@@ -1,0 +1,357 @@
+use async_std::task;
+use async_std::sync::{ Sender, Receiver, channel };
+
+use crate::base::*;
+
+use crate::process::{
+  Either,
+  Choice,
+  ExternalChoice
+};
+
+pub struct ExternalChoiceResult < L, R >
+{
+  result: Either< L, R >
+}
+
+fn left_choice < L, R > (res: L)
+  -> ExternalChoiceResult< L, R >
+{
+  return ExternalChoiceResult {
+    result: Either::Left(res)
+  }
+}
+
+fn right_choice < L, R > (res: R)
+  -> ExternalChoiceResult< L, R >
+{
+  return ExternalChoiceResult {
+    result: Either::Right(res)
+  }
+}
+
+/*
+  Additive Conjunction / External Choice
+
+    cont_builder(Left) :: Δ ⊢ A  cont_builder(Right) :: Δ  ⊢ B
+  ==============================================================
+          offer_choice(cont_builder) Δ ⊢  :: (x : A & B)
+
+  Takes an offer builder that builds either the left process or the right process.
+
+  With dependent type, the offer builder function is supposed to be something like:
+
+    data Choice = Left | Right
+
+    choiceType :: Type -> Type -> Choice -> Type
+    choiceType a _ Left = a
+    choiceType _ b Right = b
+
+    ContBuilder :: (a: Type) -> (b: Type) -> (c: Choice) -> (choiceType a b c)
+
+  But we don't really have dependent type in Rust. Fortunately there is a
+  way to emulate dependent type indexed by types with finite terms, i.e. Bool.
+
+  Using continuation passing style, we can define offer builder as follow:
+
+    ContBuilder :: forall a b r. Either (a -> r) (b -> r) -> r
+
+  This way we encode the choice together with the continuation to produce a result.
+  In order to produce a generic r, offer_builder have no choice but to produce
+  either an a or a b depending on the value of the Either type.
+
+  There is just one more small issue which is that we also can't really do
+  impredicative polymorphism, e.g. generic closure, in Rust. To work around
+  that we define an opaque r type ExternalChoiceResult with private constructors,
+  so that user code can never construct a ExternalChoiceResult on their own.
+
+    cont_builder :: forall a b
+      . Either (a -> ExternalChoiceResult) (b -> ExternalChoiceResult)
+      -> ExternalChoiceResult
+
+  With that we can call offer_builder with our choice, and be confident that
+  offer_builder will produce the a or b that we want and extract it from the
+  ExternalChoiceResult.
+
+  offerChoice
+      :: forall ins p q .
+      ( Process p
+      , Process q
+      , Processes ins
+      )
+    => (forall r
+        . Either
+            (Receiver (Session ins p) -> r)
+            (Receiver (Session ins q) -> r)
+        -> Either (Session ins p) (Session ins q)
+       )
+    ->  PartialSession ins (ExternalChoice p q)
+ */
+pub type ReturnChoice < Ins, P, Q > =
+  Either <
+    Box < dyn FnOnce (
+       PartialSession < Ins, P >
+    ) -> ExternalChoiceResult <
+       PartialSession < Ins, P >,
+       PartialSession < Ins, Q >
+    > + Send >,
+    Box< dyn FnOnce (
+       PartialSession < Ins, Q >
+    ) -> ExternalChoiceResult <
+       PartialSession < Ins, P >,
+       PartialSession < Ins, Q >
+    > + Send >
+  >;
+
+pub type OfferChoiceCont < Ins, P, Q >
+  = fn (ReturnChoice < Ins, P, Q >)
+     -> ExternalChoiceResult<
+           PartialSession < Ins, P >,
+           PartialSession < Ins, Q >
+        >;
+
+pub fn offer_choice < Ins, P, Q, F >
+  ( cont_builder : F )
+  ->
+    PartialSession <
+      Ins,
+      ExternalChoice < P, Q >
+    >
+where
+  P   : Process + 'static,
+  Q   : Process + 'static,
+  Ins : Processes + 'static,
+  F   : FnOnce(
+          ReturnChoice < Ins, P, Q >
+        ) -> ExternalChoiceResult<
+           PartialSession < Ins, P >,
+           PartialSession < Ins, Q >
+        > + Send + 'static
+{
+  return  PartialSession {
+    builder: Box::new(move |
+      ins : Ins::Values,
+      sender: Sender<
+        Box<
+          dyn FnOnce(Choice) ->
+            Either<
+              Receiver < P::Value >,
+              Receiver < Q::Value >
+            >
+          + Send
+        >
+      >
+    | {
+      Box::pin(async move {
+        sender.send(Box::new(
+          move |choice : Choice| ->
+            Either<
+              Receiver < P::Value >,
+              Receiver < Q::Value >
+            >
+          {
+            match choice {
+              Choice::Left => {
+                let in_choice :
+                  ReturnChoice <Ins, P, Q>
+                = Either::Left(
+                  Box::new(
+                    left_choice
+                  )
+                );
+
+                let cont_variant = cont_builder(in_choice).result;
+
+                match cont_variant {
+                  Either::Left(cont) => {
+                    let (sender, receiver) = channel(1);
+
+                    task::spawn(async {
+                      (cont.builder)(ins, sender).await;
+                    });
+
+                    return Either::Left(receiver);
+                  },
+                  Either::Right(_) => {
+                    panic!("expected cont_builder to provide left result");
+                  }
+                }
+              },
+              Choice::Right => {
+                let in_choice : ReturnChoice <Ins, P, Q>
+                = Either::Right(Box::new(right_choice));
+
+                let cont_variant = cont_builder(in_choice).result;
+
+                match cont_variant {
+                  Either::Left(_) => {
+                    panic!("expected cont_builder to provide right result");
+                  },
+                  Either::Right(cont) => {
+                    let (sender, receiver) = channel(1);
+
+                    task::spawn(async {
+                      (cont.builder)(ins, sender).await;
+                    });
+
+                    return Either::Right(receiver);
+                  }
+                }
+              }
+            }
+          })).await;
+      })
+    })
+  }
+}
+
+/*
+           cont ::  Δ, P, Δ'  ⊢ S
+  =========================================
+    choose_left(cont) :: Δ, P & Q, Δ' ⊢ S
+ */
+
+pub fn choose_left
+  < Lens, Ins1, Ins2, Ins3, P1, P2, S >
+  ( _ : Lens,
+    cont:
+      PartialSession < Ins2, S >
+  ) ->
+    PartialSession < Ins1, S >
+where
+  Ins1 : Processes + 'static,
+  Ins2 : Processes + 'static,
+  Ins3 : Processes + 'static,
+  P1 : Process + 'static,
+  P2 : Process + 'static,
+  S : Process + 'static,
+  Lens :
+    ProcessLens <
+      Ins1,
+      Ins2,
+      Ins3,
+      ExternalChoice< P1, P2 >,
+      P1
+    >
+{
+  return PartialSession {
+    builder: Box::new(move |
+      ins1,
+      sender: Sender < S::Value >
+    | {
+      let (offerer_chan, ins2) =
+        < Lens as
+          ProcessLens <
+            Ins1,
+            Ins2,
+            Ins3,
+            ExternalChoice < P1, P2 >,
+            P1
+          >
+        >
+        :: split_channels ( ins1 );
+
+      Box::pin(async move {
+        let offerer = offerer_chan.recv().await.unwrap();
+        let input_variant = offerer(Choice::Left);
+
+        match input_variant {
+          Either::Left(input_chan) => {
+            let ins3 =
+              < Lens as
+                ProcessLens <
+                  Ins1,
+                  Ins2,
+                  Ins3,
+                  ExternalChoice < P1, P2 >,
+                  P1
+                >
+              >
+              :: merge_channels( input_chan, ins2 );
+
+            (cont.builder)(ins3, sender).await;
+          },
+          Either::Right(_) => {
+            // this should never reach if offer_choice is implemented correctly
+            panic!("expected offerer to provide right result");
+          }
+        }
+      })
+    })
+  }
+}
+
+/*
+           cont ::  Δ, Q, Δ'  ⊢ S
+  =========================================
+    choose_right(cont) :: Δ, P & Q, Δ' ⊢ S
+ */
+pub fn choose_right
+  < Lens, Ins1, Ins2, Ins3, P1, P2, S >
+  ( _ : Lens,
+    cont:
+      PartialSession < Ins2, S >
+  ) ->
+    PartialSession < Ins1, S >
+where
+  Ins1 : Processes + 'static,
+  Ins2 : Processes + 'static,
+  Ins3 : Processes + 'static,
+  P1 : Process + 'static,
+  P2 : Process + 'static,
+  S : Process + 'static,
+  Lens :
+    ProcessLens <
+      Ins1,
+      Ins2,
+      Ins3,
+      ExternalChoice< P1, P2 >,
+      P2
+    >
+{
+  return PartialSession {
+    builder: Box::new(move |
+      ins1,
+      sender: Sender < S::Value >
+    | {
+      let (offerer_chan, ins2) =
+        < Lens as
+          ProcessLens <
+            Ins1,
+            Ins2,
+            Ins3,
+            ExternalChoice < P1, P2 >,
+            P2
+          >
+        >
+        :: split_channels ( ins1 );
+
+      Box::pin(async move {
+        let offerer = offerer_chan.recv().await.unwrap();
+        let input_variant = offerer(Choice::Right);
+
+        match input_variant {
+          Either::Left(_) => {
+            // this should never reach if offer_choice is implemented correctly
+            panic!("expected offerer to provide right result");
+          },
+          Either::Right(input_chan) => {
+            let ins3 =
+              < Lens as
+                ProcessLens <
+                  Ins1,
+                  Ins2,
+                  Ins3,
+                  ExternalChoice < P1, P2 >,
+                  P2
+                >
+              >
+              :: merge_channels( input_chan, ins2 );
+
+            (cont.builder)(ins3, sender).await;
+          }
+        }
+      })
+    })
+  }
+}

@@ -1,0 +1,13 @@
+[package]
+name = "session_rust"
+version = "0.1.0"
+authors = ["Soares Chen"]
+edition = "2018"
+
+[dependencies]
+log = "*"
+futures = "*"
+simple_logger = "*"
+env_logger = "*"
+async-std = { version = "1.2.0", features = ["unstable"] }
+async-macros = "1.0.0"
