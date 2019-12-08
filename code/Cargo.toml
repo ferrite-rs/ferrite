@@ -1,5 +1,5 @@
 [package]
-name = "session_rust"
+name = "ferrite"
 version = "0.1.0"
 authors = ["Soares Chen"]
 edition = "2018"

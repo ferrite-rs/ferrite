@@ -34,3 +34,12 @@ where
     > :: Value
   >;
 }
+
+pub struct Recurse { }
+
+impl < R >
+  AlgebraT < R >
+  for Recurse
+{
+  type Algebra = R;
+}

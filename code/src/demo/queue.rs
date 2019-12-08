@@ -1,6 +1,5 @@
 extern crate log;
 use std::time::Duration;
-use std::marker::PhantomData;
 use std::pin::Pin;
 use std::future::{ Future };
 use async_std::task::sleep;
@@ -9,62 +8,21 @@ use crate::base::*;
 use crate::session::*;
 use crate::process::*;
 use crate::processes::*;
-use crate::fix::*;
 
-
-/*
-  We want to define the recursive session type:
-
-    Queue e = End ⊕ (e ⊗ Queue v)
-
-  Where e is the element process.
-  But it not possible as Rust does not support recursive types.
-
-  So instead we use recursion scheme and define an algebra
-  for queue:
-
-    QueueF e r = End ⊕ (e ⊗ r)
-
-  Using the fixed point process type we can fix the recursive
-  part of QueueF:
-
-    Fix (QueueF e) ~ Queue v
-*/
-
-type QueueF < E, R > =
+type QueueF < A > =
   InternalChoice <
     End,
     SendChannel <
-      E,
-      R
+      A,
+      Recurse
     >
   >;
 
-/*
-  QueueT is a dummy data type used with the AlgebraT trait
-  to simulate recursion schemes in Rust. We can't do the
-  direct style like in Haskell, because Rust does not support
-  higher ranked polymorphism.
- */
-
-struct QueueT < A > {
-  a : PhantomData < A >
-}
-
-// The algebra for QueueF exists for all r, including itself.
-impl
-  < A, R >
-  AlgebraT < R >
-  for QueueT < A >
-where
-  A : Process,
-  R : Process
-{
-  type Algebra = QueueF < A, R >;
-}
-
 // Now we can define Queue v using FixProcess
-type Queue < A > = FixProcess < QueueT < A > >;
+type Queue < A > =
+  FixProcess <
+    QueueF < A >
+  >;
 
 type OutputString = SendValue < String, End >;
 
@@ -77,7 +35,7 @@ type StringQueue = Queue < OutputString >;
 fn read_queue_session ()
   ->
     PartialSession <
-      ( FixProcess < QueueT < OutputString > >,
+      ( FixProcess < QueueF < OutputString > >,
         ( Inactive, () )
       ),
       End

@@ -3,17 +3,15 @@ use async_std::sync::{ Receiver };
 
 use crate::base::{ Process };
 use crate::process::choice::data::{ Either };
+use crate::fix::{ AlgebraT };
 
 /*
   data InternalChoice p q = InternalChoice
  */
-pub enum InternalChoice < P, Q >
-where
-  P : Process,
-  Q : Process
+pub struct InternalChoice < P, Q >
 {
-  PC(PhantomData<P>),
-  QC(PhantomData<Q>)
+  p : PhantomData < P >,
+  q : PhantomData < Q >
 }
 
 impl
@@ -28,5 +26,31 @@ where
     Either <
       Receiver < P::Value >,
       Receiver < Q::Value >
+    >;
+}
+
+impl < P, Q, R >
+  AlgebraT < R > for
+  InternalChoice < P, Q >
+where
+  P : AlgebraT < R >,
+  Q : AlgebraT < R >,
+  < P as
+    AlgebraT < R >
+  > :: Algebra
+    : Process,
+  < Q as
+    AlgebraT < R >
+  > :: Algebra
+    : Process
+{
+  type Algebra =
+    InternalChoice <
+      < P as
+        AlgebraT < R >
+      > :: Algebra,
+      < Q as
+        AlgebraT < R >
+      > :: Algebra
     >;
 }

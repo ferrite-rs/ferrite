@@ -1,22 +1,9 @@
 use crate::base::*;
 use crate::process::*;
 use crate::shared::process::*;
-use std::marker::PhantomData;
 use async_std::sync::{ Sender, Receiver };
 
-pub struct ReleaseF {}
-
-pub struct SendValueF < T, P >
-{
-  t : PhantomData < T >,
-  p : PhantomData < P >
-}
-
-pub struct InternalChoiceF < P, Q >
-{
-  p : PhantomData < P >,
-  q : PhantomData < Q >
-}
+pub struct Release {}
 
 impl < F >
   SharedProcess for
@@ -57,14 +44,14 @@ where
 
 impl < F >
   ProcessAlgebra < F > for
-  ReleaseF
+  Release
 {
   type ToProcess = SharedToLinear < F >;
 }
 
 impl < T, P, R >
   ProcessAlgebra < R > for
-  SendValueF < T, P >
+  SendValue < T, P >
 where
   T : Send,
   P : ProcessAlgebra < R >
@@ -78,7 +65,7 @@ where
 
 impl < P, Q, R >
   ProcessAlgebra < R > for
-  InternalChoiceF < P, Q >
+  InternalChoice < P, Q >
 where
   P : ProcessAlgebra < R >,
   Q : ProcessAlgebra < R >,
