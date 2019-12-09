@@ -9,10 +9,10 @@ impl < F >
   SharedProcess for
   LinearToShared < F >
 where
-  F : ProcessAlgebra < F >
+  F : SharedAlgebra < F >
 {
   type SharedValue =
-    < < F as ProcessAlgebra < F > >
+    < < F as SharedAlgebra < F > >
       :: ToProcess
       as Process
     > :: Value;
@@ -29,12 +29,12 @@ impl < F >
   Process for
   Lock < F >
 where
-  F : ProcessAlgebra < F >
+  F : SharedAlgebra < F >
 {
   type Value =
     Sender <
       Receiver<
-        < < F as ProcessAlgebra < F > >
+        < < F as SharedAlgebra < F > >
           :: ToProcess
           as Process
         > :: Value
@@ -43,18 +43,18 @@ where
 }
 
 impl < F >
-  ProcessAlgebra < F > for
+  SharedAlgebra < F > for
   Release
 {
   type ToProcess = SharedToLinear < F >;
 }
 
 impl < T, P, R >
-  ProcessAlgebra < R > for
+  SharedAlgebra < R > for
   SendValue < T, P >
 where
   T : Send,
-  P : ProcessAlgebra < R >
+  P : SharedAlgebra < R >
 {
   type ToProcess =
     SendValue <
@@ -64,11 +64,11 @@ where
 }
 
 impl < P, Q, R >
-  ProcessAlgebra < R > for
+  SharedAlgebra < R > for
   InternalChoice < P, Q >
 where
-  P : ProcessAlgebra < R >,
-  Q : ProcessAlgebra < R >,
+  P : SharedAlgebra < R >,
+  Q : SharedAlgebra < R >,
 {
   type ToProcess =
     InternalChoice <

@@ -11,7 +11,7 @@ use std::time::Duration;
 
 pub fn make_counter_session
   ( count : i32 ) ->
-    PartialSharedSession <
+    SuspendedSharedSession <
       LinearToShared <
         SendValue < i32, Release >
       >

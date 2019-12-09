@@ -5,7 +5,7 @@ pub trait SharedProcess {
   type SharedValue : Send;
 }
 
-pub trait ProcessAlgebra < R >
+pub trait SharedAlgebra < R >
 {
   type ToProcess : Process;
 }

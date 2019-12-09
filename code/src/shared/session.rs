@@ -9,7 +9,7 @@ use std::future::{ Future };
 use async_std::task;
 use async_macros::join;
 
-pub struct PartialSharedSession < P >
+pub struct SuspendedSharedSession < P >
 where
   P : SharedProcess
 {
@@ -55,7 +55,7 @@ where
 
 pub fn run_shared_session
   < P >
-  ( session : PartialSharedSession < P > )
+  ( session : SuspendedSharedSession < P > )
   -> SharedSession < P >
 where
   P : SharedProcess + 'static
@@ -104,17 +104,17 @@ pub fn
   ( cont : PartialSession <
       (Lock < F >, ()),
       < F as
-        ProcessAlgebra < F >
+        SharedAlgebra < F >
       > :: ToProcess
     >
   ) ->
-    PartialSharedSession <
+    SuspendedSharedSession <
       LinearToShared < F >
     >
 where
-  F : ProcessAlgebra < F > + 'static
+  F : SharedAlgebra < F > + 'static
 {
-  PartialSharedSession {
+  SuspendedSharedSession {
     exec_shared_session : Box::new(
       move | sender1 | {
         Box::pin ( async move {
@@ -150,7 +150,7 @@ where
 pub fn
   detach_shared_session
   < F, I >
-  ( cont : PartialSharedSession <
+  ( cont : SuspendedSharedSession <
       LinearToShared < F >
     >
   ) ->
@@ -159,7 +159,7 @@ pub fn
       SharedToLinear < F >
     >
 where
-  F : ProcessAlgebra < F > + 'static,
+  F : SharedAlgebra < F > + 'static,
   I : EmptyList
 {
   PartialSession {
@@ -200,12 +200,12 @@ pub fn
   ) ->
     PartialSession < I, P >
 where
-  F : ProcessAlgebra < F > + 'static,
+  F : SharedAlgebra < F > + 'static,
   P : Process + 'static,
   I : Processes + NextSelector + 'static,
   I : Appendable <
         ( < F as
-            ProcessAlgebra < F >
+            SharedAlgebra < F >
           > :: ToProcess
         , ()
         )
@@ -217,7 +217,7 @@ where
             < I as
               Appendable <
                 ( < F as
-                    ProcessAlgebra < F >
+                    SharedAlgebra < F >
                   > :: ToProcess
                 , ()
                 )
@@ -252,7 +252,7 @@ where
               < I as
                 Appendable <
                   ( < F as
-                      ProcessAlgebra < F >
+                      SharedAlgebra < F >
                     > :: ToProcess
                   , ()
                   )
@@ -284,7 +284,7 @@ where
   I1 : Processes + 'static,
   I2 : Processes + 'static,
   I3 : Processes + 'static,
-  F : ProcessAlgebra < F >,
+  F : SharedAlgebra < F >,
   Lens :
     ProcessLens <
       I1,
