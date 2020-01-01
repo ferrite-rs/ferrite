@@ -1,9 +1,7 @@
 
 pub use super::{
-  Lock,
   Release,
   SharedProcess,
-  SharedAlgebra,
   LinearToShared,
   SharedToLinear,
 

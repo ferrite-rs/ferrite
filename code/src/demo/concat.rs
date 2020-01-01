@@ -7,7 +7,6 @@ use crate::public::*;
 use std::time::Duration;
 use async_std::task::sleep;
 
-#[allow(dead_code)]
 pub fn concat_session()
   -> Session < End >
 {

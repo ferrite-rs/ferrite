@@ -9,7 +9,6 @@ extern crate env_logger;
 pub mod demo;
 pub mod macros;
 
-mod fix;
 mod base;
 mod shared;
 mod session;

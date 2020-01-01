@@ -10,7 +10,6 @@ pub struct TomatoSoup {}
 pub struct BeefSteak {}
 pub struct PorkChop {}
 
-#[allow(dead_code)]
 pub fn restaurant_session()
   -> Session < End >
 {

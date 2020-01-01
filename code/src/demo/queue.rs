@@ -111,7 +111,6 @@ where
       )))
 }
 
-#[allow(dead_code)]
 pub fn queue_session()
   -> Session < End >
 {

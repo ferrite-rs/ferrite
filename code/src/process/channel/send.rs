@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use async_std::sync::{ Receiver };
 
 use crate::base::{ Process };
-use crate::fix::{ AlgebraT };
+use crate::process::fix::{ ProcessAlgebra };
 
 pub struct SendChannel < P, Q >  {
   p: PhantomData<P>,
@@ -23,27 +23,27 @@ where
 }
 
 impl < P, Q, R >
-  AlgebraT < R > for
+  ProcessAlgebra < R > for
   SendChannel < P, Q >
 where
-  P : AlgebraT < R >,
-  Q : AlgebraT < R >,
+  P : ProcessAlgebra < R >,
+  Q : ProcessAlgebra < R >,
   < P as
-    AlgebraT < R >
-  > :: Algebra
+    ProcessAlgebra < R >
+  > :: ToProcess
     : Process,
   < Q as
-    AlgebraT < R >
-  > :: Algebra
+    ProcessAlgebra < R >
+  > :: ToProcess
     : Process
 {
-  type Algebra =
+  type ToProcess =
     SendChannel <
       < P as
-        AlgebraT < R >
-      > :: Algebra,
+        ProcessAlgebra < R >
+      > :: ToProcess,
       < Q as
-        AlgebraT < R >
-      > :: Algebra
+        ProcessAlgebra < R >
+      > :: ToProcess
     >;
 }

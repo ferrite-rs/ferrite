@@ -3,7 +3,11 @@ use std::mem::transmute;
 use async_std::task;
 use async_std::sync::{ Sender, Receiver, channel };
 
-use crate::process::{ FixProcess, HoleProcess };
+use crate::process::{
+  FixProcess,
+  HoleProcess,
+  ProcessAlgebra,
+};
 
 use crate::base::{
   Process,
@@ -14,10 +18,6 @@ use crate::base::{
   create_partial_session,
 };
 
-use crate::fix::{
-  AlgebraT,
-};
-
 pub fn fill_hole
   < Ins, F >
   ( fix_session :
@@ -25,10 +25,7 @@ pub fn fill_hole
   )
   -> PartialSession < Ins, HoleProcess < F > >
 where
-  F : AlgebraT < HoleProcess < F > > + 'static,
-  <
-    F as AlgebraT < HoleProcess < F > >
-  > :: Algebra : Process,
+  F : ProcessAlgebra < HoleProcess < F > > + 'static,
   Ins : Processes + 'static
 {
   create_partial_session (
@@ -41,8 +38,9 @@ where
             Box <
               <
                 <
-                  F as AlgebraT < HoleProcess < F > >
-                > :: Algebra
+                  F as
+                  ProcessAlgebra < HoleProcess < F > >
+                > :: ToProcess
                 as Process
               > :: Value
             >
@@ -74,10 +72,7 @@ pub fn read_hole
   ->
     PartialSession < S, P >
 where
-  F : AlgebraT < HoleProcess < F > > + 'static,
-  <
-    F as AlgebraT < HoleProcess < F > >
-  > :: Algebra : Process,
+  F : ProcessAlgebra < HoleProcess < F > > + 'static,
   P : Process + 'static,
   S : Processes + 'static,
   T : Processes + 'static,
@@ -108,8 +103,8 @@ where
           Box <
             <
               <
-                F as AlgebraT < HoleProcess < F > >
-              > :: Algebra
+                F as ProcessAlgebra < HoleProcess < F > >
+              > :: ToProcess
               as Process
             > :: Value
           >
@@ -136,8 +131,8 @@ pub fn fix_session
   ( session: PartialSession <
       Ins,
       <
-        F as AlgebraT < HoleProcess < F > >
-      > :: Algebra
+        F as ProcessAlgebra < HoleProcess < F > >
+      > :: ToProcess
     >
   ) ->
     PartialSession <
@@ -145,11 +140,8 @@ pub fn fix_session
       FixProcess < F >
     >
 where
-  F : AlgebraT < HoleProcess < F > >
+  F : ProcessAlgebra < HoleProcess < F > >
     + 'static,
-  <
-    F as AlgebraT < HoleProcess < F > >
-  > :: Algebra : Process,
   Ins : Processes + 'static
 {
   create_partial_session (
@@ -160,8 +152,8 @@ where
           Box <
             <
               <
-                F as AlgebraT < HoleProcess < F > >
-              > :: Algebra
+                F as ProcessAlgebra < HoleProcess < F > >
+              > :: ToProcess
               as Process
             > :: Value
           >
@@ -192,10 +184,7 @@ pub fn unfix_session
   ->
     PartialSession < S, P >
 where
-  F : AlgebraT < HoleProcess < F > > + 'static,
-  <
-    F as AlgebraT < HoleProcess < F > >
-  > :: Algebra : Process,
+  F : ProcessAlgebra < HoleProcess < F > > + 'static,
   P : Process + 'static,
   S : Processes + 'static,
   T : Processes + 'static,
@@ -204,8 +193,8 @@ where
     ProcessLens <
       S, T, D,
       FixProcess < F >,
-      < F as AlgebraT < HoleProcess < F > >
-      > :: Algebra
+      < F as ProcessAlgebra < HoleProcess < F > >
+      > :: ToProcess
     >
 {
   create_partial_session (
@@ -218,8 +207,8 @@ where
               Box <
                 <
                   <
-                    F as AlgebraT < HoleProcess < F > >
-                  > :: Algebra
+                    F as ProcessAlgebra < HoleProcess < F > >
+                  > :: ToProcess
                   as Process
                 > :: Value
               >
@@ -230,8 +219,8 @@ where
             ProcessLens <
               S, T, D,
               FixProcess < F >,
-              < F as AlgebraT < HoleProcess < F > >
-              > :: Algebra
+              < F as ProcessAlgebra < HoleProcess < F > >
+              > :: ToProcess
             >
           > :: split_channels ( ins1 );
 
@@ -247,8 +236,8 @@ where
           ProcessLens <
             S, T, D,
             FixProcess < F >,
-            < F as AlgebraT < HoleProcess < F > >
-            > :: Algebra
+            < F as ProcessAlgebra < HoleProcess < F > >
+            > :: ToProcess
           >
         > :: merge_channels ( receiver2, ins2 );
 

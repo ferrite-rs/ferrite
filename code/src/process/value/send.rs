@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 use async_std::sync::{ Receiver };
 
 use crate::base::{ Process };
-use crate::fix::{ AlgebraT };
+use crate::process::fix::{ ProcessAlgebra };
 
 pub struct SendValue < T, P >
 {
@@ -22,21 +22,17 @@ where
 }
 
 impl < T, P, R >
-  AlgebraT < R > for
+  ProcessAlgebra < R > for
   SendValue < T, P >
 where
   T : Send,
-  P : AlgebraT < R >,
-  < P as
-    AlgebraT < R >
-  > :: Algebra
-    : Process
+  P : ProcessAlgebra < R >
 {
-  type Algebra =
+  type ToProcess =
     SendValue <
       T,
       < P as
-        AlgebraT < R >
-      > :: Algebra
+        ProcessAlgebra < R >
+      > :: ToProcess
     >;
 }

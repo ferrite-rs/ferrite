@@ -10,7 +10,6 @@ type HelloSession =
     SendValue < String, End >
   >;
 
-#[allow(dead_code)]
 pub fn hello_session()
   -> Session < End >
 {

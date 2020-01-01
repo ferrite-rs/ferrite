@@ -1,6 +1,6 @@
 use crate::base::{ Process };
 
-use crate::fix::{ AlgebraT };
+use crate::process::fix::{ ProcessAlgebra };
 
 /*
   The unit process representing termination.
@@ -15,8 +15,8 @@ impl Process for End {
 
 
 impl < R >
-  AlgebraT < R >
+  ProcessAlgebra < R >
   for End
 {
-  type Algebra = End;
+  type ToProcess = End;
 }

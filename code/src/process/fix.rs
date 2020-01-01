@@ -1,7 +1,11 @@
 use std::marker::PhantomData;
 
-use crate::fix::{ AlgebraT };
 use crate::base::{ Process };
+
+pub trait ProcessAlgebra < R >
+{
+  type ToProcess : Process;
+}
 
 pub struct FixProcess < F > {
   f : PhantomData < F >
@@ -22,24 +26,23 @@ impl
   Process
   for FixProcess < F >
 where
-  F : AlgebraT < HoleProcess < F > >,
-  <
-    F as AlgebraT < HoleProcess < F > >
-  > :: Algebra : Process
+  F : ProcessAlgebra < HoleProcess < F > >
 {
   type Value = Box <
     <
       <
-        F as AlgebraT < HoleProcess < F > >
-      > :: Algebra
+        F as ProcessAlgebra < HoleProcess < F > >
+      > :: ToProcess
       as Process
     > :: Value
   >;
 }
 
 impl < R >
-  AlgebraT < R >
+  ProcessAlgebra < R >
   for Recurse
+where
+  R : Process
 {
-  type Algebra = R;
+  type ToProcess = R;
 }

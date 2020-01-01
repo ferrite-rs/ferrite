@@ -2,8 +2,9 @@ use std::marker::PhantomData;
 use async_std::sync::{ Receiver };
 
 use crate::base::{ Process };
-use crate::process::choice::data::{ Either };
-use crate::fix::{ AlgebraT };
+use crate::process::fix::{ ProcessAlgebra };
+
+use super::data::{ Either };
 
 /*
   data InternalChoice p q = InternalChoice
@@ -30,27 +31,27 @@ where
 }
 
 impl < P, Q, R >
-  AlgebraT < R > for
+  ProcessAlgebra < R > for
   InternalChoice < P, Q >
 where
-  P : AlgebraT < R >,
-  Q : AlgebraT < R >,
+  P : ProcessAlgebra < R >,
+  Q : ProcessAlgebra < R >,
   < P as
-    AlgebraT < R >
-  > :: Algebra
+    ProcessAlgebra < R >
+  > :: ToProcess
     : Process,
   < Q as
-    AlgebraT < R >
-  > :: Algebra
+    ProcessAlgebra < R >
+  > :: ToProcess
     : Process
 {
-  type Algebra =
+  type ToProcess =
     InternalChoice <
       < P as
-        AlgebraT < R >
-      > :: Algebra,
+        ProcessAlgebra < R >
+      > :: ToProcess,
       < Q as
-        AlgebraT < R >
-      > :: Algebra
+        ProcessAlgebra < R >
+      > :: ToProcess
     >;
 }

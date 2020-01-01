@@ -5,6 +5,7 @@ pub use super::{
   Recurse,
   FixProcess,
   HoleProcess,
+  ProcessAlgebra,
 
   Choice,
   Either,

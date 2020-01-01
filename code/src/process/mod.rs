@@ -15,6 +15,7 @@ pub use fix::{
   Recurse,
   FixProcess,
   HoleProcess,
+  ProcessAlgebra,
 };
 
 pub use choice::{

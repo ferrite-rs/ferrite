@@ -46,13 +46,6 @@ pub use crate::processes::public::{
   partial_session_2,
 };
 
-pub use crate::fix::public::{
-  Fix,
-  AlgebraT,
-  fix,
-  unfix,
-};
-
 pub use crate::session::public::{
   run_session,
 
@@ -108,10 +101,8 @@ pub use crate::session::public::{
 };
 
 pub use crate::shared::public::{
-  Lock,
   Release,
   SharedProcess,
-  SharedAlgebra,
   LinearToShared,
   SharedToLinear,
 
