@@ -1,8 +1,6 @@
 extern crate log;
 
-use crate::base::*;
-use crate::session::*;
-use crate::process::*;
+use crate::public::*;
 
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -67,7 +65,7 @@ pub fn make_counter_client
 }
 
 pub fn counter_session()
-  -> RunnableSession
+  -> Session < End >
 {
   let counter = make_counter_server( 8 );
 

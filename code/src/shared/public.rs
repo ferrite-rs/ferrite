@@ -1,22 +1,12 @@
 
-pub mod public;
-
-mod process;
-mod algebra;
-mod session;
-
-pub use process::{
+pub use super::{
   Lock,
   Release,
   SharedProcess,
   SharedAlgebra,
   LinearToShared,
   SharedToLinear,
-};
 
-pub use algebra::{};
-
-pub use session::{
   SharedSession,
   SuspendedSharedSession,
   run_shared_session,

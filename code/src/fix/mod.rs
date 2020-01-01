@@ -1,8 +1,11 @@
 
-mod fix;
-mod list;
-mod process;
+pub mod public;
 
-pub use self::fix::*;
-pub use self::list::*;
-pub use self::process::*;
+mod fix;
+
+pub use fix::{
+  Fix,
+  AlgebraT,
+  fix,
+  unfix,
+};

@@ -6,23 +6,20 @@ extern crate log;
 // extern crate simple_logger;
 extern crate env_logger;
 
-mod demo;
+pub mod demo;
+pub mod macros;
+
+mod fix;
 mod base;
+mod shared;
 mod session;
 mod process;
 mod processes;
-mod fix;
-mod shared;
 
-pub mod macros;
+mod public;
 
 pub use crate::demo::*;
-pub use crate::base::*;
-pub use crate::session::*;
-pub use crate::process::*;
-pub use crate::processes::*;
-pub use crate::fix::*;
-pub use crate::shared::*;
+pub use crate::public::*;
 
 pub fn main() {
   // simple_logger::init().unwrap();

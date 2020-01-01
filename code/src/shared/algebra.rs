@@ -1,9 +1,23 @@
-use crate::base::*;
-use crate::process::*;
-use crate::shared::process::*;
+
 use async_std::sync::{ Sender, Receiver };
 
-pub struct Release {}
+use crate::process::{
+  SendValue,
+  InternalChoice,
+};
+
+use super::process::{
+  Lock,
+  Release,
+  SharedProcess,
+  SharedAlgebra,
+  LinearToShared,
+  SharedToLinear,
+};
+
+use crate::base::{
+  Process,
+};
 
 impl < F >
   SharedProcess for

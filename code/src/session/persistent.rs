@@ -3,14 +3,25 @@ use async_std::task;
 use async_macros::join;
 use async_std::sync::{ channel };
 
-use crate::base::*;
-use crate::processes::*;
+use crate::processes::{
+  NextSelector
+};
+
+use crate::base::{
+  Process,
+  Session,
+  Processes,
+  Appendable,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
 
 pub struct PersistentSession < P >
 where
   P : Process
 {
-  pub new_session : Arc <
+  new_session : Arc <
     dyn Fn () -> Session < P >
       + Send + Sync
   >
@@ -73,7 +84,7 @@ where
     < I as NextSelector > :: make_selector ()
   );
 
-  create_partial_session ( 
+  create_partial_session (
     async move | ins1, sender1 | {
       let session3 = (session2.new_session)();
 

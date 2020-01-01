@@ -6,6 +6,8 @@ extern crate log;
 // # Session Rust
 // Base crate - [`crate::base`]
 
+pub mod macros;
+
 mod public;
 
 mod base;
@@ -15,16 +17,8 @@ mod processes;
 mod fix;
 mod shared;
 
-mod macros;
 
 #[cfg(test)]
 mod test;
 
-// pub use crate::public::*;
-
-pub use crate::base::*;
-pub use crate::session::*;
-pub use crate::process::*;
-pub use crate::processes::*;
-pub use crate::fix::*;
-pub use crate::shared::*;
+pub use public::*;

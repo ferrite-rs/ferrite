@@ -2,16 +2,14 @@ extern crate log;
 
 use std::vec::*;
 
-use crate::base::*;
-use crate::session::*;
-use crate::process::*;
+use crate::public::*;
 
 use std::time::Duration;
 use async_std::task::sleep;
 
 #[allow(dead_code)]
 pub fn concat_session()
-  -> RunnableSession
+  -> Session < End >
 {
   let p1 :
     Session <
@@ -111,7 +109,7 @@ pub fn concat_session()
   });
 
   let p3 :
-    RunnableSession
+    Session < End >
   = apply_channel (p2, p1);
 
   return p3;

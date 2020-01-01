@@ -1,13 +1,9 @@
 extern crate log;
 
-use crate::base::*;
-use crate::shared::*;
-use crate::session::*;
-use crate::process::*;
-use crate::processes::*;
+use crate::public::*;
 
-use async_std::task::sleep;
 use std::time::Duration;
+use async_std::task::sleep;
 
 pub fn make_counter_session
   ( count : i32 ) ->
@@ -66,7 +62,7 @@ pub fn read_counter_session
 }
 
 pub fn shared_counter_session ()
-  -> RunnableSession
+  -> Session < End >
 {
   let shared :
     SharedSession <

@@ -1,7 +1,14 @@
 use async_std::task;
 use async_std::sync::{ Sender, Receiver, channel };
 
-use crate::base::*;
+use crate::base::{
+  Process,
+  Processes,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
 
 use crate::process::{
   Either,
@@ -103,13 +110,6 @@ pub type ReturnChoice < Ins, P, Q > =
     > + Send >
   >;
 
-pub type OfferChoiceCont < Ins, P, Q >
-  = fn (ReturnChoice < Ins, P, Q >)
-     -> ExternalChoiceResult<
-           PartialSession < Ins, P >,
-           PartialSession < Ins, Q >
-        >;
-
 pub fn offer_choice < Ins, P, Q, F >
   ( cont_builder : F )
   ->
@@ -173,7 +173,7 @@ where
 
                   return Either::Left(receiver);
                 },
-                
+
                 Either::Right(_) => {
                   panic!("expected cont_builder to provide left result");
                 }

@@ -1,15 +1,13 @@
 extern crate log;
 
-use crate::base::*;
-use crate::session::*;
-use crate::process::*;
+use crate::public::*;
 
 use std::time::Duration;
 use async_std::task::sleep;
 
 #[allow(dead_code)]
 pub fn pair_session()
-  -> RunnableSession
+  -> Session < End >
 {
 
   /*
@@ -152,7 +150,7 @@ pub fn pair_session()
     >
   = apply_channel(p2, p1);
 
-  let p6 : RunnableSession
+  let p6 : Session < End >
   = apply_channel( apply_channel ( p3, p5), p4 );
 
   p6

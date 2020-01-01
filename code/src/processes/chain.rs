@@ -1,10 +1,10 @@
 use crate::base::{
+  Inactive,
   Processes,
+  EmptyList,
   Appendable,
   Reversible,
-  EmptyList,
   ProcessNode,
-  Inactive,
 };
 
 // Type level list manipulation tricks copied from https://github.com/lloydmeta/frunk

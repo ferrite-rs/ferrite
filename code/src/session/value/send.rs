@@ -4,7 +4,15 @@ use std::future::{ Future };
 use async_std::sync::{ Sender, Receiver, channel };
 
 use crate::process::{ SendValue };
-use crate::base::*;
+
+use crate::base::{
+  Process,
+  Processes,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
 
 /*
           cont_builder() :: T ; cont :: Δ ⊢ P
@@ -23,7 +31,7 @@ where
   T   : Send + 'static,
   P   : Process + 'static,
   Ins : Processes + 'static,
-  Func : 
+  Func :
     FnOnce() -> Fut
       + Send + 'static,
   Fut :
@@ -94,7 +102,7 @@ where
   Ins2 : Processes + 'static,
   Ins3 : Processes + 'static,
   T : Send + 'static,
-  Func : 
+  Func :
     FnOnce( T ) -> Fut
       + Send + 'static,
   Fut :

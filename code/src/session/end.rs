@@ -3,7 +3,18 @@ use async_std::sync::{ Sender };
 use std::future::{ Future };
 
 use crate::process::{ End };
-use crate::base::*;
+
+use crate::base::{
+  Process,
+  Session,
+  Inactive,
+  Processes,
+  EmptyList,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
 
 /*
 
@@ -18,7 +29,7 @@ pub fn terminate_async < Ins, Func, Fut >
   -> PartialSession < Ins, End >
 where
   Ins : EmptyList + 'static,
-  Func : 
+  Func :
     FnOnce() -> Fut
       + Send + 'static,
   Fut :
@@ -66,7 +77,7 @@ where
   T : Processes + 'static,
   D : Processes + 'static,
   P : Process + 'static,
-  Func : 
+  Func :
     FnOnce () -> Fut
       + Send + 'static,
   Fut :
@@ -90,7 +101,7 @@ where
 
       wait_chan.recv().await.unwrap();
       let cont = cont_builder().await;
-      
+
       run_partial_session
         ( cont, ins3, sender
         ).await;

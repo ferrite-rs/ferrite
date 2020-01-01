@@ -4,13 +4,24 @@ use async_std::task;
 use async_std::sync::{ Sender, Receiver, channel };
 
 use crate::process::{ FixProcess, HoleProcess };
-use crate::base::*;
 
-use crate::fix::*;
+use crate::base::{
+  Process,
+  Processes,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
+
+use crate::fix::{
+  AlgebraT,
+};
 
 pub fn fill_hole
   < Ins, F >
-  ( fix_session : PartialSession < Ins, FixProcess < F > >
+  ( fix_session :
+      PartialSession < Ins, FixProcess < F > >
   )
   -> PartialSession < Ins, HoleProcess < F > >
 where
@@ -77,7 +88,7 @@ where
     FixProcess < F >
   >
 {
-  create_partial_session ( 
+  create_partial_session (
     async move |
       ins1,
       sender: Sender < P :: Value >

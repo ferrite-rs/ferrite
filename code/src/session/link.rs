@@ -1,7 +1,17 @@
-use crate::base::*;
 use async_macros::join;
 use async_std::task;
 use async_std::sync::{ channel };
+
+use crate::base::{
+  Process,
+  Session,
+  Inactive,
+  Processes,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
 
 /*
   Cut (Communication)
@@ -39,7 +49,7 @@ where
       Q
     >
 {
-  create_partial_session ( 
+  create_partial_session (
     async move | ins1, p_sender | {
       let (q_sender, q_receiver) = channel(1);
 
@@ -68,7 +78,7 @@ where
       });
 
       let child2 = task::spawn(async {
-        run_partial_session 
+        run_partial_session
           ( cont2, ins3, p_sender
           ).await;
       });

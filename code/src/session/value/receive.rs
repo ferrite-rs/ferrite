@@ -1,10 +1,18 @@
 use async_std::task;
 use async_macros::join;
-use async_std::sync::{ Sender, Receiver, channel };
 use std::future::{ Future };
+use async_std::sync::{ Sender, Receiver, channel };
 
 use crate::process::{ ReceiveValue };
-use crate::base::*;
+
+use crate::base::{
+  Process,
+  Processes,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
 
 /*
               cont_builder(x) :: Δ ⊢ P
@@ -19,7 +27,7 @@ where
   T : Send + 'static,
   P : Process + 'static,
   Ins : Processes + 'static,
-  Func : 
+  Func :
     FnOnce(T) -> Fut
     + Send + 'static,
   Fut :
@@ -77,7 +85,7 @@ where
   Ins2 : Processes + 'static,
   Ins3 : Processes + 'static,
   T : Send + 'static,
-  Func : 
+  Func :
     FnOnce() -> Fut
     + Send + 'static,
   Fut :
@@ -93,7 +101,7 @@ where
       Q
     >
 {
-  create_partial_session ( 
+  create_partial_session (
     async move |
       ins1: < Ins1 as Processes >::Values,
       sender1 : Sender < P::Value >

@@ -1,8 +1,6 @@
 extern crate log;
 
-use crate::base::*;
-use crate::session::*;
-use crate::process::*;
+use crate::public::*;
 
 use std::format;
 
@@ -14,7 +12,7 @@ type HelloSession =
 
 #[allow(dead_code)]
 pub fn hello_session()
-  -> RunnableSession
+  -> Session < End >
 {
   let server :
     Session < HelloSession >
@@ -41,7 +39,7 @@ pub fn hello_session()
                 terminate()
               ) }) ) });
 
-  let main : RunnableSession
+  let main : Session < End >
     = apply_channel (client, server);
 
   return main;

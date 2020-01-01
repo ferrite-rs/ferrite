@@ -1,5 +1,6 @@
-use crate::base::*;
 use std::marker::PhantomData;
+
+use crate::base::{ Process };
 
 pub trait SharedProcess {
   type SharedValue : Send;
@@ -9,6 +10,8 @@ pub trait SharedAlgebra < R >
 {
   type ToProcess : Process;
 }
+
+pub struct Release {}
 
 pub struct Lock < F >
 {

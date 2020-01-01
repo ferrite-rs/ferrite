@@ -1,15 +1,19 @@
 use async_std::task;
-use async_std::sync::{ Sender, Receiver, channel };
 use async_macros::join;
+use async_std::sync::{ Sender, Receiver, channel };
 
-use crate::process::{ InternalChoice, Either };
-use crate::base::{ 
-  PartialSession, 
-  Process, 
-  Processes, 
+use crate::process::{
+  Either,
+  InternalChoice,
+};
+
+use crate::base::{
+  PartialSession,
+  Process,
+  Processes,
   ProcessLens,
   run_partial_session,
-  create_partial_session
+  create_partial_session,
 };
 
 /*
@@ -255,7 +259,7 @@ where
 
           match cont_variant {
             Either::Left(cont) => {
-              run_partial_session 
+              run_partial_session
                 ( cont, ins3, sender
                 ).await;
             }

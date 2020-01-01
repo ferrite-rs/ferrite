@@ -1,12 +1,32 @@
 use async_std::task;
 use async_macros::join;
 use async_std::sync::{ channel };
-use std::collections::*;
+use std::collections::{ LinkedList };
 
-use crate::base::*;
-use crate::process::*;
-use crate::processes::*;
-use crate::session::end::*;
+use crate::process::{ End };
+
+use crate::base::{
+  Process,
+  Session,
+  Inactive,
+  Processes,
+  Appendable,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
+
+use crate::processes::{
+  NextSelector,
+  append_emtpy_slot
+};
+
+use crate::session::end::{
+  wait,
+  terminate,
+  wait_async,
+};
 
 pub fn
   include_session
@@ -36,7 +56,7 @@ where
     < I as NextSelector > :: make_selector ()
   );
 
-  create_partial_session ( 
+  create_partial_session (
     async move | ins1, sender1 | {
       let (sender2, receiver2) = channel(1);
 
@@ -124,12 +144,12 @@ where
     >
 {
   wait_session (
-    merge_sessions (sessions) ,
+    join_sessions (sessions) ,
     cont
   )
 }
 
-pub fn merge_sessions
+pub fn join_sessions
   ( sessions :
       Vec <
         Session < End >
@@ -137,10 +157,10 @@ pub fn merge_sessions
   ) ->
     Session < End >
 {
-  do_merge_sessions ( sessions.into_iter().collect() )
+  do_join_sessions ( sessions.into_iter().collect() )
 }
 
-fn do_merge_sessions
+fn do_join_sessions
   ( mut sessions :
       LinkedList <
         Session < End >
@@ -152,7 +172,7 @@ fn do_merge_sessions
     Some (session) => {
       include_session ( session, move | c1 | {
         include_session (
-          do_merge_sessions ( sessions ),
+          do_join_sessions ( sessions ),
           move | c2 | {
             wait ( c1,
               wait ( c2,

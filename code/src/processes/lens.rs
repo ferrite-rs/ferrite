@@ -7,10 +7,10 @@ use crate::base::{
 };
 
 #[derive(Copy, Clone)]
-pub struct Selector1 {}
+pub struct SelectorZ {}
 
 #[derive(Copy, Clone)]
-pub struct SelectorNext < Lens > {
+pub struct SelectorSucc < Lens > {
   lens : PhantomData < Lens >
 }
 
@@ -22,12 +22,12 @@ pub trait NextSelector {
 }
 
 impl NextSelector for () {
-  type Selector = Selector1;
+  type Selector = SelectorZ;
 
   fn make_selector () ->
     Self :: Selector
   {
-    return Selector1 {};
+    return SelectorZ {};
   }
 }
 
@@ -39,7 +39,7 @@ where
   P : ProcessNode,
   R : Processes + NextSelector
 {
-  type Selector = SelectorNext <
+  type Selector = SelectorSucc <
     < R as NextSelector >
     :: Selector
   >;
@@ -47,7 +47,7 @@ where
   fn make_selector () ->
     Self :: Selector
   {
-    return SelectorNext {
+    return SelectorSucc {
       lens : PhantomData
     };
   }
@@ -62,7 +62,7 @@ impl
     P1,
     P2
   > for
-  Selector1
+  SelectorZ
 where
   P1 : ProcessNode + 'static,
   P2 : ProcessNode + 'static,
@@ -104,7 +104,7 @@ impl
     Q1,
     Q2
   > for
-  SelectorNext < Lens >
+  SelectorSucc < Lens >
 where
   P : ProcessNode + 'static,
   Q1 : ProcessNode + 'static,
@@ -146,47 +146,18 @@ where
   }
 }
 
-pub type Selector2 = SelectorNext < Selector1 >;
-pub type Selector3 = SelectorNext < Selector2 >;
-pub type Selector4 = SelectorNext < Selector3 >;
-pub type Selector5 = SelectorNext < Selector4 >;
+pub type Selector1 = SelectorSucc < SelectorZ >;
 
-pub static SELECT_1 : Selector1 = Selector1{};
-pub static SELECT_2 : Selector2 = select_next();
-pub static SELECT_3 : Selector3 = select_next();
-pub static SELECT_4 : Selector4 = select_next();
-pub static SELECT_5 : Selector5 = select_next();
+pub static SELECT_0 : SelectorZ = SelectorZ{};
+pub static SELECT_1 : Selector1 = select_succ();
 
-pub const fn select_next
+pub const fn 
+  select_succ
   < Lens >
   () ->
-    SelectorNext < Lens >
+    SelectorSucc < Lens >
 {
-  SelectorNext {
+  SelectorSucc {
     lens: PhantomData
   }
-}
-
-pub fn make_slots_1 () ->
-  Selector1
-{
-  SELECT_1
-}
-
-pub fn make_slots_2 () ->
-  (Selector1, Selector2)
-{
-  (SELECT_1, SELECT_2)
-}
-
-pub fn make_slots_3 () ->
-  (Selector1, Selector2, Selector3)
-{
-  (SELECT_1, SELECT_2, SELECT_3)
-}
-
-pub fn make_slots_4 () ->
-  (Selector1, Selector2, Selector3, Selector4)
-{
-  (SELECT_1, SELECT_2, SELECT_3, SELECT_4)
 }

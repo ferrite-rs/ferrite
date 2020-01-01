@@ -13,7 +13,9 @@ mod lens;
 
 pub mod public;
 
-pub use self::process::{ Process };
+pub use self::process::{ 
+  Process 
+};
 
 pub use self::processes::{  
   Processes, 

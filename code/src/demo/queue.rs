@@ -3,10 +3,7 @@ use std::time::Duration;
 use std::future::{ Future };
 use async_std::task::sleep;
 
-use crate::base::*;
-use crate::session::*;
-use crate::process::*;
-use crate::processes::*;
+use crate::public::*;
 
 type QueueF < A > =
   InternalChoice <
@@ -92,7 +89,7 @@ fn append_queue
   ) ->
     Session < StringQueue >
 where
-  Func : 
+  Func :
     FnOnce() -> Fut
     + Send + 'static,
   Fut :
@@ -116,7 +113,7 @@ where
 
 #[allow(dead_code)]
 pub fn queue_session()
-  -> RunnableSession
+  -> Session < End >
 {
   // Create a queue with two elements: "Hello", "World"
   let p11
@@ -157,7 +154,7 @@ pub fn queue_session()
       });
 
   let p3 :
-    RunnableSession
+    Session < End >
   = apply_channel( p2, p13 );
 
   p3

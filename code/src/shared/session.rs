@@ -6,9 +6,29 @@ use async_macros::join;
 use std::future::{ Future };
 use async_std::sync::{ Sender, Receiver, channel };
 
-use crate::base::*;
-use crate::processes::*;
-use crate::shared::process::*;
+use super::process::{
+  Lock,
+  SharedProcess,
+  SharedAlgebra,
+  LinearToShared,
+  SharedToLinear,
+};
+
+use crate::base::{
+  Process,
+  Inactive,
+  Processes,
+  EmptyList,
+  Appendable,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
+
+use crate::processes::{
+  NextSelector
+};
 
 pub struct SuspendedSharedSession < P >
 where
@@ -21,10 +41,10 @@ where
             Receiver < P::SharedValue >
           >
         ) ->
-          Pin < Box < 
+          Pin < Box <
             dyn Future <
               Output = ()
-            > + Send 
+            > + Send
           > >
       + Send
     >

@@ -1,2 +1,10 @@
-pub mod send;
-pub mod receive;
+mod send;
+mod receive;
+
+pub use send::{
+  SendValue
+};
+
+pub use receive::{
+  ReceiveValue
+};

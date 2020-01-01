@@ -1,10 +1,27 @@
 use async_std::task;
-use async_std::sync::{ Sender, Receiver, channel };
 use async_macros::join;
+use async_std::sync::{
+  Sender,
+  Receiver,
+  channel
+};
 
 use crate::process::{ SendChannel };
-use crate::base::*;
-use crate::processes::*;
+
+use crate::base::{
+  Process,
+  Inactive,
+  Processes,
+  Appendable,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
+
+use crate::processes::{
+  NextSelector
+};
 
 /*
     Additive Conjunction, Right Rule
@@ -71,7 +88,7 @@ where
 
       let child3 = task::spawn(async {
         // the continuation Q only starts after that
-        run_partial_session 
+        run_partial_session
           ( cont, ins3, sender3
           ).await;
       });
@@ -130,7 +147,7 @@ where
     < T as NextSelector > :: make_selector ()
   );
 
-  create_partial_session ( 
+  create_partial_session (
     async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
         < SourceLens as
@@ -159,7 +176,7 @@ where
           >
         > :: append_channels (ins3, (p_chan, ()));
 
-        run_partial_session 
+        run_partial_session
           ( cont, ins4, sender1
           ).await;
     })
@@ -196,7 +213,7 @@ where
   InsP: 'static,
   InsQ: 'static
 {
-  create_partial_session ( 
+  create_partial_session (
     async move |
       ins,
       sender: Sender<(
@@ -270,7 +287,7 @@ where
       P1
     >,
 {
-  create_partial_session ( 
+  create_partial_session (
     async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
         < SourceLens as

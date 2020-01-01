@@ -1,12 +1,30 @@
 use async_std::task;
-use async_std::sync::{ Sender, Receiver, channel };
 use async_macros::join;
+use async_std::sync::{
+  Sender,
+  Receiver,
+  channel,
+};
+
+use crate::base::{
+  Process,
+  Session,
+  Inactive,
+  Processes,
+  Appendable,
+  ProcessLens,
+  PartialSession,
+  run_partial_session,
+  create_partial_session,
+};
+
+use crate::processes::{
+  NextSelector
+};
 
 use crate::process::{ ReceiveChannel };
-use crate::base::*;
-use crate::processes::*;
-use crate::session::link::*;
 use crate::session::forward::{ forward };
+use crate::session::include::{ include_session };
 
 /*
     Implication, Right Rule
@@ -45,7 +63,7 @@ where
     < Ins as NextSelector > :: make_selector ()
   );
 
-  create_partial_session ( 
+  create_partial_session (
     async move | ins1, sender | {
       let (sender1, receiver1) :
         ( Sender < (
@@ -70,8 +88,8 @@ where
           >
         > :: append_channels ( ins1, (receiver2, ()) );
 
-        run_partial_session 
-          ( cont, ins2, sender2 
+        run_partial_session
+          ( cont, ins2, sender2
           ).await;
     })
 }
@@ -96,7 +114,7 @@ where
       P
     >
 {
-  create_partial_session ( 
+  create_partial_session (
     async move | ins1, sender | {
       let ((), ins2) =
         < Lens as
@@ -133,7 +151,7 @@ where
             >
           > :: merge_channels (receiver2, ins2);
 
-          run_partial_session 
+          run_partial_session
             ( cont, ins3, sender2
             ).await;
       });
@@ -183,7 +201,7 @@ where
       P2
     >
 {
-  create_partial_session ( 
+  create_partial_session (
     async move | ins1, sender1 | {
       let (receiver1, ins2) =
         < SourceLens as
@@ -236,8 +254,8 @@ where
         > :: merge_channels (receiver3, ins4);
 
       let child2 = task::spawn(async move {
-        run_partial_session 
-          ( cont, ins5, sender1 
+        run_partial_session
+          ( cont, ins5, sender1
           ).await;
       });
 
@@ -263,12 +281,11 @@ where
   P : Process + 'static,
   Q : Process + 'static,
 {
-  session_2 ( | slot1, slot2 | {
-    link ( slot2, p1,
-      link ( slot1, p2,
-        send_channel_to ( slot2, slot1,
-          forward ( slot2 )
-        ))
-    )
+  include_session ( p1, | c1 | {
+    include_session ( p2, | c2 | {
+      send_channel_to ( c1, c2,
+        forward ( c1 )
+      )
+    })
   })
 }

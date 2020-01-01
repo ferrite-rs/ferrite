@@ -70,7 +70,7 @@
 
 // #[allow(dead_code)]
 // pub fn chatroom_session()
-//   -> RunnableSession
+//   -> Session < End >
 // {
 //   unimplemented!()
 // }

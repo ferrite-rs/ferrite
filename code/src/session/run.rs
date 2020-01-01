@@ -1,17 +1,18 @@
 
-use crate::process::{ End };
-use crate::base::{ 
-  EmptyList, 
-  PartialSession, 
-  run_partial_session 
-};
 use async_std::task;
-use async_std::sync::{ channel };
 use async_macros::join;
+use async_std::sync::{ channel };
 
-pub type RunnableSession = PartialSession < (), End >;
+use crate::process::{ End };
 
-pub fn run_session
+use crate::base::{
+  EmptyList,
+  PartialSession,
+  run_partial_session
+};
+
+pub fn
+  run_session
   < Ins >
   (session : PartialSession < Ins, End >)
 where

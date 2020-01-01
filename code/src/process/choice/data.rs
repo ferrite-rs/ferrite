@@ -3,7 +3,7 @@ pub enum Choice {
   Right
 }
 
-pub enum Either <S, T>
+pub enum Either < S, T >
 {
   Left(S),
   Right(T)

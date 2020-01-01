@@ -1,5 +1,13 @@
 
-use crate::base::*;
+use crate::base::{
+  Process,
+  Inactive,
+  Processes,
+  EmptyList,
+  ProcessLens,
+  PartialSession,
+  create_partial_session,
+};
 
 pub fn forward
   < S, T, D, P, Lens >
@@ -21,7 +29,7 @@ where
       Inactive
     >
 {
-  create_partial_session ( 
+  create_partial_session (
     async move | ins, sender | {
       let (receiver, _) =
         < Lens as

@@ -1,9 +1,6 @@
 extern crate log;
 
-use crate::base::*;
-use crate::session::*;
-use crate::process::*;
-use crate::processes::*;
+use crate::public::*;
 
 use std::time::Duration;
 use async_std::task::sleep;
@@ -15,7 +12,7 @@ pub struct PorkChop {}
 
 #[allow(dead_code)]
 pub fn restaurant_session()
-  -> RunnableSession
+  -> Session < End >
 {
   /*
                 cleanup = terminate_async () :: · ⊢ End
@@ -92,7 +89,7 @@ pub fn restaurant_session()
       Either::Right(return_right) => {
         info!("[MainCourse] Customer chose to eat pork chop");
 
-        return_right ( 
+        return_right (
           send_value_async ( async || {
             info!("[MainCourse] Spending 5 seconds to prepare pork chop");
             sleep(Duration::from_secs(5)).await;
@@ -136,12 +133,11 @@ pub fn restaurant_session()
         SendValue < PorkChop, End >
       >
     >
-  > = session_1 ( | slot | {
-    link( slot,
-      soup_of_the_day,
-      send_channel_from ( slot,
-        partial_session( main_dish ) ))
-  });
+  > =
+    include_session ( soup_of_the_day, | chan | {
+      send_channel_from ( chan,
+        partial_session( main_dish ) )
+    });
 
   /*
       cont4 = choose_right(cont6)                     cont5 = choose_left(cont7)

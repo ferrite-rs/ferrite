@@ -11,6 +11,8 @@ pub struct HoleProcess < F > {
   f : PhantomData < F >
 }
 
+pub struct Recurse { }
+
 impl < F > Process for HoleProcess < F > {
   type Value = Box < () >;
 }
@@ -34,8 +36,6 @@ where
     > :: Value
   >;
 }
-
-pub struct Recurse { }
 
 impl < R >
   AlgebraT < R >
