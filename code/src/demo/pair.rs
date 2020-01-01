@@ -21,23 +21,19 @@ pub fn pair_session()
     Session <
       SendValue < i32, End >
     >
-  = send_value_async ( || {
-      Box::pin ( async move {
-        info!("[P1] Spending 7 seconds to produce first output");
-        sleep(Duration::from_secs(7)).await;
-        info!("[P1] Done producing first output - 42");
+  = send_value_async ( async move || {
+      info!("[P1] Spending 7 seconds to produce first output");
+      sleep(Duration::from_secs(7)).await;
+      info!("[P1] Done producing first output - 42");
 
-        ( 42
+      ( 42
 
-        , terminate_async ( || {
-            Box::pin ( async move {
-              info!("[P1] Spending 3 seconds to cleanup");
-              sleep(Duration::from_secs(3)).await;
-              info!("[P1] Terminating");
-            })
-          })
-        )
-      })
+      , terminate_async ( async move || {
+          info!("[P1] Spending 3 seconds to cleanup");
+          sleep(Duration::from_secs(3)).await;
+          info!("[P1] Terminating");
+        })
+      )
     });
 
   /*
@@ -59,23 +55,19 @@ pub fn pair_session()
     >
   = receive_channel ( move | val_chan | {
       send_channel_from ( val_chan,
-        send_value_async( || {
-          Box::pin ( async move {
-            info!("[P2] Spending 2 seconds to produce second output");
-            sleep(Duration::from_secs(2)).await;
-            info!("[P2] Done producing second output - Hello World");
+        send_value_async ( async move || {
+          info!("[P2] Spending 2 seconds to produce second output");
+          sleep(Duration::from_secs(2)).await;
+          info!("[P2] Done producing second output - Hello World");
 
-            ( "Hello World".to_string()
+          ( "Hello World".to_string()
 
-            , terminate_async ( || {
-                Box::pin ( async move {
-                  info!("[P2] Spending 10 seconds to cleanup");
-                  sleep(Duration::from_secs(10)).await;
-                  info!("[P2] Terminating");
-                })
-              })
-            )
-          })
+          , terminate_async ( async move || {
+              info!("[P2] Spending 10 seconds to cleanup");
+              sleep(Duration::from_secs(10)).await;
+              info!("[P2] Terminating");
+            })
+          )
       }))
     });
 
@@ -109,38 +101,26 @@ pub fn pair_session()
     >
   = receive_channel ( move | str_chan | {
       receive_channel ( move | timer_chan | {
-        wait_async ( timer_chan, move || {
-          Box::pin ( async move {
-            info!("[P3] P4 has terminated. Receiving channel from P1");
+        wait_async ( timer_chan, async move || {
+          info!("[P3] P4 has terminated. Receiving channel from P1");
 
-            receive_channel_from ( str_chan, move | int_chan | {
-              receive_value_from ( int_chan, move | input1 | {
-                Box::pin ( async move {
-                  info!("[P3] Received input from P1: {}", input1);
+          receive_channel_from ( str_chan, move | int_chan | {
+            receive_value_from ( int_chan, async move | input1 | {
+              info!("[P3] Received input from P1: {}", input1);
 
-                  wait_async ( int_chan, move || {
-                    Box::pin ( async move {
-                      info!("[P3] P1 has terminated");
+              wait_async ( int_chan, async move || {
+                info!("[P3] P1 has terminated");
 
-                      receive_value_from ( str_chan, move | input2 | {
-                        Box::pin ( async move {
-                          info!("[P3] Received input from P2: {}", input2);
+                receive_value_from ( str_chan, async move | input2 | {
+                  info!("[P3] Received input from P2: {}", input2);
 
-                          wait_async ( str_chan, move || {
-                            Box::pin ( async move {
-                              info!("[P3] P2 has terminated");
+                  wait_async ( str_chan, async move || {
+                    info!("[P3] P2 has terminated");
 
-                              terminate_async ( || {
-                                Box::pin ( async move {
-                                  info!("[P3] Spending 2 seconds to clean up");
-                                  sleep(Duration::from_secs(2)).await;
-                                  info!("[P3] Terminating");
-                                })
-                              })
-                            })
-                          })
-                        })
-                      })
+                    terminate_async ( async move || {
+                      info!("[P3] Spending 2 seconds to clean up");
+                      sleep(Duration::from_secs(2)).await;
+                      info!("[P3] Terminating");
                     })
                   })
                 })
@@ -157,12 +137,10 @@ pub fn pair_session()
    */
   let p4 : Session <
     End
-  > = terminate_async ( || {
-    Box::pin ( async move {
-      info!("[P4] Sleeping for 3 seconds before terminating");
-      sleep(Duration::from_secs(2)).await;
-      info!("[P4] Terminating");
-    })
+  > = terminate_async ( async move || {
+    info!("[P4] Sleeping for 3 seconds before terminating");
+    sleep(Duration::from_secs(2)).await;
+    info!("[P4] Terminating");
   });
 
   let p5 :

@@ -21,8 +21,8 @@ where
       Inactive
     >
 {
-  return  PartialSession {
-    builder : Box::new ( move | ins, sender | {
+  create_partial_session ( 
+    async move | ins, sender | {
       let (receiver, _) =
         < Lens as
           ProcessLens <
@@ -32,10 +32,7 @@ where
           >
         > :: split_channels ( ins );
 
-      Box::pin(async move {
-        let val = receiver.recv().await.unwrap();
-        sender.send( val ).await;
-      })
+      let val = receiver.recv().await.unwrap();
+      sender.send( val ).await;
     })
-  }
 }

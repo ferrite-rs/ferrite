@@ -11,17 +11,11 @@ where
   Ins : EmptyList + 'static,
   P : Process + 'static
 {
-  return PartialSession {
-    builder: Box::new(move |
-      (),
-      sender
-    | {
-      Box::pin(async {
-        let ins = < Ins as EmptyList > :: make_empty_list();
-        (cont.builder)(ins, sender).await;
-      })
+  create_partial_session (
+    async move | (), sender | {
+      let ins = < Ins as EmptyList > :: make_empty_list();
+      run_partial_session ( cont, ins, sender ).await;
     })
-  }
 }
 
 pub fn partial_session
@@ -32,14 +26,13 @@ where
   Ins : EmptyList + 'static,
   P : Process + 'static
 {
-  return PartialSession {
-    builder: Box::new(move |
+  create_partial_session (
+    async move |
       _,
       sender
     | {
-      (cont.builder)((), sender)
+      run_partial_session ( cont, (), sender ).await
     })
-  }
 }
 
 pub fn append_emtpy_slot
@@ -57,17 +50,15 @@ where
   I : Processes + 'static,
   I : Appendable < ( Inactive, () ) >
 {
-  return PartialSession {
-    builder: Box::new (
-      move | ins1, sender | {
-        let (ins2, _) =
-          < I as
-            Appendable < ( Inactive, () ) >
-          > :: split_channels ( ins1 );
+  create_partial_session (
+    async move | ins1, sender | {
+      let (ins2, _) =
+        < I as
+          Appendable < ( Inactive, () ) >
+        > :: split_channels ( ins1 );
 
-        (cont.builder)(ins2, sender)
-      })
-  }
+      run_partial_session ( cont, ins2, sender ).await
+    })
 }
 
 pub fn session_1

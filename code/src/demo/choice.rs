@@ -36,20 +36,16 @@ pub fn restaurant_session()
       >
     >
   = offer_left(
-      send_value_async ( || {
-        Box::pin ( async move {
-          info!("[Soup] Spending 3 seconds to prepare mushroom soup");
-          sleep(Duration::from_secs(2)).await;
-          info!("[Soup] Finished preparing mushroom soup");
+      send_value_async ( async || {
+        info!("[Soup] Spending 3 seconds to prepare mushroom soup");
+        sleep(Duration::from_secs(2)).await;
+        info!("[Soup] Finished preparing mushroom soup");
 
-          ( MushroomSoup {}
-          , terminate_async ( || {
-              Box::pin ( async move {
-                info!("[Soup] Served mushroom soup. Terminating soup process");
-              })
-            })
-          )
-        })
+        ( MushroomSoup {}
+        , terminate_async ( async || {
+            info!("[Soup] Served mushroom soup. Terminating soup process");
+          })
+        )
       }));
 
   /*
@@ -80,41 +76,33 @@ pub fn restaurant_session()
       Either::Left(return_left) => {
         info!("[MainCourse] Customer chose to eat beef steak");
 
-        return_left(
-          send_value_async( || {
-            Box::pin ( async move {
-              info!("[MainCourse] Spending 7 seconds to prepare beef steak");
-              sleep(Duration::from_secs(7)).await;
+        return_left (
+          send_value_async( async || {
+            info!("[MainCourse] Spending 7 seconds to prepare beef steak");
+            sleep(Duration::from_secs(7)).await;
 
-              ( BeefSteak{}
+            ( BeefSteak{}
 
-              , terminate_async ( || {
-                  Box::pin ( async move {
-                    info!("[MainCourse] Served beef steak. Terminating main course process");
-                  })
-                })
-              )
-            })
+            , terminate_async ( async || {
+                info!("[MainCourse] Served beef steak. Terminating main course process");
+              })
+            )
           }))
       }
       Either::Right(return_right) => {
         info!("[MainCourse] Customer chose to eat pork chop");
 
-        return_right(
-          send_value_async ( || {
-            Box::pin ( async move {
-              info!("[MainCourse] Spending 5 seconds to prepare pork chop");
-              sleep(Duration::from_secs(5)).await;
+        return_right ( 
+          send_value_async ( async || {
+            info!("[MainCourse] Spending 5 seconds to prepare pork chop");
+            sleep(Duration::from_secs(5)).await;
 
-              ( PorkChop{}
+            ( PorkChop{}
 
-              , terminate_async (|| {
-                  Box::pin ( async move {
-                    info!("[MainCourse] Served pork chop. Terminating main course process");
-                  })
-                })
-              )
-            })
+            , terminate_async ( async || {
+                info!("[MainCourse] Served pork chop. Terminating main course process");
+              })
+            )
           }))
       }
       }
@@ -211,84 +199,64 @@ pub fn restaurant_session()
           Either::Left(return_left) => {
             info!("[Diner] Restaurant offers mushroom soup today");
             return_left(
-              receive_value_from( soup_chan, move | _mushroom_soup | {
-                Box::pin ( async move {
-                  info!("[Diner] Received mushroom soup. Spending 2 seconds drinking it");
-                  sleep(Duration::from_secs(2)).await;
-                  info!("[Diner] Finished drinking mushroom soup");
+              receive_value_from( soup_chan, async move | _mushroom_soup | {
+                info!("[Diner] Received mushroom soup. Spending 2 seconds drinking it");
+                sleep(Duration::from_secs(2)).await;
+                info!("[Diner] Finished drinking mushroom soup");
 
-                  info!("[Diner] Choosing pork chop for main");
-                  wait_async ( soup_chan, move || {
-                    Box::pin ( async move {
-                      info!("[Diner] Soup process terminated");
+                info!("[Diner] Choosing pork chop for main");
+                wait_async ( soup_chan, async move || {
+                  info!("[Diner] Soup process terminated");
 
-                      choose_right( menu_chan,
-                        receive_value_from( menu_chan, move | _pork_chop | {
-                          Box::pin ( async move {
-                            info!("[Diner] Received pork chop. Spending 5 seconds eating it");
-                            sleep(Duration::from_secs(5)).await;
-                            info!("[Diner] Finished eating pork chop");
+                  choose_right( menu_chan,
+                    receive_value_from( menu_chan, async move | _pork_chop | {
+                      info!("[Diner] Received pork chop. Spending 5 seconds eating it");
+                      sleep(Duration::from_secs(5)).await;
+                      info!("[Diner] Finished eating pork chop");
 
-                            wait_async ( menu_chan, || {
-                              Box::pin ( async move {
-                                info!("[Diner] Main course process terminated");
+                      wait_async ( menu_chan, async || {
+                        info!("[Diner] Main course process terminated");
 
-                                terminate_async ( || {
-                                  Box::pin ( async move {
-                                    info!("[Diner] Spending 4 seconds in washroom");
-                                    sleep(Duration::from_secs(4)).await;
-                                    info!("[Diner] Leaving restaurant");
-                                  })
-                                })
-                              })
-                            })
-                          })
-                        }))
-                    })
-                  })
+                        terminate_async ( async || {
+                          info!("[Diner] Spending 4 seconds in washroom");
+                          sleep(Duration::from_secs(4)).await;
+                          info!("[Diner] Leaving restaurant");
+                        })
+                      })
+                    }))
                 })
               }))
           }
           Either::Right(return_right) => {
             info!("[Diner] Restaurant offers tomato soup today");
             return_right(
-              receive_value_from( soup_chan, move | _tomato_soup | {
-                Box::pin ( async move {
-                  info!("[Diner] Received tomato soup. Spending 1 second drinking it");
+              receive_value_from( soup_chan, async move | _tomato_soup | {
+                info!("[Diner] Received tomato soup. Spending 1 second drinking it");
 
-                  sleep(Duration::from_secs(1)).await;
+                sleep(Duration::from_secs(1)).await;
 
-                  info!("[Diner] finished drinking tomato soup");
-                  info!("[Diner] Choosing beef steak for main");
+                info!("[Diner] finished drinking tomato soup");
+                info!("[Diner] Choosing beef steak for main");
 
-                  wait_async ( soup_chan, move || {
-                    Box::pin ( async move {
-                      info!("[Diner] Soup process terminated");
+                wait_async ( soup_chan, async move || {
+                  info!("[Diner] Soup process terminated");
 
-                      choose_left( menu_chan,
-                        receive_value_from( menu_chan, move | _beef_steak | {
-                          Box::pin ( async move {
-                            info!("[Diner] Received beef steak. Spending 6 seconds eating it");
-                            sleep(Duration::from_secs(6)).await;
-                            info!("[Diner] Finished eating beef steak.");
+                  choose_left( menu_chan,
+                    receive_value_from( menu_chan, async move | _beef_steak | {
+                      info!("[Diner] Received beef steak. Spending 6 seconds eating it");
+                      sleep(Duration::from_secs(6)).await;
+                      info!("[Diner] Finished eating beef steak.");
 
-                            wait_async ( menu_chan, || {
-                              Box::pin ( async move {
-                                info!("[Diner] Main course process terminated");
+                      wait_async ( menu_chan, async || {
+                        info!("[Diner] Main course process terminated");
 
-                                terminate_async ( || {
-                                  Box::pin ( async move {
-                                    info!("[Diner] Spending 3 seconds in washroom");
-                                    sleep(Duration::from_secs(3)).await;
-                                    info!("[Diner] Leaving restaurant");
-                                  })
-                                })
-                              })
-                            })
-                          })
-                        }))
-                    })
-                  })
+                        terminate_async ( async || {
+                          info!("[Diner] Spending 3 seconds in washroom");
+                          sleep(Duration::from_secs(3)).await;
+                          info!("[Diner] Leaving restaurant");
+                        })
+                      })
+                    }))
                 })
               }))
           }

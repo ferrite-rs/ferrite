@@ -128,8 +128,8 @@ where
            PartialSession < Ins, Q >
         > + Send + 'static
 {
-  return  PartialSession {
-    builder: Box::new(move |
+  create_partial_session (
+    async move |
       ins : Ins::Values,
       sender: Sender<
         Box<
@@ -142,67 +142,71 @@ where
         >
       >
     | {
-      Box::pin(async move {
-        sender.send(Box::new(
-          move |choice : Choice| ->
-            Either<
-              Receiver < P::Value >,
-              Receiver < Q::Value >
-            >
-          {
-            match choice {
-              Choice::Left => {
-                let in_choice :
-                  ReturnChoice <Ins, P, Q>
-                = Either::Left(
-                  Box::new(
-                    left_choice
-                  )
-                );
+      sender.send(Box::new(
+        move |choice : Choice| ->
+          Either<
+            Receiver < P::Value >,
+            Receiver < Q::Value >
+          >
+        {
+          match choice {
+            Choice::Left => {
+              let in_choice :
+                ReturnChoice <Ins, P, Q>
+              = Either::Left(
+                Box::new(
+                  left_choice
+                )
+              );
 
-                let cont_variant = cont_builder(in_choice).result;
+              let cont_variant = cont_builder(in_choice).result;
 
-                match cont_variant {
-                  Either::Left(cont) => {
-                    let (sender, receiver) = channel(1);
+              match cont_variant {
+                Either::Left(cont) => {
+                  let (sender, receiver) = channel(1);
 
-                    task::spawn(async {
-                      (cont.builder)(ins, sender).await;
-                    });
+                  task::spawn(async {
+                    run_partial_session
+                      ( cont, ins, sender
+                      ).await;
+                  });
 
-                    return Either::Left(receiver);
-                  },
-                  Either::Right(_) => {
-                    panic!("expected cont_builder to provide left result");
-                  }
+                  return Either::Left(receiver);
+                },
+                
+                Either::Right(_) => {
+                  panic!("expected cont_builder to provide left result");
                 }
-              },
-              Choice::Right => {
-                let in_choice : ReturnChoice <Ins, P, Q>
-                = Either::Right(Box::new(right_choice));
+              }
+            },
 
-                let cont_variant = cont_builder(in_choice).result;
+            Choice::Right => {
+              let in_choice : ReturnChoice <Ins, P, Q>
+              = Either::Right(Box::new(right_choice));
 
-                match cont_variant {
-                  Either::Left(_) => {
-                    panic!("expected cont_builder to provide right result");
-                  },
-                  Either::Right(cont) => {
-                    let (sender, receiver) = channel(1);
+              let cont_variant = cont_builder(in_choice).result;
 
-                    task::spawn(async {
-                      (cont.builder)(ins, sender).await;
-                    });
+              match cont_variant {
+                Either::Left(_) => {
+                  panic!("expected cont_builder to provide right result");
+                },
 
-                    return Either::Right(receiver);
-                  }
+                Either::Right(cont) => {
+                  let (sender, receiver) = channel(1);
+
+                  task::spawn(async {
+                    run_partial_session
+                      ( cont, ins, sender
+                      ).await;
+                  });
+
+                  return Either::Right(receiver);
                 }
               }
             }
-          })).await;
-      })
+          }
+        })).await;
     })
-  }
 }
 
 /*
@@ -234,11 +238,8 @@ where
       P1
     >
 {
-  return PartialSession {
-    builder: Box::new(move |
-      ins1,
-      sender: Sender < S::Value >
-    | {
+  create_partial_session (
+    async move | ins1, sender | {
       let (offerer_chan, ins2) =
         < Lens as
           ProcessLens <
@@ -251,34 +252,33 @@ where
         >
         :: split_channels ( ins1 );
 
-      Box::pin(async move {
-        let offerer = offerer_chan.recv().await.unwrap();
-        let input_variant = offerer(Choice::Left);
+      let offerer = offerer_chan.recv().await.unwrap();
+      let input_variant = offerer(Choice::Left);
 
-        match input_variant {
-          Either::Left(input_chan) => {
-            let ins3 =
-              < Lens as
-                ProcessLens <
-                  Ins1,
-                  Ins2,
-                  Ins3,
-                  ExternalChoice < P1, P2 >,
-                  P1
-                >
+      match input_variant {
+        Either::Left(input_chan) => {
+          let ins3 =
+            < Lens as
+              ProcessLens <
+                Ins1,
+                Ins2,
+                Ins3,
+                ExternalChoice < P1, P2 >,
+                P1
               >
-              :: merge_channels( input_chan, ins2 );
+            >
+            :: merge_channels( input_chan, ins2 );
 
-            (cont.builder)(ins3, sender).await;
-          },
-          Either::Right(_) => {
-            // this should never reach if offer_choice is implemented correctly
-            panic!("expected offerer to provide right result");
-          }
+            run_partial_session
+              ( cont, ins3, sender
+              ).await;
+        },
+        Either::Right(_) => {
+          // this should never reach if offer_choice is implemented correctly
+          panic!("expected offerer to provide right result");
         }
-      })
+      }
     })
-  }
 }
 
 /*
@@ -309,8 +309,8 @@ where
       P2
     >
 {
-  return PartialSession {
-    builder: Box::new(move |
+  create_partial_session (
+    async move |
       ins1,
       sender: Sender < S::Value >
     | {
@@ -326,32 +326,31 @@ where
         >
         :: split_channels ( ins1 );
 
-      Box::pin(async move {
-        let offerer = offerer_chan.recv().await.unwrap();
-        let input_variant = offerer(Choice::Right);
+      let offerer = offerer_chan.recv().await.unwrap();
+      let input_variant = offerer(Choice::Right);
 
-        match input_variant {
-          Either::Left(_) => {
-            // this should never reach if offer_choice is implemented correctly
-            panic!("expected offerer to provide right result");
-          },
-          Either::Right(input_chan) => {
-            let ins3 =
-              < Lens as
-                ProcessLens <
-                  Ins1,
-                  Ins2,
-                  Ins3,
-                  ExternalChoice < P1, P2 >,
-                  P2
-                >
+      match input_variant {
+        Either::Left (_) => {
+          // this should never reach if offer_choice is implemented correctly
+          panic!("expected offerer to provide right result");
+        },
+        Either::Right (input_chan) => {
+          let ins3 =
+            < Lens as
+              ProcessLens <
+                Ins1,
+                Ins2,
+                Ins3,
+                ExternalChoice < P1, P2 >,
+                P2
               >
-              :: merge_channels( input_chan, ins2 );
+            >
+            :: merge_channels( input_chan, ins2 );
 
-            (cont.builder)(ins3, sender).await;
-          }
+          run_partial_session
+            ( cont, ins3, sender
+            ).await;
         }
-      })
+      }
     })
-  }
 }

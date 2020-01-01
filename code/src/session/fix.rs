@@ -20,8 +20,8 @@ where
   > :: Algebra : Process,
   Ins : Processes + 'static
 {
-  PartialSession {
-    builder: Box ::new (move |
+  create_partial_session (
+    async move |
       ins,
       sender1: Sender < Box < () > >
     | {
@@ -40,11 +40,10 @@ where
           transmute(sender1)
         };
 
-      Box::pin(async {
-        (fix_session.builder)(ins, sender2).await;
-      })
+      run_partial_session
+        ( fix_session, ins, sender2
+        ).await;
     })
-  }
 }
 
 fn unsafe_transmute_receiver < S, T >
@@ -78,48 +77,47 @@ where
     FixProcess < F >
   >
 {
-  PartialSession {
-    builder: Box ::new ( move |
+  create_partial_session ( 
+    async move |
       ins1,
       sender: Sender < P :: Value >
     | {
-      Box::pin(async {
-        let ( receiver1, ins2 )
-          : ( Receiver < Box < () > >, _)
-          = < Lens as
-              ProcessLens <
-                S, T, D,
-                HoleProcess < F >,
-                FixProcess < F >
-              >
-            > :: split_channels ( ins1 );
-
-        let receiver2 :
-          Receiver <
-            Box <
-              <
-                <
-                  F as AlgebraT < HoleProcess < F > >
-                > :: Algebra
-                as Process
-              > :: Value
-            >
-          >
-          = unsafe_transmute_receiver(receiver1);
-
-        let ins3 =
-          < Lens as
+      let ( receiver1, ins2 )
+        : ( Receiver < Box < () > >, _)
+        = < Lens as
             ProcessLens <
               S, T, D,
               HoleProcess < F >,
               FixProcess < F >
             >
-          > :: merge_channels ( receiver2, ins2 );
+          > :: split_channels ( ins1 );
 
-        (fix_session.builder)(ins3, sender).await;
-      })
+      let receiver2 :
+        Receiver <
+          Box <
+            <
+              <
+                F as AlgebraT < HoleProcess < F > >
+              > :: Algebra
+              as Process
+            > :: Value
+          >
+        >
+        = unsafe_transmute_receiver(receiver1);
+
+      let ins3 =
+        < Lens as
+          ProcessLens <
+            S, T, D,
+            HoleProcess < F >,
+            FixProcess < F >
+          >
+        > :: merge_channels ( receiver2, ins2 );
+
+        run_partial_session
+          ( fix_session, ins3, sender
+          ).await;
     })
-  }
 }
 
 pub fn fix_session
@@ -143,8 +141,8 @@ where
   > :: Algebra : Process,
   Ins : Processes + 'static
 {
-  PartialSession {
-    builder: Box ::new (move |
+  create_partial_session (
+    async move |
       ins,
       sender1:
         Sender <
@@ -158,22 +156,21 @@ where
           >
         >
     | {
-      Box::pin(async {
-        let (sender2, receiver) = channel(1);
+      let (sender2, receiver) = channel(1);
 
-        let child1 = task::spawn(async move {
-          let val = receiver.recv().await.unwrap();
-          sender1.send( Box::new(val) ).await;
-        });
+      let child1 = task::spawn(async move {
+        let val = receiver.recv().await.unwrap();
+        sender1.send( Box::new(val) ).await;
+      });
 
-        let child2 = task::spawn(async move {
-          (session.builder)(ins, sender2).await;
-        });
+      let child2 = task::spawn(async move {
+        run_partial_session
+          ( session, ins, sender2
+          ).await;
+      });
 
-        join!(child1, child2).await;
-      })
+      join!(child1, child2).await;
     })
-  }
 }
 
 pub fn unfix_session
@@ -200,8 +197,8 @@ where
       > :: Algebra
     >
 {
-  PartialSession {
-    builder: Box ::new (move |
+  create_partial_session (
+    async move |
       ins1,
       sender1: Sender < P :: Value >
     | {
@@ -226,30 +223,30 @@ where
               > :: Algebra
             >
           > :: split_channels ( ins1 );
-      Box::pin(async {
-        let (sender2, receiver2) = channel(1);
 
-        let child1 = task::spawn(async move {
-          let val = receiver1.recv().await.unwrap();
-          sender2.send( *val ).await;
-        });
+      let (sender2, receiver2) = channel(1);
 
-        let ins3 =
-          < Lens as
-            ProcessLens <
-              S, T, D,
-              FixProcess < F >,
-              < F as AlgebraT < HoleProcess < F > >
-              > :: Algebra
-            >
-          > :: merge_channels ( receiver2, ins2 );
+      let child1 = task::spawn(async move {
+        let val = receiver1.recv().await.unwrap();
+        sender2.send( *val ).await;
+      });
 
-        let child2 = task::spawn(async move {
-          (session.builder)(ins3, sender1).await;
-        });
+      let ins3 =
+        < Lens as
+          ProcessLens <
+            S, T, D,
+            FixProcess < F >,
+            < F as AlgebraT < HoleProcess < F > >
+            > :: Algebra
+          >
+        > :: merge_channels ( receiver2, ins2 );
 
-        join!(child1, child2).await;
-      })
+      let child2 = task::spawn(async move {
+        run_partial_session
+          ( session, ins3, sender1
+          ).await;
+      });
+
+      join!(child1, child2).await;
     })
-  }
 }

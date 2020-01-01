@@ -18,13 +18,11 @@ pub fn hello_session()
 {
   let server :
     Session < HelloSession >
-  = receive_value ( |name| {
-      Box::pin ( async move {
-        send_value (
-          format!("Hello, {}!", name),
-          terminate()
-        )
-      })
+  = receive_value ( async move | name | {
+      send_value (
+        format!("Hello, {}!", name),
+        terminate()
+      )
     });
 
   let client :
@@ -37,12 +35,11 @@ pub fn hello_session()
       send_value_to ( x,
         "John".to_string(),
         receive_value_from ( x,
-          move | result | {
-            Box::pin ( async move {
+          async move | result | {
               println! ("{}", result);
               wait ( x,
                 terminate()
-              ) }) }) ) });
+              ) }) ) });
 
   let main : RunnableSession
     = apply_channel (client, server);

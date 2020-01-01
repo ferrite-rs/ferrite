@@ -18,18 +18,16 @@ pub fn make_counter_session
     >
 {
   accept_shared_session (
-    send_value_async ( move || {
-      Box::pin ( async move {
-        info!("[Server] Producing count {}", count);
-        sleep(Duration::from_secs(2)).await;
-        info!("[Server] Produced count {}", count);
+    send_value_async ( async move || {
+      info!("[Server] Producing count {}", count);
+      sleep(Duration::from_secs(2)).await;
+      info!("[Server] Produced count {}", count);
 
-        ( count,
-          detach_shared_session (
-            make_counter_session ( count + 1 )
-          )
+      ( count,
+        detach_shared_session (
+          make_counter_session ( count + 1 )
         )
-      })
+      )
     })
   )
 }
@@ -49,21 +47,19 @@ pub fn read_counter_session
 
   acquire_shared_session ( shared, move | counter | {
     // info!("[{}] Receiving count", name);
-    receive_value_from ( counter, move | count | {
-      Box::pin ( async move {
-        info!("[{}] Received count: {}", name, count);
-        sleep(Duration::from_secs(1)).await;
+    receive_value_from ( counter, async move | count | {
+      info!("[{}] Received count: {}", name, count);
+      sleep(Duration::from_secs(1)).await;
 
-        release_shared_session ( counter, {
-          if stop_at <= count {
-            info!("[{}] terminating", name);
-            terminate()
-          } else {
-            // info!("[{}] Reading next", name);
-            partial_session (
-              read_counter_session ( name, stop_at, shared2 ))
-          }
-        })
+      release_shared_session ( counter, {
+        if stop_at <= count {
+          info!("[{}] terminating", name);
+          terminate()
+        } else {
+          // info!("[{}] Reading next", name);
+          partial_session (
+            read_counter_session ( name, stop_at, shared2 ))
+        }
       })
     })
   })

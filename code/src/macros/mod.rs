@@ -17,18 +17,5 @@ macro_rules! plist {
   };
 }
 
-
-#[macro_export]
-macro_rules! pzipper {
-  ( [$( $left:ty ),*], $p:ty, [$( $right:ty ),*]  ) => {
-    ProcessZipper <
-    plist!( $( $left )* ),
-    $p,
-    plist!( $( $right )* )
-    >
-  };
-}
-
-
 #[allow(unused_imports)]
-pub (crate) use { plist, pzipper };
+pub (crate) use { plist };

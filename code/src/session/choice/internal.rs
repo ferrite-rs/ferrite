@@ -3,7 +3,14 @@ use async_std::sync::{ Sender, Receiver, channel };
 use async_macros::join;
 
 use crate::process::{ InternalChoice, Either };
-use crate::base::{ PartialSession, Process, Processes, ProcessLens };
+use crate::base::{ 
+  PartialSession, 
+  Process, 
+  Processes, 
+  ProcessLens,
+  run_partial_session,
+  create_partial_session
+};
 
 /*
   Additive Disjuction / Internal Choice
@@ -35,30 +42,28 @@ where
   Q : Process + 'static,
   I : Processes + 'static
 {
-  return  PartialSession {
-    builder: Box::new(
-      move |
-        ins,
-        sender: Sender<
-          Either<
-            Receiver<P::Value>,
-            Receiver<Q::Value> > >
-      | {
-        Box::pin(async {
-          let (in_sender, in_receiver) = channel(1);
+  return create_partial_session (
+    async move |
+      ins,
+      sender: Sender<
+        Either<
+          Receiver<P::Value>,
+          Receiver<Q::Value> > >
+    | {
+      let (in_sender, in_receiver) = channel(1);
 
-          let child1 = task::spawn(async {
-            (cont.builder)(ins, in_sender).await;
-          });
+      let child1 = task::spawn(async {
+        run_partial_session
+          ( cont, ins, in_sender
+          ).await;
+      });
 
-          let child2 = task::spawn(async move {
-            sender.send(Either::Left(in_receiver)).await;
-          });
+      let child2 = task::spawn(async move {
+        sender.send(Either::Left(in_receiver)).await;
+      });
 
-          join!(child1, child2).await;
-        })
-      })
-  };
+      join!(child1, child2).await;
+    })
 }
 
 pub fn offer_right
@@ -73,30 +78,28 @@ pub fn offer_right
     Q   : 'static,
     Ins : 'static
 {
-  return  PartialSession {
-    builder: Box::new(
-      move |
-        ins,
-        sender: Sender<
-          Either<
-            Receiver<P::Value>,
-            Receiver<Q::Value> > >
-      | {
-        Box::pin(async {
-          let (in_sender, in_receiver) = channel(1);
+  return create_partial_session (
+    async move |
+      ins,
+      sender: Sender<
+        Either<
+          Receiver<P::Value>,
+          Receiver<Q::Value> > >
+    | {
+      let (in_sender, in_receiver) = channel(1);
 
-          let child1 = task::spawn(async {
-            (cont.builder)(ins, in_sender).await;
-          });
+      let child1 = task::spawn(async {
+        run_partial_session
+          ( cont, ins, in_sender
+          ).await;
+      });
 
-          let child2 = task::spawn(async move {
-            sender.send(Either::Right(in_receiver)).await;
-          });
+      let child2 = task::spawn(async move {
+        sender.send(Either::Right(in_receiver)).await;
+      });
 
-          join!(child1, child2).await;
-        })
-      })
-  };
+      join!(child1, child2).await;
+    })
 }
 
 /*
@@ -201,112 +204,110 @@ where
       P2
     >
 {
-  PartialSession {
-    builder : Box::new (
-      move | ins1, sender |
-      {
-        let (variant_chan, ins2) =
-          < Lens as
-            ProcessLens <
-              Ins1,
-              Ins2,
-              Ins4,
-              InternalChoice < P1, P2 >,
-              P1
-            >
-          > :: split_channels ( ins1 );
+  create_partial_session (
+    async move | ins1, sender | {
+      let (variant_chan, ins2) =
+        < Lens as
+          ProcessLens <
+            Ins1,
+            Ins2,
+            Ins4,
+            InternalChoice < P1, P2 >,
+            P1
+          >
+        > :: split_channels ( ins1 );
 
-        Box::pin(async move {
-          let variant = variant_chan.recv().await.unwrap();
+      let variant = variant_chan.recv().await.unwrap();
 
-          match variant {
-            Either::Left( p1 ) => {
-              let in_choice
-                : Either <
-                    Box <
-                      dyn FnOnce (
-                        PartialSession < Ins2, S >
-                      ) ->
-                        InternalChoiceResult < Ins2, Ins3, S >
-                      + Send
-                    >,
-                    Box <
-                      dyn FnOnce (
-                        PartialSession < Ins3, S >
-                      ) ->
-                        InternalChoiceResult < Ins2, Ins3, S >
-                      + Send
-                    >
-                  >
-                = Either::Left(Box::new(left_choice));
+      match variant {
+        Either::Left( p1 ) => {
+          let in_choice
+            : Either <
+                Box <
+                  dyn FnOnce (
+                    PartialSession < Ins2, S >
+                  ) ->
+                    InternalChoiceResult < Ins2, Ins3, S >
+                  + Send
+                >,
+                Box <
+                  dyn FnOnce (
+                    PartialSession < Ins3, S >
+                  ) ->
+                    InternalChoiceResult < Ins2, Ins3, S >
+                  + Send
+                >
+              >
+            = Either::Left(Box::new(left_choice));
 
-              let cont_variant = cont_builder(in_choice).result;
+          let cont_variant = cont_builder(in_choice).result;
 
-              let ins3 =
-                < Lens as
-                  ProcessLens <
-                    Ins1,
-                    Ins2,
-                    Ins4,
-                    InternalChoice < P1, P2 >,
-                    P1
-                  >
-                > :: merge_channels ( p1, ins2 );
+          let ins3 =
+            < Lens as
+              ProcessLens <
+                Ins1,
+                Ins2,
+                Ins4,
+                InternalChoice < P1, P2 >,
+                P1
+              >
+            > :: merge_channels ( p1, ins2 );
 
-              match cont_variant {
-                Either::Left(cont) => {
-                  (cont.builder)(ins3, sender).await;
-                }
-                Either::Right(_) => {
-                  panic!("expected cont_builder to provide left result");
-                }
-              }
-            },
-            Either::Right( p2 ) => {
-              let in_choice
-                : Either <
-                    Box <
-                      dyn FnOnce (
-                        PartialSession < Ins2, S >
-                      ) ->
-                        InternalChoiceResult < Ins2, Ins3, S >
-                      + Send
-                    >,
-                    Box <
-                      dyn FnOnce (
-                        PartialSession < Ins3, S >
-                      ) ->
-                        InternalChoiceResult < Ins2, Ins3, S >
-                      + Send
-                    >
-                  >
-                = Either::Right(Box::new(right_choice));
+          match cont_variant {
+            Either::Left(cont) => {
+              run_partial_session 
+                ( cont, ins3, sender
+                ).await;
+            }
+            Either::Right(_) => {
+              panic!("expected cont_builder to provide left result");
+            }
+          }
+        },
+        Either::Right( p2 ) => {
+          let in_choice
+            : Either <
+                Box <
+                  dyn FnOnce (
+                    PartialSession < Ins2, S >
+                  ) ->
+                    InternalChoiceResult < Ins2, Ins3, S >
+                  + Send
+                >,
+                Box <
+                  dyn FnOnce (
+                    PartialSession < Ins3, S >
+                  ) ->
+                    InternalChoiceResult < Ins2, Ins3, S >
+                  + Send
+                >
+              >
+            = Either::Right(Box::new(right_choice));
 
-              let cont_variant = cont_builder(in_choice).result;
+          let cont_variant = cont_builder(in_choice).result;
 
-              let ins3 =
-                < Lens as
-                  ProcessLens <
-                    Ins1,
-                    Ins3,
-                    Ins4,
-                    InternalChoice < P1, P2 >,
-                    P2
-                  >
-                > :: merge_channels ( p2, ins2 );
+          let ins3 =
+            < Lens as
+              ProcessLens <
+                Ins1,
+                Ins3,
+                Ins4,
+                InternalChoice < P1, P2 >,
+                P2
+              >
+            > :: merge_channels ( p2, ins2 );
 
-              match cont_variant {
-                Either::Left(_) => {
-                  panic!("expected cont_builder to provide right result");
-                }
-                Either::Right(cont) => {
-                  (cont.builder)(ins3, sender).await;
-                }
+          match cont_variant {
+            Either::Left(_) => {
+              panic!("expected cont_builder to provide right result");
+            }
+            Either::Right(cont) => {
+              run_partial_session
+                  ( cont, ins3, sender).await;
               }
             }
           }
-        })
+        }
       }
     )
-  }
 }

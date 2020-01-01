@@ -39,39 +39,40 @@ where
       Q
     >
 {
-  PartialSession {
-    builder: Box::new ( move | ins1, p_sender | {
-      Box::pin(async {
-        let (q_sender, q_receiver) = channel(1);
+  create_partial_session ( 
+    async move | ins1, p_sender | {
+      let (q_sender, q_receiver) = channel(1);
 
-        let (_, ins2) =
-          < Lens as
-            ProcessLens <
-              S, T, D,
-              Inactive,
-              Q
-            >
-          > :: split_channels (ins1);
+      let (_, ins2) =
+        < Lens as
+          ProcessLens <
+            S, T, D,
+            Inactive,
+            Q
+          >
+        > :: split_channels (ins1);
 
-        let ins3 =
-          < Lens as
-            ProcessLens <
-              S, T, D,
-              Inactive,
-              Q
-            >
-          > :: merge_channels (q_receiver, ins2);
+      let ins3 =
+        < Lens as
+          ProcessLens <
+            S, T, D,
+            Inactive,
+            Q
+          >
+        > :: merge_channels (q_receiver, ins2);
 
-        let child1 = task::spawn(async {
-          (cont1.builder)((), q_sender).await;
-        });
+      let child1 = task::spawn(async {
+        run_partial_session
+          ( cont1, (), q_sender
+          ).await;
+      });
 
-        let child2 = task::spawn(async {
-          (cont2.builder)(ins3, p_sender).await;
-        });
+      let child2 = task::spawn(async {
+        run_partial_session 
+          ( cont2, ins3, p_sender
+          ).await;
+      });
 
-        join!(child1, child2).await;
-      })
+      join!(child1, child2).await;
     })
-  }
 }

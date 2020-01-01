@@ -73,30 +73,31 @@ where
     < I as NextSelector > :: make_selector ()
   );
 
-  return PartialSession {
-    builder: Box::new( move | ins1, sender1 | {
-      Box::pin(async move {
-        let session3 = (session2.new_session)();
+  create_partial_session ( 
+    async move | ins1, sender1 | {
+      let session3 = (session2.new_session)();
 
-        let (sender2, receiver2) = channel(1);
+      let (sender2, receiver2) = channel(1);
 
-        let child1 = task::spawn(async move {
-          (session3.builder)((), sender2).await;
-        });
+      let child1 = task::spawn(async move {
+        run_partial_session
+          ( session3, (), sender2
+          ).await;
+      });
 
-        let ins2 =
-          < I as
-            Appendable <
-              ( P, () )
-            >
-          > :: append_channels ( ins1, (receiver2, ()) );
+      let ins2 =
+        < I as
+          Appendable <
+            ( P, () )
+          >
+        > :: append_channels ( ins1, (receiver2, ()) );
 
-        let child2 = task::spawn(async move {
-          (cont.builder)(ins2, sender1).await;
-        });
+      let child2 = task::spawn(async move {
+        run_partial_session
+          ( cont, ins2, sender1
+          ).await;
+      });
 
-        join!(child1, child2).await;
-      })
+      join!(child1, child2).await;
     })
-  }
 }

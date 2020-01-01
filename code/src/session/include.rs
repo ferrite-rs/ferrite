@@ -36,30 +36,31 @@ where
     < I as NextSelector > :: make_selector ()
   );
 
-  return PartialSession {
-    builder: Box::new( move | ins1, sender1 | {
-      Box::pin(async {
-        let (sender2, receiver2) = channel(1);
+  create_partial_session ( 
+    async move | ins1, sender1 | {
+      let (sender2, receiver2) = channel(1);
 
-        let child1 = task::spawn(async move {
-          (session1.builder)((), sender2).await;
-        });
+      let child1 = task::spawn(async move {
+        run_partial_session
+          ( session1, (), sender2
+          ).await;
+      });
 
-        let ins2 =
-          < I as
-            Appendable <
-              ( P, () )
-            >
-          > :: append_channels ( ins1, (receiver2, ()) );
+      let ins2 =
+        < I as
+          Appendable <
+            ( P, () )
+          >
+        > :: append_channels ( ins1, (receiver2, ()) );
 
-        let child2 = task::spawn(async move {
-          (cont.builder)(ins2, sender1).await;
-        });
+      let child2 = task::spawn(async move {
+        run_partial_session
+          ( cont, ins2, sender1
+          ).await;
+      });
 
-        join!(child1, child2).await;
-      })
+      join!(child1, child2).await;
     })
-  }
 }
 
 pub fn wait_session
@@ -88,10 +89,8 @@ where
     >
 {
   include_session ( session1, move | chan | {
-    wait_async ( chan, move || {
-      Box::pin ( async {
-        append_emtpy_slot ( cont )
-      })
+    wait_async ( chan, async move || {
+      append_emtpy_slot ( cont )
     })
   })
 }

@@ -1,13 +1,14 @@
-extern crate log;
+// extern crate log;
+
+use std::pin::Pin;
+use async_std::task;
+use async_macros::join;
+use std::future::{ Future };
+use async_std::sync::{ Sender, Receiver, channel };
 
 use crate::base::*;
 use crate::processes::*;
 use crate::shared::process::*;
-use async_std::sync::{ Sender, Receiver, channel };
-use std::pin::Pin;
-use std::future::{ Future };
-use async_std::task;
-use async_macros::join;
 
 pub struct SuspendedSharedSession < P >
 where
@@ -20,9 +21,11 @@ where
             Receiver < P::SharedValue >
           >
         ) ->
-          Pin < Box < dyn Future <
-            Output = ()
-          > + Send > >
+          Pin < Box < 
+            dyn Future <
+              Output = ()
+            > + Send 
+          > >
       + Send
     >
 }
@@ -115,7 +118,7 @@ where
   F : SharedAlgebra < F > + 'static
 {
   SuspendedSharedSession {
-    exec_shared_session : Box::new(
+    exec_shared_session : Box::new (
       move | sender1 | {
         Box::pin ( async move {
           let (sender2, receiver2) = channel (999);
@@ -123,7 +126,8 @@ where
 
           let child1 = task::spawn ( async move {
             // debug!("[accept_shared_session] calling cont");
-            (cont.builder)( (receiver2, ()), sender3 ).await;
+            run_partial_session
+              ( cont, (receiver2, ()), sender3 ).await;
             // debug!("[accept_shared_session] returned from cont");
           });
 
@@ -160,34 +164,42 @@ pub fn
     >
 where
   F : SharedAlgebra < F > + 'static,
-  I : EmptyList
+  I : EmptyList + 'static
 {
-  PartialSession {
-    builder:
-      Box::new(move |
-        (receiver1, _),
-        sender1
-      | {
-        Box::pin ( async move {
-          let child1 = task::spawn ( async move {
-            // debug!("[detach_shared_session] receiving sender2");
-            let sender2 = receiver1.recv().await.unwrap();
+  create_partial_session (
+    async move |
+      (receiver1, _)
+        : ( Receiver <
+              Sender <
+                Receiver<
+                  < < F as SharedAlgebra < F > >
+                    :: ToProcess
+                    as Process
+                  > :: Value
+                >
+              >
+            >,
+            I :: Values
+          ),
+      sender1
+    | {
+      let child1 = task::spawn ( async move {
+        // debug!("[detach_shared_session] receiving sender2");
+        let sender2 = receiver1.recv().await.unwrap();
 
-            // debug!("[detach_shared_session] received sender2");
-            (cont.exec_shared_session)(sender2).await;
-            // debug!("[detach_shared_session] ran cont");
-          });
+        // debug!("[detach_shared_session] received sender2");
+        (cont.exec_shared_session)(sender2).await;
+        // debug!("[detach_shared_session] ran cont");
+      });
 
-          let child2 = task::spawn ( async move {
-            // debug!("[detach_shared_session] sending sender1");
-            sender1.send(()).await;
-            // debug!("[detach_shared_session] sent sender1");
-          });
+      let child2 = task::spawn ( async move {
+        // debug!("[detach_shared_session] sending sender1");
+        sender1.send(()).await;
+        // debug!("[detach_shared_session] sent sender1");
+      });
 
-          join! ( child1, child2 ).await;
-        })
-      })
-  }
+      join! ( child1, child2 ).await;
+    })
 }
 
 pub fn
@@ -227,46 +239,45 @@ where
           >
 {
 
-  let cont = cont_builder(
+  let cont = cont_builder (
     < I as NextSelector > :: make_selector ()
   );
 
-  PartialSession {
-    builder : Box::new(
-      move | ins1, sender1 | {
-        Box::pin ( async move {
-          let (sender2, receiver2) = channel (999);
+  create_partial_session (
+    async move | ins1, sender1 | {
+      let (sender2, receiver2) = channel (999);
 
-          let child1 = task::spawn ( async move {
-            // debug!("[acquire_shared_session] sending sender2");
-            shared.recv_shared_session.send(sender2).await;
-            // debug!("[acquire_shared_session] sent sender2");
-          });
+      let child1 = task::spawn ( async move {
+        // debug!("[acquire_shared_session] sending sender2");
+        shared.recv_shared_session.send(sender2).await;
+        // debug!("[acquire_shared_session] sent sender2");
+      });
 
-          let child2 = task::spawn ( async move {
-            // debug!("[acquire_shared_session] receiving receiver4");
-            let receiver4 = receiver2.recv().await.unwrap();
-            // debug!("[acquire_shared_session] received receiver4");
+      let child2 = task::spawn ( async move {
+        // debug!("[acquire_shared_session] receiving receiver4");
+        let receiver4 = receiver2.recv().await.unwrap();
+        // debug!("[acquire_shared_session] received receiver4");
 
-            let ins2 =
-              < I as
-                Appendable <
-                  ( < F as
-                      SharedAlgebra < F >
-                    > :: ToProcess
-                  , ()
-                  )
-                >
-              > :: append_channels ( ins1, (receiver4, ()) );
+        let ins2 =
+          < I as
+            Appendable <
+              ( < F as
+                  SharedAlgebra < F >
+                > :: ToProcess
+              , ()
+              )
+            >
+          > :: append_channels ( ins1, (receiver4, ()) );
 
-            (cont.builder)(ins2, sender1).await;
-            // debug!("[acquire_shared_session] ran cont");
-          });
+        run_partial_session
+          ( cont, ins2, sender1
+          ).await;
 
-          join! (child1, child2).await;
-        })
-      })
-  }
+        // debug!("[acquire_shared_session] ran cont");
+      });
+
+      join! (child1, child2).await;
+    })
 }
 
 pub fn
@@ -294,38 +305,36 @@ where
       Inactive
     >,
 {
-  PartialSession {
-    builder : Box::new(
-      move | ins1, sender1 | {
-        Box::pin ( async move {
-          let (receiver2, ins2) =
-            < Lens as
-              ProcessLens <
-                I1,
-                I2,
-                I3,
-                SharedToLinear < F >,
-                Inactive
-              >
-            > :: split_channels ( ins1 );
+  create_partial_session (
+    async move | ins1, sender1 | {
+      let (receiver2, ins2) =
+        < Lens as
+          ProcessLens <
+            I1,
+            I2,
+            I3,
+            SharedToLinear < F >,
+            Inactive
+          >
+        > :: split_channels ( ins1 );
 
-          let ins3 =
-            < Lens as
-              ProcessLens <
-                I1,
-                I2,
-                I3,
-                SharedToLinear < F >,
-                Inactive
-              >
-            > :: merge_channels ( (), ins2 );
+      let ins3 =
+        < Lens as
+          ProcessLens <
+            I1,
+            I2,
+            I3,
+            SharedToLinear < F >,
+            Inactive
+          >
+        > :: merge_channels ( (), ins2 );
 
-          // debug!("[release_shared_session] waiting receiver2");
-          receiver2.recv().await.unwrap();
-          // debug!("[release_shared_session] received receiver2");
-          (cont.builder)(ins3, sender1).await;
-          // debug!("[release_shared_session] ran cont");
-        })
-      })
-  }
+      // debug!("[release_shared_session] waiting receiver2");
+      receiver2.recv().await.unwrap();
+      // debug!("[release_shared_session] received receiver2");
+      run_partial_session
+        ( cont, ins3, sender1
+        ).await;
+      // debug!("[release_shared_session] ran cont");
+    })
 }

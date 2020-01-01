@@ -35,8 +35,8 @@ where
       Inactive
     >
 {
-  return PartialSession {
-    builder: Box::new(move | ins1, sender1 | {
+  create_partial_session (
+    async move | ins1, sender1 | {
       let (p_chan, ins2) =
         < Lens as
           ProcessLens <
@@ -58,27 +58,26 @@ where
           >
         > :: merge_channels ((), ins2);
 
-      Box::pin(async {
-        let child1 = task::spawn(async move {
-          // receive the input x from the input channel
-          let p = p_chan.recv().await.unwrap();
-          sender2.send(p).await;
-        });
+      let child1 = task::spawn(async move {
+        // receive the input x from the input channel
+        let p = p_chan.recv().await.unwrap();
+        sender2.send(p).await;
+      });
 
-        let child2 = task::spawn(async move {
-          // blocks until the channel pairs are sent
-          sender1.send((receiver2, receiver3)).await;
-        });
+      let child2 = task::spawn(async move {
+        // blocks until the channel pairs are sent
+        sender1.send((receiver2, receiver3)).await;
+      });
 
-        let child3 = task::spawn(async {
-          // the continuation Q only starts after that
-          (cont.builder)(ins3, sender3).await;
-        });
+      let child3 = task::spawn(async {
+        // the continuation Q only starts after that
+        run_partial_session 
+          ( cont, ins3, sender3
+          ).await;
+      });
 
-        join!(child1, child2, child3).await;
-      })
-    })
-  }
+      join!(child1, child2, child3).await;
+  })
 }
 
 /*
@@ -131,8 +130,8 @@ where
     < T as NextSelector > :: make_selector ()
   );
 
-  return PartialSession {
-    builder: Box::new( move | ins1, sender1 | {
+  create_partial_session ( 
+    async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
         < SourceLens as
           ProcessLens <
@@ -142,29 +141,28 @@ where
           >
         > :: split_channels ( ins1 );
 
-      Box::pin(async move {
-        let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
+      let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
 
-        let ins3 =
-          < SourceLens as
-            ProcessLens <
-              S, T, D,
-              SendChannel < P1, P2 >,
-              P2
-            >
-          > :: merge_channels ( y_chan, ins2 );
+      let ins3 =
+        < SourceLens as
+          ProcessLens <
+            S, T, D,
+            SendChannel < P1, P2 >,
+            P2
+          >
+        > :: merge_channels ( y_chan, ins2 );
 
-        let ins4 =
-          < T as
-            Appendable <
-              ( P1, () )
-            >
-          > :: append_channels (ins3, (p_chan, ()));
+      let ins4 =
+        < T as
+          Appendable <
+            ( P1, () )
+          >
+        > :: append_channels (ins3, (p_chan, ()));
 
-        (cont.builder)(ins4, sender1).await;
-      })
+        run_partial_session 
+          ( cont, ins4, sender1
+          ).await;
     })
-  };
 }
 
 /*
@@ -198,8 +196,8 @@ where
   InsP: 'static,
   InsQ: 'static
 {
-  return  PartialSession {
-    builder: Box::new(move |
+  create_partial_session ( 
+    async move |
       ins,
       sender: Sender<(
         Receiver< P::Value >,
@@ -211,29 +209,30 @@ where
       let (sender1, receiver1) = channel(1);
       let (sender2, receiver2) = channel(1);
 
-      Box::pin(async move {
-        // the first thread spawns immediately
+      // the first thread spawns immediately
 
-        let child1 = task::spawn(async move {
-          (cont1.builder)(ins1, sender1).await;
-        });
+      let child1 = task::spawn(async move {
+        run_partial_session
+          ( cont1, ins1, sender1
+          ).await;
+      });
 
-        // the sender here blocks until the inner channel pairs
-        // are received on the other side
-        let child2 = task::spawn(async move {
-          sender.send((receiver1, receiver2)).await;
-        });
+      // the sender here blocks until the inner channel pairs
+      // are received on the other side
+      let child2 = task::spawn(async move {
+        sender.send((receiver1, receiver2)).await;
+      });
 
-        // the second thread is blocked until the first channel is being accessed
+      // the second thread is blocked until the first channel is being accessed
 
-        let child3 = task::spawn(async move {
-          (cont2.builder)(ins2, sender2).await;
-        });
+      let child3 = task::spawn(async move {
+        run_partial_session
+          ( cont2, ins2, sender2
+          ).await;
+      });
 
-        join!(child1, child2, child3).await;
-      })
+      join!(child1, child2, child3).await;
     })
-  }
 }
 
 pub fn receive_channel_from_slot
@@ -271,8 +270,8 @@ where
       P1
     >,
 {
-  return  PartialSession {
-    builder: Box::new( move | ins1, sender1 | {
+  create_partial_session ( 
+    async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
         < SourceLens as
           ProcessLens <
@@ -282,38 +281,37 @@ where
           >
         > :: split_channels ( ins1 );
 
-      Box::pin(async move {
-        let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
+      let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
 
-        let ins3 =
-          < SourceLens as
-            ProcessLens <
-              S, T1, D1,
-              SendChannel < P1, P2 >,
-              P2
-            >
-          > :: merge_channels ( y_chan, ins2 );
+      let ins3 =
+        < SourceLens as
+          ProcessLens <
+            S, T1, D1,
+            SendChannel < P1, P2 >,
+            P2
+          >
+        > :: merge_channels ( y_chan, ins2 );
 
-        let ((), ins4) =
-          < TargetLens as
-            ProcessLens <
-              T1, T2, D2,
-              Inactive,
-              P1
-            >
-          > :: split_channels ( ins3 );
+      let ((), ins4) =
+        < TargetLens as
+          ProcessLens <
+            T1, T2, D2,
+            Inactive,
+            P1
+          >
+        > :: split_channels ( ins3 );
 
-        let ins5 =
-          < TargetLens as
-            ProcessLens <
-              T1, T2, D2,
-              Inactive,
-              P1
-            >
-          > :: merge_channels ( p_chan, ins4 );
+      let ins5 =
+        < TargetLens as
+          ProcessLens <
+            T1, T2, D2,
+            Inactive,
+            P1
+          >
+        > :: merge_channels ( p_chan, ins4 );
 
-        (cont.builder)(ins5, sender1).await;
-      })
+        run_partial_session
+          ( cont, ins5, sender1
+          ).await;
     })
-  };
 }

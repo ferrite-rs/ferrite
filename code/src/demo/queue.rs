@@ -1,6 +1,5 @@
 extern crate log;
 use std::time::Duration;
-use std::pin::Pin;
 use std::future::{ Future };
 use async_std::task::sleep;
 
@@ -47,27 +46,21 @@ fn read_queue_session ()
         match option {
           Either::Left(return_left) => {
             return_left(
-              wait_async ( slot1, move || {
-                Box::pin ( async move {
-                  info!("Queue process terminated");
-                  terminate ()
-                })
+              wait_async ( slot1, async move || {
+                info!("Queue process terminated");
+                terminate ()
               }))
           },
           Either::Right(return_right) => {
             return_right(
               receive_channel_from_slot ( slot1, slot2,
-                receive_value_from ( slot2, move | x : String | {
-                  Box::pin ( async move {
-                    info!("Receive value: {}", x);
+                receive_value_from ( slot2, async move | x : String | {
+                  info!("Receive value: {}", x);
 
-                    wait_async ( slot2, move || {
-                      Box::pin ( async move {
-                        read_hole ( slot1,
-                          read_queue_session()
-                        )
-                      })
-                    })
+                  wait_async ( slot2, async move || {
+                    read_hole ( slot1,
+                      read_queue_session()
+                    )
                   })
                 })
               )
@@ -93,29 +86,29 @@ fn nil_queue ()
 // Takes an existing queue session and extend it
 // with a new element process that output string.
 fn append_queue
-  < F >
-  ( build_string : F,
+  < Func, Fut >
+  ( build_string : Func,
     rest : Session < StringQueue >
   ) ->
     Session < StringQueue >
 where
-  F: FnOnce() ->
-        Pin < Box < dyn Future <
-          Output = String
-        > + Send > >
-      + Send + 'static
+  Func : 
+    FnOnce() -> Fut
+    + Send + 'static,
+  Fut :
+    Future <
+      Output = String
+    > + Send
 {
   fix_session (
     offer_right(
       // TODO: fork() is currently not working with both
       // processes start running at the same time.
       fork(
-        send_value_async ( || {
-          Box::pin ( async move {
-            ( build_string().await
-            , terminate_nil ()
-            )
-          })
+        send_value_async ( async move || {
+          ( build_string().await
+          , terminate_nil ()
+          )
         }),
         fill_hole ( rest )
       )))
@@ -132,25 +125,20 @@ pub fn queue_session()
 
   let p12
     : Session < StringQueue >
-  = append_queue( || {
-      Box::pin ( async move {
-        info!("producing world..");
-        sleep(Duration::from_secs(3)).await;
-        "World".to_string()
-      })
+  = append_queue ( async || {
+      info!("producing world..");
+      sleep(Duration::from_secs(3)).await;
+      "World".to_string()
     },
     p11
   );
 
   let p13
     : Session < StringQueue >
-  = append_queue(
-    || {
-      Box::pin ( async move {
-        info!("producing hello..");
-        sleep(Duration::from_secs(2)).await;
-        "Hello".to_string()
-      })
+  = append_queue ( async || {
+      info!("producing hello..");
+      sleep(Duration::from_secs(2)).await;
+      "Hello".to_string()
     },
     p12
   );

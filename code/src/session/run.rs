@@ -1,6 +1,10 @@
 
 use crate::process::{ End };
-use crate::base::{ EmptyList, PartialSession };
+use crate::base::{ 
+  EmptyList, 
+  PartialSession, 
+  run_partial_session 
+};
 use async_std::task;
 use async_std::sync::{ channel };
 use async_macros::join;
@@ -18,7 +22,9 @@ where
 
   task::block_on(async {
     let child1 = task::spawn(async {
-      (session.builder)(ins, sender).await;
+      run_partial_session
+        ( session, ins, sender
+        ).await;
     });
 
     let child2 = task::spawn(async move {

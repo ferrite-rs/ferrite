@@ -1,8 +1,7 @@
 use async_std::task;
 use async_macros::join;
-use async_std::sync::{ Sender, Receiver, channel };
-use std::pin::Pin;
 use std::future::{ Future };
+use async_std::sync::{ Sender, Receiver, channel };
 
 use crate::process::{ SendValue };
 use crate::base::*;
@@ -13,8 +12,8 @@ use crate::base::*;
       send_value_async(cont_builder) :: Δ ⊢  T ∧ P
  */
 pub fn send_value_async
-  < T, Ins, P, F >
-  ( cont_builder: F
+  < T, Ins, P, Func, Fut >
+  ( cont_builder: Func
   ) ->
     PartialSession <
       Ins,
@@ -24,38 +23,38 @@ where
   T   : Send + 'static,
   P   : Process + 'static,
   Ins : Processes + 'static,
-  F   : FnOnce() ->
-          Pin < Box < dyn Future <
-            Output = ( T,  PartialSession < Ins, P > )
-          > + Send > >
-        + Send + 'static
+  Func : 
+    FnOnce() -> Fut
+      + Send + 'static,
+  Fut :
+    Future <
+      Output = ( T,  PartialSession < Ins, P > )
+    > + Send
 {
-  return PartialSession {
-    builder:
-      Box::new(move |
-        ins : Ins::Values,
-        sender1 : Sender < (
-          T,
-          Receiver < P::Value >
-        ) >
-      | {
-        Box::pin ( async move {
-          let (sender2, receiver2) = channel(1);
+  create_partial_session (
+    async move |
+      ins : Ins::Values,
+      sender1 : Sender < (
+        T,
+        Receiver < P::Value >
+      ) >
+    | {
+      let (sender2, receiver2) = channel(1);
 
-          let (result, cont) = cont_builder().await;
+      let (result, cont) = cont_builder().await;
 
-          let child1 = task::spawn(async move {
-            sender1.send((result, receiver2)).await;
-          });
+      let child1 = task::spawn(async move {
+        sender1.send((result, receiver2)).await;
+      });
 
-          let child2 = task::spawn(async move {
-            (cont.builder)(ins, sender2).await;
-          });
+      let child2 = task::spawn(async move {
+        run_partial_session
+          ( cont, ins, sender2
+          ).await;
+      });
 
-          join!(child1, child2).await;
-        })
-      })
-  }
+      join!(child1, child2).await;
+    })
 }
 
 pub fn send_value
@@ -72,8 +71,8 @@ where
   P   : Process + 'static,
   Ins : Processes + 'static
 {
-  send_value_async ( move || {
-    wrap_async ( ( val, cont ) )
+  send_value_async ( async move || {
+    ( val, cont )
   })
 }
 
@@ -83,9 +82,9 @@ where
       receive_value_from(cont_builder) :: T ∧ Q, Δ ⊢ P
  */
 pub fn receive_value_from
-  < Lens, Ins1, Ins2, Ins3, T, Q, P, F >
+  < Lens, Ins1, Ins2, Ins3, T, Q, P, Func, Fut >
   ( _ : Lens,
-    cont_builder : F
+    cont_builder : Func
   ) ->
     PartialSession < Ins1, Q >
 where
@@ -95,11 +94,13 @@ where
   Ins2 : Processes + 'static,
   Ins3 : Processes + 'static,
   T : Send + 'static,
-  F : FnOnce( T ) ->
-        Pin < Box < dyn Future <
-          Output = PartialSession < Ins2, Q >
-        > + Send > >
+  Func : 
+    FnOnce( T ) -> Fut
       + Send + 'static,
+  Fut :
+    Future <
+      Output = PartialSession < Ins2, Q >
+    > + Send,
   Lens :
     ProcessLens <
       Ins1,
@@ -109,33 +110,29 @@ where
       P
     >
 {
-  return  PartialSession {
-    builder: Box::new(move |
+  create_partial_session (
+    async move |
       ins1 : Ins1 :: Values,
       sender : Sender < Q :: Value >
     | {
-      Box::pin ( async {
-        let (receiver1, ins2) =
-          < Lens as
-            ProcessLens < Ins1, Ins2, Ins3, SendValue < T, P >, P >
-          >
-          :: split_channels ( ins1 );
+      let (receiver1, ins2) =
+        < Lens as
+          ProcessLens < Ins1, Ins2, Ins3, SendValue < T, P >, P >
+        >
+        :: split_channels ( ins1 );
 
-        let (val, receiver2) = receiver1.recv().await.unwrap();
+      let (val, receiver2) = receiver1.recv().await.unwrap();
 
-        let ins3 =
-          < Lens as
-            ProcessLens < Ins1, Ins2, Ins3, SendValue < T, P >, P >
-          >
-          :: merge_channels (receiver2, ins2);
+      let ins3 =
+        < Lens as
+          ProcessLens < Ins1, Ins2, Ins3, SendValue < T, P >, P >
+        >
+        :: merge_channels (receiver2, ins2);
 
-        let cont = cont_builder(val).await;
+      let cont = cont_builder(val).await;
 
-        (cont.builder)(
-          ins3,
-          sender
+      run_partial_session
+        ( cont, ins3, sender
         ).await;
-      })
     })
-  }
 }

@@ -9,5 +9,5 @@ log = "*"
 futures = "*"
 simple_logger = "*"
 env_logger = "*"
-async-std = { version = "1.2.0", features = ["unstable"] }
+async-std = { version = "1.4.0", features = ["unstable"] }
 async-macros = "1.0.0"

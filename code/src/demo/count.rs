@@ -24,23 +24,20 @@ pub fn make_counter_server
         Mutex :: new (initial_count)
       );
 
-  return create_persistent_session ( move || {
+  create_persistent_session ( move || {
     info!("[CounterServer] starting new session");
     let counter2 = counter1.clone();
 
-    return send_value_async ( move || {
-      Box::pin ( async move {
-        info!("[CounterServer] Getting count");
-        let mut count1 = counter2.lock().unwrap();
-        let count2 : i32 = *count1;
-        *count1 += 1;
+    send_value_async ( async move || {
+      info!("[CounterServer] Getting count");
+      let mut count1 = counter2.lock().unwrap();
+      let count2 : i32 = *count1;
+      *count1 += 1;
 
-        (
-          count2,
-          terminate()
-        )
-      })
-    });
+      ( count2,
+        terminate()
+      )
+    })
   })
 }
 
@@ -51,24 +48,18 @@ pub fn make_counter_client
   ) -> Session < End >
 {
   let timer : Session < End > =
-    terminate_async ( move || {
-      Box::pin ( async move {
-        sleep ( Duration::from_secs(timeout) ).await;
-      })
+    terminate_async ( async move || {
+      sleep ( Duration::from_secs(timeout) ).await;
     });
 
   include_session ( timer, move | timer_chan | {
-    wait_async ( timer_chan, move || {
-      Box::pin ( async move {
-        info!("[{}] Timer reached", name);
-        clone_session(&counter_server, move | counter_chan | {
-          receive_value_from ( counter_chan, move | count | {
-            Box::pin ( async move {
-              info!("[{}] Received count: {}", name, count);
+    wait_async ( timer_chan, async move || {
+      info!("[{}] Timer reached", name);
+      clone_session(&counter_server, move | counter_chan | {
+        receive_value_from ( counter_chan, async move | count | {
+          info!("[{}] Received count: {}", name, count);
 
-              wait ( counter_chan, terminate () )
-            })
-          })
+          wait ( counter_chan, terminate () )
         })
       })
     })
