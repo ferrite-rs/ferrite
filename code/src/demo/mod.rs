@@ -1,12 +1,13 @@
 
-mod pair;
-mod hello;
-mod choice;
-mod concat;
-mod queue;
-mod count;
-mod chatroom;
-mod shared;
+pub mod pair;
+pub mod hello;
+pub mod choice;
+pub mod concat;
+pub mod queue;
+pub mod count;
+pub mod chatroom;
+pub mod shared;
+pub mod channel;
 
 pub use pair::*;
 pub use hello::*;

@@ -8,7 +8,7 @@ use crate::base::processes::{ Processes };
 
 /// A session builder is a consumer for the given list of
 /// input processes and output a process with given Out type.
-pub type Session < P > = 
+pub type Session < P > =
   PartialSession < (), P >;
 
 pub struct PartialSession
@@ -24,7 +24,7 @@ where
   >
 }
 
-pub fn create_partial_session 
+pub fn create_partial_session
   < I, P, Func, Fut >
   (
     executor : Func
@@ -33,7 +33,7 @@ pub fn create_partial_session
 where
   P: Process + 'static,
   I: Processes + 'static,
-  Func : 
+  Func :
     FnOnce( I::Values, Sender < P::Value > )
       -> Fut
     + Send + 'static,

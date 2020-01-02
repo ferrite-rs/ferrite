@@ -103,7 +103,7 @@ impl < P, Q, R >
   SharedAlgebra < R > for
   InternalChoice < P, Q >
 where
-  P : ProcessAlgebra < R >,
+  P : SharedAlgebra < R >,
   Q : SharedAlgebra < R >,
 {
   type ToProcess =
@@ -117,7 +117,7 @@ impl < P, Q, R >
   SharedAlgebra < R > for
   ExternalChoice < P, Q >
 where
-  P : ProcessAlgebra < R >,
+  P : SharedAlgebra < R >,
   Q : SharedAlgebra < R >,
 {
   type ToProcess =
