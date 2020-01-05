@@ -1,7 +1,10 @@
 
+pub use super::process::public::{
+  SharedProcess,
+};
+
 pub use super::{
   Release,
-  SharedProcess,
   LinearToShared,
   SharedToLinear,
 

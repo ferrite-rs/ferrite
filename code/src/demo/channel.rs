@@ -56,7 +56,7 @@ where
                       send_value ( val,
                         release_shared_session ( chan,
                           fill_hole (
-                            partial_session(
+                            partial_session (
                               make_receiver ( source ) )
                           ) ) ) )
                   },
@@ -178,11 +178,10 @@ pub fn channel_session ()
             receive_value_from ( receiver, async move | val | {
               info!("[Consumer 1] Receive first value: {}", val);
 
-              read_hole ( receiver,
-                unfix_session ( receiver,
-                  choose_right ( receiver,
-                    wait ( receiver,
-                      terminate () ) ) ) )
+              unfix_hole ( receiver,
+                choose_right ( receiver,
+                  wait ( receiver,
+                    terminate () ) ) )
             } ) ))
       });
 

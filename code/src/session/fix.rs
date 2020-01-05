@@ -250,3 +250,37 @@ where
       join!(child1, child2).await;
     })
 }
+
+pub fn unfix_hole
+  < S, T1, D1, T2, D2, P, F, Lens >
+  ( lens : Lens
+  , session : PartialSession < T2, P >
+  )
+  ->
+    PartialSession < S, P >
+where
+  F : ProcessAlgebra < HoleProcess < F > > + 'static,
+  P : Process + 'static,
+  S : Processes + 'static,
+  T1 : Processes + 'static,
+  D1 : Processes + 'static,
+  T2 : Processes + 'static,
+  D2 : Processes + 'static,
+  Lens : Copy,
+  Lens : ProcessLens <
+    S, T1, D1,
+    HoleProcess < F >,
+    FixProcess < F >
+  >,
+  Lens :
+    ProcessLens <
+      T1, T2, D2,
+      FixProcess < F >,
+      < F as ProcessAlgebra < HoleProcess < F > >
+      > :: ToProcess
+    >
+{
+  read_hole ( lens,
+    unfix_session ( lens,
+      session ) )
+}

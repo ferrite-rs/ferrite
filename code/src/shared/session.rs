@@ -34,7 +34,7 @@ pub struct SuspendedSharedSession < P >
 where
   P : SharedProcess
 {
-  pub exec_shared_session :
+  exec_shared_session :
     Box < dyn
       FnOnce
         ( Sender <
@@ -54,7 +54,7 @@ pub struct SharedSession < P >
 where
   P : SharedProcess
 {
-  pub recv_shared_session :
+  recv_shared_session :
     Sender <
       Sender <
         Receiver <

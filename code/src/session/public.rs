@@ -11,6 +11,7 @@ pub use super::{
   read_hole,
   fix_session,
   unfix_session,
+  unfix_hole,
 
   forward,
 

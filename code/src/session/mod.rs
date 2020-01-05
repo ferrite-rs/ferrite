@@ -28,6 +28,7 @@ pub use self::fix::{
   read_hole,
   fix_session,
   unfix_session,
+  unfix_hole,
 };
 
 pub use self::forward::{

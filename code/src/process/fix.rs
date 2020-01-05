@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-use crate::base::{ Process };
+use crate::base as base;
+
+use base::{ Process };
 
 pub trait ProcessAlgebra < R >
 {
@@ -23,6 +25,12 @@ impl < F > Process for HoleProcess < F > {
 
 impl
   < F >
+  base::public::Process for
+  HoleProcess < F >
+{ }
+
+impl
+  < F >
   Process
   for FixProcess < F >
 where
@@ -37,6 +45,14 @@ where
     > :: Value
   >;
 }
+
+impl
+  < F >
+  base::public::Process
+  for FixProcess < F >
+where
+  F : ProcessAlgebra < HoleProcess < F > >
+{ }
 
 impl < R >
   ProcessAlgebra < R >

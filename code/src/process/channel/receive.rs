@@ -1,7 +1,9 @@
 use std::marker::PhantomData;
 use async_std::sync::{ Sender, Receiver };
 
-use crate::base::{ Process };
+use crate::base as base;
+
+use base::{ Process };
 use crate::process::fix::{ ProcessAlgebra };
 
 pub struct ReceiveChannel
@@ -25,6 +27,15 @@ where
       Sender < Q :: Value >
     ) >;
 }
+
+impl
+  < P, Q >
+  base::public::Process for
+  ReceiveChannel < P, Q >
+where
+  P: base::public::Process,
+  Q: base::public::Process
+{ }
 
 impl < P, Q, R >
   ProcessAlgebra < R > for

@@ -59,6 +59,7 @@ pub use crate::session::public::{
   read_hole,
   fix_session,
   unfix_session,
+  unfix_hole,
 
   forward,
 

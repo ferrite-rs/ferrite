@@ -1,5 +1,5 @@
 
-pub use super::process::{ Process };
+pub use super::process::public::{ Process };
 
 pub use super::{
   Processes,

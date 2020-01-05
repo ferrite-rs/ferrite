@@ -3,3 +3,7 @@
 pub trait Process {
   type Value : Sized + Send;
 }
+
+pub mod public {
+  pub trait Process : super::Process {}
+}
