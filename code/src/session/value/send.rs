@@ -90,42 +90,46 @@ where
       receive_value_from(cont_builder) :: T ∧ Q, Δ ⊢ P
  */
 pub fn receive_value_from
-  < Lens, Ins1, Ins2, Ins3, T, Q, P, Func, Fut >
+  < Lens, I, T, Q, P, Func, Fut >
   ( _ : Lens,
     cont_builder : Func
   ) ->
-    PartialSession < Ins1, Q >
+    PartialSession < I, Q >
 where
   P : Process + 'static,
   Q : Process + 'static,
-  Ins1 : Processes + 'static,
-  Ins2 : Processes + 'static,
-  Ins3 : Processes + 'static,
+  I : Processes + 'static,
   T : Send + 'static,
   Func :
     FnOnce( T ) -> Fut
       + Send + 'static,
   Fut :
     Future <
-      Output = PartialSession < Ins2, Q >
+      Output =
+        PartialSession <
+          Lens :: Target,
+          Q
+        >
     > + Send,
   Lens :
     ProcessLens <
-      Ins1,
-      Ins2,
-      Ins3,
+      I,
       SendValue < T, P >,
       P
     >
 {
   create_partial_session (
     async move |
-      ins1 : Ins1 :: Values,
+      ins1 : I :: Values,
       sender : Sender < Q :: Value >
     | {
       let (receiver1, ins2) =
         < Lens as
-          ProcessLens < Ins1, Ins2, Ins3, SendValue < T, P >, P >
+          ProcessLens <
+            I,
+            SendValue < T, P >,
+            P
+          >
         >
         :: split_channels ( ins1 );
 
@@ -133,7 +137,11 @@ where
 
       let ins3 =
         < Lens as
-          ProcessLens < Ins1, Ins2, Ins3, SendValue < T, P >, P >
+          ProcessLens <
+            I,
+            SendValue < T, P >,
+            P
+          >
         >
         :: merge_channels (receiver2, ins2);
 

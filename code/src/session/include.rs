@@ -84,7 +84,7 @@ where
 }
 
 pub fn wait_session
-  < I, P, D >
+  < I, P >
   ( session1 : Session < End >,
     cont : PartialSession < I, P >
   ) ->
@@ -92,7 +92,6 @@ pub fn wait_session
 where
   P : Process + 'static,
   I : NextSelector + 'static,
-  D : Processes + 'static,
   I : Appendable < (End, ()) >,
   I : Appendable < (Inactive, ()) >,
   < I as NextSelector >::Selector :
@@ -100,12 +99,12 @@ where
       < I as
         Appendable < (End, ()) >
       >::AppendResult,
-      < I as
-        Appendable < (Inactive, ()) >
-      >::AppendResult,
-      D,
       End,
-      Inactive
+      Inactive,
+      Target =
+        < I as
+          Appendable < (Inactive, ()) >
+        >::AppendResult
     >
 {
   include_session ( session1, move | chan | {
@@ -116,7 +115,7 @@ where
 }
 
 pub fn wait_sessions
-  < I, P, D >
+  < I, P >
   ( sessions :
       Vec <
         Session < End >
@@ -127,7 +126,6 @@ pub fn wait_sessions
 where
   P : Process + 'static,
   I : NextSelector + 'static,
-  D : Processes + 'static,
   I : Appendable < (End, ()) >,
   I : Appendable < (Inactive, ()) >,
   < I as NextSelector >::Selector :
@@ -135,12 +133,12 @@ where
       < I as
         Appendable < (End, ()) >
       >::AppendResult,
-      < I as
-        Appendable < (Inactive, ()) >
-      >::AppendResult,
-      D,
       End,
-      Inactive
+      Inactive,
+      Target =
+        < I as
+          Appendable < (Inactive, ()) >
+        >::AppendResult
     >
 {
   wait_session (

@@ -65,20 +65,22 @@ fn unsafe_transmute_receiver < S, T >
 }
 
 pub fn read_hole
-  < S, T, D, P, F, Lens >
+  < I, P, F, Lens >
   ( _ : Lens
-  , fix_session : PartialSession < T, P >
+  , fix_session :
+      PartialSession <
+        Lens :: Target,
+        P
+      >
   )
   ->
-    PartialSession < S, P >
+    PartialSession < I, P >
 where
   F : ProcessAlgebra < HoleProcess < F > > + 'static,
   P : Process + 'static,
-  S : Processes + 'static,
-  T : Processes + 'static,
-  D : Processes + 'static,
+  I : Processes + 'static,
   Lens : ProcessLens <
-    S, T, D,
+    I,
     HoleProcess < F >,
     FixProcess < F >
   >
@@ -90,13 +92,7 @@ where
     | {
       let ( receiver1, ins2 )
         : ( Receiver < Box < () > >, _)
-        = < Lens as
-            ProcessLens <
-              S, T, D,
-              HoleProcess < F >,
-              FixProcess < F >
-            >
-          > :: split_channels ( ins1 );
+        = Lens :: split_channels ( ins1 );
 
       let receiver2 :
         Receiver <
@@ -112,13 +108,7 @@ where
         = unsafe_transmute_receiver(receiver1);
 
       let ins3 =
-        < Lens as
-          ProcessLens <
-            S, T, D,
-            HoleProcess < F >,
-            FixProcess < F >
-          >
-        > :: merge_channels ( receiver2, ins2 );
+        Lens :: merge_channels ( receiver2, ins2 );
 
         run_partial_session
           ( fix_session, ins3, sender
@@ -150,14 +140,11 @@ where
       sender1:
         Sender <
           Box <
-            <
-              <
-                F as ProcessAlgebra < HoleProcess < F > >
+            < < F as ProcessAlgebra < HoleProcess < F > >
               > :: ToProcess
               as Process
             > :: Value
-          >
-        >
+          > >
     | {
       let (sender2, receiver) = channel(1);
 
@@ -177,21 +164,23 @@ where
 }
 
 pub fn unfix_session
-  < S, T, D, P, F, Lens >
+  < I, P, F, Lens >
   ( _ : Lens,
-    session : PartialSession < T, P >
+    session :
+      PartialSession <
+        Lens :: Target,
+        P
+      >
   )
   ->
-    PartialSession < S, P >
+    PartialSession < I, P >
 where
   F : ProcessAlgebra < HoleProcess < F > > + 'static,
   P : Process + 'static,
-  S : Processes + 'static,
-  T : Processes + 'static,
-  D : Processes + 'static,
+  I : Processes + 'static,
   Lens :
     ProcessLens <
-      S, T, D,
+      I,
       FixProcess < F >,
       < F as ProcessAlgebra < HoleProcess < F > >
       > :: ToProcess
@@ -215,14 +204,7 @@ where
             >,
             _
           )
-        = < Lens as
-            ProcessLens <
-              S, T, D,
-              FixProcess < F >,
-              < F as ProcessAlgebra < HoleProcess < F > >
-              > :: ToProcess
-            >
-          > :: split_channels ( ins1 );
+        = Lens :: split_channels ( ins1 );
 
       let (sender2, receiver2) = channel(1);
 
@@ -232,14 +214,7 @@ where
       });
 
       let ins3 =
-        < Lens as
-          ProcessLens <
-            S, T, D,
-            FixProcess < F >,
-            < F as ProcessAlgebra < HoleProcess < F > >
-            > :: ToProcess
-          >
-        > :: merge_channels ( receiver2, ins2 );
+        Lens :: merge_channels ( receiver2, ins2 );
 
       let child2 = task::spawn(async move {
         run_partial_session
@@ -252,29 +227,49 @@ where
 }
 
 pub fn unfix_hole
-  < S, T1, D1, T2, D2, P, F, Lens >
+  < I, P, F, Lens >
   ( lens : Lens
-  , session : PartialSession < T2, P >
+  , session :
+      PartialSession <
+        < Lens as
+          ProcessLens <
+            < Lens as
+              ProcessLens <
+                I,
+                HoleProcess < F >,
+                FixProcess < F >
+              >
+            > :: Target,
+            FixProcess < F >,
+            < F as ProcessAlgebra < HoleProcess < F > >
+            > :: ToProcess
+          >
+        > :: Target,
+        P
+      >
   )
   ->
-    PartialSession < S, P >
+    PartialSession < I, P >
 where
   F : ProcessAlgebra < HoleProcess < F > > + 'static,
   P : Process + 'static,
-  S : Processes + 'static,
-  T1 : Processes + 'static,
-  D1 : Processes + 'static,
-  T2 : Processes + 'static,
-  D2 : Processes + 'static,
+  I : Processes + 'static,
   Lens : Copy,
-  Lens : ProcessLens <
-    S, T1, D1,
-    HoleProcess < F >,
-    FixProcess < F >
-  >,
   Lens :
     ProcessLens <
-      T1, T2, D2,
+      I,
+      HoleProcess < F >,
+      FixProcess < F >
+    >,
+  Lens :
+    ProcessLens <
+      < Lens as
+        ProcessLens <
+          I,
+          HoleProcess < F >,
+          FixProcess < F >
+        >
+      > :: Target,
       FixProcess < F >,
       < F as ProcessAlgebra < HoleProcess < F > >
       > :: ToProcess

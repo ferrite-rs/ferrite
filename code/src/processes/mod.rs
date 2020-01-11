@@ -2,7 +2,7 @@
 pub mod public;
 
 mod chain;
-mod lens;
+pub mod lens;
 mod session;
 
 pub use self::chain::{};

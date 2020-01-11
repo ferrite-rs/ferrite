@@ -22,27 +22,33 @@ impl ProcessNode for Inactive {
   type NodeValue = ();
 }
 
-pub trait ProcessLens < S, T, D, P1, P2 >
+pub trait ProcessLens < I, P1, P2 >
 where
-  S : Processes,
-  T : Processes,
-  D : Processes,
+  I : Processes,
   P1 : ProcessNode,
-  P2 : ProcessNode
+  P2 : ProcessNode,
 {
+  type Deleted : Processes + 'static;
+  type Target : Processes + 'static;
+
   fn split_channels (
-    channels : < S as Processes > :: Values
+    channels :
+      < I as Processes > :: Values
   ) ->
     ( < P1 as ProcessNode > :: NodeValue,
-      < D as Processes
+      < Self::Deleted
+        as Processes
       > :: Values
     );
 
   fn merge_channels (
     receiver : < P2 as ProcessNode > :: NodeValue,
     channels :
-      < D as Processes >
+      < Self::Deleted
+        as Processes >
       :: Values
   ) ->
-    < T as Processes > :: Values;
+    < Self::Target
+      as Processes
+    > :: Values;
 }

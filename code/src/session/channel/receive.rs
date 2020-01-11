@@ -95,23 +95,23 @@ where
 }
 
 pub fn receive_channel_slot
-  < S, T, D, P, Q, Lens >
+  < I, P, Q, Lens >
 (
   _ : Lens,
-  cont : PartialSession < T, Q >
+  cont :
+    PartialSession <
+      Lens :: Target,
+      Q
+    >
 ) ->
-  PartialSession < S, ReceiveChannel < P, Q > >
+  PartialSession < I, ReceiveChannel < P, Q > >
 where
   P : Process + 'static,
   Q : Process + 'static,
-  S : Processes + 'static,
-  T : Processes + 'static,
-  D : Processes + 'static,
+  I : Processes + 'static,
   Lens :
     ProcessLens <
-      S, T, D,
-      Inactive,
-      P
+      I, Inactive, P
     >
 {
   create_partial_session (
@@ -119,9 +119,7 @@ where
       let ((), ins2) =
         < Lens as
           ProcessLens <
-            S, T, D,
-            Inactive,
-            P
+            I, Inactive, P
           >
         > :: split_channels (ins1);
 
@@ -145,9 +143,7 @@ where
         let ins3 =
           < Lens as
             ProcessLens <
-              S, T, D,
-              Inactive,
-              P
+              I, Inactive, P
             >
           > :: merge_channels (receiver2, ins2);
 
@@ -169,34 +165,31 @@ where
  */
 pub fn send_channel_to
   < TargetLens, SourceLens,
-    S,
-    T1, T2,
-    D1, D2,
-    P1, P2, Q
+    I, P1, P2, Q
   >
   ( _ : TargetLens,
     _ : SourceLens,
-    cont : PartialSession < T2, Q >
+    cont :
+      PartialSession <
+        TargetLens :: Target,
+        Q
+      >
   ) ->
-    PartialSession < S, Q >
+    PartialSession < I, Q >
 where
-  S : Processes + 'static,
-  T1 : Processes + 'static,
-  T2 : Processes + 'static,
-  D1 : Processes + 'static,
-  D2 : Processes + 'static,
+  I : Processes + 'static,
   P1 : Process + 'static,
   P2 : Process + 'static,
   Q : Process + 'static,
   SourceLens :
     ProcessLens <
-      S, T1, D1,
+      I,
       P1,
       Inactive
     >,
   TargetLens :
     ProcessLens <
-      T1, T2, D2,
+      SourceLens :: Target,
       ReceiveChannel < P1, P2 >,
       P2
     >
@@ -206,7 +199,7 @@ where
       let (receiver1, ins2) =
         < SourceLens as
           ProcessLens <
-            S, T1, D1,
+            I,
             P1,
             Inactive
           >
@@ -215,7 +208,7 @@ where
       let ins3 =
         < SourceLens as
           ProcessLens <
-            S, T1, D1,
+            I,
             P1,
             Inactive
           >
@@ -224,7 +217,7 @@ where
       let (receiver2, ins4) =
         < TargetLens as
           ProcessLens <
-            T1, T2, D2,
+            SourceLens :: Target,
             ReceiveChannel < P1, P2 >,
             P2
           >
@@ -247,7 +240,7 @@ where
       let ins5 =
         < TargetLens as
           ProcessLens <
-            T1, T2, D2,
+            SourceLens :: Target,
             ReceiveChannel < P1, P2 >,
             P2
           >

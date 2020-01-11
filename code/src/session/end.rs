@@ -67,37 +67,49 @@ pub fn terminate_nil
  */
 
 pub fn wait_async
-  < Lens, S, T, D, P, Func, Fut >
+  < Lens, I, P, Func, Fut >
   ( _ : Lens,
     cont_builder : Func
   ) ->
-    PartialSession < S, P >
+    PartialSession < I, P >
 where
-  S : Processes + 'static,
-  T : Processes + 'static,
-  D : Processes + 'static,
+  I : Processes + 'static,
   P : Process + 'static,
   Func :
     FnOnce () -> Fut
       + Send + 'static,
   Fut :
     Future <
-      Output = PartialSession < T, P >
+      Output =
+        PartialSession <
+          Lens :: Target,
+          P
+        >
     > + Send,
-  Lens : ProcessLens < S, T, D, End, Inactive >
+  Lens : ProcessLens < I, End, Inactive >
 {
   create_partial_session (
     async move |
-      ins1 : <S as Processes>::Values,
+      ins1 : I :: Values,
       sender
     | {
       let (wait_chan, ins2) =
-        < Lens as ProcessLens < S, T, D, End, Inactive > >
-        :: split_channels (ins1);
+        < Lens as
+          ProcessLens <
+            I,
+            End,
+            Inactive
+          >
+        > :: split_channels (ins1);
 
       let ins3 =
-        < Lens as ProcessLens < S, T, D, End, Inactive > >
-        :: merge_channels ((), ins2);
+        < Lens as
+          ProcessLens <
+            I,
+            End,
+            Inactive
+          >
+        > :: merge_channels ((), ins2);
 
       wait_chan.recv().await.unwrap();
       let cont = cont_builder().await;
@@ -109,17 +121,19 @@ where
 }
 
 pub fn wait
-  < Lens, S, T, D, P >
+  < Lens, I, P >
   ( lens : Lens,
-    cont : PartialSession < T, P >
+    cont :
+      PartialSession <
+        Lens :: Target,
+        P
+      >
   ) ->
-    PartialSession < S, P >
+    PartialSession < I, P >
 where
-  S : Processes + 'static,
-  T : Processes + 'static,
-  D : Processes + 'static,
+  I : Processes + 'static,
   P : Process + 'static,
-  Lens : ProcessLens < S, T, D, End, Inactive >
+  Lens : ProcessLens < I, End, Inactive >
 {
   wait_async ( lens, async move || {
     cont

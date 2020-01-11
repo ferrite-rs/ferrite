@@ -216,24 +216,25 @@ where
  */
 
 pub fn choose_left
-  < Lens, Ins1, Ins2, Ins3, P1, P2, S >
+  < Lens, I, P1, P2, S >
   ( _ : Lens,
     cont:
-      PartialSession < Ins2, S >
+      PartialSession <
+        Lens :: Target,
+        S
+      >
   ) ->
-    PartialSession < Ins1, S >
+    PartialSession <
+      I, S
+    >
 where
-  Ins1 : Processes + 'static,
-  Ins2 : Processes + 'static,
-  Ins3 : Processes + 'static,
+  I : Processes + 'static,
   P1 : Process + 'static,
   P2 : Process + 'static,
   S : Process + 'static,
   Lens :
     ProcessLens <
-      Ins1,
-      Ins2,
-      Ins3,
+      I,
       ExternalChoice< P1, P2 >,
       P1
     >
@@ -243,9 +244,7 @@ where
       let (offerer_chan, ins2) =
         < Lens as
           ProcessLens <
-            Ins1,
-            Ins2,
-            Ins3,
+            I,
             ExternalChoice < P1, P2 >,
             P1
           >
@@ -260,9 +259,7 @@ where
           let ins3 =
             < Lens as
               ProcessLens <
-                Ins1,
-                Ins2,
-                Ins3,
+                I,
                 ExternalChoice < P1, P2 >,
                 P1
               >
@@ -287,24 +284,23 @@ where
     choose_right(cont) :: Δ, P & Q, Δ' ⊢ S
  */
 pub fn choose_right
-  < Lens, Ins1, Ins2, Ins3, P1, P2, S >
+  < Lens, I, P1, P2, S >
   ( _ : Lens,
     cont:
-      PartialSession < Ins2, S >
+      PartialSession <
+        Lens :: Target,
+        S
+      >
   ) ->
-    PartialSession < Ins1, S >
+    PartialSession < I, S >
 where
-  Ins1 : Processes + 'static,
-  Ins2 : Processes + 'static,
-  Ins3 : Processes + 'static,
+  I : Processes + 'static,
   P1 : Process + 'static,
   P2 : Process + 'static,
   S : Process + 'static,
   Lens :
     ProcessLens <
-      Ins1,
-      Ins2,
-      Ins3,
+      I,
       ExternalChoice< P1, P2 >,
       P2
     >
@@ -317,9 +313,7 @@ where
       let (offerer_chan, ins2) =
         < Lens as
           ProcessLens <
-            Ins1,
-            Ins2,
-            Ins3,
+            I,
             ExternalChoice < P1, P2 >,
             P2
           >
@@ -338,9 +332,7 @@ where
           let ins3 =
             < Lens as
               ProcessLens <
-                Ins1,
-                Ins2,
-                Ins3,
+                I,
                 ExternalChoice < P1, P2 >,
                 P2
               >

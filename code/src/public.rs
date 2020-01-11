@@ -115,3 +115,8 @@ pub use crate::shared::public::{
   acquire_shared_session,
   release_shared_session,
 };
+
+pub mod nary_choice {
+  pub use crate::process::nary_choice::*;
+  pub use crate::session::nary_choice::*;
+}

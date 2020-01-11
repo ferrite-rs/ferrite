@@ -1,9 +1,10 @@
 use std::marker::PhantomData;
 
 use crate::base::{
+  Inactive,
   Processes,
   ProcessLens,
-  ProcessNode
+  ProcessNode,
 };
 
 #[derive(Copy, Clone)]
@@ -57,8 +58,6 @@ impl
   < P1, P2, R >
   ProcessLens <
     ( P1, R ),
-    ( P2, R ),
-    R,
     P1,
     P2
   > for
@@ -68,24 +67,32 @@ where
   P2 : ProcessNode + 'static,
   R : Processes + 'static
 {
+  type Deleted = (Inactive, R);
+  type Target = (P2, R);
+
   fn split_channels (
-    channels :
+    (p, r) :
       < ( P1, R )
         as Processes
       > :: Values
   ) ->
     ( < P1 as ProcessNode > :: NodeValue,
-      < R as Processes
-      > :: Values
+      ( (),
+        < R as Processes
+        > :: Values
+      )
     )
   {
-    return channels;
+    return (p, ((), r));
   }
 
   fn merge_channels
     ( p : < P2 as ProcessNode > :: NodeValue,
-      r : < R as Processes
-      > :: Values
+      ((), r) :
+        ( (),
+          < R as Processes
+          > :: Values
+        )
     ) ->
       < ( P2, R )
         as Processes
@@ -96,11 +103,9 @@ where
 }
 
 impl
-  < P, Q1, Q2, R1, R2, R3, Lens >
+  < P, Q1, Q2, R, Lens >
   ProcessLens <
-    ( P, R1 ),
-    ( P, R2 ),
-    ( P, R3 ),
+    ( P, R ),
     Q1,
     Q2
   > for
@@ -109,22 +114,33 @@ where
   P : ProcessNode + 'static,
   Q1 : ProcessNode + 'static,
   Q2 : ProcessNode + 'static,
-  R1 : Processes + 'static,
-  R2 : Processes + 'static,
-  R3 : Processes + 'static,
-  Lens : ProcessLens < R1, R2, R3, Q1, Q2 >,
+  R : Processes + 'static,
+  Lens : ProcessLens < R, Q1, Q2 >,
 {
+  type Deleted =
+    ( P,
+      Lens :: Deleted
+    );
+
+  type Target =
+    ( P,
+      Lens :: Target
+    );
+
   fn split_channels (
     (p, r1) :
-      < ( P, R1 ) as Processes >
+      < ( P, R ) as Processes >
       :: Values
   ) ->
     ( < Q1 as ProcessNode > :: NodeValue,
-      < ( P, R3 ) as Processes > :: Values
+      < ( P,
+          Lens :: Deleted
+        ) as Processes
+      > :: Values
     )
   {
     let (q, r2) =
-      < Lens as ProcessLens < R1, R2, R3, Q1, Q2 >
+      < Lens as ProcessLens < R, Q1, Q2 >
       > :: split_channels ( r1 );
 
     return ( q, ( p, r2 ) );
@@ -133,13 +149,18 @@ where
   fn merge_channels (
     q : < Q2 as ProcessNode > :: NodeValue,
     (p, r1) :
-      < ( P, R3 ) as Processes >
-      :: Values
+      < ( P,
+          Lens ::Deleted
+        ) as Processes
+      > :: Values
   ) ->
-    < ( P, R2 ) as Processes > :: Values
+    < ( P,
+        Lens :: Target
+      ) as Processes
+    > :: Values
   {
     let r2 =
-      < Lens as ProcessLens < R1, R2, R3, Q1, Q2 >
+      < Lens as ProcessLens < R, Q1, Q2 >
       > :: merge_channels ( q, r1 );
 
     return ( p, r2 );
@@ -151,7 +172,7 @@ pub type Selector1 = SelectorSucc < SelectorZ >;
 pub static SELECT_0 : SelectorZ = SelectorZ{};
 pub static SELECT_1 : Selector1 = select_succ();
 
-pub const fn 
+pub const fn
   select_succ
   < Lens >
   () ->

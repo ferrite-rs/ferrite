@@ -161,16 +161,13 @@ where
 }
 
 pub fn case
-  < Lens, Ins1, Ins2, Ins3, Ins4, P1, P2, S, F >
+  < Lens, I, P1, P2, S, F >
   ( _ : Lens,
     cont_builder : F
   ) ->
-    PartialSession < Ins1, S >
+    PartialSession < I, S >
 where
-  Ins1 : Processes + 'static,
-  Ins2 : Processes + 'static,
-  Ins3 : Processes + 'static,
-  Ins4 : Processes + 'static,
+  I : Processes + 'static,
   P1 : Process + 'static,
   P2 : Process + 'static,
   S : Process + 'static,
@@ -178,34 +175,107 @@ where
         Either <
           Box <
             dyn FnOnce (
-              PartialSession < Ins2, S >
-            ) -> InternalChoiceResult < Ins2, Ins3, S>
+              PartialSession <
+                < Lens as
+                  ProcessLens <
+                    I,
+                    InternalChoice < P1, P2 >,
+                    P1
+                  >
+                > :: Target,
+                S
+              >
+            ) ->
+              InternalChoiceResult <
+                < Lens as
+                  ProcessLens <
+                    I,
+                    InternalChoice < P1, P2 >,
+                    P1
+                  >
+                > :: Target,
+                < Lens as
+                  ProcessLens <
+                    I,
+                    InternalChoice < P1, P2 >,
+                    P2
+                  >
+                > :: Target,
+                S
+              >
             + Send
           >,
           Box <
             dyn FnOnce (
-              PartialSession < Ins3, S >
-            ) -> InternalChoiceResult < Ins2, Ins3, S >
+              PartialSession <
+                < Lens as
+                  ProcessLens <
+                    I,
+                    InternalChoice < P1, P2 >,
+                    P2
+                  >
+                > :: Target,
+                S
+              >
+            ) ->
+              InternalChoiceResult <
+                < Lens as
+                  ProcessLens <
+                    I,
+                    InternalChoice < P1, P2 >,
+                    P1
+                  >
+                > :: Target,
+                < Lens as
+                  ProcessLens <
+                    I,
+                    InternalChoice < P1, P2 >,
+                    P2
+                  >
+                > :: Target,
+                S
+              >
             + Send
           >
         >
-      ) -> InternalChoiceResult < Ins2, Ins3, S >
+      ) ->
+        InternalChoiceResult <
+          < Lens as
+            ProcessLens <
+              I,
+              InternalChoice < P1, P2 >,
+              P1
+            >
+          > :: Target,
+          < Lens as
+            ProcessLens <
+              I,
+              InternalChoice < P1, P2 >,
+              P2
+            >
+          > :: Target,
+          S
+        >
       + Send + 'static,
   Lens :
     ProcessLens <
-      Ins1,
-      Ins2,
-      Ins4,
+      I,
       InternalChoice < P1, P2 >,
       P1
     >,
   Lens :
     ProcessLens <
-      Ins1,
-      Ins3,
-      Ins4,
+      I,
       InternalChoice < P1, P2 >,
-      P2
+      P2,
+      Deleted =
+        < Lens as
+          ProcessLens <
+            I,
+            InternalChoice < P1, P2 >,
+            P1
+          >
+        > :: Deleted
     >
 {
   create_partial_session (
@@ -213,9 +283,7 @@ where
       let (variant_chan, ins2) =
         < Lens as
           ProcessLens <
-            Ins1,
-            Ins2,
-            Ins4,
+            I,
             InternalChoice < P1, P2 >,
             P1
           >
@@ -229,16 +297,66 @@ where
             : Either <
                 Box <
                   dyn FnOnce (
-                    PartialSession < Ins2, S >
+                    PartialSession <
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P1
+                        >
+                      > :: Target,
+                      S
+                    >
                   ) ->
-                    InternalChoiceResult < Ins2, Ins3, S >
+                    InternalChoiceResult <
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P1
+                        >
+                      > :: Target,
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P2
+                        >
+                      > :: Target,
+                      S
+                    >
                   + Send
                 >,
                 Box <
                   dyn FnOnce (
-                    PartialSession < Ins3, S >
+                    PartialSession <
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P2
+                        >
+                      > :: Target,
+                      S
+                    >
                   ) ->
-                    InternalChoiceResult < Ins2, Ins3, S >
+                    InternalChoiceResult <
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P1
+                        >
+                      > :: Target,
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P2
+                        >
+                      > :: Target,
+                      S
+                    >
                   + Send
                 >
               >
@@ -249,9 +367,7 @@ where
           let ins3 =
             < Lens as
               ProcessLens <
-                Ins1,
-                Ins2,
-                Ins4,
+                I,
                 InternalChoice < P1, P2 >,
                 P1
               >
@@ -273,16 +389,66 @@ where
             : Either <
                 Box <
                   dyn FnOnce (
-                    PartialSession < Ins2, S >
+                    PartialSession <
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P1
+                        >
+                      > :: Target,
+                      S
+                    >
                   ) ->
-                    InternalChoiceResult < Ins2, Ins3, S >
+                    InternalChoiceResult <
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P1
+                        >
+                      > :: Target,
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P2
+                        >
+                      > :: Target,
+                      S
+                    >
                   + Send
                 >,
                 Box <
                   dyn FnOnce (
-                    PartialSession < Ins3, S >
+                    PartialSession <
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P2
+                        >
+                      > :: Target,
+                      S
+                    >
                   ) ->
-                    InternalChoiceResult < Ins2, Ins3, S >
+                    InternalChoiceResult <
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P1
+                        >
+                      > :: Target,
+                      < Lens as
+                        ProcessLens <
+                          I,
+                          InternalChoice < P1, P2 >,
+                          P2
+                        >
+                      > :: Target,
+                      S
+                    >
                   + Send
                 >
               >
@@ -293,9 +459,7 @@ where
           let ins3 =
             < Lens as
               ProcessLens <
-                Ins1,
-                Ins3,
-                Ins4,
+                I,
                 InternalChoice < P1, P2 >,
                 P2
               >

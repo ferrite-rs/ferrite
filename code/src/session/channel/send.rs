@@ -31,23 +31,25 @@ use crate::processes::{
       send_channel_from (cont) :: P, Δ  ⊢ P ⊗ Q
  */
 pub fn send_channel_from
-  < S, T, D, P, Q, Lens >
+  < I, P, Q, Lens >
   ( _ : Lens,
-    cont: PartialSession < T, Q >
+    cont:
+      PartialSession <
+        Lens :: Target,
+        Q
+      >
   ) ->
-     PartialSession <
-      S,
+    PartialSession <
+      I,
       SendChannel< P, Q >
     >
 where
   P : Process + 'static,
   Q : Process + 'static,
-  S : Processes + 'static,
-  T : Processes + 'static,
-  D : Processes + 'static,
+  I : Processes + 'static,
   Lens :
     ProcessLens <
-      S, T, D,
+      I,
       P,
       Inactive
     >
@@ -57,9 +59,7 @@ where
       let (p_chan, ins2) =
         < Lens as
           ProcessLens <
-            S, T, D,
-            P,
-            Inactive
+            I, P, Inactive
           >
         > :: split_channels (ins1);
 
@@ -69,9 +69,7 @@ where
       let ins3 =
         < Lens as
           ProcessLens <
-            S, T, D,
-            P,
-            Inactive
+            I, P, Inactive
           >
         > :: merge_channels ((), ins2);
 
@@ -105,38 +103,39 @@ where
     receive_channel_from(cont) :: P ⊗ Q, Δ  ⊢ S
  */
 pub fn receive_channel_from
-  < S, T, D,
-    P1, P2, Q,
-    SourceLens,
+  < I, P1, P2, Q,
+    Lens,
     F
   >
-  ( _ : SourceLens,
+  ( _ : Lens,
     cont_builder: F
   ) ->
-    PartialSession < S, Q >
+    PartialSession < I, Q >
 where
   P1 : Process + 'static,
   P2 : Process + 'static,
   Q : Process + 'static,
-  S : Processes + 'static,
-  T : Processes + 'static,
-  D : Processes + 'static,
-  T : NextSelector,
-  T : Appendable <
+  I : Processes + 'static,
+  Lens :: Target :
+    NextSelector,
+  Lens :: Target :
+    Appendable <
         ( P1, () )
       >,
-  SourceLens :
+  Lens :
     ProcessLens <
-      S, T, D,
+      I,
       SendChannel < P1, P2 >,
       P2
     >,
   F : FnOnce
-        ( < T as NextSelector > :: Selector
+        ( < Lens :: Target
+            as NextSelector
+          > :: Selector
         ) ->
           PartialSession <
-            < T as
-              Appendable <
+            < Lens :: Target
+              as Appendable <
                 ( P1, () )
               >
             > :: AppendResult,
@@ -144,15 +143,17 @@ where
           >
 {
   let cont = cont_builder (
-    < T as NextSelector > :: make_selector ()
+    < Lens :: Target
+      as NextSelector
+    > :: make_selector ()
   );
 
   create_partial_session (
     async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
-        < SourceLens as
+        < Lens as
           ProcessLens <
-            S, T, D,
+            I,
             SendChannel < P1, P2 >,
             P2
           >
@@ -161,16 +162,16 @@ where
       let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
 
       let ins3 =
-        < SourceLens as
+        < Lens as
           ProcessLens <
-            S, T, D,
+            I,
             SendChannel < P1, P2 >,
             P2
           >
         > :: merge_channels ( y_chan, ins2 );
 
       let ins4 =
-        < T as
+        < Lens :: Target as
           Appendable <
             ( P1, () )
           >
@@ -253,36 +254,33 @@ where
 }
 
 pub fn receive_channel_from_slot
-  < S,
-    T1, T2, D1, D2,
-    P1, P2, Q,
+  < I, P1, P2, Q,
     TargetLens, SourceLens
   >
   (
     _ : SourceLens,
     _ : TargetLens,
     cont:
-      PartialSession < T2, Q >
+      PartialSession <
+        TargetLens :: Target,
+        Q
+      >
   ) ->
-    PartialSession < S, Q >
+    PartialSession < I, Q >
 where
   P1 : Process + 'static,
   P2 : Process + 'static,
   Q : Process + 'static,
-  S : Processes + 'static,
-  T1 : Processes + 'static,
-  T2 : Processes + 'static,
-  D1 : Processes + 'static,
-  D2 : Processes + 'static,
+  I : Processes + 'static,
   SourceLens :
     ProcessLens <
-      S, T1, D1,
+      I,
       SendChannel < P1, P2 >,
       P2
     >,
   TargetLens :
     ProcessLens <
-      T1, T2, D2,
+      SourceLens :: Target,
       Inactive,
       P1
     >,
@@ -292,18 +290,19 @@ where
       let ( pair_chan, ins2 ) =
         < SourceLens as
           ProcessLens <
-            S, T1, D1,
+            I,
             SendChannel < P1, P2 >,
             P2
           >
         > :: split_channels ( ins1 );
 
-      let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
+      let (p_chan, y_chan) =
+        pair_chan.recv().await.unwrap();
 
       let ins3 =
         < SourceLens as
           ProcessLens <
-            S, T1, D1,
+            I,
             SendChannel < P1, P2 >,
             P2
           >
@@ -312,7 +311,7 @@ where
       let ((), ins4) =
         < TargetLens as
           ProcessLens <
-            T1, T2, D2,
+            SourceLens :: Target,
             Inactive,
             P1
           >
@@ -321,7 +320,7 @@ where
       let ins5 =
         < TargetLens as
           ProcessLens <
-            T1, T2, D2,
+            SourceLens :: Target,
             Inactive,
             P1
           >

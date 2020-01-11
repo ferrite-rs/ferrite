@@ -10,21 +10,20 @@ use crate::base::{
 };
 
 pub fn forward
-  < S, T, D, P, Lens >
+  < I, P, Lens >
   (_ : Lens)
   ->
     PartialSession <
-      S,
+      I,
       P
     >
 where
   P : Process + 'static,
-  S : Processes + 'static,
-  T : Processes + EmptyList + 'static,
-  D : Processes + EmptyList + 'static,
+  I : Processes + 'static,
+  Lens :: Target : EmptyList,
   Lens :
     ProcessLens <
-      S, T, D,
+      I,
       P,
       Inactive
     >
@@ -34,7 +33,7 @@ where
       let (receiver, _) =
         < Lens as
           ProcessLens <
-            S, T, D,
+            I,
             P,
             Inactive
           >

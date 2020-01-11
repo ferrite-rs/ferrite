@@ -302,25 +302,25 @@ where
 
 pub fn
   release_shared_session
-  < F, I1, I2, I3, P, Lens >
+  < F, I, P, Lens >
   ( _ : Lens,
-    cont : PartialSession < I2, P >
+    cont :
+      PartialSession <
+        Lens :: Target,
+        P
+      >
   ) ->
     PartialSession <
-      I1,
+      I,
       P
     >
 where
   P : Process + 'static,
-  I1 : Processes + 'static,
-  I2 : Processes + 'static,
-  I3 : Processes + 'static,
+  I : Processes + 'static,
   F : SharedAlgebra < F >,
   Lens :
     ProcessLens <
-      I1,
-      I2,
-      I3,
+      I,
       SharedToLinear < F >,
       Inactive
     >,
@@ -328,26 +328,10 @@ where
   create_partial_session (
     async move | ins1, sender1 | {
       let (receiver2, ins2) =
-        < Lens as
-          ProcessLens <
-            I1,
-            I2,
-            I3,
-            SharedToLinear < F >,
-            Inactive
-          >
-        > :: split_channels ( ins1 );
+        Lens :: split_channels ( ins1 );
 
       let ins3 =
-        < Lens as
-          ProcessLens <
-            I1,
-            I2,
-            I3,
-            SharedToLinear < F >,
-            Inactive
-          >
-        > :: merge_channels ( (), ins2 );
+        Lens :: merge_channels ( (), ins2 );
 
       // debug!("[release_shared_session] waiting receiver2");
       receiver2.recv().await.unwrap();

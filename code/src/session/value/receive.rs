@@ -73,42 +73,47 @@ where
       send_value_to_async(cont_builder) :: T ⊃ Q, Δ ⊢ P
  */
 pub fn send_value_to_async
-  < Lens, Ins1, Ins2, Ins3, P, Q, T, Func, Fut >
+  < Lens, I, P, Q, T, Func, Fut >
   ( _ : Lens,
     cont_builder : Func
   ) ->
-    PartialSession < Ins1, P >
+    PartialSession < I, P >
 where
   P : Process + 'static,
   Q : Process + 'static,
-  Ins1 : Processes + 'static,
-  Ins2 : Processes + 'static,
-  Ins3 : Processes + 'static,
+  I : Processes + 'static,
   T : Send + 'static,
   Func :
     FnOnce() -> Fut
     + Send + 'static,
   Fut :
     Future <
-      Output = ( T,  PartialSession < Ins2, P > )
+      Output =
+        ( T,
+          PartialSession <
+            Lens :: Target,
+            P
+          > )
     > + Send,
   Lens :
     ProcessLens <
-      Ins1,
-      Ins2,
-      Ins3,
+      I,
       ReceiveValue < T, Q >,
       Q
     >
 {
   create_partial_session (
     async move |
-      ins1: < Ins1 as Processes >::Values,
+      ins1: I :: Values,
       sender1 : Sender < P::Value >
     | {
       let (receiver1, ins2) =
         < Lens as
-          ProcessLens < Ins1, Ins2, Ins3, ReceiveValue < T, Q >, Q >
+          ProcessLens <
+            I,
+            ReceiveValue < T, Q >,
+            Q
+          >
         >
         :: split_channels ( ins1 );
 
@@ -117,9 +122,12 @@ where
 
       let ins3 =
         < Lens as
-          ProcessLens < Ins1, Ins2, Ins3, ReceiveValue < T, Q >, Q >
-        >
-        :: merge_channels( receiver2, ins2);
+          ProcessLens <
+            I,
+            ReceiveValue < T, Q >,
+            Q
+          >
+        > :: merge_channels( receiver2, ins2);
 
       let child1 = task::spawn(async move {
         sender2.send(val).await;
@@ -136,24 +144,24 @@ where
 }
 
 pub fn send_value_to
-  < Lens, I1, I2, I3, P, Q, T >
+  < Lens, I, P, Q, T >
   ( lens : Lens,
     value : T,
-    cont : PartialSession < I2, P >
+    cont :
+      PartialSession <
+        Lens :: Target,
+        P
+      >
   ) ->
-    PartialSession < I1, P >
+    PartialSession < I, P >
 where
   P : Process + 'static,
   Q : Process + 'static,
-  I1 : Processes + 'static,
-  I2 : Processes + 'static,
-  I3 : Processes + 'static,
+  I : Processes + 'static,
   T : Send + 'static,
   Lens :
     ProcessLens <
-      I1,
-      I2,
-      I3,
+      I,
       ReceiveValue < T, Q >,
       Q
     >

@@ -13,15 +13,15 @@ mod lens;
 
 pub mod public;
 
-pub use self::process::{ 
-  Process 
+pub use self::process::{
+  Process
 };
 
-pub use self::processes::{  
-  Processes, 
-  EmptyList, 
-  Appendable, 
-  Reversible 
+pub use self::processes::{
+  Processes,
+  EmptyList,
+  Appendable,
+  Reversible
 };
 
 pub use self::session::{
@@ -34,5 +34,5 @@ pub use self::session::{
 pub use self::lens::{
   ProcessNode,
   Inactive,
-  ProcessLens
+  ProcessLens,
 };

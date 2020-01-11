@@ -11,6 +11,8 @@ mod channel;
 mod forward;
 mod persistent;
 
+pub mod nary_choice;
+
 pub use self::run::{
   run_session,
 };

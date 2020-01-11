@@ -1,4 +1,5 @@
 extern crate log;
+use std::pin::Pin;
 use std::time::Duration;
 use std::future::{ Future };
 use async_std::task::sleep;
@@ -82,20 +83,21 @@ fn nil_queue ()
 
 // Takes an existing queue session and extend it
 // with a new element process that output string.
-fn append_queue
-  < Func, Fut >
+fn append_queue_2
+  < Func >
   ( build_string : Func,
     rest : Session < StringQueue >
   ) ->
     Session < StringQueue >
 where
   Func :
-    FnOnce() -> Fut
+    FnOnce() ->
+      Pin < Box <
+        dyn Future <
+          Output = String
+        > + Send + 'static
+      > >
     + Send + 'static,
-  Fut :
-    Future <
-      Output = String
-    > + Send
 {
   fix_session (
     offer_right(
@@ -109,6 +111,42 @@ where
         }),
         fill_hole ( rest )
       )))
+}
+
+fn append_queue
+  < Func, Fut >
+  ( build_string : Func,
+    rest : Session < StringQueue >
+  ) ->
+    Session < StringQueue >
+where
+  Func :
+    FnOnce() -> Fut
+    + Send + 'static,
+  Fut :
+    Future <
+      Output = String
+    > + Send + 'static
+{
+  let build_string2
+    : Box <
+        dyn FnOnce () ->
+          Pin < Box <
+            dyn Future < Output = String >
+                + Send
+          > >
+        + Send
+      >
+  = Box::new ( move || {
+      Box::pin ( async move {
+        build_string().await
+      })
+    });
+
+  append_queue_2 (
+    build_string2,
+    rest
+  )
 }
 
 pub fn queue_session()
