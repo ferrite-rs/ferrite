@@ -160,6 +160,74 @@ where
   }
 }
 
+type ReturnChoice < Lens, I, P1, P2, S > =
+  Either <
+    Box <
+      dyn FnOnce (
+        PartialSession <
+          < Lens as
+            ProcessLens <
+              I,
+              InternalChoice < P1, P2 >,
+              P1
+            >
+          > :: Target,
+          S
+        >
+      ) ->
+        InternalChoiceResult <
+          < Lens as
+            ProcessLens <
+              I,
+              InternalChoice < P1, P2 >,
+              P1
+            >
+          > :: Target,
+          < Lens as
+            ProcessLens <
+              I,
+              InternalChoice < P1, P2 >,
+              P2
+            >
+          > :: Target,
+          S
+        >
+      + Send
+    >,
+    Box <
+      dyn FnOnce (
+        PartialSession <
+          < Lens as
+            ProcessLens <
+              I,
+              InternalChoice < P1, P2 >,
+              P2
+            >
+          > :: Target,
+          S
+        >
+      ) ->
+        InternalChoiceResult <
+          < Lens as
+            ProcessLens <
+              I,
+              InternalChoice < P1, P2 >,
+              P1
+            >
+          > :: Target,
+          < Lens as
+            ProcessLens <
+              I,
+              InternalChoice < P1, P2 >,
+              P2
+            >
+          > :: Target,
+          S
+        >
+      + Send
+    >
+  >;
+
 pub fn case
   < Lens, I, P1, P2, S, F >
   ( _ : Lens,
@@ -172,72 +240,7 @@ where
   P2 : Process + 'static,
   S : Process + 'static,
   F : FnOnce (
-        Either <
-          Box <
-            dyn FnOnce (
-              PartialSession <
-                < Lens as
-                  ProcessLens <
-                    I,
-                    InternalChoice < P1, P2 >,
-                    P1
-                  >
-                > :: Target,
-                S
-              >
-            ) ->
-              InternalChoiceResult <
-                < Lens as
-                  ProcessLens <
-                    I,
-                    InternalChoice < P1, P2 >,
-                    P1
-                  >
-                > :: Target,
-                < Lens as
-                  ProcessLens <
-                    I,
-                    InternalChoice < P1, P2 >,
-                    P2
-                  >
-                > :: Target,
-                S
-              >
-            + Send
-          >,
-          Box <
-            dyn FnOnce (
-              PartialSession <
-                < Lens as
-                  ProcessLens <
-                    I,
-                    InternalChoice < P1, P2 >,
-                    P2
-                  >
-                > :: Target,
-                S
-              >
-            ) ->
-              InternalChoiceResult <
-                < Lens as
-                  ProcessLens <
-                    I,
-                    InternalChoice < P1, P2 >,
-                    P1
-                  >
-                > :: Target,
-                < Lens as
-                  ProcessLens <
-                    I,
-                    InternalChoice < P1, P2 >,
-                    P2
-                  >
-                > :: Target,
-                S
-              >
-            + Send
-          >
-        >
+        ReturnChoice < Lens, I, P1, P2, S >
       ) ->
         InternalChoiceResult <
           < Lens as
@@ -294,72 +297,7 @@ where
       match variant {
         Either::Left( p1 ) => {
           let in_choice
-            : Either <
-                Box <
-                  dyn FnOnce (
-                    PartialSession <
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P1
-                        >
-                      > :: Target,
-                      S
-                    >
-                  ) ->
-                    InternalChoiceResult <
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P1
-                        >
-                      > :: Target,
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P2
-                        >
-                      > :: Target,
-                      S
-                    >
-                  + Send
-                >,
-                Box <
-                  dyn FnOnce (
-                    PartialSession <
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P2
-                        >
-                      > :: Target,
-                      S
-                    >
-                  ) ->
-                    InternalChoiceResult <
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P1
-                        >
-                      > :: Target,
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P2
-                        >
-                      > :: Target,
-                      S
-                    >
-                  + Send
-                >
-              >
+            : ReturnChoice < Lens, I, P1, P2, S >
             = Either::Left(Box::new(left_choice));
 
           let cont_variant = cont_builder(in_choice).result;
@@ -386,72 +324,7 @@ where
         },
         Either::Right( p2 ) => {
           let in_choice
-            : Either <
-                Box <
-                  dyn FnOnce (
-                    PartialSession <
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P1
-                        >
-                      > :: Target,
-                      S
-                    >
-                  ) ->
-                    InternalChoiceResult <
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P1
-                        >
-                      > :: Target,
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P2
-                        >
-                      > :: Target,
-                      S
-                    >
-                  + Send
-                >,
-                Box <
-                  dyn FnOnce (
-                    PartialSession <
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P2
-                        >
-                      > :: Target,
-                      S
-                    >
-                  ) ->
-                    InternalChoiceResult <
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P1
-                        >
-                      > :: Target,
-                      < Lens as
-                        ProcessLens <
-                          I,
-                          InternalChoice < P1, P2 >,
-                          P2
-                        >
-                      > :: Target,
-                      S
-                    >
-                  + Send
-                >
-              >
+            : ReturnChoice < Lens, I, P1, P2, S >
             = Either::Right(Box::new(right_choice));
 
           let cont_variant = cont_builder(in_choice).result;

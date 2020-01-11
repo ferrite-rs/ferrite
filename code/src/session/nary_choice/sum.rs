@@ -10,14 +10,45 @@ where
   type SessionSum;
 }
 
-pub trait InternalSum  < S, D, P, Lens >
+pub trait InternalSessionSum
+  < Lens, I, ParentSum, Out >
   : ProcessSum
 where
-  P : Process,
-  S : Processes,
-  D : Processes,
+  ParentSum : ProcessSum,
+  Out : Process,
+  I : Processes,
 {
-  type SessionSum;
+  type CurrentSession : 'static;
+
+  type SessionSum : 'static;
+}
+
+pub trait InternalSessionCont
+  < ParentSession, Lens, I, Parent, Out >
+  : InternalSessionSum <
+      Lens, I, Parent, Out
+    >
+where
+  Parent : ProcessSum,
+  Out : Process,
+  I : Processes,
+{
+  type CurrentCont;
+
+  type ContSum;
+
+  fn make_cont_sum
+    ( selector : Self :: SelectorSum,
+      inject :
+        Box <
+          dyn FnOnce (
+            Self :: SessionSum
+          ) ->
+            ParentSession
+        >
+    ) ->
+      Self :: ContSum
+  ;
 }
 
 impl
@@ -51,20 +82,143 @@ where
     >;
 }
 
-// impl
-//   < Lens, I, T, D, P, Q, R >
-//   InternalSum < I, D, P, Lens >
-//   for Sum < Q, R >
-// where
-//   P : Process,
-//   Q : Process,
-//   R : InternalSum < I, D, P, Lens >,
-//   I : Processes,
-//   D : Processes,
-//   Lens :
-//     ProcessLens <
-//       I, T, D, P, Q
-//     >,
-// {
-//   type SessionSum = ();
-// }
+impl
+  < Lens, I, ParentSum, Out, P, Rest >
+  InternalSessionSum <
+    Lens, I, ParentSum, Out
+  >
+  for Sum < P, Rest >
+where
+  P : Process + 'static,
+  Out : Process + 'static,
+  ParentSum : ProcessSum,
+  Rest :
+    InternalSessionSum <
+      Lens, I, ParentSum, Out
+    > + 'static,
+  I : Processes + 'static,
+  Lens :
+    ProcessLens <
+      I,
+      InternalChoice < ParentSum >,
+      P
+    >,
+{
+  type CurrentSession =
+    PartialSession <
+      Lens :: Target,
+      Out
+    >;
+
+  type SessionSum =
+    Sum <
+      PartialSession <
+        Lens :: Target,
+        Out
+      >,
+      Rest :: SessionSum
+    >;
+}
+
+impl
+  < ParentSession, Lens, I, ParentSum, Out, P, Rest >
+  InternalSessionCont <
+    ParentSession, Lens, I, ParentSum, Out
+  >
+  for Sum < P, Rest >
+where
+  P : Process + 'static,
+  Out : Process + 'static,
+  ParentSum : ProcessSum,
+  ParentSession : 'static,
+  Rest :
+    InternalSessionCont <
+      ParentSession, Lens, I, ParentSum, Out
+    > + 'static,
+  I : Processes + 'static,
+  Lens :
+    ProcessLens <
+      I,
+      InternalChoice < ParentSum >,
+      P
+    >,
+{
+  type CurrentCont =
+    Box <
+      dyn FnOnce (
+        Self :: CurrentSession
+      ) ->
+        ParentSession
+    >;
+
+  type ContSum =
+    Sum <
+      Self :: CurrentCont,
+      Rest :: ContSum
+    >;
+
+
+  fn make_cont_sum
+    ( selector : Self :: SelectorSum,
+      inject :
+        Box <
+          dyn FnOnce (
+            Self :: SessionSum
+          ) ->
+            ParentSession
+        >
+    ) ->
+      Self :: ContSum
+  {
+    match selector {
+      Sum::Inl (_) => {
+        let cont
+          : Self :: CurrentCont
+          = Box::new (
+              move | session | {
+                let session_sum
+                  : Self :: SessionSum
+                  = Sum::Inl ( session );
+
+                let parent_session
+                  : ParentSession
+                  = inject ( session_sum );
+
+                parent_session
+              });
+
+        let cont_sum
+          : Self :: ContSum
+          = Sum :: Inl ( cont );
+
+        cont_sum
+      },
+      Sum::Inr (selector2) => {
+        let inject2
+          : Box <
+              dyn FnOnce (
+                Rest :: SessionSum
+              ) ->
+                ParentSession
+            >
+          = Box::new (
+              move | session | {
+                let session_sum
+                  : Self :: SessionSum
+                  = Sum::Inr ( session );
+
+                inject ( session_sum )
+              });
+
+        let cont_sum
+          : Rest :: ContSum
+          = Rest :: make_cont_sum (
+              selector2,
+              inject2
+            );
+
+        Sum :: Inr ( cont_sum )
+      }
+    }
+  }
+}
