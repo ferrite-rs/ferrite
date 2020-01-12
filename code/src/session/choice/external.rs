@@ -242,14 +242,7 @@ where
   create_partial_session (
     async move | ins1, sender | {
       let (offerer_chan, ins2) =
-        < Lens as
-          ProcessLens <
-            I,
-            ExternalChoice < P1, P2 >,
-            P1
-          >
-        >
-        :: split_channels ( ins1 );
+        Lens :: split_channels ( ins1 );
 
       let offerer = offerer_chan.recv().await.unwrap();
       let input_variant = offerer(Choice::Left);
@@ -257,14 +250,7 @@ where
       match input_variant {
         Either::Left(input_chan) => {
           let ins3 =
-            < Lens as
-              ProcessLens <
-                I,
-                ExternalChoice < P1, P2 >,
-                P1
-              >
-            >
-            :: merge_channels( input_chan, ins2 );
+            Lens :: merge_channels( input_chan, ins2 );
 
             run_partial_session
               ( cont, ins3, sender

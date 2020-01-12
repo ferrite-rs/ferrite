@@ -46,7 +46,7 @@ where
   Q : Process + 'static,
   I : Processes + 'static
 {
-  return create_partial_session (
+  create_partial_session (
     async move |
       ins,
       sender: Sender<

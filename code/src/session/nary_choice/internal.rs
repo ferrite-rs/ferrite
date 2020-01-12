@@ -1,11 +1,20 @@
 
 use std::pin::Pin;
+use async_std::task;
+use async_macros::join;
 use std::future::Future;
-use async_std::sync::Sender;
+use async_std::sync::{ Sender, channel };
 
 pub use crate::base::*;
 pub use crate::processes::*;
 pub use crate::process::nary_choice::*;
+
+pub trait OfferSum
+  < I, Lens >
+  : SelectSum < Lens >
+{
+
+}
 
 pub trait InternalSessionSum
   < Lens, I, ParentSum, Out >
@@ -316,7 +325,6 @@ where
       Rest :: ContSum
     >;
 
-
   fn make_cont_sum
     ( selector : Self :: SelectorSum,
       inject :
@@ -442,6 +450,45 @@ where
       }
     }
   }
+}
+
+pub fn offer_case
+  < Lens, I, P, Sum >
+  ( cont :
+      PartialSession <
+        I,
+        Sum :: SelectedProcess
+      >
+  ) ->
+    PartialSession <
+      I,
+      InternalChoice < Sum >
+    >
+where
+  I : Processes + 'static,
+  Sum :
+    SelectSum < Lens >
+    + 'static
+{
+  create_partial_session (
+    async move | ins, sender1 | {
+      let (sender2, receiver2) = channel (1);
+
+      let child1 = task::spawn(async {
+        run_partial_session
+          ( cont, ins, sender2
+          ).await;
+      });
+
+      let child2 = task::spawn(async move {
+        sender1.send(
+          Sum :: inject_selected ( receiver2 )
+        ).await;
+      });
+
+      join!(child1, child2).await;
+    }
+  )
 }
 
 pub fn case

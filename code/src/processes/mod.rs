@@ -11,6 +11,7 @@ pub use self::lens::{
   SelectorZ,
   SelectorSucc,
   NextSelector,
+  mk_selector_succ,
 };
 
 pub use self::session::{
