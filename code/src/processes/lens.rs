@@ -173,6 +173,17 @@ pub static SELECT_0 : SelectorZ = SelectorZ{};
 pub static SELECT_1 : Selector1 = select_succ();
 
 pub const fn
+  mk_selector_succ
+  < Selector >
+  () ->
+    SelectorSucc < Selector >
+{
+  SelectorSucc {
+    lens : PhantomData
+  }
+}
+
+pub const fn
   select_succ
   < Lens >
   () ->
