@@ -8,6 +8,7 @@ pub mod count;
 pub mod chatroom;
 pub mod shared;
 pub mod channel;
+pub mod nary_choice;
 
 pub use pair::*;
 pub use hello::*;

@@ -48,14 +48,15 @@ where
 }
 
 pub trait ExternalSelect
-  < Lens, I, Selector >
+  < Lens, I, Source, Selector >
   : ExternalSum < I >
 where
   I : Processes,
+  Source : Process,
   Lens :
     ProcessLens <
       I,
-      Inactive,
+      Source,
       Self :: SelectedProcess
     >,
 {
@@ -325,18 +326,19 @@ where
 }
 
 impl
-  < Lens, I, P >
+  < Lens, I, Source, P >
   ExternalSelect <
-    Lens, I, SelectorZ
+    Lens, I, Source, SelectorZ
   >
   for P
 where
   P : Process + 'static,
   I : Processes + 'static,
+  Source : Process + 'static,
   Lens :
     ProcessLens <
       I,
-      Inactive,
+      Source,
       P
     >,
 {
@@ -366,22 +368,23 @@ where
 }
 
 impl
-  < Lens, I, Selector, P, Rest >
+  < Lens, I, Source, Selector, P, Rest >
   ExternalSelect <
-    Lens, I,
+    Lens, I, Source,
     SelectorSucc < Selector >
   >
   for Sum < P, Rest >
 where
   P : Process + 'static,
   I : Processes + 'static,
+  Source : Process + 'static,
   Rest : ExternalSelect <
-    Lens, I, Selector
+    Lens, I, Source, Selector
   > + 'static,
   Lens :
     ProcessLens <
       I,
-      Inactive,
+      Source,
       Rest :: SelectedProcess
     >,
 {
@@ -421,20 +424,21 @@ where
 }
 
 impl
-  < Lens, I, P, Rest >
+  < Lens, I, Source, P, Rest >
   ExternalSelect <
-    Lens, I,
+    Lens, I, Source,
     SelectorZ
   >
   for Sum < P, Rest >
 where
   P : Process + 'static,
   I : Processes + 'static,
+  Source : Process + 'static,
   Rest : ExternalSum < I > + 'static,
   Lens :
     ProcessLens <
       I,
-      Inactive,
+      Source,
       P
     >,
 {
@@ -549,13 +553,7 @@ pub fn choose
     _ : Selector,
     cont :
       PartialSession <
-        < Lens as
-          ProcessLens <
-            I,
-            Inactive,
-            Sum :: SelectedProcess,
-          >
-        > :: Target,
+        Lens :: Target,
         P
       >
   ) ->
@@ -567,39 +565,22 @@ where
   I : Processes + 'static,
   Sum :
     ExternalSelect <
-      Lens, I, Selector
-    >,
-  Lens :
-    ProcessLens <
+      Lens,
       I,
-      Inactive,
-      Sum :: SelectedProcess,
+      ExternalChoice < Sum >,
+      Selector
     >,
   Lens :
     ProcessLens <
       I,
       ExternalChoice < Sum >,
-      Inactive,
-      Deleted =
-        < Lens as
-          ProcessLens <
-            I,
-            Inactive,
-            Sum :: SelectedProcess,
-          >
-        > :: Deleted
+      Sum :: SelectedProcess,
     >,
 {
   create_partial_session (
     async move | ins1, sender | {
       let (receiver, ins2) =
-        < Lens as
-          ProcessLens <
-            I,
-            ExternalChoice < Sum >,
-            Inactive
-          >
-        > :: split_channels ( ins1 );
+        Lens :: split_channels ( ins1 );
 
       let offerer =
         receiver.recv().await.unwrap();

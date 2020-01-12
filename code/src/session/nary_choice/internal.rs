@@ -453,8 +453,9 @@ where
 }
 
 pub fn offer_case
-  < Lens, I, P, Sum >
-  ( cont :
+  < Selector, I, Sum >
+  (  _ : Selector,
+    cont :
       PartialSession <
         I,
         Sum :: SelectedProcess
@@ -467,7 +468,7 @@ pub fn offer_case
 where
   I : Processes + 'static,
   Sum :
-    SelectSum < Lens >
+    SelectSum < Selector >
     + 'static
 {
   create_partial_session (

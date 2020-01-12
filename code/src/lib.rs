@@ -17,3 +17,4 @@ mod shared;
 mod test;
 
 pub use public::*;
+pub use public::nary_choice as nary_choice;

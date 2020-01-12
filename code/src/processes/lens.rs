@@ -168,9 +168,11 @@ where
 }
 
 pub type Selector1 = SelectorSucc < SelectorZ >;
+pub type Selector2 = SelectorSucc < Selector1 >;
 
 pub static SELECT_0 : SelectorZ = SelectorZ{};
 pub static SELECT_1 : Selector1 = select_succ();
+pub static SELECT_2 : Selector2 = select_succ();
 
 pub const fn
   mk_selector_succ

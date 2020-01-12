@@ -29,13 +29,17 @@ pub fn main() {
   // run_session(pair_session());
   // run_session(restaurant_session());
   // run_session(concat_session());
-  run_session(queue_session());
+  // run_session(queue_session());
   // run_session(counter_session());
   // run_session ( shared_counter_session() );
 
   // run_session (
   //   demo::channel::channel_session()
   // );
+
+  run_session (
+    demo::nary_choice::nary_choice_demo()
+  );
 
   info!("[Main] Main program terminating");
 }
