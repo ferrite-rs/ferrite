@@ -4,12 +4,9 @@ use crate::base::*;
 use crate::processes::lens::*;
 use async_std::sync::Receiver;
 
-pub enum Sum < P, Q > {
-  Inl ( P ),
-  Inr ( Q )
-}
-
-pub trait ProcessSum {
+pub trait ProcessSum2
+  : Send + 'static
+{
   type ValueSum : Send;
 
   type SelectCurrent : Send + 'static;
@@ -24,7 +21,7 @@ pub trait ProcessSum {
       Self::SelectorSum;
 }
 
-pub trait SelectSum < Lens > : ProcessSum {
+pub trait SelectSum < Lens > : ProcessSum2 {
   type SelectedProcess : Process + 'static;
 
   fn inject_selected
@@ -53,7 +50,7 @@ impl
   Process for
   InternalChoice < Sum >
 where
-  Sum : ProcessSum
+  Sum : ProcessSum2
 {
   type Value = Sum :: ValueSum;
 }
@@ -63,7 +60,7 @@ impl
   Process for
   ExternalChoice < Sum >
 where
-  Sum : ProcessSum
+  Sum : ProcessSum2
 {
   type Value =
     Box <
@@ -75,7 +72,7 @@ where
     >;
 }
 
-impl < P > ProcessSum for P
+impl < P > ProcessSum2 for P
 where
   P : Process
 {
@@ -101,11 +98,11 @@ where
 }
 
 impl < P, R >
-  ProcessSum
+  ProcessSum2
   for Sum < P, R >
 where
   P : Process,
-  R : ProcessSum
+  R : ProcessSum2
 {
   type ValueSum =
     Sum <
@@ -181,7 +178,7 @@ impl
   for Sum < P, R >
 where
   P : Process + 'static,
-  R : ProcessSum
+  R : ProcessSum2
 {
   type SelectedProcess = P;
 
@@ -205,7 +202,7 @@ impl
   for Sum < P, R >
 where
   P : Process,
-  R : ProcessSum,
+  R : ProcessSum2,
   R : SelectSum < Lens >
 {
   type SelectedProcess =

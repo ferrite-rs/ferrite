@@ -13,13 +13,17 @@ pub struct FixProcess < F > {
   f : PhantomData < F >
 }
 
-pub struct HoleProcess < F > {
+pub struct HoleProcess < F >
+{
   f : PhantomData < F >
 }
 
 pub struct Recurse { }
 
-impl < F > Process for HoleProcess < F > {
+impl < F > Process for HoleProcess < F >
+where
+  F : Send + 'static
+{
   type Value = Box < () >;
 }
 
@@ -27,6 +31,8 @@ impl
   < F >
   base::public::Process for
   HoleProcess < F >
+where
+  F : Send + 'static
 { }
 
 impl
@@ -35,6 +41,7 @@ impl
   for FixProcess < F >
 where
   F : ProcessAlgebra < HoleProcess < F > >
+      + Send + 'static
 {
   type Value = Box <
     <
@@ -52,6 +59,7 @@ impl
   for FixProcess < F >
 where
   F : ProcessAlgebra < HoleProcess < F > >
+      + Send + 'static
 { }
 
 impl < R >

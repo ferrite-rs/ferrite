@@ -38,6 +38,8 @@ pub struct SharedToLinear < F >
 impl < F >
   Process for
   SharedToLinear < F >
+where
+  F : Send + 'static
 {
   type Value = ();
 }
@@ -47,6 +49,7 @@ impl < F >
   Lock < F >
 where
   F : SharedAlgebra < F >
+      + Send + 'static
 {
   type Value =
     Sender <
@@ -75,6 +78,8 @@ where
 impl < F >
   base::public::Process for
   SharedToLinear < F >
+where
+  F : Send + 'static
 { }
 
 impl < F >
@@ -82,6 +87,7 @@ impl < F >
   Lock < F >
 where
   F : SharedAlgebra < F >
+      + Send + 'static
 { }
 
 impl < F >

@@ -25,7 +25,8 @@ pub fn fill_hole
   )
   -> PartialSession < Ins, HoleProcess < F > >
 where
-  F : ProcessAlgebra < HoleProcess < F > > + 'static,
+  F : ProcessAlgebra < HoleProcess < F > >
+      + Send + 'static,
   Ins : Processes + 'static
 {
   create_partial_session (
@@ -76,7 +77,8 @@ pub fn read_hole
   ->
     PartialSession < I, P >
 where
-  F : ProcessAlgebra < HoleProcess < F > > + 'static,
+  F : ProcessAlgebra < HoleProcess < F > >
+      + Send + 'static,
   P : Process + 'static,
   I : Processes + 'static,
   Lens : ProcessLens <
@@ -131,7 +133,7 @@ pub fn fix_session
     >
 where
   F : ProcessAlgebra < HoleProcess < F > >
-    + 'static,
+      + Send + 'static,
   Ins : Processes + 'static
 {
   create_partial_session (
@@ -175,7 +177,8 @@ pub fn unfix_session
   ->
     PartialSession < I, P >
 where
-  F : ProcessAlgebra < HoleProcess < F > > + 'static,
+  F : ProcessAlgebra < HoleProcess < F > >
+      + Send + 'static,
   P : Process + 'static,
   I : Processes + 'static,
   Lens :
@@ -251,7 +254,8 @@ pub fn unfix_hole
   ->
     PartialSession < I, P >
 where
-  F : ProcessAlgebra < HoleProcess < F > > + 'static,
+  F : ProcessAlgebra < HoleProcess < F > >
+      + Send + 'static,
   P : Process + 'static,
   I : Processes + 'static,
   Lens : Copy,

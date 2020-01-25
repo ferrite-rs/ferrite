@@ -135,7 +135,7 @@ pub fn
       LinearToShared < F >
     >
 where
-  F : SharedAlgebra < F > + 'static
+  F : SharedAlgebra < F > + Send + 'static
 {
   SuspendedSharedSession {
     exec_shared_session : Box::new (
@@ -183,7 +183,7 @@ pub fn
       SharedToLinear < F >
     >
 where
-  F : SharedAlgebra < F > + 'static,
+  F : SharedAlgebra < F > + Send + 'static,
   I : EmptyList + 'static
 {
   create_partial_session (
@@ -317,7 +317,7 @@ pub fn
 where
   P : Process + 'static,
   I : Processes + 'static,
-  F : SharedAlgebra < F >,
+  F : SharedAlgebra < F > + Send + 'static,
   Lens :
     ProcessLens <
       I,

@@ -10,6 +10,8 @@ mod process;
 mod processes;
 mod session;
 mod lens;
+mod nat;
+mod prism;
 
 pub mod public;
 
@@ -36,3 +38,6 @@ pub use self::lens::{
   Inactive,
   ProcessLens,
 };
+
+pub use nat::*;
+pub use prism::*;

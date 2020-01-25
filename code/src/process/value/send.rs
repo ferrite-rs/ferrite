@@ -15,7 +15,7 @@ pub struct SendValue < T, P >
 
 impl < T, P > Process for SendValue < T, P >
 where
-  T : Send,
+  T : Send + 'static,
   P : Process
 {
   type Value = (
@@ -29,7 +29,7 @@ impl
   base::public::Process for
   SendValue < T, P >
 where
-  T : Send,
+  T : Send + 'static,
   P : Process
 { }
 
@@ -37,7 +37,7 @@ impl < T, P, R >
   ProcessAlgebra < R > for
   SendValue < T, P >
 where
-  T : Send,
+  T : Send + 'static,
   P : ProcessAlgebra < R >
 {
   type ToProcess =

@@ -19,7 +19,7 @@ impl
   Process for
   ReceiveValue < T, P >
 where
-  T : Send,
+  T : Send + 'static,
   P : Process
 {
   type Value = (
@@ -33,7 +33,7 @@ impl
   base::public::Process for
   ReceiveValue < T, P >
 where
-  T : Send,
+  T : Send + 'static,
   P : Process
 { }
 
@@ -41,7 +41,7 @@ impl < T, P, R >
   ProcessAlgebra < R > for
   ReceiveValue < T, P >
 where
-  T : Send,
+  T : Send + 'static,
   P : ProcessAlgebra < R >
 {
   type ToProcess =

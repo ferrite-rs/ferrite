@@ -14,3 +14,6 @@ pub use super::{
   Inactive,
   ProcessLens
 };
+
+pub use super::nat::*;
+pub use super::prism::*;

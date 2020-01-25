@@ -21,6 +21,8 @@ use super::process::{
 impl < F >
   SharedAlgebra < F > for
   Release
+where
+  F : Send + 'static
 {
   type ToProcess = SharedToLinear < F >;
 }
@@ -29,7 +31,7 @@ impl < T, P, R >
   SharedAlgebra < R > for
   SendValue < T, P >
 where
-  T : Send,
+  T : Send + 'static,
   P : SharedAlgebra < R >
 {
   type ToProcess =
@@ -43,7 +45,7 @@ impl < T, P, R >
   SharedAlgebra < R > for
   ReceiveValue < T, P >
 where
-  T : Send,
+  T : Send + 'static,
   P : SharedAlgebra < R >
 {
   type ToProcess =

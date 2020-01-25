@@ -6,7 +6,7 @@ pub use crate::process::nary_choice::*;
 use async_std::sync::{ Sender, Receiver, channel };
 
 pub trait ExternalSum < I >
-  : ProcessSum
+  : ProcessSum2
 where
   I : Processes
 {

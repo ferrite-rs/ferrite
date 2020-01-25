@@ -18,9 +18,9 @@ pub trait OfferSum
 
 pub trait InternalSessionSum
   < Lens, I, ParentSum, Out >
-  : ProcessSum
+  : ProcessSum2
 where
-  ParentSum : ProcessSum,
+  ParentSum : ProcessSum2,
   Out : Process,
   I : Processes,
 {
@@ -35,7 +35,7 @@ pub trait InternalSessionCont
       Lens, I, ParentSum, Out
     >
 where
-  ParentSum : ProcessSum,
+  ParentSum : ProcessSum2,
   Out : Process,
   I : Processes,
   Lens :
@@ -120,7 +120,7 @@ impl
 where
   P : Process + 'static,
   Out : Process + 'static,
-  ParentSum : ProcessSum,
+  ParentSum : ProcessSum2,
   I : Processes + 'static,
   Lens :
     ProcessLens <
@@ -148,7 +148,7 @@ impl
 where
   P : Process + 'static,
   Out : Process + 'static,
-  ParentSum : ProcessSum,
+  ParentSum : ProcessSum2,
   Rest :
     InternalSessionSum <
       Lens, I, ParentSum, Out
@@ -186,7 +186,7 @@ impl
 where
   P : Process + 'static,
   Out : Process + 'static,
-  ParentSum : ProcessSum,
+  ParentSum : ProcessSum2,
   ParentSession : 'static,
   I : Processes + 'static,
   Lens :
@@ -282,7 +282,7 @@ impl
 where
   P : Process + 'static,
   Out : Process + 'static,
-  ParentSum : ProcessSum,
+  ParentSum : ProcessSum2,
   ParentSession : 'static,
   Rest :
     InternalSessionCont <
