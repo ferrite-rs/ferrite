@@ -1,3 +1,4 @@
+use crate::base::nat::*;
 
 /// A process / session type. This can be used as either input or output process.
 pub trait Process
@@ -8,4 +9,17 @@ pub trait Process
 
 pub mod public {
   pub trait Process : super::Process {}
+}
+
+impl Process for Zero {
+  type Value = Zero;
+}
+
+impl < N >
+  Process for
+  Succ < N >
+where
+  N : Nat
+{
+  type Value = Succ < N >;
 }

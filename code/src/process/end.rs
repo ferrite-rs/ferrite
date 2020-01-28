@@ -3,6 +3,7 @@ use crate::base as base;
 use crate::process as process;
 
 use base::{ Process };
+use crate::base::fix::{ TyCon };
 use process::fix::{ ProcessAlgebra };
 
 /*
@@ -23,4 +24,11 @@ impl < R >
   for End
 {
   type ToProcess = End;
+}
+
+impl < A >
+  TyCon < A >
+  for End
+{
+  type Type = End;
 }

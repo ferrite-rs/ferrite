@@ -12,6 +12,7 @@ mod session;
 mod lens;
 mod nat;
 mod prism;
+pub mod fix;
 
 pub mod public;
 

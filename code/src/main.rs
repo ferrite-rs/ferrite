@@ -8,11 +8,11 @@ extern crate env_logger;
 pub mod demo;
 pub mod macros;
 
-mod base;
-mod shared;
-mod session;
-mod process;
-mod processes;
+pub mod base;
+pub mod shared;
+pub mod session;
+pub mod process;
+pub mod processes;
 
 mod public;
 

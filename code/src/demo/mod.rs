@@ -4,6 +4,7 @@ pub mod hello;
 pub mod choice;
 pub mod concat;
 pub mod queue;
+pub mod queue2;
 pub mod count;
 pub mod chatroom;
 pub mod shared;

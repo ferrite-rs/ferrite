@@ -3,6 +3,7 @@ pub mod public;
 mod run;
 mod end;
 mod fix;
+pub mod fix2;
 mod link;
 mod value;
 mod choice;

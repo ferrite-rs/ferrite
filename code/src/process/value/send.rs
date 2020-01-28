@@ -6,6 +6,7 @@ use crate::process as process;
 
 use base::{ Process };
 use process::fix::{ ProcessAlgebra };
+use crate::base::fix::{ TyCon };
 
 pub struct SendValue < T, P >
 {
@@ -22,6 +23,19 @@ where
     T,
     Receiver < P::Value >
   );
+}
+
+impl < A, T, P >
+  TyCon < A > for
+  SendValue < T, P >
+where
+  P : TyCon < A >,
+{
+  type Type =
+    SendValue <
+      T,
+      P :: Type
+    >;
 }
 
 impl

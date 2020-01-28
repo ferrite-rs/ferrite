@@ -5,6 +5,7 @@ use crate::base as base;
 
 use base::{ Process };
 use crate::process::fix::{ ProcessAlgebra };
+use crate::base::fix::{ TyCon };
 
 use super::data::{ Either };
 
@@ -64,5 +65,19 @@ where
       < Q as
         ProcessAlgebra < R >
       > :: ToProcess
+    >;
+}
+
+impl < A, X, Y >
+  TyCon < A > for
+  InternalChoice < X, Y >
+where
+  X : TyCon < A >,
+  Y : TyCon < A >,
+{
+  type Type =
+    InternalChoice <
+      X :: Type,
+      Y :: Type
     >;
 }

@@ -3,6 +3,7 @@ pub mod public;
 
 mod end;
 mod fix;
+pub mod fix2;
 mod value;
 mod choice;
 mod channel;
