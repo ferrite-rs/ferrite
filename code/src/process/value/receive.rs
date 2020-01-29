@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use async_std::sync::{ Sender, Receiver };
 
+use super::data::Val;
 use crate::base as base;
 use crate::process as process;
 
@@ -23,7 +24,7 @@ where
   P : Process
 {
   type Value = (
-    Sender < T >,
+    Sender < Val < T > >,
     Receiver < P::Value >
   );
 }

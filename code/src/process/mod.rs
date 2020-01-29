@@ -28,6 +28,7 @@ pub use choice::{
 };
 
 pub use value::{
+  Val,
   SendValue,
   ReceiveValue,
 };

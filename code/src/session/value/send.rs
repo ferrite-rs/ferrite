@@ -3,7 +3,7 @@ use async_macros::join;
 use std::future::{ Future };
 use async_std::sync::{ Sender, Receiver, channel };
 
-use crate::process::{ SendValue };
+use crate::process::{ Val, SendValue };
 
 use crate::base::{
   Process,
@@ -43,7 +43,7 @@ where
     async move |
       ins : Ins::Values,
       sender1 : Sender < (
-        T,
+        Val < T >,
         Receiver < P::Value >
       ) >
     | {
@@ -52,7 +52,12 @@ where
       let (result, cont) = cont_builder().await;
 
       let child1 = task::spawn(async move {
-        sender1.send((result, receiver2)).await;
+        sender1.send(
+          ( Val {
+              val : result
+            },
+            receiver2
+          ) ).await;
       });
 
       let child2 = task::spawn(async move {
@@ -145,7 +150,7 @@ where
         >
         :: merge_channels (receiver2, ins2);
 
-      let cont = cont_builder(val).await;
+      let cont = cont_builder(val.val).await;
 
       run_partial_session
         ( cont, ins3, sender

@@ -37,8 +37,12 @@ pub fn main() {
   //   demo::channel::channel_session()
   // );
 
+  // run_session (
+  //   demo::nary_choice::nary_choice_demo()
+  // );
+
   run_session (
-    demo::nary_choice::nary_choice_demo()
+    demo::queue2::queue_session()
   );
 
   info!("[Main] Main program terminating");
