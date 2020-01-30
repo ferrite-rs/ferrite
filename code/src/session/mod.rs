@@ -3,7 +3,6 @@ pub mod public;
 mod run;
 mod end;
 mod fix;
-pub mod fix2;
 mod link;
 mod value;
 mod choice;
@@ -27,11 +26,8 @@ pub use self::end::{
 };
 
 pub use self::fix::{
-  fill_hole,
-  read_hole,
   fix_session,
   unfix_session,
-  unfix_hole,
 };
 
 pub use self::forward::{

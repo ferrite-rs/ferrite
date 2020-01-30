@@ -1,10 +1,7 @@
 
 use crate::base as base;
-use crate::process as process;
 
-use base::{ Process };
-use crate::base::fix::{ TyCon };
-use process::fix::{ ProcessAlgebra };
+use base::{ TyCon, Process };
 
 /*
   The unit process representing termination.
@@ -18,13 +15,6 @@ impl Process for End {
 }
 
 impl base::public::Process for End {}
-
-impl < R >
-  ProcessAlgebra < R >
-  for End
-{
-  type ToProcess = End;
-}
 
 impl < A >
   TyCon < A >

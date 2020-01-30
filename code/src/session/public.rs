@@ -7,11 +7,8 @@ pub use super::{
   terminate_async,
   terminate_nil,
 
-  fill_hole,
-  read_hole,
   fix_session,
   unfix_session,
-  unfix_hole,
 
   forward,
 

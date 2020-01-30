@@ -1,4 +1,4 @@
-use crate::base::fix::*;
+use crate::base::{ TyCon };
 
 pub enum Choice {
   Left,

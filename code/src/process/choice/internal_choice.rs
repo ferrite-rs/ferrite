@@ -3,9 +3,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ Process };
-use crate::process::fix::{ ProcessAlgebra };
-use crate::base::fix::{ TyCon };
+use base::{ TyCon, Process };
 
 use super::data::{ Either };
 
@@ -41,32 +39,6 @@ where
   P: base::public::Process,
   Q: base::public::Process
 { }
-
-impl < P, Q, R >
-  ProcessAlgebra < R > for
-  InternalChoice < P, Q >
-where
-  P : ProcessAlgebra < R >,
-  Q : ProcessAlgebra < R >,
-  < P as
-    ProcessAlgebra < R >
-  > :: ToProcess
-    : Process,
-  < Q as
-    ProcessAlgebra < R >
-  > :: ToProcess
-    : Process
-{
-  type ToProcess =
-    InternalChoice <
-      < P as
-        ProcessAlgebra < R >
-      > :: ToProcess,
-      < Q as
-        ProcessAlgebra < R >
-      > :: ToProcess
-    >;
-}
 
 impl < A, X, Y >
   TyCon < A > for

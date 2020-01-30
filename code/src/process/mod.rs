@@ -3,7 +3,6 @@ pub mod public;
 
 mod end;
 mod fix;
-pub mod fix2;
 mod value;
 mod choice;
 mod channel;
@@ -13,12 +12,7 @@ pub use end::{
   End,
 };
 
-pub use fix::{
-  Recurse,
-  FixProcess,
-  HoleProcess,
-  ProcessAlgebra,
-};
+pub use fix::*;
 
 pub use choice::{
   Choice,

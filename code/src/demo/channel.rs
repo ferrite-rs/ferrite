@@ -13,7 +13,7 @@ pub type Receiver < T > =
     ExternalChoice <
       SendValue <
         T,
-        Recurse
+        Zero
       >,
       End
     >
@@ -52,20 +52,17 @@ where
               offer_choice ( move | option | {
                 match option {
                   Either::Left ( ret ) => {
-                    ret (
-                      send_value ( val,
-                        release_shared_session ( chan,
-                          fill_hole (
-                            partial_session (
-                              make_receiver ( source ) )
-                          ) ) ) )
+                    ret ( send_value ( val,
+                      release_shared_session ( chan,
+                          partial_session (
+                            make_receiver ( source ) ) )
+                        ) )
                   },
                   Either::Right ( ret ) => {
                     ret (
                       release_shared_session ( chan,
                         terminate () ) )
-                  }
-                }
+                  } }
               }) )
           },
           None => {
@@ -178,7 +175,7 @@ pub fn channel_session ()
             receive_value_from ( receiver, async move | val | {
               info!("[Consumer 1] Receive first value: {}", val);
 
-              unfix_hole ( receiver,
+              unfix_session ( receiver,
                 choose_right ( receiver,
                   wait ( receiver,
                     terminate () ) ) )

@@ -12,7 +12,7 @@ mod session;
 mod lens;
 mod nat;
 mod prism;
-pub mod fix;
+mod fix;
 
 pub mod public;
 
@@ -40,5 +40,6 @@ pub use self::lens::{
   ProcessLens,
 };
 
+pub use fix::*;
 pub use nat::*;
 pub use prism::*;

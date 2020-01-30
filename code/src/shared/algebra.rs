@@ -1,7 +1,7 @@
 
-use crate::process::{
-  ProcessAlgebra,
+use crate::base::{ Process };
 
+use crate::process::{
   ExternalChoice,
   InternalChoice,
 
@@ -87,12 +87,12 @@ impl < P, Q, R >
   SharedAlgebra < R > for
   SendChannel < P, Q >
 where
-  P : ProcessAlgebra < R >,
+  P : Process,
   Q : SharedAlgebra < R >,
 {
   type ToProcess =
     SendChannel <
-      P :: ToProcess,
+      P,
       Q :: ToProcess
     >;
 }
@@ -101,12 +101,12 @@ impl < P, Q, R >
   SharedAlgebra < R > for
   ReceiveChannel < P, Q >
 where
-  P : ProcessAlgebra < R >,
+  P : Process,
   Q : SharedAlgebra < R >,
 {
   type ToProcess =
     ReceiveChannel <
-      P :: ToProcess,
+      P,
       Q :: ToProcess
     >;
 }

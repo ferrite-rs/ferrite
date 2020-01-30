@@ -3,8 +3,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ Process };
-use crate::process::fix::{ ProcessAlgebra };
+use base::{ TyCon, Process };
 
 pub struct SendChannel < P, Q >  {
   p: PhantomData<P>,
@@ -33,28 +32,16 @@ where
   Q: base::public::Process
 { }
 
-impl < P, Q, R >
-  ProcessAlgebra < R > for
+impl < A, P, Q >
+  TyCon < A > for
   SendChannel < P, Q >
 where
-  P : ProcessAlgebra < R >,
-  Q : ProcessAlgebra < R >,
-  < P as
-    ProcessAlgebra < R >
-  > :: ToProcess
-    : Process,
-  < Q as
-    ProcessAlgebra < R >
-  > :: ToProcess
-    : Process
+  P : TyCon < A >,
+  Q : TyCon < A >,
 {
-  type ToProcess =
-    SendChannel <
-      < P as
-        ProcessAlgebra < R >
-      > :: ToProcess,
-      < Q as
-        ProcessAlgebra < R >
-      > :: ToProcess
+  type Type =
+  SendChannel <
+      P :: Type,
+      Q :: Type
     >;
 }

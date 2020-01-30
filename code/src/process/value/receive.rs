@@ -3,10 +3,8 @@ use async_std::sync::{ Sender, Receiver };
 
 use super::data::Val;
 use crate::base as base;
-use crate::process as process;
 
-use base::{ Process };
-use process::fix::{ ProcessAlgebra };
+use base::{ TyCon, Process };
 
 pub struct ReceiveValue
   < T, P >
@@ -38,18 +36,15 @@ where
   P : Process
 { }
 
-impl < T, P, R >
-  ProcessAlgebra < R > for
+impl < A, T, P >
+  TyCon < A > for
   ReceiveValue < T, P >
 where
-  T : Send + 'static,
-  P : ProcessAlgebra < R >
+  P : TyCon < A >,
 {
-  type ToProcess =
+  type Type =
     ReceiveValue <
       T,
-      < P as
-        ProcessAlgebra < R >
-      > :: ToProcess
+      P :: Type
     >;
 }

@@ -3,8 +3,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ Process };
-use crate::process::fix::{ ProcessAlgebra };
+use base::{ TyCon, Process };
 
 use super::data::{ Choice, Either };
 
@@ -41,28 +40,38 @@ where
   Q: base::public::Process
 { }
 
-impl < P, Q, R >
-  ProcessAlgebra < R > for
+impl < A, T, X, Y >
+  TyCon < A > for
+  Box <
+    dyn FnOnce (T) ->
+      Either < X, Y >
+    + Send
+  >
+where
+  X : TyCon < A >,
+  Y : TyCon < A >,
+{
+  type Type =
+    Box <
+      dyn FnOnce (T) ->
+        Either <
+          X :: Type,
+          Y :: Type
+        >
+      + Send
+    >;
+}
+
+impl < A, P, Q >
+  TyCon < A > for
   ExternalChoice < P, Q >
 where
-  P : ProcessAlgebra < R >,
-  Q : ProcessAlgebra < R >,
-  < P as
-    ProcessAlgebra < R >
-  > :: ToProcess
-    : Process,
-  < Q as
-    ProcessAlgebra < R >
-  > :: ToProcess
-    : Process
+  P : TyCon < A >,
+  Q : TyCon < A >,
 {
-  type ToProcess =
-    ExternalChoice <
-      < P as
-        ProcessAlgebra < R >
-      > :: ToProcess,
-      < Q as
-        ProcessAlgebra < R >
-      > :: ToProcess
+  type Type =
+  ExternalChoice <
+      P :: Type,
+      Q :: Type
     >;
 }
