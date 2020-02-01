@@ -107,7 +107,7 @@ impl
   < P, T >
   ProcessPrism
   < P, P, T >
-  for Zero
+  for Z
 where
   P : Process,
   T : ProcessField < P >
@@ -135,7 +135,7 @@ impl
     P,
     T
   >
-  for Zero
+  for Z
 where
   P : Process,
   R : ProcessSum < T >,

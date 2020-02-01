@@ -4,7 +4,6 @@ pub use super::process::public::{
 };
 
 pub use super::{
-  Release,
   LinearToShared,
   SharedToLinear,
 

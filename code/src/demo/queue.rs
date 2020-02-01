@@ -10,7 +10,7 @@ type Queue < A > =
   FixProcess <
     InternalChoice <
       End,
-      SendValue < A, Zero >,
+      SendValue < A, Z >,
     >
   >;
 

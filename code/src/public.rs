@@ -98,7 +98,6 @@ pub use crate::session::public::{
 };
 
 pub use crate::shared::public::{
-  Release,
   SharedProcess,
   LinearToShared,
   SharedToLinear,

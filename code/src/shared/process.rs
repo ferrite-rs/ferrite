@@ -13,12 +13,10 @@ pub mod public {
   pub trait SharedProcess : super::SharedProcess {}
 }
 
-pub trait SharedAlgebra < R >
+pub trait SharedTyCon < R >
 {
   type ToProcess : Process;
 }
-
-pub struct Release {}
 
 pub struct Lock < F >
 {
@@ -48,13 +46,13 @@ impl < F >
   Process for
   Lock < F >
 where
-  F : SharedAlgebra < F >
+  F : SharedTyCon < F >
       + Send + 'static
 {
   type Value =
     Sender <
       Receiver<
-        < < F as SharedAlgebra < F > >
+        < < F as SharedTyCon < F > >
           :: ToProcess
           as Process
         > :: Value
@@ -66,10 +64,10 @@ impl < F >
   SharedProcess for
   LinearToShared < F >
 where
-  F : SharedAlgebra < F >
+  F : SharedTyCon < F >
 {
   type SharedValue =
-    < < F as SharedAlgebra < F > >
+    < < F as SharedTyCon < F > >
       :: ToProcess
       as Process
     > :: Value;
@@ -86,7 +84,7 @@ impl < F >
   base::public::Process for
   Lock < F >
 where
-  F : SharedAlgebra < F >
+  F : SharedTyCon < F >
       + Send + 'static
 { }
 
@@ -94,5 +92,5 @@ impl < F >
   public::SharedProcess for
   LinearToShared < F >
 where
-  F : SharedAlgebra < F >
+  F : SharedTyCon < F >
 { }

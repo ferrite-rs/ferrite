@@ -1,5 +1,5 @@
 
-use crate::base::{ Process };
+use crate::base::{ Process, Z };
 
 use crate::process::{
   ExternalChoice,
@@ -13,14 +13,13 @@ use crate::process::{
 };
 
 use super::process::{
-  Release,
-  SharedAlgebra,
+  SharedTyCon,
   SharedToLinear,
 };
 
 impl < F >
-  SharedAlgebra < F > for
-  Release
+  SharedTyCon < F > for
+  Z
 where
   F : Send + 'static
 {
@@ -28,11 +27,11 @@ where
 }
 
 impl < T, P, R >
-  SharedAlgebra < R > for
+  SharedTyCon < R > for
   SendValue < T, P >
 where
   T : Send + 'static,
-  P : SharedAlgebra < R >
+  P : SharedTyCon < R >
 {
   type ToProcess =
     SendValue <
@@ -42,11 +41,11 @@ where
 }
 
 impl < T, P, R >
-  SharedAlgebra < R > for
+  SharedTyCon < R > for
   ReceiveValue < T, P >
 where
   T : Send + 'static,
-  P : SharedAlgebra < R >
+  P : SharedTyCon < R >
 {
   type ToProcess =
     ReceiveValue <
@@ -56,11 +55,11 @@ where
 }
 
 impl < P, Q, R >
-  SharedAlgebra < R > for
+  SharedTyCon < R > for
   InternalChoice < P, Q >
 where
-  P : SharedAlgebra < R >,
-  Q : SharedAlgebra < R >,
+  P : SharedTyCon < R >,
+  Q : SharedTyCon < R >,
 {
   type ToProcess =
     InternalChoice <
@@ -70,11 +69,11 @@ where
 }
 
 impl < P, Q, R >
-  SharedAlgebra < R > for
+  SharedTyCon < R > for
   ExternalChoice < P, Q >
 where
-  P : SharedAlgebra < R >,
-  Q : SharedAlgebra < R >,
+  P : SharedTyCon < R >,
+  Q : SharedTyCon < R >,
 {
   type ToProcess =
     ExternalChoice <
@@ -84,11 +83,11 @@ where
 }
 
 impl < P, Q, R >
-  SharedAlgebra < R > for
+  SharedTyCon < R > for
   SendChannel < P, Q >
 where
   P : Process,
-  Q : SharedAlgebra < R >,
+  Q : SharedTyCon < R >,
 {
   type ToProcess =
     SendChannel <
@@ -98,11 +97,11 @@ where
 }
 
 impl < P, Q, R >
-  SharedAlgebra < R > for
+  SharedTyCon < R > for
   ReceiveChannel < P, Q >
 where
   P : Process,
-  Q : SharedAlgebra < R >,
+  Q : SharedTyCon < R >,
 {
   type ToProcess =
     ReceiveChannel <

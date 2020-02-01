@@ -13,7 +13,7 @@ pub type Receiver < T > =
     ExternalChoice <
       SendValue <
         T,
-        Zero
+        Z
       >,
       End
     >
@@ -22,10 +22,10 @@ pub type Receiver < T > =
 pub type Channel < T > =
   LinearToShared <
     ExternalChoice <
-      ReceiveValue < T, Release >,
+      ReceiveValue < T, Z >,
       SendValue <
         Option < T >,
-        Release
+        Z
       >
     >
   >;

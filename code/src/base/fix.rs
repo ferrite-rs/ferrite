@@ -32,9 +32,34 @@ where
   *x.unfix
 }
 
+impl < A, F >
+  TyCon < A > for
+  Fix < F >
+where
+  F : TyCon < A >,
+  F : TyCon < Fix < F > >,
+  < F as
+    TyCon < A >
+  > :: Type :
+    TyCon <
+      Fix <
+        < F as
+          TyCon < A >
+        > :: Type
+      >
+    >,
+{
+  type Type =
+    Fix <
+      < F as
+        TyCon < A >
+      > :: Type
+    >;
+}
+
 impl < A >
   TyCon < A > for
-  Zero
+  Z
 {
   type Type = A;
 }

@@ -9,6 +9,7 @@ pub mod chatroom;
 pub mod shared;
 pub mod channel;
 pub mod nary_choice;
+pub mod canvas;
 
 pub use pair::*;
 pub use hello::*;

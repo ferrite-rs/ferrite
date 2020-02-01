@@ -9,7 +9,7 @@ pub fn make_counter_session
   ( count : i32 ) ->
     SuspendedSharedSession <
       LinearToShared <
-        SendValue < i32, Release >
+        SendValue < i32, Z >
       >
     >
 {
@@ -34,7 +34,7 @@ pub fn read_counter_session
   , shared:
       SharedSession <
         LinearToShared <
-          SendValue < i32, Release >
+          SendValue < i32, Z >
         >
       >
   ) -> Session < End >
@@ -67,7 +67,7 @@ pub fn shared_counter_session ()
   let shared :
     SharedSession <
       LinearToShared <
-        SendValue < i32, Release >
+        SendValue < i32, Z >
       >
     > =
     run_shared_session ( make_counter_session ( 0 ));

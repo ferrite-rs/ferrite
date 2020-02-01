@@ -6,6 +6,7 @@ mod fix;
 mod value;
 mod choice;
 mod channel;
+pub mod choice2;
 pub mod nary_choice;
 
 pub use end::{

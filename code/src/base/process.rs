@@ -11,8 +11,8 @@ pub mod public {
   pub trait Process : super::Process {}
 }
 
-impl Process for Zero {
-  type Value = Zero;
+impl Process for Z {
+  type Value = Z;
 }
 
 impl < N >

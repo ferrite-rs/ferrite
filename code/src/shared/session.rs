@@ -9,7 +9,7 @@ use async_std::sync::{ Sender, Receiver, channel };
 use super::process::{
   Lock,
   SharedProcess,
-  SharedAlgebra,
+  SharedTyCon,
   LinearToShared,
   SharedToLinear,
 };
@@ -127,7 +127,7 @@ pub fn
   ( cont : PartialSession <
       (Lock < F >, ()),
       < F as
-        SharedAlgebra < F >
+        SharedTyCon < F >
       > :: ToProcess
     >
   ) ->
@@ -135,7 +135,7 @@ pub fn
       LinearToShared < F >
     >
 where
-  F : SharedAlgebra < F > + Send + 'static
+  F : SharedTyCon < F > + Send + 'static
 {
   SuspendedSharedSession {
     exec_shared_session : Box::new (
@@ -183,7 +183,7 @@ pub fn
       SharedToLinear < F >
     >
 where
-  F : SharedAlgebra < F > + Send + 'static,
+  F : SharedTyCon < F > + Send + 'static,
   I : EmptyList + 'static
 {
   create_partial_session (
@@ -192,7 +192,7 @@ where
         : ( Receiver <
               Sender <
                 Receiver<
-                  < < F as SharedAlgebra < F > >
+                  < < F as SharedTyCon < F > >
                     :: ToProcess
                     as Process
                   > :: Value
@@ -232,12 +232,12 @@ pub fn
   ) ->
     PartialSession < I, P >
 where
-  F : SharedAlgebra < F > + 'static,
+  F : SharedTyCon < F > + 'static,
   P : Process + 'static,
   I : Processes + NextSelector + 'static,
   I : Appendable <
         ( < F as
-            SharedAlgebra < F >
+            SharedTyCon < F >
           > :: ToProcess
         , ()
         )
@@ -249,7 +249,7 @@ where
             < I as
               Appendable <
                 ( < F as
-                    SharedAlgebra < F >
+                    SharedTyCon < F >
                   > :: ToProcess
                 , ()
                 )
@@ -282,7 +282,7 @@ where
           < I as
             Appendable <
               ( < F as
-                  SharedAlgebra < F >
+                  SharedTyCon < F >
                 > :: ToProcess
               , ()
               )
@@ -317,7 +317,7 @@ pub fn
 where
   P : Process + 'static,
   I : Processes + 'static,
-  F : SharedAlgebra < F > + Send + 'static,
+  F : SharedTyCon < F > + Send + 'static,
   Lens :
     ProcessLens <
       I,
