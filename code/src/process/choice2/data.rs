@@ -19,25 +19,6 @@ where
   field2 : T2 :: Type
 }
 
-impl < T1, T2, A >
-  TyCon < A >
-  for Merge < T1, T2 >
-where
-  T1 : TyCon < A >,
-  T2 : TyCon < A >,
-{
-  type Type = MergeField < T1, T2, A >;
-}
-
-impl < P >
-  TyCon < P > for
-  ReceiverCon
-where
-  P : Process
-{
-  type Type = Receiver < P :: Value >;
-}
-
 pub enum Sum < A, B >
 {
   Inl ( A ),
@@ -49,29 +30,12 @@ pub trait SumRow < T >
   type Field;
 }
 
-impl < T >
-  SumRow < T > for
-  ()
-{
-  type Field = Bottom;
-}
-
-impl < T, A, R >
-  SumRow < T > for
-  ( A, R )
-where
-  T : TyCon < A >,
-  R : SumRow < T >
-{
-  type Field =
-    Sum <
-      T :: Type,
-      R :: Field
-    >;
-}
-
 pub trait Iso {
   type Canon;
+}
+
+pub trait Inject < A > {
+  fn inject ( a : A ) -> Self;
 }
 
 pub trait IsoRow < T >
@@ -122,6 +86,40 @@ pub trait LiftSum < T1, T2, F >
     > :: Field;
 }
 
+pub trait LiftField2 < T1, T2, A, T3, Root >
+where
+  T1 : TyCon < A >,
+  T2 : TyCon < A >,
+  T3 : TyCon < A >,
+{
+  fn lift_field (
+    inject : impl Fn (T3 :: Type) -> Root + Send + 'static,
+    field : T1 :: Type
+  ) ->
+    T2 :: Type;
+}
+
+pub trait LiftSum2 < T1, T2, F, T3, Root >
+  : SumRow < T1 >
+  + SumRow < T2 >
+  + SumRow < T3 >
+{
+  fn lift_sum (
+    inject:
+      impl Fn
+        ( < Self as SumRow < T3 > >:: Field ) ->
+          Root
+          + Send + 'static,
+    sum :
+      < Self as
+        SumRow < T1 >
+      > :: Field
+  ) ->
+    < Self as
+      SumRow < T2 >
+    > :: Field;
+}
+
 pub trait IntersectSum < T1, T2 >
   : SumRow < T1 >
   + SumRow < T2 >
@@ -150,6 +148,7 @@ where
   T : TyCon < A >
 {
   fn elim_field (
+    self,
     a : T :: Type
   ) ->
     R
@@ -160,6 +159,7 @@ pub trait ElimSum < T, F, R >
   : SumRow < T >
 {
   fn elim_sum (
+    f : F,
     row : Self :: Field
   ) ->
     R;
@@ -182,6 +182,64 @@ where
   fn intro_sum () ->
     Self :: Field
   ;
+}
+
+impl < T1, T2, A >
+  TyCon < A >
+  for Merge < T1, T2 >
+where
+  T1 : TyCon < A >,
+  T2 : TyCon < A >,
+{
+  type Type = MergeField < T1, T2, A >;
+}
+
+impl < P >
+  TyCon < P > for
+  ReceiverCon
+where
+  P : Process
+{
+  type Type = Receiver < P :: Value >;
+}
+
+impl < T >
+  SumRow < T > for
+  ()
+{
+  type Field = Bottom;
+}
+
+impl < T, A, R >
+  SumRow < T > for
+  ( A, R )
+where
+  T : TyCon < A >,
+  R : SumRow < T >
+{
+  type Field =
+    Sum <
+      T :: Type,
+      R :: Field
+    >;
+}
+
+impl Inject < Bottom > for Bottom {
+  fn inject ( a : Bottom ) -> Bottom {
+    a
+  }
+}
+
+impl < A, B, C >
+  Inject < C > for
+  Sum < A, B >
+where
+  B : Inject < C >
+{
+  fn inject ( c : C ) -> Sum < A, B >
+  {
+    Sum::Inr ( B::inject(c) )
+  }
 }
 
 impl < T1, T2 >
@@ -292,11 +350,97 @@ where
   }
 }
 
+
+impl < T1, T2, F, T3, Root >
+  LiftSum2 < T1, T2, F, T3, Root > for
+  ()
+{
+  fn lift_sum (
+    inject : impl Fn ( Bottom ) -> Root,
+    bot : Bottom
+  ) -> Bottom
+  {
+    match bot {}
+  }
+}
+
+impl < T1, T2, F, T3, Root, A, B >
+  LiftSum2 < T1, T2, F, T3, Root > for
+  (A, B)
+where
+  T1 : TyCon < A >,
+  T2 : TyCon < A >,
+  T3 : TyCon < A >,
+  F : LiftField2 < T1, T2, A, T3, Root >,
+  B : LiftSum2 < T1, T2, F, T3, Root >,
+{
+  fn lift_sum (
+    inject1 :
+      impl Fn
+        ( Sum <
+            T3 :: Type,
+            < B as
+              SumRow < T3 >
+            > :: Field
+          >
+        ) ->
+          Root
+          + Send + 'static,
+    sum :
+      Sum <
+        T1 :: Type,
+        < B as
+          SumRow < T1 >
+        > :: Field
+      >
+  ) ->
+    Sum <
+      T2 :: Type,
+      < B as
+        SumRow < T2 >
+      > :: Field
+    >
+  {
+    match sum {
+      Sum::Inl(a) => {
+        let inject2 =
+          move | b : T3 :: Type | ->
+            Root
+          {
+            inject1 ( Sum::Inl (b) )
+          };
+
+        Sum :: Inl(
+          F :: lift_field ( inject2, a )
+        )
+      },
+      Sum::Inr(b) => {
+        let inject2 =
+          move |
+            b :
+              < B as
+                SumRow < T3 >
+              > :: Field
+          | ->
+            Root
+          {
+            inject1 ( Sum::Inr (b) )
+          };
+
+        Sum::Inr (
+          B :: lift_sum ( inject2, b )
+        )
+      }
+    }
+  }
+}
+
+
 impl < T, F, R >
   ElimSum < T, F, R > for
   ()
 {
-  fn elim_sum ( row : Bottom ) -> R {
+  fn elim_sum ( _ : F, row : Bottom ) -> R {
     match row {}
   }
 }
@@ -310,6 +454,7 @@ where
   F : ElimField < T, A, R >,
 {
   fn elim_sum (
+    f : F,
     row :
       Sum <
         T :: Type,
@@ -320,10 +465,10 @@ where
   {
     match row {
       Sum::Inl(a) => {
-        F :: elim_field ( a )
+        f.elim_field ( a )
       },
       Sum::Inr(b) => {
-        B :: elim_sum ( b )
+        B :: elim_sum ( f, b )
       }
     }
   }
