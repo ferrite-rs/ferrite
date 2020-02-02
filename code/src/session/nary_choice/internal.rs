@@ -10,14 +10,14 @@ pub use crate::processes::*;
 pub use crate::process::nary_choice::*;
 
 pub trait OfferSum
-  < I, Lens >
-  : SelectSum < Lens >
+  < I, N >
+  : SelectSum < N >
 {
 
 }
 
 pub trait InternalSessionSum
-  < Lens, I, ParentSum, Out >
+  < N, I, ParentSum, Out >
   : ProcessSum2
 where
   ParentSum : ProcessSum2,
@@ -30,15 +30,15 @@ where
 }
 
 pub trait InternalSessionCont
-  < ParentSession, Lens, I, ParentSum, Out >
+  < ParentSession, N, I, ParentSum, Out >
   : InternalSessionSum <
-      Lens, I, ParentSum, Out
+      N, I, ParentSum, Out
     >
 where
   ParentSum : ProcessSum2,
   Out : Process,
   I : Processes,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < ParentSum >,
@@ -65,7 +65,7 @@ where
 
   fn run_cont
     ( ins :
-        < Lens :: Deleted
+        < N :: Deleted
           as Processes
         > :: Values,
       sender : Sender < Out :: Value >,
@@ -79,31 +79,31 @@ where
 }
 
 pub struct InternalChoiceResult
-  < Lens, I, P, Sum >
+  < N, I, P, Sum >
 where
   P : Process,
   I : Processes,
   Sum :
     InternalSessionSum <
-      Lens, I, Sum, P
+      N, I, Sum, P
     >
 {
   result: Sum :: SessionSum
 }
 
 fn mk_internal_choice_result
-  < Lens, I, P, Sum >
+  < N, I, P, Sum >
   ( session_sum : Sum :: SessionSum
   ) ->
     InternalChoiceResult <
-      Lens, I, P, Sum
+      N, I, P, Sum
     >
 where
   P : Process,
   I : Processes,
   Sum :
     InternalSessionSum <
-      Lens, I, Sum, P
+      N, I, Sum, P
     >
 {
   InternalChoiceResult {
@@ -112,9 +112,9 @@ where
 }
 
 impl
-  < Lens, I, ParentSum, Out, P >
+  < N, I, ParentSum, Out, P >
   InternalSessionSum <
-    Lens, I, ParentSum, Out
+    N, I, ParentSum, Out
   >
   for P
 where
@@ -122,7 +122,7 @@ where
   Out : Process + 'static,
   ParentSum : ProcessSum2,
   I : Processes + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < ParentSum >,
@@ -131,7 +131,7 @@ where
 {
   type CurrentSession =
     PartialSession <
-      Lens :: Target,
+      N :: Target,
       Out
     >;
 
@@ -140,9 +140,9 @@ where
 }
 
 impl
-  < Lens, I, ParentSum, Out, P, Rest >
+  < N, I, ParentSum, Out, P, Rest >
   InternalSessionSum <
-    Lens, I, ParentSum, Out
+    N, I, ParentSum, Out
   >
   for Sum < P, Rest >
 where
@@ -151,10 +151,10 @@ where
   ParentSum : ProcessSum2,
   Rest :
     InternalSessionSum <
-      Lens, I, ParentSum, Out
+      N, I, ParentSum, Out
     > + 'static,
   I : Processes + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < ParentSum >,
@@ -163,14 +163,14 @@ where
 {
   type CurrentSession =
     PartialSession <
-      Lens :: Target,
+      N :: Target,
       Out
     >;
 
   type SessionSum =
     Sum <
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         Out
       >,
       Rest :: SessionSum
@@ -178,9 +178,9 @@ where
 }
 
 impl
-  < ParentSession, Lens, I, ParentSum, Out, P >
+  < ParentSession, N, I, ParentSum, Out, P >
   InternalSessionCont <
-    ParentSession, Lens, I, ParentSum, Out
+    ParentSession, N, I, ParentSum, Out
   >
   for P
 where
@@ -189,19 +189,19 @@ where
   ParentSum : ProcessSum2,
   ParentSession : 'static,
   I : Processes + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < ParentSum >,
       Inactive,
     >,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < ParentSum >,
       P,
       Deleted =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             InternalChoice < ParentSum >,
@@ -223,7 +223,7 @@ where
     Self :: CurrentCont;
 
   fn make_cont_sum
-    ( _ : SelectorZ,
+    ( _ : Z,
       inject :
         Box <
           dyn FnOnce (
@@ -240,7 +240,7 @@ where
 
   fn run_cont
     ( ins :
-        < < Lens as
+        < < N as
             ProcessLens <
               I,
               InternalChoice < ParentSum >,
@@ -259,7 +259,7 @@ where
       > >
   {
     let ins2 =
-      < Lens as
+      < N as
         ProcessLens <
           I,
           InternalChoice < ParentSum >,
@@ -274,9 +274,9 @@ where
 }
 
 impl
-  < ParentSession, Lens, I, ParentSum, Out, P, Rest >
+  < ParentSession, N, I, ParentSum, Out, P, Rest >
   InternalSessionCont <
-    ParentSession, Lens, I, ParentSum, Out
+    ParentSession, N, I, ParentSum, Out
   >
   for Sum < P, Rest >
 where
@@ -286,22 +286,22 @@ where
   ParentSession : 'static,
   Rest :
     InternalSessionCont <
-      ParentSession, Lens, I, ParentSum, Out
+      ParentSession, N, I, ParentSum, Out
     > + 'static,
   I : Processes + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < ParentSum >,
       Inactive,
     >,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < ParentSum >,
       P,
       Deleted =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             InternalChoice < ParentSum >,
@@ -393,7 +393,7 @@ where
 
   fn run_cont
     ( ins :
-        < < Lens as
+        < < N as
             ProcessLens <
               I,
               InternalChoice < ParentSum >,
@@ -416,7 +416,7 @@ where
         match session_sum {
           Sum::Inl (session) => {
             let ins2 =
-              < Lens as
+              < N as
                 ProcessLens <
                   I,
                   InternalChoice < ParentSum >,
@@ -493,8 +493,8 @@ where
 }
 
 pub fn case
-  < Lens, I, P, Sum, F >
-  ( _ : Lens,
+  < N, I, P, Sum, F >
+  ( _ : N,
     cont_builder : F
   ) ->
     PartialSession < I, P >
@@ -506,10 +506,10 @@ where
       Sum :: ContSum
     ) ->
       InternalChoiceResult <
-        Lens, I, P, Sum
+        N, I, P, Sum
       >
     + Send + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < Sum >,
@@ -517,14 +517,14 @@ where
     > + 'static,
   Sum :
     InternalSessionSum <
-      Lens, I, Sum, P
+      N, I, Sum, P
     > + 'static,
   Sum :
     InternalSessionCont <
       InternalChoiceResult <
-        Lens, I, P, Sum
+        N, I, P, Sum
       >,
-      Lens,
+      N,
       I,
       Sum,
       P
@@ -533,7 +533,7 @@ where
   create_partial_session (
     async move | ins1, sender | {
       let (sum_chan, ins2) =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             InternalChoice < Sum >,

@@ -181,7 +181,7 @@ impl
     P,
     T
   >
-  for Succ < N >
+  for S < N >
 where
   N : Nat,
   P : Process,

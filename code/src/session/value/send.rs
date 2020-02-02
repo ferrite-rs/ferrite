@@ -95,8 +95,8 @@ where
       receive_value_from(cont_builder) :: T ∧ Q, Δ ⊢ P
  */
 pub fn receive_value_from
-  < Lens, I, T, Q, P, Func, Fut >
-  ( _ : Lens,
+  < N, I, T, Q, P, Func, Fut >
+  ( _ : N,
     cont_builder : Func
   ) ->
     PartialSession < I, Q >
@@ -112,11 +112,11 @@ where
     Future <
       Output =
         PartialSession <
-          Lens :: Target,
+          N :: Target,
           Q
         >
     > + Send,
-  Lens :
+  N :
     ProcessLens <
       I,
       SendValue < T, P >,
@@ -129,7 +129,7 @@ where
       sender : Sender < Q :: Value >
     | {
       let (receiver1, ins2) =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             SendValue < T, P >,
@@ -141,7 +141,7 @@ where
       let (val, receiver2) = receiver1.recv().await.unwrap();
 
       let ins3 =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             SendValue < T, P >,

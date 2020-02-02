@@ -493,7 +493,7 @@ where
 }
 
 impl < N, T, F, A, B >
-  IntroSum < Succ < N >, T, F > for
+  IntroSum < S < N >, T, F > for
   ( A, B )
 where
   N : Nat,

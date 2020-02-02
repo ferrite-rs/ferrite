@@ -5,16 +5,18 @@ pub trait Nat
   : Send + 'static
 {}
 
+#[derive(Copy, Clone)]
 pub struct Z {}
 
-pub struct Succ < N > {
+#[derive(Copy, Clone)]
+pub struct S < N > {
   n : PhantomData < N >
 }
 
 impl Nat for Z {}
 
 impl < N > Nat
-  for Succ < N >
+  for S < N >
 where
   N : Nat
 {}
@@ -24,11 +26,11 @@ pub fn mk_zero () -> Z {
 }
 
 pub fn mk_succ < N > () ->
-  Succ < N >
+  S < N >
 where
   N : Nat
 {
-  Succ {
+  S {
     n : PhantomData
   }
 }

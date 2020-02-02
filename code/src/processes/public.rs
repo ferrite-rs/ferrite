@@ -1,7 +1,5 @@
 
 pub use super::{
-  SelectorZ,
-  SelectorSucc,
   NextSelector,
 
   session,

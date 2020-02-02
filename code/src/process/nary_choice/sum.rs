@@ -9,7 +9,7 @@ pub trait ProcessSum2
 {
   type ValueSum : Send;
 
-  type SelectCurrent : Send + 'static;
+  type SelectCurrent : Nat + Send + 'static;
   type SelectorSum : Send + 'static;
 
   fn select_current () ->
@@ -21,7 +21,7 @@ pub trait ProcessSum2
       Self::SelectorSum;
 }
 
-pub trait SelectSum < Lens > : ProcessSum2 {
+pub trait SelectSum < N > : ProcessSum2 {
   type SelectedProcess : Process + 'static;
 
   fn inject_selected
@@ -79,13 +79,13 @@ where
   type ValueSum =
     Receiver < P :: Value >;
 
-  type SelectCurrent = SelectorZ;
-  type SelectorSum = SelectorZ;
+  type SelectCurrent = Z;
+  type SelectorSum = Z;
 
   fn select_current () ->
     Self :: SelectCurrent
   {
-    SelectorZ {}
+    Z {}
   }
 
   fn value_sum_to_selector_sum
@@ -102,7 +102,7 @@ impl < P, R >
   for Sum < P, R >
 where
   P : Process,
-  R : ProcessSum2
+  R : ProcessSum2,
 {
   type ValueSum =
     Sum <
@@ -113,7 +113,7 @@ where
     >;
 
   type SelectCurrent =
-    SelectorSucc <
+    S <
       R :: SelectCurrent
     >;
 
@@ -126,7 +126,7 @@ where
   fn select_current () ->
     Self :: SelectCurrent
   {
-    mk_selector_succ ()
+    mk_succ ()
   }
 
   fn value_sum_to_selector_sum
@@ -151,7 +151,7 @@ where
 
 impl
   < P >
-  SelectSum < SelectorZ >
+  SelectSum < Z >
   for P
 where
   P : Process + 'static
@@ -173,12 +173,12 @@ where
 impl
   < P, R >
   SelectSum <
-    SelectorZ
+    Z
   >
   for Sum < P, R >
 where
   P : Process + 'static,
-  R : ProcessSum2
+  R : ProcessSum2,
 {
   type SelectedProcess = P;
 
@@ -195,18 +195,19 @@ where
 }
 
 impl
-  < P, R, Lens >
+  < P, R, N >
   SelectSum <
-    SelectorSucc < Lens >
+    S < N >
   >
   for Sum < P, R >
 where
+  N : Nat,
   P : Process,
   R : ProcessSum2,
-  R : SelectSum < Lens >
+  R : SelectSum < N >
 {
   type SelectedProcess =
-    < R as SelectSum < Lens >
+    < R as SelectSum < N >
     > :: SelectedProcess ;
 
   fn inject_selected
@@ -220,7 +221,7 @@ where
       Self :: ValueSum
   {
     Sum :: Inr (
-      < R as SelectSum < Lens >
+      < R as SelectSum < N >
       > :: inject_selected ( receiver )
     )
   }

@@ -48,12 +48,12 @@ where
 }
 
 pub trait ExternalSelect
-  < Lens, I, Source, Selector >
+  < N, I, Source, Selector >
   : ExternalSum < I >
 where
   I : Processes,
   Source : Process,
-  Lens :
+  N :
     ProcessLens <
       I,
       Source,
@@ -69,11 +69,11 @@ where
   fn select_ins (
     val_sum : Self :: ValueSum,
     ins :
-      < Lens :: Deleted
+      < N :: Deleted
         as Processes
       > :: Values
   ) ->
-    < Lens :: Target
+    < N :: Target
       as Processes
     > :: Values
   ;
@@ -164,7 +164,7 @@ where
 
 
   fn make_cont_sum
-    ( _ : SelectorZ,
+    ( _ : Z,
       inject :
         Box <
           dyn FnOnce (
@@ -326,16 +326,16 @@ where
 }
 
 impl
-  < Lens, I, Source, P >
+  < N, I, Source, P >
   ExternalSelect <
-    Lens, I, Source, SelectorZ
+    N, I, Source, Z
   >
   for P
 where
   P : Process + 'static,
   I : Processes + 'static,
   Source : Process + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       Source,
@@ -347,31 +347,31 @@ where
   fn to_selector_sum ()
     -> Self :: SelectorSum
   {
-    SelectorZ {}
+    Z {}
   }
 
   fn select_ins (
     receiver :
       Receiver < P :: Value >,
     ins :
-      < Lens :: Deleted
+      < N :: Deleted
         as Processes
       > :: Values
   ) ->
-    < Lens :: Target
+    < N :: Target
       as Processes
     > :: Values
   {
-    Lens :: merge_channels
+    N :: merge_channels
       ( receiver, ins )
   }
 }
 
 impl
-  < Lens, I, Source, Selector, P, Rest >
+  < N, I, Source, Selector, P, Rest >
   ExternalSelect <
-    Lens, I, Source,
-    SelectorSucc < Selector >
+    N, I, Source,
+    S < Selector >
   >
   for Sum < P, Rest >
 where
@@ -379,9 +379,9 @@ where
   I : Processes + 'static,
   Source : Process + 'static,
   Rest : ExternalSelect <
-    Lens, I, Source, Selector
+    N, I, Source, Selector
   > + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       Source,
@@ -402,11 +402,11 @@ where
   fn select_ins (
     val_sum : Self :: ValueSum,
     ins :
-      < Lens :: Deleted
+      < N :: Deleted
         as Processes
       > :: Values
   ) ->
-    < Lens :: Target
+    < N :: Target
       as Processes
     > :: Values
   {
@@ -424,10 +424,10 @@ where
 }
 
 impl
-  < Lens, I, Source, P, Rest >
+  < N, I, Source, P, Rest >
   ExternalSelect <
-    Lens, I, Source,
-    SelectorZ
+    N, I, Source,
+    Z
   >
   for Sum < P, Rest >
 where
@@ -435,7 +435,7 @@ where
   I : Processes + 'static,
   Source : Process + 'static,
   Rest : ExternalSum < I > + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       Source,
@@ -448,24 +448,24 @@ where
     -> Self :: SelectorSum
   {
     Sum::Inl (
-      mk_selector_succ()
+      mk_succ()
     )
   }
 
   fn select_ins (
     val_sum : Self :: ValueSum,
     ins :
-      < Lens :: Deleted
+      < N :: Deleted
         as Processes
       > :: Values
   ) ->
-    < Lens :: Target
+    < N :: Target
       as Processes
     > :: Values
   {
     match val_sum {
       Sum::Inl (receiver) => {
-        Lens :: merge_channels
+        N :: merge_channels
           ( receiver, ins )
       },
       Sum::Inr (_) => {
@@ -548,12 +548,12 @@ where
 }
 
 pub fn choose
-  < Lens, Selector, I, Sum, P >
-  ( _ : Lens,
+  < N, Selector, I, Sum, P >
+  ( _ : N,
     _ : Selector,
     cont :
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         P
       >
   ) ->
@@ -565,12 +565,12 @@ where
   I : Processes + 'static,
   Sum :
     ExternalSelect <
-      Lens,
+      N,
       I,
       ExternalChoice < Sum >,
       Selector
     >,
-  Lens :
+  N :
     ProcessLens <
       I,
       ExternalChoice < Sum >,
@@ -580,7 +580,7 @@ where
   create_partial_session (
     async move | ins1, sender | {
       let (receiver, ins2) =
-        Lens :: split_channels ( ins1 );
+        N :: split_channels ( ins1 );
 
       let offerer =
         receiver.recv().await.unwrap();

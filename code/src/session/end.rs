@@ -67,8 +67,8 @@ pub fn terminate_nil
  */
 
 pub fn wait_async
-  < Lens, I, P, Func, Fut >
-  ( _ : Lens,
+  < N, I, P, Func, Fut >
+  ( _ : N,
     cont_builder : Func
   ) ->
     PartialSession < I, P >
@@ -82,11 +82,11 @@ where
     Future <
       Output =
         PartialSession <
-          Lens :: Target,
+          N :: Target,
           P
         >
     > + Send,
-  Lens : ProcessLens < I, End, Inactive >
+  N : ProcessLens < I, End, Inactive >
 {
   create_partial_session (
     async move |
@@ -94,7 +94,7 @@ where
       sender
     | {
       let (wait_chan, ins2) =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             End,
@@ -103,7 +103,7 @@ where
         > :: split_channels (ins1);
 
       let ins3 =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             End,
@@ -121,11 +121,11 @@ where
 }
 
 pub fn wait
-  < Lens, I, P >
-  ( lens : Lens,
+  < N, I, P >
+  ( lens : N,
     cont :
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         P
       >
   ) ->
@@ -133,7 +133,7 @@ pub fn wait
 where
   I : Processes + 'static,
   P : Process + 'static,
-  Lens : ProcessLens < I, End, Inactive >
+  N : ProcessLens < I, End, Inactive >
 {
   wait_async ( lens, async move || {
     cont

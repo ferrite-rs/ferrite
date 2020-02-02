@@ -74,8 +74,8 @@ where
       send_value_to_async(cont_builder) :: T ⊃ Q, Δ ⊢ P
  */
 pub fn send_value_to_async
-  < Lens, I, P, Q, T, Func, Fut >
-  ( _ : Lens,
+  < N, I, P, Q, T, Func, Fut >
+  ( _ : N,
     cont_builder : Func
   ) ->
     PartialSession < I, P >
@@ -92,11 +92,11 @@ where
       Output =
         ( T,
           PartialSession <
-            Lens :: Target,
+            N :: Target,
             P
           > )
     > + Send,
-  Lens :
+  N :
     ProcessLens <
       I,
       ReceiveValue < T, Q >,
@@ -109,7 +109,7 @@ where
       sender1 : Sender < P::Value >
     | {
       let (receiver1, ins2) =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             ReceiveValue < T, Q >,
@@ -122,7 +122,7 @@ where
       let (val, cont) = cont_builder().await;
 
       let ins3 =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             ReceiveValue < T, Q >,
@@ -147,12 +147,12 @@ where
 }
 
 pub fn send_value_to
-  < Lens, I, P, Q, T >
-  ( lens : Lens,
+  < N, I, P, Q, T >
+  ( lens : N,
     value : T,
     cont :
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         P
       >
   ) ->
@@ -162,7 +162,7 @@ where
   Q : Process + 'static,
   I : Processes + 'static,
   T : Send + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       ReceiveValue < T, Q >,

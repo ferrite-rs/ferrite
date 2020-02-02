@@ -32,8 +32,6 @@ pub use crate::process::public::{
 };
 
 pub use crate::processes::public::{
-  SelectorZ,
-  SelectorSucc,
   NextSelector,
 
   session,

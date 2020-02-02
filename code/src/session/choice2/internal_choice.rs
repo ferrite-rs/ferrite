@@ -8,6 +8,7 @@ use async_std::sync::{ Sender, channel };
 
 pub use crate::base::{
   Nat,
+  Z,
   TyCon,
   Process,
   Processes,
@@ -219,7 +220,7 @@ where
   )
 }
 
-type TestSum =
+type TestSum < A, B, P > =
   Sum <
     PartialSession <
       (A, ()),
@@ -245,7 +246,7 @@ fn make_test_sum
             P
           >
         ) ->
-          TestSum
+          TestSum < A, B, P >
         + Send
       >,
       Sum <
@@ -256,7 +257,7 @@ fn make_test_sum
               P
             >
           ) ->
-            TestSum
+            TestSum < A, B, P >
           + Send
         >,
         Bottom
@@ -268,7 +269,7 @@ where
   P : Process,
 {
   make_cont_sum ::
-    < SelectorZ,
+    < Z,
       ( InternalChoice <
         ( A, ( B, () ))
       >,

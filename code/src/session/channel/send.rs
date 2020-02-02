@@ -31,11 +31,11 @@ use crate::processes::{
       send_channel_from (cont) :: P, Δ  ⊢ P ⊗ Q
  */
 pub fn send_channel_from
-  < I, P, Q, Lens >
-  ( _ : Lens,
+  < I, P, Q, N >
+  ( _ : N,
     cont:
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         Q
       >
   ) ->
@@ -47,7 +47,7 @@ where
   P : Process + 'static,
   Q : Process + 'static,
   I : Processes + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       P,
@@ -57,7 +57,7 @@ where
   create_partial_session (
     async move | ins1, sender1 | {
       let (p_chan, ins2) =
-        < Lens as
+        < N as
           ProcessLens <
             I, P, Inactive
           >
@@ -67,7 +67,7 @@ where
       let (sender3, receiver3) = channel(1);
 
       let ins3 =
-        < Lens as
+        < N as
           ProcessLens <
             I, P, Inactive
           >
@@ -104,10 +104,10 @@ where
  */
 pub fn receive_channel_from
   < I, P1, P2, Q,
-    Lens,
+    N,
     F
   >
-  ( _ : Lens,
+  ( _ : N,
     cont_builder: F
   ) ->
     PartialSession < I, Q >
@@ -116,25 +116,25 @@ where
   P2 : Process + 'static,
   Q : Process + 'static,
   I : Processes + 'static,
-  Lens :: Target :
+  N :: Target :
     NextSelector,
-  Lens :: Target :
+  N :: Target :
     Appendable <
         ( P1, () )
       >,
-  Lens :
+  N :
     ProcessLens <
       I,
       SendChannel < P1, P2 >,
       P2
     >,
   F : FnOnce
-        ( < Lens :: Target
+        ( < N :: Target
             as NextSelector
           > :: Selector
         ) ->
           PartialSession <
-            < Lens :: Target
+            < N :: Target
               as Appendable <
                 ( P1, () )
               >
@@ -143,7 +143,7 @@ where
           >
 {
   let cont = cont_builder (
-    < Lens :: Target
+    < N :: Target
       as NextSelector
     > :: make_selector ()
   );
@@ -151,7 +151,7 @@ where
   create_partial_session (
     async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             SendChannel < P1, P2 >,
@@ -162,7 +162,7 @@ where
       let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
 
       let ins3 =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             SendChannel < P1, P2 >,
@@ -171,7 +171,7 @@ where
         > :: merge_channels ( y_chan, ins2 );
 
       let ins4 =
-        < Lens :: Target as
+        < N :: Target as
           Appendable <
             ( P1, () )
           >

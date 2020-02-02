@@ -216,11 +216,11 @@ where
  */
 
 pub fn choose_left
-  < Lens, I, P1, P2, S >
-  ( _ : Lens,
+  < N, I, P1, P2, S >
+  ( _ : N,
     cont:
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         S
       >
   ) ->
@@ -232,7 +232,7 @@ where
   P1 : Process + 'static,
   P2 : Process + 'static,
   S : Process + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       ExternalChoice< P1, P2 >,
@@ -242,7 +242,7 @@ where
   create_partial_session (
     async move | ins1, sender | {
       let (offerer_chan, ins2) =
-        Lens :: split_channels ( ins1 );
+        N :: split_channels ( ins1 );
 
       let offerer = offerer_chan.recv().await.unwrap();
       let input_variant = offerer(Choice::Left);
@@ -250,7 +250,7 @@ where
       match input_variant {
         Either::Left(input_chan) => {
           let ins3 =
-            Lens :: merge_channels( input_chan, ins2 );
+            N :: merge_channels( input_chan, ins2 );
 
             run_partial_session
               ( cont, ins3, sender
@@ -270,11 +270,11 @@ where
     choose_right(cont) :: Δ, P & Q, Δ' ⊢ S
  */
 pub fn choose_right
-  < Lens, I, P1, P2, S >
-  ( _ : Lens,
+  < N, I, P1, P2, S >
+  ( _ : N,
     cont:
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         S
       >
   ) ->
@@ -284,7 +284,7 @@ where
   P1 : Process + 'static,
   P2 : Process + 'static,
   S : Process + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       ExternalChoice< P1, P2 >,
@@ -297,7 +297,7 @@ where
       sender: Sender < S::Value >
     | {
       let (offerer_chan, ins2) =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             ExternalChoice < P1, P2 >,
@@ -316,7 +316,7 @@ where
         },
         Either::Right (input_chan) => {
           let ins3 =
-            < Lens as
+            < N as
               ProcessLens <
                 I,
                 ExternalChoice < P1, P2 >,

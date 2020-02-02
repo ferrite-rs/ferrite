@@ -66,13 +66,13 @@ pub fn session_1
     Session < P >
 where
   P : Process + 'static,
-  F : FnOnce (SelectorZ) ->
+  F : FnOnce (Z) ->
         PartialSession <
           ( Inactive, () ),
           P
         >
 {
-  session(cont(SELECT_0))
+  session(cont(select_0()))
 }
 
 pub fn session_2
@@ -81,13 +81,13 @@ pub fn session_2
     Session < P >
 where
   P : Process + 'static,
-  F : FnOnce (SelectorZ, Selector1) ->
+  F : FnOnce (Z, Selector1) ->
         PartialSession <
           ( Inactive, ( Inactive, () )),
           P
         >
 {
-  session(cont(SELECT_0, SELECT_1))
+  session(cont(select_0(), select_1()))
 }
 
 pub fn partial_session_1
@@ -100,13 +100,13 @@ pub fn partial_session_1
 where
   P1 : ProcessNode + 'static,
   Q : Process + 'static,
-  F : FnOnce (SelectorZ) ->
+  F : FnOnce (Z) ->
         PartialSession <
           (P1, ()),
           Q
         >
 {
-  cont (SELECT_0)
+  cont (select_0())
 }
 
 pub fn partial_session_2
@@ -120,11 +120,11 @@ where
   P1 : ProcessNode + 'static,
   P2 : ProcessNode + 'static,
   Q : Process + 'static,
-  F : FnOnce (SelectorZ, Selector1) ->
+  F : FnOnce (Z, Selector1) ->
         PartialSession <
           (P1, (P2, ())),
           Q
         >
 {
-  cont (SELECT_0, SELECT_1)
+  cont (select_0(), select_1())
 }

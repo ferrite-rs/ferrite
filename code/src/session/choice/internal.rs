@@ -160,12 +160,12 @@ where
   }
 }
 
-type ReturnChoice < Lens, I, P1, P2, S > =
+type ReturnChoice < N, I, P1, P2, S > =
   Either <
     Box <
       dyn FnOnce (
         PartialSession <
-          < Lens as
+          < N as
             ProcessLens <
               I,
               InternalChoice < P1, P2 >,
@@ -176,14 +176,14 @@ type ReturnChoice < Lens, I, P1, P2, S > =
         >
       ) ->
         InternalChoiceResult <
-          < Lens as
+          < N as
             ProcessLens <
               I,
               InternalChoice < P1, P2 >,
               P1
             >
           > :: Target,
-          < Lens as
+          < N as
             ProcessLens <
               I,
               InternalChoice < P1, P2 >,
@@ -197,7 +197,7 @@ type ReturnChoice < Lens, I, P1, P2, S > =
     Box <
       dyn FnOnce (
         PartialSession <
-          < Lens as
+          < N as
             ProcessLens <
               I,
               InternalChoice < P1, P2 >,
@@ -208,14 +208,14 @@ type ReturnChoice < Lens, I, P1, P2, S > =
         >
       ) ->
         InternalChoiceResult <
-          < Lens as
+          < N as
             ProcessLens <
               I,
               InternalChoice < P1, P2 >,
               P1
             >
           > :: Target,
-          < Lens as
+          < N as
             ProcessLens <
               I,
               InternalChoice < P1, P2 >,
@@ -229,8 +229,8 @@ type ReturnChoice < Lens, I, P1, P2, S > =
   >;
 
 pub fn case
-  < Lens, I, P1, P2, S, F >
-  ( _ : Lens,
+  < N, I, P1, P2, S, F >
+  ( _ : N,
     cont_builder : F
   ) ->
     PartialSession < I, S >
@@ -240,17 +240,17 @@ where
   P2 : Process + 'static,
   S : Process + 'static,
   F : FnOnce (
-        ReturnChoice < Lens, I, P1, P2, S >
+        ReturnChoice < N, I, P1, P2, S >
       ) ->
         InternalChoiceResult <
-          < Lens as
+          < N as
             ProcessLens <
               I,
               InternalChoice < P1, P2 >,
               P1
             >
           > :: Target,
-          < Lens as
+          < N as
             ProcessLens <
               I,
               InternalChoice < P1, P2 >,
@@ -260,19 +260,19 @@ where
           S
         >
       + Send + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < P1, P2 >,
       P1
     >,
-  Lens :
+  N :
     ProcessLens <
       I,
       InternalChoice < P1, P2 >,
       P2,
       Deleted =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             InternalChoice < P1, P2 >,
@@ -284,7 +284,7 @@ where
   create_partial_session (
     async move | ins1, sender | {
       let (variant_chan, ins2) =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             InternalChoice < P1, P2 >,
@@ -297,13 +297,13 @@ where
       match variant {
         Either::Left( p1 ) => {
           let in_choice
-            : ReturnChoice < Lens, I, P1, P2, S >
+            : ReturnChoice < N, I, P1, P2, S >
             = Either::Left(Box::new(left_choice));
 
           let cont_variant = cont_builder(in_choice).result;
 
           let ins3 =
-            < Lens as
+            < N as
               ProcessLens <
                 I,
                 InternalChoice < P1, P2 >,
@@ -324,13 +324,13 @@ where
         },
         Either::Right( p2 ) => {
           let in_choice
-            : ReturnChoice < Lens, I, P1, P2, S >
+            : ReturnChoice < N, I, P1, P2, S >
             = Either::Right(Box::new(right_choice));
 
           let cont_variant = cont_builder(in_choice).result;
 
           let ins3 =
-            < Lens as
+            < N as
               ProcessLens <
                 I,
                 InternalChoice < P1, P2 >,

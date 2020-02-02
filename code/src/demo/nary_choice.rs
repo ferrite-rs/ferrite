@@ -64,7 +64,7 @@ pub fn nary_choice_demo ()
     include_session ( p1,
       move | chan | {
         nary::choose (
-          chan, SELECT_2,
+          chan, select_2(),
           receive_value_from (
             chan, async move | _ : Baz | {
               info!("[p2] received baz");
@@ -80,7 +80,7 @@ pub fn nary_choice_demo ()
         SendFooBarBaz
       >
     > =
-    nary::offer_case ( SELECT_2,
+    nary::offer_case ( select_2(),
       send_value ( Baz {},
         terminate () ) );
 

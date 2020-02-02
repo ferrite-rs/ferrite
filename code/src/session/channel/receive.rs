@@ -95,12 +95,12 @@ where
 }
 
 pub fn receive_channel_slot
-  < I, P, Q, Lens >
+  < I, P, Q, N >
 (
-  _ : Lens,
+  _ : N,
   cont :
     PartialSession <
-      Lens :: Target,
+      N :: Target,
       Q
     >
 ) ->
@@ -109,7 +109,7 @@ where
   P : Process + 'static,
   Q : Process + 'static,
   I : Processes + 'static,
-  Lens :
+  N :
     ProcessLens <
       I, Inactive, P
     >
@@ -117,7 +117,7 @@ where
   create_partial_session (
     async move | ins1, sender | {
       let ((), ins2) =
-        < Lens as
+        < N as
           ProcessLens <
             I, Inactive, P
           >
@@ -141,7 +141,7 @@ where
           = receiver1.recv().await.unwrap();
 
         let ins3 =
-          < Lens as
+          < N as
             ProcessLens <
               I, Inactive, P
             >

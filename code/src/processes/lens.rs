@@ -1,34 +1,29 @@
-use std::marker::PhantomData;
 
 use crate::base::{
+  Nat,
+  Z,
+  S,
+  mk_succ,
   Inactive,
   Processes,
   ProcessLens,
   ProcessNode,
 };
 
-#[derive(Copy, Clone)]
-pub struct SelectorZ {}
-
-#[derive(Copy, Clone)]
-pub struct SelectorSucc < Lens > {
-  lens : PhantomData < Lens >
-}
-
 pub trait NextSelector {
-  type Selector;
+  type Selector : Nat;
 
   fn make_selector () ->
     Self :: Selector;
 }
 
 impl NextSelector for () {
-  type Selector = SelectorZ;
+  type Selector = Z;
 
   fn make_selector () ->
     Self :: Selector
   {
-    return SelectorZ {};
+    return Z {};
   }
 }
 
@@ -40,7 +35,7 @@ where
   P : ProcessNode,
   R : Processes + NextSelector
 {
-  type Selector = SelectorSucc <
+  type Selector = S <
     < R as NextSelector >
     :: Selector
   >;
@@ -48,9 +43,7 @@ where
   fn make_selector () ->
     Self :: Selector
   {
-    return SelectorSucc {
-      lens : PhantomData
-    };
+    return mk_succ ();
   }
 }
 
@@ -61,7 +54,7 @@ impl
     P1,
     P2
   > for
-  SelectorZ
+  Z
 where
   P1 : ProcessNode + 'static,
   P2 : ProcessNode + 'static,
@@ -103,28 +96,28 @@ where
 }
 
 impl
-  < P, Q1, Q2, R, Lens >
+  < P, Q1, Q2, R, N >
   ProcessLens <
     ( P, R ),
     Q1,
     Q2
   > for
-  SelectorSucc < Lens >
+  S < N >
 where
   P : ProcessNode + 'static,
   Q1 : ProcessNode + 'static,
   Q2 : ProcessNode + 'static,
   R : Processes + 'static,
-  Lens : ProcessLens < R, Q1, Q2 >,
+  N : ProcessLens < R, Q1, Q2 >,
 {
   type Deleted =
     ( P,
-      Lens :: Deleted
+      N :: Deleted
     );
 
   type Target =
     ( P,
-      Lens :: Target
+      N :: Target
     );
 
   fn split_channels (
@@ -134,13 +127,13 @@ where
   ) ->
     ( < Q1 as ProcessNode > :: NodeValue,
       < ( P,
-          Lens :: Deleted
+          N :: Deleted
         ) as Processes
       > :: Values
     )
   {
     let (q, r2) =
-      < Lens as ProcessLens < R, Q1, Q2 >
+      < N as ProcessLens < R, Q1, Q2 >
       > :: split_channels ( r1 );
 
     return ( q, ( p, r2 ) );
@@ -150,48 +143,29 @@ where
     q : < Q2 as ProcessNode > :: NodeValue,
     (p, r1) :
       < ( P,
-          Lens ::Deleted
+          N ::Deleted
         ) as Processes
       > :: Values
   ) ->
     < ( P,
-        Lens :: Target
+        N :: Target
       ) as Processes
     > :: Values
   {
     let r2 =
-      < Lens as ProcessLens < R, Q1, Q2 >
+      < N as ProcessLens < R, Q1, Q2 >
       > :: merge_channels ( q, r1 );
 
     return ( p, r2 );
   }
 }
 
-pub type Selector1 = SelectorSucc < SelectorZ >;
-pub type Selector2 = SelectorSucc < Selector1 >;
+pub type Selector1 = S < Z >;
+pub type Selector2 = S < Selector1 >;
 
-pub static SELECT_0 : SelectorZ = SelectorZ{};
-pub static SELECT_1 : Selector1 = select_succ();
-pub static SELECT_2 : Selector2 = select_succ();
-
-pub const fn
-  mk_selector_succ
-  < Selector >
-  () ->
-    SelectorSucc < Selector >
-{
-  SelectorSucc {
-    lens : PhantomData
-  }
+pub fn select_0 () -> Z {
+  Z {}
 }
 
-pub const fn
-  select_succ
-  < Lens >
-  () ->
-    SelectorSucc < Lens >
-{
-  SelectorSucc {
-    lens: PhantomData
-  }
-}
+pub fn select_1 () -> Selector1 { mk_succ () }
+pub fn select_2 () -> Selector2 { mk_succ () }

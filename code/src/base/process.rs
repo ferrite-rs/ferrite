@@ -17,9 +17,9 @@ impl Process for Z {
 
 impl < N >
   Process for
-  Succ < N >
+  S < N >
 where
   N : Nat
 {
-  type Value = Succ < N >;
+  type Value = S < N >;
 }

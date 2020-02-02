@@ -73,7 +73,7 @@ impl < A >
 
 impl < A, N >
   TyCon < A > for
-  Succ < N >
+  S < N >
 where
   N : Nat
 {

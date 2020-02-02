@@ -89,11 +89,11 @@ where
 }
 
 pub fn unfix_session
-  < I, P, F, Lens >
-  ( _ : Lens,
+  < I, P, F, N >
+  ( _ : N,
     cont :
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         P
       >
   ) ->
@@ -129,7 +129,7 @@ where
     >
   > :: Type :
     Send,
-  Lens :
+  N :
     ProcessLens <
       I,
       FixProcess < F >,
@@ -143,7 +143,7 @@ where
   create_partial_session(
     async move | ins1, sender1 | {
       let (receiver1, ins2) =
-        Lens :: split_channels ( ins1 );
+        N :: split_channels ( ins1 );
 
         let (sender2, receiver2)
         : ( Sender <
@@ -160,7 +160,7 @@ where
         = channel(1);
 
       let ins3 =
-        Lens :: merge_channels ( receiver2, ins2 );
+        N :: merge_channels ( receiver2, ins2 );
 
       let child1 = task::spawn ( async move {
         let val = receiver1.recv().await.unwrap();

@@ -10,8 +10,8 @@ use crate::base::{
 };
 
 pub fn forward
-  < I, P, Lens >
-  (_ : Lens)
+  < I, P, N >
+  (_ : N)
   ->
     PartialSession <
       I,
@@ -20,8 +20,8 @@ pub fn forward
 where
   P : Process + 'static,
   I : Processes + 'static,
-  Lens :: Target : EmptyList,
-  Lens :
+  N :: Target : EmptyList,
+  N :
     ProcessLens <
       I,
       P,
@@ -31,7 +31,7 @@ where
   create_partial_session (
     async move | ins, sender | {
       let (receiver, _) =
-        < Lens as
+        < N as
           ProcessLens <
             I,
             P,

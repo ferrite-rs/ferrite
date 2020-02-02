@@ -23,14 +23,14 @@ use crate::base::{
 
 pub fn link
   < I, P, Q,
-    Lens
+    N
   >
-  ( _ : Lens,
+  ( _ : N,
     cont1 :
       Session < Q >,
     cont2 :
       PartialSession <
-        Lens :: Target,
+        N :: Target,
         P
       >
   ) ->
@@ -39,7 +39,7 @@ where
   P : Process + 'static,
   Q : Process + 'static,
   I : Processes + 'static,
-  Lens :
+  N :
     ProcessLens <
       I,
       Inactive,
@@ -51,10 +51,10 @@ where
       let (q_sender, q_receiver) = channel(1);
 
       let (_, ins2) =
-        Lens :: split_channels (ins1);
+        N :: split_channels (ins1);
 
       let ins3 =
-        Lens :: merge_channels (q_receiver, ins2);
+        N :: merge_channels (q_receiver, ins2);
 
       let child1 = task::spawn(async {
         run_partial_session
