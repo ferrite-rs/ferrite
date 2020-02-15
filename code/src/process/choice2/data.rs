@@ -27,7 +27,7 @@ pub enum Sum < A, B >
 
 pub trait SumRow < T >
 {
-  type Field;
+  type Field : Send;
 }
 
 pub trait Iso {
@@ -244,7 +244,8 @@ impl < T, A, R >
 where
   R : Iso < Canon = R >,
   R : SumRow < T >,
-  T : TyApp < A >
+  T : TyApp < A >,
+  T::Type : Send,
 {
   fn to_canon (
     row :
@@ -296,7 +297,8 @@ impl < T, A, R >
   ( A, R )
 where
   T : TyApp < A >,
-  R : SumRow < T >
+  R : SumRow < T >,
+  T::Type : Send
 {
   type Field =
     Sum <
@@ -343,7 +345,9 @@ impl < T1, T2, A, R >
 where
   T1 : TyApp < A >,
   T2 : TyApp < A >,
-  R : IntersectSum < T1, T2 >
+  R : IntersectSum < T1, T2 >,
+  T1::Type : Send,
+  T2::Type : Send,
 {
   fn intersect (
     row1 :
@@ -405,6 +409,8 @@ where
   T2 : TyApp < A >,
   F : LiftField < T1, T2, A >,
   B : LiftSum < T1, T2, F >,
+  T1::Type : Send,
+  T2::Type : Send,
 {
   fn lift_sum (
     sum :
@@ -445,6 +451,8 @@ where
   T2 : TyApp < A >,
   F : LiftFieldBorrow < T1, T2, A >,
   B : LiftSumBorrow < T1, T2, F >,
+  T1::Type : Send,
+  T2::Type : Send,
 {
   fn lift_sum_borrow (
     sum :
@@ -483,7 +491,7 @@ impl < T1, T2, F, T3, Root >
   ()
 {
   fn lift_sum (
-    inject : impl Fn ( Bottom ) -> Root,
+    _ : impl Fn ( Bottom ) -> Root,
     bot : Bottom
   ) -> Bottom
   {
@@ -500,6 +508,9 @@ where
   T3 : TyApp < A >,
   F : LiftField2 < T1, T2, A, T3, Root >,
   B : LiftSum2 < T1, T2, F, T3, Root >,
+  T1::Type : Send,
+  T2::Type : Send,
+  T3::Type : Send,
 {
   fn lift_sum (
     inject1 :
@@ -579,6 +590,7 @@ where
   T : TyApp < A >,
   B : ElimSum < T, F, R >,
   F : ElimField < T, A, R >,
+  T::Type : Send,
 {
   fn elim_sum (
     f : F,
@@ -607,7 +619,8 @@ impl < T, F, A, B >
 where
   T : TyApp < A >,
   B : SumRow < T >,
-  F : IntroField < T, A >
+  F : IntroField < T, A >,
+  T::Type : Send,
 {
   fn intro_sum () ->
     Sum <
@@ -626,7 +639,8 @@ where
   N : Nat,
   T : TyApp < A >,
   B : SumRow < T >,
-  B : IntroSum < N, T, F >
+  B : IntroSum < N, T, F >,
+  T::Type : Send,
 {
   fn intro_sum () ->
     Sum <

@@ -1,10 +1,8 @@
 
 use std::pin::Pin;
 use std::marker::PhantomData;
-use async_std::task;
-use async_macros::join;
 use std::future::Future;
-use async_std::sync::{ Sender, Receiver, channel };
+use async_std::sync::{ Sender, Receiver };
 
 pub use crate::base::{
   Nat,
@@ -299,7 +297,7 @@ where
       ) ->
         Root
       + Send + 'static,
-    field : ()
+    _ : ()
   ) ->
     InjectSession < N, I, A, P, Row, Root >
   {
@@ -421,12 +419,11 @@ where
           ContextCon < N, C, A, Row >
         >
       > :: Field
-    + Send + 'static,
+      + Send + 'static,
+  Row : Send + 'static,
   Row : Iso < Canon = Canon >,
   Canon :
     SumRow < () >,
-  Row :
-    Send + 'static,
   Canon : 'static,
   Row :
     IsoRow <
@@ -441,10 +438,6 @@ where
     >,
   Canon :
     SumRow < ReceiverCon >,
-  < Canon as
-    SumRow < ReceiverCon >
-  >  :: Field
-    : Send,
   Canon :
     SumRow <
       ContextCon < N, C, A, Row >
@@ -498,53 +491,7 @@ where
           ContextCon < N, C, A, Row >
         >
       > :: Field
-    >,
-  < Canon as
-    SumRow < () >
-  > :: Field :
-    Send,
-  < Canon as
-    SumRow < ReceiverCon >
-  > :: Field :
-    Send,
-  < Canon as
-    SumRow <
-      ContextCon < N, C, A, Row >
     >
-  > :: Field : Send,
-  < Canon as
-    SumRow <
-      Merge <
-        ReceiverCon,
-        ContextCon < N, C, A, Row >
-      >
-    >
-  > :: Field :
-    Send,
-  < Canon as
-    SumRow <
-      InternalCont <
-        N, C, A, Row,
-        < Canon as
-          SumRow <
-            ContextCon < N, C, A, Row >
-          >
-        > :: Field
-      >
-    >
-  > :: Field : Send,
-  < Row as
-    SumRow <
-      InternalCont <
-        N, C, A, Row,
-        < Canon as
-          SumRow <
-            ContextCon < N, C, A, Row >
-          >
-        > :: Field
-      >
-    >
-  > :: Field : Send,
 {
   create_partial_session (
     async move | ins1, sender | {
@@ -626,11 +573,8 @@ where
     })
 }
 
-pub type EitherField < A, B, T >
-where
-  T : TyApp < A >,
-  T : TyApp < B >
-= Either <
+pub type EitherField < A, B, T > =
+  Either <
     < T as TyApp<A> > :: Type,
     < T as TyApp<B> > :: Type
   >;
@@ -646,6 +590,8 @@ impl < T, A, B >
 where
   T : TyApp < A >,
   T : TyApp < B >,
+  < T as TyApp<A> > :: Type : Send,
+  < T as TyApp<B> > :: Type : Send,
 {
   type Field = Either <
     < T as TyApp<A> > :: Type,
@@ -666,6 +612,8 @@ impl < A, B, T >
 where
   T : TyApp < A >,
   T : TyApp < B >,
+  < T as TyApp<A> > :: Type : Send,
+  < T as TyApp<B> > :: Type : Send,
 {
   fn to_canon (
     row : EitherField < A, B, T >
