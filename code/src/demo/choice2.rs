@@ -20,10 +20,10 @@ pub fn choice2_demo ()
       >
     > =
   receive_channel ( | chan | {
-    choice::case::< _, _, _, Choice, _ >
+    choice::case::< Choice, _, _, _, _, _ >
     ( chan, move | choice1 | {
       match choice1 {
-        choice::Sum::Inl ( ret ) => {
+        choice::Either::Left ( ret ) => {
           ret (
             receive_value_from ( chan,
               async move | val | {
@@ -33,18 +33,11 @@ pub fn choice2_demo ()
               })
           )
         },
-        choice::Sum::Inr ( choice2 ) => {
-          match choice2 {
-            choice::Sum::Inl ( ret ) => {
-              ret (
-                send_value_to ( chan, 42,
-                  wait ( chan,
-                    terminate () ) ) )
-            },
-            choice::Sum::Inr ( bot ) => {
-              match bot {}
-            },
-          }
+        choice::Either::Right ( ret ) => {
+          ret (
+            send_value_to ( chan, 42,
+              wait ( chan,
+                terminate () ) ) )
         },
       }
     })

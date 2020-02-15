@@ -343,7 +343,7 @@ where
 }
 
 pub fn case
-  < N, C, A, Row, F >
+  < Row, N, C, A, Canon, F >
   ( _ : N,
     cont1 : F
   ) ->
@@ -359,11 +359,11 @@ where
     > + 'static,
   F :
     FnOnce (
-      < Row::Canon as
+      < Row as
         SumRow <
           InternalCont <
             N, C, A, Row,
-            < Row::Canon as
+            < Canon as
               SumRow <
                 ContextCon < N, C, A, Row >
               >
@@ -372,39 +372,51 @@ where
         >
       > :: Field
     ) ->
-      < Row::Canon as
+      < Canon as
         SumRow <
           ContextCon < N, C, A, Row >
         >
       > :: Field
     + Send + 'static,
-  Row : Iso,
-  Row::Canon :
+  Row : Iso < Canon = Canon >,
+  Canon :
     SumRow < () >,
   Row :
     Send + 'static,
-  Row::Canon :
+  Canon : 'static,
+  Row :
+    IsoRow <
+      InternalCont <
+        N, C, A, Row,
+        < Canon as
+          SumRow <
+            ContextCon < N, C, A, Row >
+          >
+        > :: Field
+      >
+    >,
+  Canon :
     SumRow < ReceiverCon >,
-  < Row::Canon as
+  < Canon as
     SumRow < ReceiverCon >
   >  :: Field
     : Send,
-  Row::Canon :
+  Canon :
     SumRow <
       ContextCon < N, C, A, Row >
     >,
-  Row::Canon :
+  Canon :
     LiftSumBorrow <
       ReceiverCon,
       (),
       ReceiverToSelector
     >,
-  Row::Canon :
+  Canon :
     IntersectSum <
       ReceiverCon,
       ContextCon < N, C, A, Row >
     >,
-  Row::Canon :
+  Canon :
     ElimSum <
       Merge <
         ReceiverCon,
@@ -413,23 +425,23 @@ where
       RunCont < N, C, A, Row >,
       Pin < Box < dyn Future < Output=() > + Send > >
     >,
-  Row::Canon :
+  Canon :
     SumRow <
       InternalCont <
         N, C, A, Row,
-        < Row::Canon as
+        < Canon as
           SumRow <
             ContextCon < N, C, A, Row >
           >
         > :: Field
       >
     >,
-  Row::Canon :
+  Canon :
     LiftSum2 <
       (),
       InternalCont <
         N, C, A, Row,
-        < Row::Canon as
+        < Canon as
           SumRow <
             ContextCon < N, C, A, Row >
           >
@@ -437,26 +449,26 @@ where
       >,
       MakeCont,
       ContextCon < N, C, A, Row >,
-      < Row::Canon as
+      < Canon as
         SumRow <
           ContextCon < N, C, A, Row >
         >
       > :: Field
     >,
-  < Row::Canon as
+  < Canon as
     SumRow < () >
   > :: Field :
     Send,
-  < Row::Canon as
+  < Canon as
     SumRow < ReceiverCon >
   > :: Field :
     Send,
-  < Row::Canon as
+  < Canon as
     SumRow <
       ContextCon < N, C, A, Row >
     >
   > :: Field : Send,
-  < Row::Canon as
+  < Canon as
     SumRow <
       Merge <
         ReceiverCon,
@@ -465,18 +477,30 @@ where
     >
   > :: Field :
     Send,
-  < Row::Canon as
+  < Canon as
     SumRow <
       InternalCont <
         N, C, A, Row,
-        < Row::Canon as
+        < Canon as
           SumRow <
             ContextCon < N, C, A, Row >
           >
         > :: Field
       >
     >
-  > :: Field : Send
+  > :: Field : Send,
+  < Row as
+    SumRow <
+      InternalCont <
+        N, C, A, Row,
+        < Canon as
+          SumRow <
+            ContextCon < N, C, A, Row >
+          >
+        > :: Field
+      >
+    >
+  > :: Field : Send,
 {
   create_partial_session (
     async move | ins1, sender | {
@@ -490,31 +514,45 @@ where
         > :: split_channels ( ins1 );
 
       let receiver_sum
-        : < Row::Canon as
+        : < Canon as
             SumRow < ReceiverCon >
           >  :: Field
         =
         sum_chan.recv().await.unwrap();
 
       let selector
-        : < Row::Canon as SumRow < () > > :: Field
-        = Row::Canon::lift_sum_borrow ( &receiver_sum );
+        : < Canon as SumRow < () > > :: Field
+        = Canon::lift_sum_borrow ( &receiver_sum );
 
       let cont2 = make_cont_sum ::
         < N, C, A, (), Row >
         ( selector );
 
-      let cont3 :
-        < Row::Canon as
+      let cont3 =
+        < Row as
+          IsoRow <
+            InternalCont <
+              N, C, A, Row,
+              < Canon as
+                SumRow <
+                  ContextCon < N, C, A, Row >
+                >
+              > :: Field
+            >
+          >
+        > :: from_canon ( cont2 );
+
+      let cont4 :
+        < Canon as
           SumRow <
             ContextCon < N, C, A, Row >
           >
         > :: Field =
-        cont1 ( cont2 );
+        cont1 ( cont3 );
 
       let cont4 :
         Option <
-          < Row::Canon as
+          < Canon as
             SumRow <
               Merge <
                 ReceiverCon,
@@ -523,7 +561,7 @@ where
             >
           > :: Field
         > =
-        Row::Canon :: intersect ( receiver_sum, cont3 );
+        Canon :: intersect ( receiver_sum, cont4 );
 
       match cont4 {
         Some ( cont5 ) => {
@@ -534,7 +572,7 @@ where
               sender : sender
             };
 
-          Row::Canon :: elim_sum ( runner, cont5 ).await;
+          Canon :: elim_sum ( runner, cont5 ).await;
         },
         None => {
           panic!(
