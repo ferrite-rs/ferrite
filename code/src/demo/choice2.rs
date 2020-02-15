@@ -20,11 +20,10 @@ pub fn choice2_demo ()
       >
     > =
   receive_channel ( | chan | {
-    choice::case::< Choice, _, _, _, _, _ >
-    ( chan, move | choice1 | {
+    choice::case ( chan, move | choice1 | {
       match choice1 {
         choice::Either::Left ( ret ) => {
-          ret (
+          choice::run_cont ( ret,
             receive_value_from ( chan,
               async move | val | {
                 info! ("receied value: {}", val);
@@ -34,7 +33,7 @@ pub fn choice2_demo ()
           )
         },
         choice::Either::Right ( ret ) => {
-          ret (
+          choice::run_cont ( ret,
             send_value_to ( chan, 42,
               wait ( chan,
                 terminate () ) ) )

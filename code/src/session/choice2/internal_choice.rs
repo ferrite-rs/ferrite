@@ -96,6 +96,64 @@ where
     >;
 }
 
+pub struct InjectSession
+  < N, I, P, Q, Row, Root >
+where
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
+  InternalChoice < Row > :
+    Protocol,
+  N :
+    ContextLens <
+      I,
+      InternalChoice < Row >,
+      P
+    >,
+{
+  inject_session :
+    Box <
+      dyn FnOnce (
+        PartialSession <
+          N :: Target,
+          Q
+        >
+      ) ->
+        Root
+      + Send
+    >
+}
+
+pub fn run_cont
+  < N, I, P, Q, Row, Root >
+(
+  inject :
+  InjectSession <
+      N, I, P, Q, Row, Root
+    >,
+  session :
+    PartialSession <
+      N :: Target,
+      Q
+    >
+) ->
+  Root
+where
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
+  InternalChoice < Row > :
+    Protocol,
+  N :
+    ContextLens <
+      I,
+      InternalChoice < Row >,
+      P
+    >,
+{
+  (inject.inject_session)(session)
+}
+
 impl < N, I, P, Q, Row, Root >
   TyApp < P > for
   InternalCont < N, I, Q, Row, Root >
@@ -113,15 +171,8 @@ where
     >,
 {
   type Type =
-    Box <
-      dyn FnOnce (
-        PartialSession <
-          N :: Target,
-          Q
-        >
-      ) ->
-        Root
-      + Send
+    InjectSession <
+      N, I, P, Q, Row, Root
     >;
 }
 
@@ -250,18 +301,11 @@ where
       + Send + 'static,
     field : ()
   ) ->
-    Box <
-      dyn FnOnce (
-        PartialSession <
-          N :: Target,
-          P
-        >
-      ) ->
-        Root
-      + Send
-    >
+    InjectSession < N, I, A, P, Row, Root >
   {
-    Box::new ( inject )
+    InjectSession {
+      inject_session : Box::new ( inject )
+    }
   }
 }
 
@@ -665,116 +709,4 @@ where
       }
     }
   }
-}
-
-type TestSum < A, B, P > =
-  Sum <
-    PartialSession <
-      (A, ()),
-      P
-    >,
-    Sum <
-      PartialSession <
-        (B, ()),
-        P
-      >,
-      Bottom
-    >
-  >;
-
-fn make_test_sum
-  < A, B, P >
-  () ->
-    Either <
-      Box <
-        dyn FnOnce (
-          PartialSession <
-            (A, ()),
-            P
-          >
-        ) ->
-          TestSum < A, B, P >
-        + Send
-      >,
-      Box <
-        dyn FnOnce (
-          PartialSession <
-            (B, ()),
-            P
-          >
-        ) ->
-          TestSum < A, B, P >
-        + Send
-      >,
-    >
-where
-  A : Protocol,
-  B : Protocol,
-  P : Protocol,
-{
-  let sum1 :
-    Sum <
-      Box <
-        dyn FnOnce (
-          PartialSession <
-            (A, ()),
-            P
-          >
-        ) ->
-          TestSum < A, B, P >
-        + Send
-      >,
-      Sum <
-        Box <
-          dyn FnOnce (
-            PartialSession <
-              (B, ()),
-              P
-            >
-          ) ->
-            TestSum < A, B, P >
-          + Send
-        >,
-        Bottom
-      >
-    > =
-    make_cont_sum ::
-      < Z,
-        ( InternalChoice <
-            Either < A, B >
-          >,
-          () ),
-        P,
-        (),
-        Either < A, B >
-      >
-      (Sum::Inl(()));
-
-
-  < Either < A, B > as
-    IsoRow <
-      InternalCont <
-        Z,
-        ( InternalChoice <
-            Either < A, B >
-          >,
-          () ),
-        P,
-        Either < A, B >,
-        < (A, (B, ())) as
-          SumRow <
-            ContextCon <
-              Z,
-              ( InternalChoice <
-                  Either < A, B >
-                >,
-                () ),
-              P,
-              Either < A, B >
-            >
-          >
-        > :: Field
-      >
-    >
-  > :: from_canon ( sum1 )
 }
