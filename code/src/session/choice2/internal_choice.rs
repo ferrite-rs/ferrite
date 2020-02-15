@@ -40,8 +40,9 @@ pub struct RunCont
 where
   A : Protocol,
   C : Context,
+  Row : Iso,
   Row : Send + 'static,
-  Row :
+  Row::Canon :
     SumRow < ReceiverCon >,
   N :
     ContextLens <
@@ -49,7 +50,7 @@ where
       InternalChoice < Row >,
       Empty
     >,
-  < Row as
+  < Row::Canon as
     SumRow < ReceiverCon >
   > :: Field :
     Send
@@ -151,8 +152,9 @@ where
   A : Protocol,
   B : Protocol,
   C : Context,
+  Row : Iso,
   Row : Send + 'static,
-  Row :
+  Row::Canon :
     SumRow < ReceiverCon >,
   N :
     ContextLens <
@@ -174,7 +176,7 @@ where
       InternalChoice < Row >,
       Empty
     >,
-  < Row as
+  < Row::Canon as
     SumRow < ReceiverCon >
   > :: Field :
     Send
@@ -270,15 +272,15 @@ fn id < A > (a : A) -> A {
 fn make_cont_sum
   < N, I, P, T, Row >
   ( selector :
-      < Row as
+      < Row::Canon as
         SumRow < T >
       > :: Field
   ) ->
-    < Row as
+    < Row::Canon as
       SumRow <
         InternalCont <
           N, I, P, Row,
-          < Row as
+          < Row::Canon as
             SumRow <
               ContextCon < N, I, P, Row >
             >
@@ -291,28 +293,29 @@ where
   I : Context,
   InternalChoice < Row > :
     Protocol,
-  Row : SumRow < T >,
-  Row :
+  Row : Iso,
+  Row::Canon : SumRow < T >,
+  Row::Canon :
     SumRow <
       ContextCon < N, I, P, Row >
     >,
-  Row :
+  Row::Canon :
     SumRow <
       InternalCont <
         N, I, P, Row,
-        < Row as
+        < Row::Canon as
           SumRow <
             ContextCon < N, I, P, Row >
           >
         > :: Field
       >
     >,
-  Row :
+  Row::Canon :
     LiftSum2 <
       T,
       InternalCont <
         N, I, P, Row,
-        < Row as
+        < Row::Canon as
           SumRow <
             ContextCon < N, I, P, Row >
           >
@@ -320,20 +323,20 @@ where
       >,
       MakeCont,
       ContextCon < N, I, P, Row >,
-      < Row as
+      < Row::Canon as
         SumRow <
           ContextCon < N, I, P, Row >
         >
       > :: Field
     >,
-  < Row as
+  < Row::Canon as
     SumRow <
       ContextCon < N, I, P, Row >
     >
   > :: Field :
     'static,
 {
-  Row :: lift_sum (
+  Row::Canon :: lift_sum (
     id,
     selector
   )
@@ -356,11 +359,11 @@ where
     > + 'static,
   F :
     FnOnce (
-      < Row as
+      < Row::Canon as
         SumRow <
           InternalCont <
             N, C, A, Row,
-            < Row as
+            < Row::Canon as
               SumRow <
                 ContextCon < N, C, A, Row >
               >
@@ -369,35 +372,39 @@ where
         >
       > :: Field
     ) ->
-      < Row as
+      < Row::Canon as
         SumRow <
           ContextCon < N, C, A, Row >
         >
       > :: Field
     + Send + 'static,
-  Row : SumRow < () >,
-  Row : Send + 'static,
-  Row : SumRow < ReceiverCon >,
-  < Row as
+  Row : Iso,
+  Row::Canon :
+    SumRow < () >,
+  Row :
+    Send + 'static,
+  Row::Canon :
+    SumRow < ReceiverCon >,
+  < Row::Canon as
     SumRow < ReceiverCon >
   >  :: Field
     : Send,
-  Row :
+  Row::Canon :
     SumRow <
       ContextCon < N, C, A, Row >
     >,
-  Row :
+  Row::Canon :
     LiftSumBorrow <
       ReceiverCon,
       (),
       ReceiverToSelector
     >,
-  Row :
+  Row::Canon :
     IntersectSum <
       ReceiverCon,
       ContextCon < N, C, A, Row >
     >,
-  Row :
+  Row::Canon :
     ElimSum <
       Merge <
         ReceiverCon,
@@ -406,23 +413,23 @@ where
       RunCont < N, C, A, Row >,
       Pin < Box < dyn Future < Output=() > + Send > >
     >,
-  Row :
+  Row::Canon :
     SumRow <
       InternalCont <
         N, C, A, Row,
-        < Row as
+        < Row::Canon as
           SumRow <
             ContextCon < N, C, A, Row >
           >
         > :: Field
       >
     >,
-  Row :
+  Row::Canon :
     LiftSum2 <
       (),
       InternalCont <
         N, C, A, Row,
-        < Row as
+        < Row::Canon as
           SumRow <
             ContextCon < N, C, A, Row >
           >
@@ -430,26 +437,26 @@ where
       >,
       MakeCont,
       ContextCon < N, C, A, Row >,
-      < Row as
+      < Row::Canon as
         SumRow <
           ContextCon < N, C, A, Row >
         >
       > :: Field
     >,
-  < Row as
+  < Row::Canon as
     SumRow < () >
   > :: Field :
     Send,
-  < Row as
+  < Row::Canon as
     SumRow < ReceiverCon >
   > :: Field :
     Send,
-  < Row as
+  < Row::Canon as
     SumRow <
       ContextCon < N, C, A, Row >
     >
   > :: Field : Send,
-  < Row as
+  < Row::Canon as
     SumRow <
       Merge <
         ReceiverCon,
@@ -458,11 +465,11 @@ where
     >
   > :: Field :
     Send,
-  < Row as
+  < Row::Canon as
     SumRow <
       InternalCont <
         N, C, A, Row,
-        < Row as
+        < Row::Canon as
           SumRow <
             ContextCon < N, C, A, Row >
           >
@@ -483,22 +490,22 @@ where
         > :: split_channels ( ins1 );
 
       let receiver_sum
-        : < Row as
+        : < Row::Canon as
             SumRow < ReceiverCon >
           >  :: Field
         =
         sum_chan.recv().await.unwrap();
 
       let selector
-        : < Row as SumRow < () > > :: Field
-        = Row::lift_sum_borrow ( &receiver_sum );
+        : < Row::Canon as SumRow < () > > :: Field
+        = Row::Canon::lift_sum_borrow ( &receiver_sum );
 
       let cont2 = make_cont_sum ::
         < N, C, A, (), Row >
         ( selector );
 
       let cont3 :
-        < Row as
+        < Row::Canon as
           SumRow <
             ContextCon < N, C, A, Row >
           >
@@ -507,7 +514,7 @@ where
 
       let cont4 :
         Option <
-          < Row as
+          < Row::Canon as
             SumRow <
               Merge <
                 ReceiverCon,
@@ -516,7 +523,7 @@ where
             >
           > :: Field
         > =
-        Row :: intersect ( receiver_sum, cont3 );
+        Row::Canon :: intersect ( receiver_sum, cont3 );
 
       match cont4 {
         Some ( cont5 ) => {
@@ -527,7 +534,7 @@ where
               sender : sender
             };
 
-          Row :: elim_sum ( runner, cont5 ).await;
+          Row::Canon :: elim_sum ( runner, cont5 ).await;
         },
         None => {
           panic!(
@@ -535,6 +542,91 @@ where
         }
       }
     })
+}
+
+pub type EitherField < A, B, T >
+where
+  T : TyApp < A >,
+  T : TyApp < B >
+= Either <
+    < T as TyApp<A> > :: Type,
+    < T as TyApp<B> > :: Type
+  >;
+
+pub enum Either < A, B > {
+  Left ( A ),
+  Right ( B ),
+}
+
+impl < T, A, B >
+  SumRow < T > for
+  Either < A, B >
+where
+  T : TyApp < A >,
+  T : TyApp < B >,
+{
+  type Field = Either <
+    < T as TyApp<A> > :: Type,
+    < T as TyApp<B> > :: Type
+  >;
+}
+
+impl < A, B >
+  Iso
+  for Either < A, B >
+{
+  type Canon = ( A, ( B, () ) );
+}
+
+impl < A, B, T >
+  IsoRow < T >
+  for Either < A, B >
+where
+  T : TyApp < A >,
+  T : TyApp < B >,
+{
+  fn to_canon (
+    row : EitherField < A, B, T >
+  ) ->
+    < Self :: Canon
+      as SumRow < T >
+    > :: Field
+  {
+    match row {
+      Either::Left ( a ) => {
+        Sum::Inl ( a )
+      },
+      Either::Right ( a ) => {
+        Sum::Inr (
+          Sum::Inl ( a ) )
+      }
+    }
+  }
+
+  fn from_canon (
+    row :
+      < Self :: Canon
+        as SumRow < T >
+      > :: Field
+  ) ->
+    EitherField < A, B, T >
+  {
+    match row {
+      Sum::Inl ( a ) => {
+        Either::Left( a )
+      },
+      Sum::Inr ( row2 ) => {
+        match row2 {
+          Sum::Inl ( a ) => {
+            Either::Right( a )
+          },
+          Sum::Inr ( bot ) => {
+            match bot {}
+          }
+        }
+      }
+    }
+  }
 }
 
 type TestSum < A, B, P > =
@@ -555,6 +647,34 @@ type TestSum < A, B, P > =
 fn make_test_sum
   < A, B, P >
   () ->
+    Either <
+      Box <
+        dyn FnOnce (
+          PartialSession <
+            (A, ()),
+            P
+          >
+        ) ->
+          TestSum < A, B, P >
+        + Send
+      >,
+      Box <
+        dyn FnOnce (
+          PartialSession <
+            (B, ()),
+            P
+          >
+        ) ->
+          TestSum < A, B, P >
+        + Send
+      >,
+    >
+where
+  A : Protocol,
+  B : Protocol,
+  P : Protocol,
+{
+  let sum1 :
     Sum <
       Box <
         dyn FnOnce (
@@ -579,21 +699,44 @@ fn make_test_sum
         >,
         Bottom
       >
+    > =
+    make_cont_sum ::
+      < Z,
+        ( InternalChoice <
+            Either < A, B >
+          >,
+          () ),
+        P,
+        (),
+        Either < A, B >
+      >
+      (Sum::Inl(()));
+
+
+  < Either < A, B > as
+    IsoRow <
+      InternalCont <
+        Z,
+        ( InternalChoice <
+            Either < A, B >
+          >,
+          () ),
+        P,
+        Either < A, B >,
+        < (A, (B, ())) as
+          SumRow <
+            ContextCon <
+              Z,
+              ( InternalChoice <
+                  Either < A, B >
+                >,
+                () ),
+              P,
+              Either < A, B >
+            >
+          >
+        > :: Field
+      >
     >
-where
-  A : Protocol,
-  B : Protocol,
-  P : Protocol,
-{
-  make_cont_sum ::
-    < Z,
-      ( InternalChoice <
-        ( A, ( B, () ))
-      >,
-      () ),
-      P,
-      (),
-      ( A, ( B, () ))
-    >
-    (Sum::Inl(()))
+  > :: from_canon ( sum1 )
 }

@@ -209,6 +209,62 @@ where
   ;
 }
 
+impl Iso for () {
+  type Canon = ();
+}
+
+impl < A, R >
+  Iso for
+  ( A, R )
+where
+  R : Iso < Canon = R >
+{
+  type Canon = ( A, R :: Canon );
+}
+
+
+impl < T >
+  IsoRow < T >
+  for ()
+{
+  fn to_canon (
+    row : Bottom
+  ) -> Bottom
+  { row }
+
+  fn from_canon (
+    row : Bottom
+  ) -> Bottom
+  { row }
+}
+
+impl < T, A, R >
+  IsoRow < T >
+  for ( A, R )
+where
+  R : Iso < Canon = R >,
+  R : SumRow < T >,
+  T : TyApp < A >
+{
+  fn to_canon (
+    row :
+      Sum < T :: Type, R :: Field >
+  ) ->
+      Sum < T :: Type, R :: Field >
+  {
+    row
+  }
+
+  fn from_canon (
+    row :
+      Sum < T :: Type, R :: Field >
+  ) ->
+    Sum < T :: Type, R :: Field >
+  {
+    row
+  }
+}
+
 impl < T1, T2, A >
   TyApp < A >
   for Merge < T1, T2 >

@@ -4,10 +4,10 @@ use crate::public::*;
 use crate::public::choice as choice;
 
 type Choice =
-  ( SendValue < String, End >,
-    ( ReceiveValue < i32, End >,
-      () ) );
-
+  choice::Either <
+    SendValue < String, End >,
+    ReceiveValue < i32, End >
+  >;
 
 pub fn choice2_demo ()
   -> Session < End >

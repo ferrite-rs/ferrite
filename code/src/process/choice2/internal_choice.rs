@@ -10,12 +10,18 @@ impl < Row >
   Protocol for
   InternalChoice < Row >
 where
-  Row : Send + 'static,
-  Row : SumRow < ReceiverCon >,
-  < Row as
+  Row : Iso,
+  Row :
+    Send + 'static,
+  Row::Canon :
+    SumRow < ReceiverCon >,
+  < Row::Canon as
     SumRow < ReceiverCon >
   >  :: Field
     : Send,
 {
-  type Value = Row :: Field;
+  type Value =
+    < Row::Canon as
+      SumRow < ReceiverCon >
+    >  :: Field;
 }
