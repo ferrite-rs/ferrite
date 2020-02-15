@@ -113,3 +113,8 @@ pub mod nary_choice {
   pub use crate::process::nary_choice::*;
   pub use crate::session::nary_choice::*;
 }
+
+pub mod choice {
+  pub use crate::process::choice2::*;
+  pub use crate::session::choice2::*;
+}

@@ -2,6 +2,7 @@
 pub mod pair;
 pub mod hello;
 pub mod choice;
+pub mod choice2;
 pub mod concat;
 pub mod queue;
 pub mod count;
