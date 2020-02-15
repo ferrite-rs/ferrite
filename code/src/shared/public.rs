@@ -1,6 +1,6 @@
 
 pub use super::process::public::{
-  SharedProcess,
+  SharedProtocol,
 };
 
 pub use super::{

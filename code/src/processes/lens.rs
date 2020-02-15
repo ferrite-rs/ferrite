@@ -4,10 +4,10 @@ use crate::base::{
   Z,
   S,
   mk_succ,
-  Inactive,
-  Processes,
-  ProcessLens,
-  ProcessNode,
+  Empty,
+  Context,
+  ContextLens,
+  Slot,
 };
 
 pub trait NextSelector {
@@ -32,8 +32,8 @@ impl
   NextSelector for
   ( P, R )
 where
-  P : ProcessNode,
-  R : Processes + NextSelector
+  P : Slot,
+  R : Context + NextSelector
 {
   type Selector = S <
     < R as NextSelector >
@@ -49,29 +49,29 @@ where
 
 impl
   < P1, P2, R >
-  ProcessLens <
+  ContextLens <
     ( P1, R ),
     P1,
     P2
   > for
   Z
 where
-  P1 : ProcessNode + 'static,
-  P2 : ProcessNode + 'static,
-  R : Processes + 'static
+  P1 : Slot + 'static,
+  P2 : Slot + 'static,
+  R : Context + 'static
 {
-  type Deleted = (Inactive, R);
+  type Deleted = (Empty, R);
   type Target = (P2, R);
 
   fn split_channels (
     (p, r) :
       < ( P1, R )
-        as Processes
+        as Context
       > :: Values
   ) ->
-    ( < P1 as ProcessNode > :: NodeValue,
+    ( < P1 as Slot > :: SlotValue,
       ( (),
-        < R as Processes
+        < R as Context
         > :: Values
       )
     )
@@ -80,15 +80,15 @@ where
   }
 
   fn merge_channels
-    ( p : < P2 as ProcessNode > :: NodeValue,
+    ( p : < P2 as Slot > :: SlotValue,
       ((), r) :
         ( (),
-          < R as Processes
+          < R as Context
           > :: Values
         )
     ) ->
       < ( P2, R )
-        as Processes
+        as Context
       > :: Values
   {
     return (p, r);
@@ -97,18 +97,18 @@ where
 
 impl
   < P, Q1, Q2, R, N >
-  ProcessLens <
+  ContextLens <
     ( P, R ),
     Q1,
     Q2
   > for
   S < N >
 where
-  P : ProcessNode + 'static,
-  Q1 : ProcessNode + 'static,
-  Q2 : ProcessNode + 'static,
-  R : Processes + 'static,
-  N : ProcessLens < R, Q1, Q2 >,
+  P : Slot + 'static,
+  Q1 : Slot + 'static,
+  Q2 : Slot + 'static,
+  R : Context + 'static,
+  N : ContextLens < R, Q1, Q2 >,
 {
   type Deleted =
     ( P,
@@ -122,38 +122,38 @@ where
 
   fn split_channels (
     (p, r1) :
-      < ( P, R ) as Processes >
+      < ( P, R ) as Context >
       :: Values
   ) ->
-    ( < Q1 as ProcessNode > :: NodeValue,
+    ( < Q1 as Slot > :: SlotValue,
       < ( P,
           N :: Deleted
-        ) as Processes
+        ) as Context
       > :: Values
     )
   {
     let (q, r2) =
-      < N as ProcessLens < R, Q1, Q2 >
+      < N as ContextLens < R, Q1, Q2 >
       > :: split_channels ( r1 );
 
     return ( q, ( p, r2 ) );
   }
 
   fn merge_channels (
-    q : < Q2 as ProcessNode > :: NodeValue,
+    q : < Q2 as Slot > :: SlotValue,
     (p, r1) :
       < ( P,
           N ::Deleted
-        ) as Processes
+        ) as Context
       > :: Values
   ) ->
     < ( P,
         N :: Target
-      ) as Processes
+      ) as Context
     > :: Values
   {
     let r2 =
-      < N as ProcessLens < R, Q1, Q2 >
+      < N as ContextLens < R, Q1, Q2 >
       > :: merge_channels ( q, r1 );
 
     return ( p, r2 );

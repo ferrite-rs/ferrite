@@ -1,4 +1,4 @@
-use crate::base::{ TyCon };
+use crate::base::{ TyApp };
 
 pub struct Val < A > {
   pub val : A
@@ -6,7 +6,7 @@ pub struct Val < A > {
 
 impl
   < A, X >
-  TyCon < A > for
+  TyApp < A > for
   Val < X >
 {
   type Type = Val < X >;

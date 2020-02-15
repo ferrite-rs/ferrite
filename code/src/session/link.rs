@@ -3,11 +3,11 @@ use async_std::task;
 use async_std::sync::{ channel };
 
 use crate::base::{
-  Process,
+  Protocol,
   Session,
-  Inactive,
-  Processes,
-  ProcessLens,
+  Empty,
+  Context,
+  ContextLens,
   PartialSession,
   run_partial_session,
   create_partial_session,
@@ -36,13 +36,13 @@ pub fn link
   ) ->
     PartialSession < I, P >
 where
-  P : Process + 'static,
-  Q : Process + 'static,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  Q : Protocol + 'static,
+  I : Context + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
-      Inactive,
+      Empty,
       Q
     >
 {

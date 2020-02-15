@@ -3,7 +3,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ TyCon, Process };
+use base::{ TyApp, Protocol };
 
 use super::data::{ Either };
 
@@ -18,11 +18,11 @@ pub struct InternalChoice < P, Q >
 
 impl
   < P, Q >
-  Process for
+  Protocol for
   InternalChoice < P, Q >
 where
-  P: Process,
-  Q: Process
+  P: Protocol,
+  Q: Protocol
 {
   type Value =
     Either <
@@ -33,19 +33,19 @@ where
 
 impl
   < P, Q >
-  base::public::Process for
+  base::public::Protocol for
   InternalChoice < P, Q >
 where
-  P: base::public::Process,
-  Q: base::public::Process
+  P: base::public::Protocol,
+  Q: base::public::Protocol
 { }
 
 impl < A, X, Y >
-  TyCon < A > for
+  TyApp < A > for
   InternalChoice < X, Y >
 where
-  X : TyCon < A >,
-  Y : TyCon < A >,
+  X : TyApp < A >,
+  Y : TyApp < A >,
 {
   type Type =
     InternalChoice <

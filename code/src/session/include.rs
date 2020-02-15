@@ -6,12 +6,12 @@ use std::collections::{ LinkedList };
 use crate::process::{ End };
 
 use crate::base::{
-  Process,
+  Protocol,
   Session,
-  Inactive,
-  Processes,
-  Appendable,
-  ProcessLens,
+  Empty,
+  Context,
+  AppendContext,
+  ContextLens,
   PartialSession,
   run_partial_session,
   create_partial_session,
@@ -36,16 +36,16 @@ pub fn
   ) ->
     PartialSession < I, Q >
 where
-  P : Process + 'static,
-  Q : Process + 'static,
-  I : Processes + NextSelector + 'static,
-  I : Appendable < ( P, () ) >,
+  P : Protocol + 'static,
+  Q : Protocol + 'static,
+  I : Context + NextSelector + 'static,
+  I : AppendContext < ( P, () ) >,
   F : FnOnce
         ( < I as NextSelector > :: Selector )
         ->
           PartialSession <
             < I as
-              Appendable <
+              AppendContext <
                 ( P, () )
               >
             > :: AppendResult,
@@ -68,7 +68,7 @@ where
 
       let ins2 =
         < I as
-          Appendable <
+          AppendContext <
             ( P, () )
           >
         > :: append_channels ( ins1, (receiver2, ()) );
@@ -90,20 +90,20 @@ pub fn wait_session
   ) ->
     PartialSession < I, P >
 where
-  P : Process + 'static,
+  P : Protocol + 'static,
   I : NextSelector + 'static,
-  I : Appendable < (End, ()) >,
-  I : Appendable < (Inactive, ()) >,
+  I : AppendContext < (End, ()) >,
+  I : AppendContext < (Empty, ()) >,
   < I as NextSelector >::Selector :
-    ProcessLens <
+    ContextLens <
       < I as
-        Appendable < (End, ()) >
+        AppendContext < (End, ()) >
       >::AppendResult,
       End,
-      Inactive,
+      Empty,
       Target =
         < I as
-          Appendable < (Inactive, ()) >
+          AppendContext < (Empty, ()) >
         >::AppendResult
     >
 {
@@ -124,20 +124,20 @@ pub fn wait_sessions
   ) ->
     PartialSession < I, P >
 where
-  P : Process + 'static,
+  P : Protocol + 'static,
   I : NextSelector + 'static,
-  I : Appendable < (End, ()) >,
-  I : Appendable < (Inactive, ()) >,
+  I : AppendContext < (End, ()) >,
+  I : AppendContext < (Empty, ()) >,
   < I as NextSelector >::Selector :
-    ProcessLens <
+    ContextLens <
       < I as
-        Appendable < (End, ()) >
+        AppendContext < (End, ()) >
       >::AppendResult,
       End,
-      Inactive,
+      Empty,
       Target =
         < I as
-          Appendable < (Inactive, ()) >
+          AppendContext < (Empty, ()) >
         >::AppendResult
     >
 {

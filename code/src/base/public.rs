@@ -1,18 +1,18 @@
 
-pub use super::process::public::{ Process };
+pub use super::process::public::{ Protocol };
 
 pub use super::{
-  Processes,
-  EmptyList,
-  Appendable,
+  Context,
+  EmptyContext,
+  AppendContext,
   Reversible,
 
   Session,
   PartialSession,
 
-  ProcessNode,
-  Inactive,
-  ProcessLens
+  Slot,
+  Empty,
+  ContextLens
 };
 
 pub use super::nat::*;

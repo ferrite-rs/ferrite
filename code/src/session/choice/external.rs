@@ -2,9 +2,9 @@ use async_std::task;
 use async_std::sync::{ Sender, Receiver, channel };
 
 use crate::base::{
-  Process,
-  Processes,
-  ProcessLens,
+  Protocol,
+  Context,
+  ContextLens,
   PartialSession,
   run_partial_session,
   create_partial_session,
@@ -82,9 +82,9 @@ fn right_choice < L, R > (res: R)
 
   offerChoice
       :: forall ins p q .
-      ( Process p
-      , Process q
-      , Processes ins
+      ( Protocol p
+      , Protocol q
+      , Context ins
       )
     => (forall r
         . Either
@@ -118,9 +118,9 @@ pub fn offer_choice < Ins, P, Q, F >
       ExternalChoice < P, Q >
     >
 where
-  P   : Process + 'static,
-  Q   : Process + 'static,
-  Ins : Processes + 'static,
+  P   : Protocol + 'static,
+  Q   : Protocol + 'static,
+  Ins : Context + 'static,
   F   : FnOnce(
           ReturnChoice < Ins, P, Q >
         ) -> ExternalChoiceResult<
@@ -228,12 +228,12 @@ pub fn choose_left
       I, S
     >
 where
-  I : Processes + 'static,
-  P1 : Process + 'static,
-  P2 : Process + 'static,
-  S : Process + 'static,
+  I : Context + 'static,
+  P1 : Protocol + 'static,
+  P2 : Protocol + 'static,
+  S : Protocol + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       ExternalChoice< P1, P2 >,
       P1
@@ -280,12 +280,12 @@ pub fn choose_right
   ) ->
     PartialSession < I, S >
 where
-  I : Processes + 'static,
-  P1 : Process + 'static,
-  P2 : Process + 'static,
-  S : Process + 'static,
+  I : Context + 'static,
+  P1 : Protocol + 'static,
+  P2 : Protocol + 'static,
+  S : Protocol + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       ExternalChoice< P1, P2 >,
       P2
@@ -298,7 +298,7 @@ where
     | {
       let (offerer_chan, ins2) =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             ExternalChoice < P1, P2 >,
             P2
@@ -317,7 +317,7 @@ where
         Either::Right (input_chan) => {
           let ins3 =
             < N as
-              ProcessLens <
+              ContextLens <
                 I,
                 ExternalChoice < P1, P2 >,
                 P2

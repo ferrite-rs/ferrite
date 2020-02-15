@@ -8,10 +8,10 @@ use crate::processes::{
 };
 
 use crate::base::{
-  Process,
+  Protocol,
   Session,
-  Processes,
-  Appendable,
+  Context,
+  AppendContext,
   PartialSession,
   run_partial_session,
   create_partial_session,
@@ -19,7 +19,7 @@ use crate::base::{
 
 pub struct PersistentSession < P >
 where
-  P : Process
+  P : Protocol
 {
   new_session : Arc <
     dyn Fn () -> Session < P >
@@ -31,7 +31,7 @@ impl < P >
   Clone for
   PersistentSession < P >
 where
-  P : Process
+  P : Protocol
 {
   fn clone(&self) -> Self {
     PersistentSession {
@@ -45,7 +45,7 @@ pub fn create_persistent_session
   (f : F)
   -> PersistentSession < P >
 where
-  P : Process,
+  P : Protocol,
   F : Fn () -> Session < P >
       + Send + Sync + 'static
 {
@@ -62,16 +62,16 @@ pub fn
   ) ->
     PartialSession < I, Q >
 where
-  P : Process + 'static,
-  Q : Process + 'static,
-  I : Processes + NextSelector + 'static,
-  I : Appendable < ( P, () ) >,
+  P : Protocol + 'static,
+  Q : Protocol + 'static,
+  I : Context + NextSelector + 'static,
+  I : AppendContext < ( P, () ) >,
   F : FnOnce
         ( < I as NextSelector > :: Selector )
         ->
           PartialSession <
             < I as
-              Appendable <
+              AppendContext <
                 ( P, () )
               >
             > :: AppendResult,
@@ -98,7 +98,7 @@ where
 
       let ins2 =
         < I as
-          Appendable <
+          AppendContext <
             ( P, () )
           >
         > :: append_channels ( ins1, (receiver2, ()) );

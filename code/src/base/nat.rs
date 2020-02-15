@@ -27,8 +27,6 @@ pub fn mk_zero () -> Z {
 
 pub fn mk_succ < N > () ->
   S < N >
-where
-  N : Nat
 {
   S {
     n : PhantomData

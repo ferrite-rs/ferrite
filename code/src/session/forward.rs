@@ -1,10 +1,10 @@
 
 use crate::base::{
-  Process,
-  Inactive,
-  Processes,
-  EmptyList,
-  ProcessLens,
+  Protocol,
+  Empty,
+  Context,
+  EmptyContext,
+  ContextLens,
   PartialSession,
   create_partial_session,
 };
@@ -18,24 +18,24 @@ pub fn forward
       P
     >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
-  N :: Target : EmptyList,
+  P : Protocol + 'static,
+  I : Context + 'static,
+  N :: Target : EmptyContext,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       P,
-      Inactive
+      Empty
     >
 {
   create_partial_session (
     async move | ins, sender | {
       let (receiver, _) =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             P,
-            Inactive
+            Empty
           >
         > :: split_channels ( ins );
 

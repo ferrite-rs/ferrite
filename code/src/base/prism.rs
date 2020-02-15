@@ -7,17 +7,17 @@ pub enum Sum < P, Q > {
   Inr ( Q )
 }
 
-pub trait ProcessField < P >
+pub trait ProtocolField < P >
 where
-  P : Process
+  P : Protocol
 {
   type Value : Send;
 }
 
 pub trait ConvergeSum < T, P, R >
 where
-  P : Process,
-  T : ProcessField < P >
+  P : Protocol,
+  T : ProtocolField < P >
 {
   fn match_proc
     ( self,
@@ -26,17 +26,17 @@ where
   ;
 }
 
-pub trait ProcessSum < T >
+pub trait ProtocolSum < T >
 {
   type ValueSum : Send;
 }
 
-pub trait ProcessPrism
+pub trait ProtocolPrism
   < S, P, T >
 where
-  P : Process,
-  S : ProcessSum < T >,
-  T : ProcessField < P >
+  P : Protocol,
+  S : ProtocolSum < T >,
+  T : ProtocolField < P >
 {
   fn intro_sum
     ( val : T :: Value )
@@ -50,26 +50,26 @@ where
       >;
 }
 
-pub trait MergeProcessSum < T1, T2 >
-  : ProcessSum < T1 >
-  + ProcessSum < T2 >
-  + ProcessSum <
+pub trait MergeProtocolSum < T1, T2 >
+  : ProtocolSum < T1 >
+  + ProtocolSum < T2 >
+  + ProtocolSum <
       ToMerge < T1, T2 >
     >
 {
   fn merge_sum (
     sum1 :
       < Self as
-        ProcessSum < T1 >
+        ProtocolSum < T1 >
       > :: ValueSum,
     sum2 :
       < Self as
-        ProcessSum < T2 >
+        ProtocolSum < T2 >
       > :: ValueSum
   ) ->
     Option <
       < Self as
-        ProcessSum <
+        ProtocolSum <
           ToMerge < T1, T2 >
         >
       > :: ValueSum
@@ -94,23 +94,23 @@ pub struct ToMerge < T1, T2 >
 
 impl
   < T, P >
-  ProcessSum < T >
+  ProtocolSum < T >
   for P
 where
-  P : Process,
-  T : ProcessField < P >,
+  P : Protocol,
+  T : ProtocolField < P >,
 {
   type ValueSum = T :: Value;
 }
 
 impl
   < P, T >
-  ProcessPrism
+  ProtocolPrism
   < P, P, T >
   for Z
 where
-  P : Process,
-  T : ProcessField < P >
+  P : Protocol,
+  T : ProtocolField < P >
 {
   fn intro_sum
     ( val : T :: Value )
@@ -130,16 +130,16 @@ where
 
 impl
   < P, R, T >
-  ProcessPrism <
+  ProtocolPrism <
     (P, R),
     P,
     T
   >
   for Z
 where
-  P : Process,
-  R : ProcessSum < T >,
-  T : ProcessField < P >
+  P : Protocol,
+  R : ProtocolSum < T >,
+  T : ProtocolField < P >
 {
   fn intro_sum
     ( val : T :: Value )
@@ -176,7 +176,7 @@ where
 
 impl
   < N, Q, P, R, T >
-  ProcessPrism <
+  ProtocolPrism <
     (Q, R),
     P,
     T
@@ -184,23 +184,23 @@ impl
   for S < N >
 where
   N : Nat,
-  P : Process,
-  Q : Process,
-  R : ProcessSum < T >,
-  T : ProcessField < P >,
-  T : ProcessField < Q >,
-  N : ProcessPrism < R, P, T >
+  P : Protocol,
+  Q : Protocol,
+  R : ProtocolSum < T >,
+  T : ProtocolField < P >,
+  T : ProtocolField < Q >,
+  N : ProtocolPrism < R, P, T >
 {
 
   fn intro_sum
     ( val :
         < T as
-          ProcessField < P >
+          ProtocolField < P >
         > :: Value )
     ->
       Sum <
         < T as
-          ProcessField < Q >
+          ProtocolField < Q >
         > :: Value,
         R :: ValueSum
       >
@@ -214,14 +214,14 @@ where
     ( val_sum :
       Sum <
         < T as
-          ProcessField < Q >
+          ProtocolField < Q >
         > :: Value,
         R :: ValueSum
       >
     ) ->
       Option <
         < T as
-          ProcessField < P >
+          ProtocolField < P >
         > :: Value
       >
   {
@@ -239,12 +239,12 @@ where
 
 impl
   < T, P, R >
-  ProcessSum < T >
+  ProtocolSum < T >
   for (P, R)
 where
-  P : Process,
-  T : ProcessField < P >,
-  R : ProcessSum < T >
+  P : Protocol,
+  T : ProtocolField < P >,
+  R : ProtocolSum < T >
 {
   type ValueSum =
     Sum <
@@ -254,29 +254,29 @@ where
 }
 
 impl < P >
-  ProcessField < P >
+  ProtocolField < P >
   for ToValue
 where
-  P : Process
+  P : Protocol
 {
   type Value = P :: Value;
 }
 
 impl < P >
-  ProcessField < P >
+  ProtocolField < P >
   for ToUnit
 where
-  P : Process
+  P : Protocol
 {
   type Value = ();
 }
 
 impl < I, P >
-  ProcessField < P >
+  ProtocolField < P >
   for ToSession < I >
 where
-  P : Process,
-  I : Processes
+  P : Protocol,
+  I : Context
 {
   type Value =
     PartialSession < I, P >;
@@ -284,12 +284,12 @@ where
 
 impl
   < P, T1, T2 >
-  ProcessField < P >
+  ProtocolField < P >
   for ToMerge < T1, T2 >
 where
-  P : Process,
-  T1 : ProcessField < P >,
-  T2 : ProcessField < P >,
+  P : Protocol,
+  T1 : ProtocolField < P >,
+  T2 : ProtocolField < P >,
 {
   type Value =
     ( T1 :: Value,

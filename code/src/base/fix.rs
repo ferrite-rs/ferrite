@@ -1,13 +1,13 @@
 use crate::base::nat::*;
 use async_std::sync::{ Sender, Receiver };
 
-pub trait TyCon < A > {
+pub trait TyApp < A > {
   type Type;
 }
 
 pub struct Fix < F >
 where
-  F : TyCon < Fix < F > >
+  F : TyApp < Fix < F > >
 {
   unfix : Box < F :: Type >
 }
@@ -16,7 +16,7 @@ pub fn fix < F >
   (x : F :: Type)
   -> Fix < F >
 where
-  F : TyCon < Fix < F > >
+  F : TyApp < Fix < F > >
 {
   Fix {
     unfix : Box::new ( x )
@@ -27,24 +27,24 @@ pub fn unfix < F >
   (x : Fix < F >)
   -> F :: Type
 where
-  F : TyCon < Fix < F > >
+  F : TyApp < Fix < F > >
 {
   *x.unfix
 }
 
 impl < A, F >
-  TyCon < A > for
+  TyApp < A > for
   Fix < F >
 where
-  F : TyCon < A >,
-  F : TyCon < Fix < F > >,
+  F : TyApp < A >,
+  F : TyApp < Fix < F > >,
   < F as
-    TyCon < A >
+    TyApp < A >
   > :: Type :
-    TyCon <
+    TyApp <
       Fix <
         < F as
-          TyCon < A >
+          TyApp < A >
         > :: Type
       >
     >,
@@ -52,27 +52,27 @@ where
   type Type =
     Fix <
       < F as
-        TyCon < A >
+        TyApp < A >
       > :: Type
     >;
 }
 
 impl < A >
-  TyCon < A > for
+  TyApp < A > for
   Z
 {
   type Type = A;
 }
 
 impl < A >
-  TyCon < A > for
+  TyApp < A > for
   ()
 {
   type Type = ();
 }
 
 impl < A, N >
-  TyCon < A > for
+  TyApp < A > for
   S < N >
 where
   N : Nat
@@ -81,38 +81,38 @@ where
 }
 
 impl < A, X >
-  TyCon < A > for
+  TyApp < A > for
   Box < X >
 where
-  X : TyCon < A >
+  X : TyApp < A >
 {
   type Type = Box < X :: Type >;
 }
 
 impl < A, X >
-  TyCon < A > for
+  TyApp < A > for
   Receiver < X >
 where
-  X : TyCon < A >
+  X : TyApp < A >
 {
   type Type = Receiver < X :: Type >;
 }
 
 impl < A, X >
-  TyCon < A > for
+  TyApp < A > for
   Sender < X >
 where
-  X : TyCon < A >
+  X : TyApp < A >
 {
   type Type = Sender < X :: Type >;
 }
 
 impl < A, X, Y >
-  TyCon < A > for
+  TyApp < A > for
   ( X, Y )
 where
-  X : TyCon < A >,
-  Y : TyCon < A >,
+  X : TyApp < A >,
+  Y : TyApp < A >,
 {
   type Type =
     ( X :: Type,

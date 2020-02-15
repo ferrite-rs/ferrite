@@ -3,7 +3,7 @@ use async_std::sync::{ Sender, Receiver };
 
 use crate::base as base;
 
-use base::{ TyCon, Process };
+use base::{ TyApp, Protocol };
 
 pub struct ReceiveChannel
   < P, Q >
@@ -14,11 +14,11 @@ pub struct ReceiveChannel
 
 impl
   < P, Q >
-  Process for
+  Protocol for
   ReceiveChannel < P, Q >
 where
-  P: Process,
-  Q: Process
+  P: Protocol,
+  Q: Protocol
 {
   type Value =
     Sender < (
@@ -29,20 +29,20 @@ where
 
 impl
   < P, Q >
-  base::public::Process for
+  base::public::Protocol for
   ReceiveChannel < P, Q >
 where
-  P: base::public::Process,
-  Q: base::public::Process
+  P: base::public::Protocol,
+  Q: base::public::Protocol
 { }
 
 
 impl < A, P, Q >
-  TyCon < A > for
+  TyApp < A > for
   ReceiveChannel < P, Q >
 where
-  P : TyCon < A >,
-  Q : TyCon < A >,
+  P : TyApp < A >,
+  Q : TyApp < A >,
 {
   type Type =
     ReceiveChannel <

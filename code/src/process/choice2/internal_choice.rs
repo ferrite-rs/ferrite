@@ -7,7 +7,7 @@ pub struct InternalChoice < Row >
   ( PhantomData < Row > );
 
 impl < Row >
-  Process for
+  Protocol for
   InternalChoice < Row >
 where
   Row : Send + 'static,

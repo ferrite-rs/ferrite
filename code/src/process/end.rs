@@ -1,7 +1,7 @@
 
 use crate::base as base;
 
-use base::{ TyCon, Process };
+use base::{ TyApp, Protocol };
 
 /*
   The unit process representing termination.
@@ -10,14 +10,14 @@ pub struct End {
 
 }
 
-impl Process for End {
+impl Protocol for End {
   type Value = ();
 }
 
-impl base::public::Process for End {}
+impl base::public::Protocol for End {}
 
 impl < A >
-  TyCon < A >
+  TyApp < A >
   for End
 {
   type Type = End;

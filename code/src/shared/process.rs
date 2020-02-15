@@ -2,20 +2,20 @@ use std::marker::PhantomData;
 
 use crate::base as base;
 
-use base::{ Process };
+use base::{ Protocol };
 use async_std::sync::{ Sender, Receiver };
 
-pub trait SharedProcess {
+pub trait SharedProtocol {
   type SharedValue : Send;
 }
 
 pub mod public {
-  pub trait SharedProcess : super::SharedProcess {}
+  pub trait SharedProtocol : super::SharedProtocol {}
 }
 
-pub trait SharedTyCon < R >
+pub trait SharedTyApp < R >
 {
-  type ToProcess : Process;
+  type ToProtocol : Protocol;
 }
 
 pub struct Lock < F >
@@ -34,7 +34,7 @@ pub struct SharedToLinear < F >
 }
 
 impl < F >
-  Process for
+  Protocol for
   SharedToLinear < F >
 where
   F : Send + 'static
@@ -43,54 +43,54 @@ where
 }
 
 impl < F >
-  Process for
+  Protocol for
   Lock < F >
 where
-  F : SharedTyCon < F >
+  F : SharedTyApp < F >
       + Send + 'static
 {
   type Value =
     Sender <
       Receiver<
-        < < F as SharedTyCon < F > >
-          :: ToProcess
-          as Process
+        < < F as SharedTyApp < F > >
+          :: ToProtocol
+          as Protocol
         > :: Value
       >
     >;
 }
 
 impl < F >
-  SharedProcess for
+  SharedProtocol for
   LinearToShared < F >
 where
-  F : SharedTyCon < F >
+  F : SharedTyApp < F >
 {
   type SharedValue =
-    < < F as SharedTyCon < F > >
-      :: ToProcess
-      as Process
+    < < F as SharedTyApp < F > >
+      :: ToProtocol
+      as Protocol
     > :: Value;
 }
 
 impl < F >
-  base::public::Process for
+  base::public::Protocol for
   SharedToLinear < F >
 where
   F : Send + 'static
 { }
 
 impl < F >
-  base::public::Process for
+  base::public::Protocol for
   Lock < F >
 where
-  F : SharedTyCon < F >
+  F : SharedTyApp < F >
       + Send + 'static
 { }
 
 impl < F >
-  public::SharedProcess for
+  public::SharedProtocol for
   LinearToShared < F >
 where
-  F : SharedTyCon < F >
+  F : SharedTyApp < F >
 { }

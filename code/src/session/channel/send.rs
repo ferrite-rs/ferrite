@@ -9,11 +9,11 @@ use async_std::sync::{
 use crate::process::{ SendChannel };
 
 use crate::base::{
-  Process,
-  Inactive,
-  Processes,
-  Appendable,
-  ProcessLens,
+  Protocol,
+  Empty,
+  Context,
+  AppendContext,
+  ContextLens,
   PartialSession,
   run_partial_session,
   create_partial_session,
@@ -44,22 +44,22 @@ pub fn send_channel_from
       SendChannel< P, Q >
     >
 where
-  P : Process + 'static,
-  Q : Process + 'static,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  Q : Protocol + 'static,
+  I : Context + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       P,
-      Inactive
+      Empty
     >
 {
   create_partial_session (
     async move | ins1, sender1 | {
       let (p_chan, ins2) =
         < N as
-          ProcessLens <
-            I, P, Inactive
+          ContextLens <
+            I, P, Empty
           >
         > :: split_channels (ins1);
 
@@ -68,8 +68,8 @@ where
 
       let ins3 =
         < N as
-          ProcessLens <
-            I, P, Inactive
+          ContextLens <
+            I, P, Empty
           >
         > :: merge_channels ((), ins2);
 
@@ -112,18 +112,18 @@ pub fn receive_channel_from
   ) ->
     PartialSession < I, Q >
 where
-  P1 : Process + 'static,
-  P2 : Process + 'static,
-  Q : Process + 'static,
-  I : Processes + 'static,
+  P1 : Protocol + 'static,
+  P2 : Protocol + 'static,
+  Q : Protocol + 'static,
+  I : Context + 'static,
   N :: Target :
     NextSelector,
   N :: Target :
-    Appendable <
+    AppendContext <
         ( P1, () )
       >,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       SendChannel < P1, P2 >,
       P2
@@ -135,7 +135,7 @@ where
         ) ->
           PartialSession <
             < N :: Target
-              as Appendable <
+              as AppendContext <
                 ( P1, () )
               >
             > :: AppendResult,
@@ -152,7 +152,7 @@ where
     async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             SendChannel < P1, P2 >,
             P2
@@ -163,7 +163,7 @@ where
 
       let ins3 =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             SendChannel < P1, P2 >,
             P2
@@ -172,7 +172,7 @@ where
 
       let ins4 =
         < N :: Target as
-          Appendable <
+          AppendContext <
             ( P1, () )
           >
         > :: append_channels (ins3, (p_chan, ()));
@@ -200,15 +200,15 @@ pub fn fork <P, Q, InsP, InsQ>
     cont2:  PartialSession <InsQ, Q>
   ) ->
      PartialSession <
-      < InsP as Appendable<InsQ> >::AppendResult,
+      < InsP as AppendContext<InsQ> >::AppendResult,
       SendChannel<P, Q>
     >
 where
-  P: Process,
-  Q: Process,
-  InsP: Processes,
-  InsQ: Processes,
-  InsP: Appendable<InsQ>,
+  P: Protocol,
+  Q: Protocol,
+  InsP: Context,
+  InsQ: Context,
+  InsP: AppendContext<InsQ>,
   P: 'static,
   Q: 'static,
   InsP: 'static,
@@ -222,7 +222,7 @@ where
         Receiver< Q::Value >
       )>
     | {
-      let (ins1, ins2) = < InsP as Appendable<InsQ> >::split_channels(ins);
+      let (ins1, ins2) = < InsP as AppendContext<InsQ> >::split_channels(ins);
 
       let (sender1, receiver1) = channel(1);
       let (sender2, receiver2) = channel(1);
@@ -268,20 +268,20 @@ pub fn receive_channel_from_slot
   ) ->
     PartialSession < I, Q >
 where
-  P1 : Process + 'static,
-  P2 : Process + 'static,
-  Q : Process + 'static,
-  I : Processes + 'static,
+  P1 : Protocol + 'static,
+  P2 : Protocol + 'static,
+  Q : Protocol + 'static,
+  I : Context + 'static,
   SourceLens :
-    ProcessLens <
+    ContextLens <
       I,
       SendChannel < P1, P2 >,
       P2
     >,
   TargetLens :
-    ProcessLens <
+    ContextLens <
       SourceLens :: Target,
-      Inactive,
+      Empty,
       P1
     >,
 {
@@ -289,7 +289,7 @@ where
     async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
         < SourceLens as
-          ProcessLens <
+          ContextLens <
             I,
             SendChannel < P1, P2 >,
             P2
@@ -301,7 +301,7 @@ where
 
       let ins3 =
         < SourceLens as
-          ProcessLens <
+          ContextLens <
             I,
             SendChannel < P1, P2 >,
             P2
@@ -310,18 +310,18 @@ where
 
       let ((), ins4) =
         < TargetLens as
-          ProcessLens <
+          ContextLens <
             SourceLens :: Target,
-            Inactive,
+            Empty,
             P1
           >
         > :: split_channels ( ins3 );
 
       let ins5 =
         < TargetLens as
-          ProcessLens <
+          ContextLens <
             SourceLens :: Target,
-            Inactive,
+            Empty,
             P1
           >
         > :: merge_channels ( p_chan, ins4 );

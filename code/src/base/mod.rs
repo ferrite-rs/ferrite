@@ -3,7 +3,7 @@
 
 //! The `base` module  defines the abstract interfaces for `session_rust`.
 //!
-//! - [`crate::base::Process`] - Process expressions in session types with
+//! - [`crate::base::Protocol`] - Protocol expressions in session types with
 //!   translation to Rust channel types.
 
 mod process;
@@ -17,13 +17,13 @@ mod fix;
 pub mod public;
 
 pub use self::process::{
-  Process
+  Protocol
 };
 
 pub use self::processes::{
-  Processes,
-  EmptyList,
-  Appendable,
+  Context,
+  EmptyContext,
+  AppendContext,
   Reversible
 };
 
@@ -35,9 +35,9 @@ pub use self::session::{
 };
 
 pub use self::lens::{
-  ProcessNode,
-  Inactive,
-  ProcessLens,
+  Slot,
+  Empty,
+  ContextLens,
 };
 
 pub use fix::*;

@@ -6,7 +6,7 @@ use async_std::sync::{ channel };
 use crate::process::{ End };
 
 use crate::base::{
-  EmptyList,
+  EmptyContext,
   PartialSession,
   run_partial_session
 };
@@ -16,10 +16,10 @@ pub fn
   < Ins >
   (session : PartialSession < Ins, End >)
 where
-  Ins : EmptyList + 'static
+  Ins : EmptyContext + 'static
 {
   let (sender, receiver) = channel(1);
-  let ins = < Ins as EmptyList > :: make_empty_list ();
+  let ins = < Ins as EmptyContext > :: make_empty_list ();
 
   task::block_on(async {
     let child1 = task::spawn(async {

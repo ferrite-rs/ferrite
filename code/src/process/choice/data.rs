@@ -1,4 +1,4 @@
-use crate::base::{ TyCon };
+use crate::base::{ TyApp };
 
 pub enum Choice {
   Left,
@@ -12,11 +12,11 @@ pub enum Either < S, T >
 }
 
 impl < A, X, Y >
-  TyCon < A > for
+  TyApp < A > for
   Either < X, Y >
 where
-  X : TyCon < A >,
-  Y : TyCon < A >,
+  X : TyApp < A >,
+  Y : TyApp < A >,
 {
   type Type =
     Either <

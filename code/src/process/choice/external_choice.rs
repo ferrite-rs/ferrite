@@ -3,7 +3,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ TyCon, Process };
+use base::{ TyApp, Protocol };
 
 use super::data::{ Choice, Either };
 
@@ -16,11 +16,11 @@ pub struct ExternalChoice
 
 impl
   < P, Q >
-  Process for
+  Protocol for
   ExternalChoice < P, Q >
 where
-  P: Process,
-  Q: Process
+  P: Protocol,
+  Q: Protocol
 {
   type Value = Box<
     dyn FnOnce(Choice) ->
@@ -33,23 +33,23 @@ where
 
 impl
   < P, Q >
-  base::public::Process for
+  base::public::Protocol for
   ExternalChoice < P, Q >
 where
-  P: base::public::Process,
-  Q: base::public::Process
+  P: base::public::Protocol,
+  Q: base::public::Protocol
 { }
 
 impl < A, T, X, Y >
-  TyCon < A > for
+  TyApp < A > for
   Box <
     dyn FnOnce (T) ->
       Either < X, Y >
     + Send
   >
 where
-  X : TyCon < A >,
-  Y : TyCon < A >,
+  X : TyApp < A >,
+  Y : TyApp < A >,
 {
   type Type =
     Box <
@@ -63,11 +63,11 @@ where
 }
 
 impl < A, P, Q >
-  TyCon < A > for
+  TyApp < A > for
   ExternalChoice < P, Q >
 where
-  P : TyCon < A >,
-  Q : TyCon < A >,
+  P : TyApp < A >,
+  Q : TyApp < A >,
 {
   type Type =
   ExternalChoice <

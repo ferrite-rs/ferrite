@@ -1,22 +1,22 @@
 use crate::base::nat::*;
 
 /// A process / session type. This can be used as either input or output process.
-pub trait Process
+pub trait Protocol
   : Send + 'static
 {
   type Value : Sized + Send;
 }
 
 pub mod public {
-  pub trait Process : super::Process {}
+  pub trait Protocol : super::Protocol {}
 }
 
-impl Process for Z {
+impl Protocol for Z {
   type Value = Z;
 }
 
 impl < N >
-  Process for
+  Protocol for
   S < N >
 where
   N : Nat

@@ -6,9 +6,9 @@ pub use crate::process::nary_choice::*;
 use async_std::sync::{ Sender, Receiver, channel };
 
 pub trait ExternalSum < I >
-  : ProcessSum2
+  : ProtocolSum2
 where
-  I : Processes
+  I : Context
 {
   type CurrentSession : Send + 'static;
 
@@ -19,7 +19,7 @@ pub trait ExternalCont
   < ParentSession, I >
   : ExternalSum < I >
 where
-  I : Processes
+  I : Context
 {
   type CurrentCont : Send + 'static;
 
@@ -51,16 +51,16 @@ pub trait ExternalSelect
   < N, I, Source, Selector >
   : ExternalSum < I >
 where
-  I : Processes,
-  Source : Process,
+  I : Context,
+  Source : Protocol,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       Source,
-      Self :: SelectedProcess
+      Self :: SelectedProtocol
     >,
 {
-  type SelectedProcess : Process + 'static;
+  type SelectedProtocol : Protocol + 'static;
 
   fn to_selector_sum ()
     -> Self :: SelectorSum
@@ -70,11 +70,11 @@ where
     val_sum : Self :: ValueSum,
     ins :
       < N :: Deleted
-        as Processes
+        as Context
       > :: Values
   ) ->
     < N :: Target
-      as Processes
+      as Context
     > :: Values
   ;
 }
@@ -83,7 +83,7 @@ pub struct ExternalChoiceResult
   < I, Sum >
 where
   Sum : ExternalSum < I >,
-  I : Processes,
+  I : Context,
 {
   result : Sum :: SessionSum
 }
@@ -97,7 +97,7 @@ fn mk_external_choice_result
     >
 where
   Sum : ExternalSum < I >,
-  I : Processes,
+  I : Context,
 {
   ExternalChoiceResult {
     result : session_sum
@@ -109,8 +109,8 @@ impl
   ExternalSum < I >
   for P
 where
-  P : Process + 'static,
-  I : Processes + 'static
+  P : Protocol + 'static,
+  I : Context + 'static
 {
   type CurrentSession =
     PartialSession < I, P >;
@@ -123,8 +123,8 @@ impl
   ExternalSum < I >
   for Sum < P, R >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
   R : ExternalSum < I > + 'static,
 {
   type CurrentSession =
@@ -146,8 +146,8 @@ impl
     ParentSession, I
   > for P
 where
-  P : Process + 'static,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
   ParentSession : 'static,
 {
   type CurrentCont =
@@ -205,8 +205,8 @@ impl
     < ParentSession, I >
   for Sum < P, R >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
   ParentSession : 'static,
   R :
     ExternalCont <
@@ -332,17 +332,17 @@ impl
   >
   for P
 where
-  P : Process + 'static,
-  I : Processes + 'static,
-  Source : Process + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
+  Source : Protocol + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       Source,
       P
     >,
 {
-  type SelectedProcess = P;
+  type SelectedProtocol = P;
 
   fn to_selector_sum ()
     -> Self :: SelectorSum
@@ -355,11 +355,11 @@ where
       Receiver < P :: Value >,
     ins :
       < N :: Deleted
-        as Processes
+        as Context
       > :: Values
   ) ->
     < N :: Target
-      as Processes
+      as Context
     > :: Values
   {
     N :: merge_channels
@@ -375,21 +375,21 @@ impl
   >
   for Sum < P, Rest >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
-  Source : Process + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
+  Source : Protocol + 'static,
   Rest : ExternalSelect <
     N, I, Source, Selector
   > + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       Source,
-      Rest :: SelectedProcess
+      Rest :: SelectedProtocol
     >,
 {
-  type SelectedProcess =
-    Rest :: SelectedProcess;
+  type SelectedProtocol =
+    Rest :: SelectedProtocol;
 
   fn to_selector_sum ()
     -> Self :: SelectorSum
@@ -403,11 +403,11 @@ where
     val_sum : Self :: ValueSum,
     ins :
       < N :: Deleted
-        as Processes
+        as Context
       > :: Values
   ) ->
     < N :: Target
-      as Processes
+      as Context
     > :: Values
   {
     match val_sum {
@@ -431,18 +431,18 @@ impl
   >
   for Sum < P, Rest >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
-  Source : Process + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
+  Source : Protocol + 'static,
   Rest : ExternalSum < I > + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       Source,
       P
     >,
 {
-  type SelectedProcess = P;
+  type SelectedProtocol = P;
 
   fn to_selector_sum ()
     -> Self :: SelectorSum
@@ -456,11 +456,11 @@ where
     val_sum : Self :: ValueSum,
     ins :
       < N :: Deleted
-        as Processes
+        as Context
       > :: Values
   ) ->
     < N :: Target
-      as Processes
+      as Context
     > :: Values
   {
     match val_sum {
@@ -485,7 +485,7 @@ pub fn offer_choice
       ExternalChoice < Sum >
     >
 where
-  I : Processes + 'static,
+  I : Context + 'static,
   Sum : ExternalSum < I > + 'static,
   Sum :
     ExternalCont <
@@ -561,8 +561,8 @@ pub fn choose
       I, P
     >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
   Sum :
     ExternalSelect <
       N,
@@ -571,10 +571,10 @@ where
       Selector
     >,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       ExternalChoice < Sum >,
-      Sum :: SelectedProcess,
+      Sum :: SelectedProtocol,
     >,
 {
   create_partial_session (

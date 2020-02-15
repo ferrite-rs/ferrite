@@ -9,7 +9,7 @@ use async_std::task::sleep;
 use crate::public::*;
 
 pub type Receiver < T > =
-  FixProcess <
+  FixProtocol <
     ExternalChoice <
       SendValue <
         T,

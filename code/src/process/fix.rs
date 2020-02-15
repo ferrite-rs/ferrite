@@ -1,21 +1,21 @@
 use std::marker::PhantomData;
 use crate::base::*;
 
-pub struct FixProcess < F > {
+pub struct FixProtocol < F > {
   f : PhantomData < F >
 }
 
 impl < F >
-  Process for
-  FixProcess < F >
+  Protocol for
+  FixProtocol < F >
 where
-  F : Process,
+  F : Protocol,
   F :: Value :
-    TyCon <
+    TyApp <
       Fix < F :: Value >
     >,
   < F :: Value as
-    TyCon <
+    TyApp <
       Fix < F :: Value >
     >
   > :: Type :

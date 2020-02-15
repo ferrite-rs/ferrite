@@ -7,7 +7,7 @@ use std::pin::Pin;
 use crate::public::*;
 
 type Queue < A > =
-  FixProcess <
+  FixProtocol <
     InternalChoice <
       End,
       SendValue < A, Z >,

@@ -4,7 +4,7 @@ use async_std::sync::{ Sender, Receiver };
 use super::data::Val;
 use crate::base as base;
 
-use base::{ TyCon, Process };
+use base::{ TyApp, Protocol };
 
 pub struct ReceiveValue
   < T, P >
@@ -15,11 +15,11 @@ pub struct ReceiveValue
 
 impl
   < T, P >
-  Process for
+  Protocol for
   ReceiveValue < T, P >
 where
   T : Send + 'static,
-  P : Process
+  P : Protocol
 {
   type Value = (
     Sender < Val < T > >,
@@ -29,18 +29,18 @@ where
 
 impl
   < T, P >
-  base::public::Process for
+  base::public::Protocol for
   ReceiveValue < T, P >
 where
   T : Send + 'static,
-  P : Process
+  P : Protocol
 { }
 
 impl < A, T, P >
-  TyCon < A > for
+  TyApp < A > for
   ReceiveValue < T, P >
 where
-  P : TyCon < A >,
+  P : TyApp < A >,
 {
   type Type =
     ReceiveValue <

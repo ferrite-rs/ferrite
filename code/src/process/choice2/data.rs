@@ -12,8 +12,8 @@ pub struct ReceiverCon {}
 
 pub struct MergeField < T1, T2, A >
 where
-  T1 : TyCon < A >,
-  T2 : TyCon < A >,
+  T1 : TyApp < A >,
+  T2 : TyApp < A >,
 {
   field1 : T1 :: Type,
   field2 : T2 :: Type
@@ -63,8 +63,8 @@ where
 
 pub trait LiftField < T1, T2, A >
 where
-  T1 : TyCon < A >,
-  T2 : TyCon < A >
+  T1 : TyApp < A >,
+  T2 : TyApp < A >
 {
   fn lift_field (
     field : T1 :: Type
@@ -88,9 +88,9 @@ pub trait LiftSum < T1, T2, F >
 
 pub trait LiftField2 < T1, T2, A, T3, Root >
 where
-  T1 : TyCon < A >,
-  T2 : TyCon < A >,
-  T3 : TyCon < A >,
+  T1 : TyApp < A >,
+  T2 : TyApp < A >,
+  T3 : TyApp < A >,
 {
   fn lift_field (
     inject : impl Fn (T3 :: Type) -> Root + Send + 'static,
@@ -145,7 +145,7 @@ pub trait IntersectSum < T1, T2 >
 
 pub trait ElimField < T, A, R >
 where
-  T : TyCon < A >
+  T : TyApp < A >
 {
   fn elim_field (
     self,
@@ -167,7 +167,7 @@ pub trait ElimSum < T, F, R >
 
 pub trait IntroField < T, A >
 where
-  T : TyCon < A >
+  T : TyApp < A >
 {
   fn intro_field () ->
     T :: Type
@@ -185,20 +185,20 @@ where
 }
 
 impl < T1, T2, A >
-  TyCon < A >
+  TyApp < A >
   for Merge < T1, T2 >
 where
-  T1 : TyCon < A >,
-  T2 : TyCon < A >,
+  T1 : TyApp < A >,
+  T2 : TyApp < A >,
 {
   type Type = MergeField < T1, T2, A >;
 }
 
 impl < P >
-  TyCon < P > for
+  TyApp < P > for
   ReceiverCon
 where
-  P : Process
+  P : Protocol
 {
   type Type = Receiver < P :: Value >;
 }
@@ -214,7 +214,7 @@ impl < T, A, R >
   SumRow < T > for
   ( A, R )
 where
-  T : TyCon < A >,
+  T : TyApp < A >,
   R : SumRow < T >
 {
   type Field =
@@ -260,8 +260,8 @@ impl < T1, T2, A, R >
   IntersectSum < T1, T2 > for
   ( A, R )
 where
-  T1 : TyCon < A >,
-  T2 : TyCon < A >,
+  T1 : TyApp < A >,
+  T2 : TyApp < A >,
   R : IntersectSum < T1, T2 >
 {
   fn intersect (
@@ -314,8 +314,8 @@ impl < T1, T2, F, A, B >
   LiftSum < T1, T2, F > for
   (A, B)
 where
-  T1 : TyCon < A >,
-  T2 : TyCon < A >,
+  T1 : TyApp < A >,
+  T2 : TyApp < A >,
   F : LiftField < T1, T2, A >,
   B : LiftSum < T1, T2, F >,
 {
@@ -368,9 +368,9 @@ impl < T1, T2, F, T3, Root, A, B >
   LiftSum2 < T1, T2, F, T3, Root > for
   (A, B)
 where
-  T1 : TyCon < A >,
-  T2 : TyCon < A >,
-  T3 : TyCon < A >,
+  T1 : TyApp < A >,
+  T2 : TyApp < A >,
+  T3 : TyApp < A >,
   F : LiftField2 < T1, T2, A, T3, Root >,
   B : LiftSum2 < T1, T2, F, T3, Root >,
 {
@@ -449,7 +449,7 @@ impl < A, B, T, F, R >
   ElimSum < T, F, R > for
   (A, B)
 where
-  T : TyCon < A >,
+  T : TyApp < A >,
   B : ElimSum < T, F, R >,
   F : ElimField < T, A, R >,
 {
@@ -478,7 +478,7 @@ impl < T, F, A, B >
   IntroSum < Z, T, F > for
   ( A, B )
 where
-  T : TyCon < A >,
+  T : TyApp < A >,
   B : SumRow < T >,
   F : IntroField < T, A >
 {
@@ -497,7 +497,7 @@ impl < N, T, F, A, B >
   ( A, B )
 where
   N : Nat,
-  T : TyCon < A >,
+  T : TyApp < A >,
   B : SumRow < T >,
   B : IntroSum < N, T, F >
 {
@@ -512,18 +512,18 @@ where
 }
 
 impl < A >
-  TyCon < A > for
+  TyApp < A > for
   Bottom
 {
   type Type = Bottom;
 }
 
 impl < X , A, B >
-  TyCon < X > for
+  TyApp < X > for
   Sum < A, B >
 where
-  A : TyCon < X >,
-  B : TyCon < X >,
+  A : TyApp < X >,
+  B : TyApp < X >,
 {
   type Type =
     Sum <

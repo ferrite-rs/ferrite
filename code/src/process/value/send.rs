@@ -4,7 +4,7 @@ use async_std::sync::{ Receiver };
 use super::data::Val;
 use crate::base as base;
 
-use base::{ TyCon, Process };
+use base::{ TyApp, Protocol };
 
 pub struct SendValue < T, P >
 {
@@ -12,10 +12,10 @@ pub struct SendValue < T, P >
   process: PhantomData<P>
 }
 
-impl < T, P > Process for SendValue < T, P >
+impl < T, P > Protocol for SendValue < T, P >
 where
   T : Send + 'static,
-  P : Process
+  P : Protocol
 {
   type Value = (
     Val < T >,
@@ -24,10 +24,10 @@ where
 }
 
 impl < A, T, P >
-  TyCon < A > for
+  TyApp < A > for
   SendValue < T, P >
 where
-  P : TyCon < A >,
+  P : TyApp < A >,
 {
   type Type =
     SendValue <
@@ -38,9 +38,9 @@ where
 
 impl
   < T, P >
-  base::public::Process for
+  base::public::Protocol for
   SendValue < T, P >
 where
   T : Send + 'static,
-  P : Process
+  P : Protocol
 { }

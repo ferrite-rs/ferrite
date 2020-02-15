@@ -8,7 +8,7 @@ pub struct ExternalChoice < Row >
   ( PhantomData < Row > );
 
 impl < Row >
-  Process for
+  Protocol for
   ExternalChoice < Row >
 where
   Row : Send + 'static,

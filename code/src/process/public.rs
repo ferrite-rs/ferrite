@@ -1,7 +1,7 @@
 
 pub use super::{
   End,
-  FixProcess,
+  FixProtocol,
   Choice,
   Either,
   ExternalChoice,

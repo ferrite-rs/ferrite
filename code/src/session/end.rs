@@ -5,12 +5,12 @@ use std::future::{ Future };
 use crate::process::{ End };
 
 use crate::base::{
-  Process,
+  Protocol,
   Session,
-  Inactive,
-  Processes,
-  EmptyList,
-  ProcessLens,
+  Empty,
+  Context,
+  EmptyContext,
+  ContextLens,
   PartialSession,
   run_partial_session,
   create_partial_session,
@@ -28,7 +28,7 @@ pub fn terminate_async < Ins, Func, Fut >
   ( cleaner: Func )
   -> PartialSession < Ins, End >
 where
-  Ins : EmptyList + 'static,
+  Ins : EmptyContext + 'static,
   Func :
     FnOnce() -> Fut
       + Send + 'static,
@@ -46,7 +46,7 @@ pub fn terminate < Ins >
   () ->
     PartialSession < Ins, End >
 where
-  Ins : EmptyList + 'static
+  Ins : EmptyContext + 'static
 {
   terminate_async ( async || { } )
 }
@@ -73,8 +73,8 @@ pub fn wait_async
   ) ->
     PartialSession < I, P >
 where
-  I : Processes + 'static,
-  P : Process + 'static,
+  I : Context + 'static,
+  P : Protocol + 'static,
   Func :
     FnOnce () -> Fut
       + Send + 'static,
@@ -86,7 +86,7 @@ where
           P
         >
     > + Send,
-  N : ProcessLens < I, End, Inactive >
+  N : ContextLens < I, End, Empty >
 {
   create_partial_session (
     async move |
@@ -95,19 +95,19 @@ where
     | {
       let (wait_chan, ins2) =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             End,
-            Inactive
+            Empty
           >
         > :: split_channels (ins1);
 
       let ins3 =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             End,
-            Inactive
+            Empty
           >
         > :: merge_channels ((), ins2);
 
@@ -131,9 +131,9 @@ pub fn wait
   ) ->
     PartialSession < I, P >
 where
-  I : Processes + 'static,
-  P : Process + 'static,
-  N : ProcessLens < I, End, Inactive >
+  I : Context + 'static,
+  P : Protocol + 'static,
+  N : ContextLens < I, End, Empty >
 {
   wait_async ( lens, async move || {
     cont

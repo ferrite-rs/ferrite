@@ -1,23 +1,23 @@
 
 pub use crate::base::public::*;
 // {
-//   Processes,
-//   EmptyList,
-//   Appendable,
+//   Context,
+//   EmptyContext,
+//   AppendContext,
 //   Reversible,
 
 //   Session,
 //   PartialSession,
 
-//   ProcessNode,
-//   Inactive,
-//   ProcessLens
+//   Slot,
+//   Empty,
+//   ContextLens
 // };
 
 pub use crate::process::public::{
   End,
 
-  FixProcess,
+  FixProtocol,
 
   Choice,
   Either,
@@ -96,7 +96,7 @@ pub use crate::session::public::{
 };
 
 pub use crate::shared::public::{
-  SharedProcess,
+  SharedProtocol,
   LinearToShared,
   SharedToLinear,
 

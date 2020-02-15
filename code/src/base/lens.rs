@@ -1,54 +1,54 @@
 use async_std::sync::Receiver;
 
-use crate::base::process::{ Process };
-use crate::base::processes::{ Processes };
+use crate::base::process::{ Protocol };
+use crate::base::processes::{ Context };
 
-pub trait ProcessNode {
-  type NodeValue : Send;
+pub trait Slot {
+  type SlotValue : Send;
 }
 
-impl < P > ProcessNode for P
+impl < P > Slot for P
 where
-  P : Process
+  P : Protocol
 {
-  type NodeValue = Receiver <
-    < P as Process > :: Value
+  type SlotValue = Receiver <
+    < P as Protocol > :: Value
   >;
 }
 
-pub struct Inactive { }
+pub struct Empty { }
 
-impl ProcessNode for Inactive {
-  type NodeValue = ();
+impl Slot for Empty {
+  type SlotValue = ();
 }
 
-pub trait ProcessLens < I, P1, P2 >
+pub trait ContextLens < I, P1, P2 >
 where
-  I : Processes,
-  P1 : ProcessNode,
-  P2 : ProcessNode,
+  I : Context,
+  P1 : Slot,
+  P2 : Slot,
 {
-  type Deleted : Processes + 'static;
-  type Target : Processes + 'static;
+  type Deleted : Context + 'static;
+  type Target : Context + 'static;
 
   fn split_channels (
     channels :
-      < I as Processes > :: Values
+      < I as Context > :: Values
   ) ->
-    ( < P1 as ProcessNode > :: NodeValue,
+    ( < P1 as Slot > :: SlotValue,
       < Self::Deleted
-        as Processes
+        as Context
       > :: Values
     );
 
   fn merge_channels (
-    receiver : < P2 as ProcessNode > :: NodeValue,
+    receiver : < P2 as Slot > :: SlotValue,
     channels :
       < Self::Deleted
-        as Processes >
+        as Context >
       :: Values
   ) ->
     < Self::Target
-      as Processes
+      as Context
     > :: Values;
 }

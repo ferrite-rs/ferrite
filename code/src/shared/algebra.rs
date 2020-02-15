@@ -1,5 +1,5 @@
 
-use crate::base::{ Process, Z };
+use crate::base::{ Protocol, Z };
 
 use crate::process::{
   ExternalChoice,
@@ -13,99 +13,99 @@ use crate::process::{
 };
 
 use super::process::{
-  SharedTyCon,
+  SharedTyApp,
   SharedToLinear,
 };
 
 impl < F >
-  SharedTyCon < F > for
+  SharedTyApp < F > for
   Z
 where
   F : Send + 'static
 {
-  type ToProcess = SharedToLinear < F >;
+  type ToProtocol = SharedToLinear < F >;
 }
 
 impl < T, P, R >
-  SharedTyCon < R > for
+  SharedTyApp < R > for
   SendValue < T, P >
 where
   T : Send + 'static,
-  P : SharedTyCon < R >
+  P : SharedTyApp < R >
 {
-  type ToProcess =
+  type ToProtocol =
     SendValue <
       T,
-      P :: ToProcess
+      P :: ToProtocol
     >;
 }
 
 impl < T, P, R >
-  SharedTyCon < R > for
+  SharedTyApp < R > for
   ReceiveValue < T, P >
 where
   T : Send + 'static,
-  P : SharedTyCon < R >
+  P : SharedTyApp < R >
 {
-  type ToProcess =
+  type ToProtocol =
     ReceiveValue <
       T,
-      P :: ToProcess
+      P :: ToProtocol
     >;
 }
 
 impl < P, Q, R >
-  SharedTyCon < R > for
+  SharedTyApp < R > for
   InternalChoice < P, Q >
 where
-  P : SharedTyCon < R >,
-  Q : SharedTyCon < R >,
+  P : SharedTyApp < R >,
+  Q : SharedTyApp < R >,
 {
-  type ToProcess =
+  type ToProtocol =
     InternalChoice <
-      P :: ToProcess,
-      Q :: ToProcess
+      P :: ToProtocol,
+      Q :: ToProtocol
     >;
 }
 
 impl < P, Q, R >
-  SharedTyCon < R > for
+  SharedTyApp < R > for
   ExternalChoice < P, Q >
 where
-  P : SharedTyCon < R >,
-  Q : SharedTyCon < R >,
+  P : SharedTyApp < R >,
+  Q : SharedTyApp < R >,
 {
-  type ToProcess =
+  type ToProtocol =
     ExternalChoice <
-      P :: ToProcess,
-      Q :: ToProcess
+      P :: ToProtocol,
+      Q :: ToProtocol
     >;
 }
 
 impl < P, Q, R >
-  SharedTyCon < R > for
+  SharedTyApp < R > for
   SendChannel < P, Q >
 where
-  P : Process,
-  Q : SharedTyCon < R >,
+  P : Protocol,
+  Q : SharedTyApp < R >,
 {
-  type ToProcess =
+  type ToProtocol =
     SendChannel <
       P,
-      Q :: ToProcess
+      Q :: ToProtocol
     >;
 }
 
 impl < P, Q, R >
-  SharedTyCon < R > for
+  SharedTyApp < R > for
   ReceiveChannel < P, Q >
 where
-  P : Process,
-  Q : SharedTyCon < R >,
+  P : Protocol,
+  Q : SharedTyApp < R >,
 {
-  type ToProcess =
+  type ToProtocol =
     ReceiveChannel <
       P,
-      Q :: ToProcess
+      Q :: ToProtocol
     >;
 }

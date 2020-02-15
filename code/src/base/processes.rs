@@ -1,47 +1,47 @@
 
 /// A list of processes for input. It has multiple implementations including
-/// [crate::base::Processes].
-pub trait Processes {
+/// [crate::base::Context].
+pub trait Context {
   type Values : Sized + Send;
 }
 
 /// An ordered linked list of processes.
-pub trait EmptyList : Processes {
+pub trait EmptyContext : Context {
   fn make_empty_list () ->
-    < Self as Processes > :: Values;
+    < Self as Context > :: Values;
 }
 
 pub trait
-  Appendable < R > : Processes
+  AppendContext < R > : Context
 where
-  R : Processes
+  R : Context
 {
-  type AppendResult : Processes;
+  type AppendResult : Context;
 
   fn append_channels(
-    channels1: <Self as Processes>::Values,
-    channels2: <R as Processes>::Values
+    channels1: <Self as Context>::Values,
+    channels2: <R as Context>::Values
   ) ->
-    <Self::AppendResult as Processes>::Values;
+    <Self::AppendResult as Context>::Values;
 
   fn split_channels(
-    channels: <Self::AppendResult as Processes>::Values
+    channels: <Self::AppendResult as Context>::Values
   ) -> (
-    <Self as Processes>::Values,
-    <R as Processes>::Values
+    <Self as Context>::Values,
+    <R as Context>::Values
   );
 }
 
-pub trait Reversible : Processes {
-  type Reversed : Processes;
+pub trait Reversible : Context {
+  type Reversed : Context;
 
   fn reverse_channels(
-    channels: <Self as Processes>::Values,
+    channels: <Self as Context>::Values,
   ) ->
-    <Self::Reversed as Processes>::Values;
+    <Self::Reversed as Context>::Values;
 
   fn unreverse_channels(
-    channels: <Self::Reversed as Processes>::Values,
+    channels: <Self::Reversed as Context>::Values,
   ) ->
     Self::Values;
 }

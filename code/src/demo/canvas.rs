@@ -8,7 +8,7 @@ enum CanvasOps {
 }
 
 type Canvas =
-  FixProcess <
+  FixProtocol <
     ExternalChoice <
       SendValue <
         CanvasOps,

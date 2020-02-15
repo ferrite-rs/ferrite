@@ -9,9 +9,9 @@ use crate::process::{
 
 use crate::base::{
   PartialSession,
-  Process,
-  Processes,
-  ProcessLens,
+  Protocol,
+  Context,
+  ContextLens,
   run_partial_session,
   create_partial_session,
 };
@@ -27,9 +27,9 @@ use crate::base::{
 
   offerLeft
     :: forall ins p q
-       ( Process p
-       , Process q
-       , Processes ins
+       ( Protocol p
+       , Protocol q
+       , Context ins
        )
     =>  PartialSession ins p
     ->  PartialSession ins (InternalChoice p q)
@@ -42,9 +42,9 @@ pub fn offer_left
       InternalChoice < P, Q >
     >
 where
-  P : Process + 'static,
-  Q : Process + 'static,
-  I : Processes + 'static
+  P : Protocol + 'static,
+  Q : Protocol + 'static,
+  I : Context + 'static
 {
   create_partial_session (
     async move |
@@ -75,9 +75,9 @@ pub fn offer_right
   ( cont:  PartialSession < Ins, Q >
   ) ->  PartialSession < Ins, InternalChoice <P, Q> >
   where
-    P   : Process,
-    Q   : Process,
-    Ins : Processes,
+    P   : Protocol,
+    Q   : Protocol,
+    Ins : Context,
     P   : 'static,
     Q   : 'static,
     Ins : 'static
@@ -120,9 +120,9 @@ pub fn offer_right
 pub struct InternalChoiceResult
   < Ins1, Ins2, P >
 where
-  Ins1 : Processes,
-  Ins2 : Processes,
-  P : Process
+  Ins1 : Context,
+  Ins2 : Context,
+  P : Protocol
 {
   result: Either <
     PartialSession < Ins1, P >,
@@ -136,9 +136,9 @@ fn left_choice
   ->
     InternalChoiceResult < Ins1, Ins2, P >
 where
-  Ins1 : Processes,
-  Ins2 : Processes,
-  P : Process
+  Ins1 : Context,
+  Ins2 : Context,
+  P : Protocol
 {
   return InternalChoiceResult {
     result: Either::Left(res)
@@ -151,9 +151,9 @@ fn right_choice
   ->
     InternalChoiceResult < Ins1, Ins2, P >
 where
-  Ins1 : Processes,
-  Ins2 : Processes,
-  P : Process
+  Ins1 : Context,
+  Ins2 : Context,
+  P : Protocol
 {
   return InternalChoiceResult {
     result: Either::Right(res)
@@ -166,7 +166,7 @@ type ReturnChoice < N, I, P1, P2, S > =
       dyn FnOnce (
         PartialSession <
           < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < P1, P2 >,
               P1
@@ -177,14 +177,14 @@ type ReturnChoice < N, I, P1, P2, S > =
       ) ->
         InternalChoiceResult <
           < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < P1, P2 >,
               P1
             >
           > :: Target,
           < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < P1, P2 >,
               P2
@@ -198,7 +198,7 @@ type ReturnChoice < N, I, P1, P2, S > =
       dyn FnOnce (
         PartialSession <
           < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < P1, P2 >,
               P2
@@ -209,14 +209,14 @@ type ReturnChoice < N, I, P1, P2, S > =
       ) ->
         InternalChoiceResult <
           < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < P1, P2 >,
               P1
             >
           > :: Target,
           < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < P1, P2 >,
               P2
@@ -235,23 +235,23 @@ pub fn case
   ) ->
     PartialSession < I, S >
 where
-  I : Processes + 'static,
-  P1 : Process + 'static,
-  P2 : Process + 'static,
-  S : Process + 'static,
+  I : Context + 'static,
+  P1 : Protocol + 'static,
+  P2 : Protocol + 'static,
+  S : Protocol + 'static,
   F : FnOnce (
         ReturnChoice < N, I, P1, P2, S >
       ) ->
         InternalChoiceResult <
           < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < P1, P2 >,
               P1
             >
           > :: Target,
           < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < P1, P2 >,
               P2
@@ -261,19 +261,19 @@ where
         >
       + Send + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < P1, P2 >,
       P1
     >,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < P1, P2 >,
       P2,
       Deleted =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             InternalChoice < P1, P2 >,
             P1
@@ -285,7 +285,7 @@ where
     async move | ins1, sender | {
       let (variant_chan, ins2) =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             InternalChoice < P1, P2 >,
             P1
@@ -304,7 +304,7 @@ where
 
           let ins3 =
             < N as
-              ProcessLens <
+              ContextLens <
                 I,
                 InternalChoice < P1, P2 >,
                 P1
@@ -331,7 +331,7 @@ where
 
           let ins3 =
             < N as
-              ProcessLens <
+              ContextLens <
                 I,
                 InternalChoice < P1, P2 >,
                 P2

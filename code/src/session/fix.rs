@@ -11,42 +11,42 @@ pub fn fix_session
       PartialSession <
         I,
         < F as
-          TyCon <
-            FixProcess < F >
+          TyApp <
+            FixProtocol < F >
           >
         > :: Type
       >
   ) ->
     PartialSession <
       I,
-      FixProcess < F >
+      FixProtocol < F >
     >
 where
-  I : Processes + 'static,
-  F : Process,
+  I : Context + 'static,
+  F : Protocol,
   F :
-    TyCon <
-      FixProcess < F >
+    TyApp <
+      FixProtocol < F >
     >,
   F :: Value :
-    TyCon <
+    TyApp <
       Fix < F :: Value >,
       Type =
         < < F as
-            TyCon <
-              FixProcess < F >
+            TyApp <
+              FixProtocol < F >
             >
           > :: Type
-          as Process
+          as Protocol
         > :: Value,
     >,
   < F as
-    TyCon <
-      FixProcess < F >
+    TyApp <
+      FixProtocol < F >
     >
-  > :: Type : Process,
+  > :: Type : Protocol,
   < F :: Value as
-    TyCon <
+    TyApp <
       Fix < F :: Value >
     >
   > :: Type :
@@ -63,11 +63,11 @@ where
       let (sender2, receiver)
         : ( Sender <
               < < F as
-                  TyCon <
-                    FixProcess < F >
+                  TyApp <
+                    FixProtocol < F >
                   >
                 > :: Type
-                as Process
+                as Protocol
               > :: Value
             >
           , _
@@ -99,43 +99,43 @@ pub fn unfix_session
   ) ->
     PartialSession < I, P >
 where
-  P : Process,
-  I : Processes + 'static,
-  F : Process,
+  P : Protocol,
+  I : Context + 'static,
+  F : Protocol,
   F :
-    TyCon <
-      FixProcess < F >
+    TyApp <
+      FixProtocol < F >
     >,
   F :: Value :
-    TyCon <
+    TyApp <
       Fix < F :: Value >,
       Type =
         < < F as
-            TyCon <
-              FixProcess < F >
+            TyApp <
+              FixProtocol < F >
             >
           > :: Type
-          as Process
+          as Protocol
         > :: Value,
     >,
   < F as
-    TyCon <
-      FixProcess < F >
+    TyApp <
+      FixProtocol < F >
     >
-  > :: Type : Process,
+  > :: Type : Protocol,
   < F :: Value as
-    TyCon <
+    TyApp <
       Fix < F :: Value >
     >
   > :: Type :
     Send,
   N :
-    ProcessLens <
+    ContextLens <
       I,
-      FixProcess < F >,
+      FixProtocol < F >,
       < F as
-        TyCon <
-          FixProcess < F >
+        TyApp <
+          FixProtocol < F >
         >
       > :: Type,
     >
@@ -148,11 +148,11 @@ where
         let (sender2, receiver2)
         : ( Sender <
               < < F as
-                  TyCon <
-                    FixProcess < F >
+                  TyApp <
+                    FixProtocol < F >
                   >
                 > :: Type
-                as Process
+                as Protocol
               > :: Value
             >
           , _

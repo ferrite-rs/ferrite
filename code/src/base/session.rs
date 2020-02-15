@@ -3,8 +3,8 @@ use std::pin::Pin;
 use std::future::Future;
 use async_std::sync::Sender;
 
-use crate::base::process::{ Process };
-use crate::base::processes::{ Processes };
+use crate::base::process::{ Protocol };
+use crate::base::processes::{ Context };
 
 /// A session builder is a consumer for the given list of
 /// input processes and output a process with given Out type.
@@ -14,8 +14,8 @@ pub type Session < P > =
 pub struct PartialSession
   < I, P >
 where
-  P: Process,
-  I: Processes
+  P: Protocol,
+  I: Context
 {
   executor : Box <
     dyn FnOnce( I::Values, Sender < P::Value > )
@@ -31,8 +31,8 @@ pub fn create_partial_session
   ) ->
     PartialSession < I, P >
 where
-  P: Process + 'static,
-  I: Processes + 'static,
+  P: Protocol + 'static,
+  I: Context + 'static,
   Func :
     FnOnce( I::Values, Sender < P::Value > )
       -> Fut
@@ -65,8 +65,8 @@ pub async fn run_partial_session
   , sender : Sender < P :: Value >
   )
 where
-  P: Process,
-  I: Processes
+  P: Protocol,
+  I: Context
 {
   (session.executor)(ins, sender).await;
 }

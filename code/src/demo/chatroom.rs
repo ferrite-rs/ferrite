@@ -33,20 +33,20 @@
 
 // impl < R > AlgebraT < R > for IncomingT
 // where
-//   R : Process
+//   R : Protocol
 // {
 //   type Algebra = IncomingF < R >;
 // }
 
 // impl < R > AlgebraT < R > for OutgoingT
 // where
-//   R : Process
+//   R : Protocol
 // {
 //   type Algebra = OutgoingF < R >;
 // }
 
-// type IncomingSession = FixProcess < IncomingT >;
-// type OutgoingSession = FixProcess < OutgoingT >;
+// type IncomingSession = FixProtocol < IncomingT >;
+// type OutgoingSession = FixProtocol < OutgoingT >;
 
 // type ChatRoomSession =
 //   ReceiveValue <

@@ -4,7 +4,7 @@ use crate::base::*;
 use crate::processes::lens::*;
 use async_std::sync::Receiver;
 
-pub trait ProcessSum2
+pub trait ProtocolSum2
   : Send + 'static
 {
   type ValueSum : Send;
@@ -21,14 +21,14 @@ pub trait ProcessSum2
       Self::SelectorSum;
 }
 
-pub trait SelectSum < N > : ProcessSum2 {
-  type SelectedProcess : Process + 'static;
+pub trait SelectSum < N > : ProtocolSum2 {
+  type SelectedProtocol : Protocol + 'static;
 
   fn inject_selected
     ( receiver :
         Receiver <
-          < Self :: SelectedProcess
-            as Process
+          < Self :: SelectedProtocol
+            as Protocol
           > :: Value
         >
     ) ->
@@ -47,20 +47,20 @@ pub struct ExternalChoice < Choice >
 
 impl
   < Sum >
-  Process for
+  Protocol for
   InternalChoice < Sum >
 where
-  Sum : ProcessSum2
+  Sum : ProtocolSum2
 {
   type Value = Sum :: ValueSum;
 }
 
 impl
   < Sum >
-  Process for
+  Protocol for
   ExternalChoice < Sum >
 where
-  Sum : ProcessSum2
+  Sum : ProtocolSum2
 {
   type Value =
     Box <
@@ -72,9 +72,9 @@ where
     >;
 }
 
-impl < P > ProcessSum2 for P
+impl < P > ProtocolSum2 for P
 where
-  P : Process
+  P : Protocol
 {
   type ValueSum =
     Receiver < P :: Value >;
@@ -98,11 +98,11 @@ where
 }
 
 impl < P, R >
-  ProcessSum2
+  ProtocolSum2
   for Sum < P, R >
 where
-  P : Process,
-  R : ProcessSum2,
+  P : Protocol,
+  R : ProtocolSum2,
 {
   type ValueSum =
     Sum <
@@ -154,9 +154,9 @@ impl
   SelectSum < Z >
   for P
 where
-  P : Process + 'static
+  P : Protocol + 'static
 {
-  type SelectedProcess = P;
+  type SelectedProtocol = P;
 
   fn inject_selected
     ( receiver :
@@ -177,10 +177,10 @@ impl
   >
   for Sum < P, R >
 where
-  P : Process + 'static,
-  R : ProcessSum2,
+  P : Protocol + 'static,
+  R : ProtocolSum2,
 {
-  type SelectedProcess = P;
+  type SelectedProtocol = P;
 
   fn inject_selected
     ( receiver :
@@ -202,19 +202,19 @@ impl
   for Sum < P, R >
 where
   N : Nat,
-  P : Process,
-  R : ProcessSum2,
+  P : Protocol,
+  R : ProtocolSum2,
   R : SelectSum < N >
 {
-  type SelectedProcess =
+  type SelectedProtocol =
     < R as SelectSum < N >
-    > :: SelectedProcess ;
+    > :: SelectedProtocol ;
 
   fn inject_selected
     ( receiver :
         Receiver <
-          < Self :: SelectedProcess
-            as Process
+          < Self :: SelectedProtocol
+            as Protocol
           > :: Value
         >
     ) ->

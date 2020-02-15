@@ -7,12 +7,12 @@ pub fn session
   (cont : PartialSession < Ins, P >)
   -> Session < P >
 where
-  Ins : EmptyList + 'static,
-  P : Process + 'static
+  Ins : EmptyContext + 'static,
+  P : Protocol + 'static
 {
   create_partial_session (
     async move | (), sender | {
-      let ins = < Ins as EmptyList > :: make_empty_list();
+      let ins = < Ins as EmptyContext > :: make_empty_list();
       run_partial_session ( cont, ins, sender ).await;
     })
 }
@@ -22,8 +22,8 @@ pub fn partial_session
   (cont : Session < P >)
   -> PartialSession < Ins, P >
 where
-  Ins : EmptyList + 'static,
-  P : Process + 'static
+  Ins : EmptyContext + 'static,
+  P : Protocol + 'static
 {
   create_partial_session (
     async move |
@@ -40,20 +40,20 @@ pub fn append_emtpy_slot
   ->
     PartialSession <
       < I as
-        Appendable < ( Inactive, () ) >
+        AppendContext < ( Empty, () ) >
       > :: AppendResult,
       P
     >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
-  I : Appendable < ( Inactive, () ) >
+  P : Protocol + 'static,
+  I : Context + 'static,
+  I : AppendContext < ( Empty, () ) >
 {
   create_partial_session (
     async move | ins1, sender | {
       let (ins2, _) =
         < I as
-          Appendable < ( Inactive, () ) >
+          AppendContext < ( Empty, () ) >
         > :: split_channels ( ins1 );
 
       run_partial_session ( cont, ins2, sender ).await
@@ -65,10 +65,10 @@ pub fn session_1
   ( cont : F ) ->
     Session < P >
 where
-  P : Process + 'static,
+  P : Protocol + 'static,
   F : FnOnce (Z) ->
         PartialSession <
-          ( Inactive, () ),
+          ( Empty, () ),
           P
         >
 {
@@ -80,10 +80,10 @@ pub fn session_2
   ( cont : F ) ->
     Session < P >
 where
-  P : Process + 'static,
+  P : Protocol + 'static,
   F : FnOnce (Z, Selector1) ->
         PartialSession <
-          ( Inactive, ( Inactive, () )),
+          ( Empty, ( Empty, () )),
           P
         >
 {
@@ -98,8 +98,8 @@ pub fn partial_session_1
       Q
     >
 where
-  P1 : ProcessNode + 'static,
-  Q : Process + 'static,
+  P1 : Slot + 'static,
+  Q : Protocol + 'static,
   F : FnOnce (Z) ->
         PartialSession <
           (P1, ()),
@@ -117,9 +117,9 @@ pub fn partial_session_2
       Q
     >
 where
-  P1 : ProcessNode + 'static,
-  P2 : ProcessNode + 'static,
-  Q : Process + 'static,
+  P1 : Slot + 'static,
+  P2 : Slot + 'static,
+  Q : Protocol + 'static,
   F : FnOnce (Z, Selector1) ->
         PartialSession <
           (P1, (P2, ())),

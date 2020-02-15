@@ -18,11 +18,11 @@ pub trait OfferSum
 
 pub trait InternalSessionSum
   < N, I, ParentSum, Out >
-  : ProcessSum2
+  : ProtocolSum2
 where
-  ParentSum : ProcessSum2,
-  Out : Process,
-  I : Processes,
+  ParentSum : ProtocolSum2,
+  Out : Protocol,
+  I : Context,
 {
   type CurrentSession : Send + 'static;
 
@@ -35,14 +35,14 @@ pub trait InternalSessionCont
       N, I, ParentSum, Out
     >
 where
-  ParentSum : ProcessSum2,
-  Out : Process,
-  I : Processes,
+  ParentSum : ProtocolSum2,
+  Out : Protocol,
+  I : Context,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < ParentSum >,
-      Inactive
+      Empty
     >,
 {
   type CurrentCont : Send + 'static;
@@ -66,7 +66,7 @@ where
   fn run_cont
     ( ins :
         < N :: Deleted
-          as Processes
+          as Context
         > :: Values,
       sender : Sender < Out :: Value >,
       val_sum : Self :: ValueSum,
@@ -81,8 +81,8 @@ where
 pub struct InternalChoiceResult
   < N, I, P, Sum >
 where
-  P : Process,
-  I : Processes,
+  P : Protocol,
+  I : Context,
   Sum :
     InternalSessionSum <
       N, I, Sum, P
@@ -99,8 +99,8 @@ fn mk_internal_choice_result
       N, I, P, Sum
     >
 where
-  P : Process,
-  I : Processes,
+  P : Protocol,
+  I : Context,
   Sum :
     InternalSessionSum <
       N, I, Sum, P
@@ -118,12 +118,12 @@ impl
   >
   for P
 where
-  P : Process + 'static,
-  Out : Process + 'static,
-  ParentSum : ProcessSum2,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  Out : Protocol + 'static,
+  ParentSum : ProtocolSum2,
+  I : Context + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < ParentSum >,
       P
@@ -146,16 +146,16 @@ impl
   >
   for Sum < P, Rest >
 where
-  P : Process + 'static,
-  Out : Process + 'static,
-  ParentSum : ProcessSum2,
+  P : Protocol + 'static,
+  Out : Protocol + 'static,
+  ParentSum : ProtocolSum2,
   Rest :
     InternalSessionSum <
       N, I, ParentSum, Out
     > + 'static,
-  I : Processes + 'static,
+  I : Context + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < ParentSum >,
       P
@@ -184,28 +184,28 @@ impl
   >
   for P
 where
-  P : Process + 'static,
-  Out : Process + 'static,
-  ParentSum : ProcessSum2,
+  P : Protocol + 'static,
+  Out : Protocol + 'static,
+  ParentSum : ProtocolSum2,
   ParentSession : 'static,
-  I : Processes + 'static,
+  I : Context + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < ParentSum >,
-      Inactive,
+      Empty,
     >,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < ParentSum >,
       P,
       Deleted =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             InternalChoice < ParentSum >,
-            Inactive,
+            Empty,
           >
         > :: Deleted
     >,
@@ -241,13 +241,13 @@ where
   fn run_cont
     ( ins :
         < < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < ParentSum >,
-              Inactive,
+              Empty,
             >
           > :: Deleted
-          as Processes
+          as Context
         > :: Values,
       sender : Sender < Out :: Value >,
       val : Self :: ValueSum,
@@ -260,7 +260,7 @@ where
   {
     let ins2 =
       < N as
-        ProcessLens <
+        ContextLens <
           I,
           InternalChoice < ParentSum >,
           P
@@ -280,32 +280,32 @@ impl
   >
   for Sum < P, Rest >
 where
-  P : Process + 'static,
-  Out : Process + 'static,
-  ParentSum : ProcessSum2,
+  P : Protocol + 'static,
+  Out : Protocol + 'static,
+  ParentSum : ProtocolSum2,
   ParentSession : 'static,
   Rest :
     InternalSessionCont <
       ParentSession, N, I, ParentSum, Out
     > + 'static,
-  I : Processes + 'static,
+  I : Context + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < ParentSum >,
-      Inactive,
+      Empty,
     >,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < ParentSum >,
       P,
       Deleted =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             InternalChoice < ParentSum >,
-            Inactive,
+            Empty,
           >
         > :: Deleted
     >,
@@ -394,13 +394,13 @@ where
   fn run_cont
     ( ins :
         < < N as
-            ProcessLens <
+            ContextLens <
               I,
               InternalChoice < ParentSum >,
-              Inactive,
+              Empty,
             >
           >:: Deleted
-          as Processes
+          as Context
         > :: Values,
       sender : Sender < Out :: Value >,
       val_sum : Self :: ValueSum,
@@ -417,7 +417,7 @@ where
           Sum::Inl (session) => {
             let ins2 =
               < N as
-                ProcessLens <
+                ContextLens <
                   I,
                   InternalChoice < ParentSum >,
                   P
@@ -458,7 +458,7 @@ pub fn offer_case
     cont :
       PartialSession <
         I,
-        Sum :: SelectedProcess
+        Sum :: SelectedProtocol
       >
   ) ->
     PartialSession <
@@ -466,7 +466,7 @@ pub fn offer_case
       InternalChoice < Sum >
     >
 where
-  I : Processes + 'static,
+  I : Context + 'static,
   Sum :
     SelectSum < Selector >
     + 'static
@@ -499,8 +499,8 @@ pub fn case
   ) ->
     PartialSession < I, P >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
   F :
     FnOnce (
       Sum :: ContSum
@@ -510,10 +510,10 @@ where
       >
     + Send + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < Sum >,
-      Inactive
+      Empty
     > + 'static,
   Sum :
     InternalSessionSum <
@@ -534,10 +534,10 @@ where
     async move | ins1, sender | {
       let (sum_chan, ins2) =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             InternalChoice < Sum >,
-            Inactive
+            Empty
           >
         > :: split_channels ( ins1 );
 

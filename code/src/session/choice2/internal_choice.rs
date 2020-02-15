@@ -9,11 +9,11 @@ use async_std::sync::{ Sender, channel };
 pub use crate::base::{
   Nat,
   Z,
-  TyCon,
-  Process,
-  Processes,
+  TyApp,
+  Protocol,
+  Context,
   PartialSession,
-  ProcessLens,
+  ContextLens,
 };
 
 pub use crate::processes::*;
@@ -31,27 +31,27 @@ struct InternalCont < N, I, P, Row, Root >
 struct MakeCont {}
 
 impl < I, P >
-  TyCon < P > for
+  TyApp < P > for
   SessionCon < I >
 where
-  P : Process,
-  I : Processes,
+  P : Protocol,
+  I : Context,
 {
   type Type =
     PartialSession < I, P >;
 }
 
 impl < N, I, P, Q, Row >
-  TyCon < P > for
+  TyApp < P > for
   ContextCon < N, I, Q, Row >
 where
-  P : Process,
-  Q : Process,
-  I : Processes,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   InternalChoice < Row > :
-    Process,
+    Protocol,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < Row >,
       P
@@ -65,16 +65,16 @@ where
 }
 
 impl < N, I, P, Q, Row, Root >
-  TyCon < P > for
+  TyApp < P > for
   InternalCont < N, I, Q, Row, Root >
 where
-  P : Process,
-  Q : Process,
-  I : Processes,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   InternalChoice < Row > :
-    Process,
+    Protocol,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < Row >,
       P
@@ -104,13 +104,13 @@ impl
   > for
   MakeCont
 where
-  A : Process,
-  P : Process,
-  I : Processes,
+  A : Protocol,
+  P : Protocol,
+  I : Context,
   InternalChoice < Row > :
-    Process,
+    Protocol,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       InternalChoice < Row >,
       A
@@ -168,10 +168,10 @@ fn make_cont_sum
       >
     > :: Field
 where
-  P : Process,
-  I : Processes,
+  P : Protocol,
+  I : Context,
   InternalChoice < Row > :
-    Process,
+    Protocol,
   Row : SumRow < () >,
   Row :
     SumRow <
@@ -264,9 +264,9 @@ fn make_test_sum
       >
     >
 where
-  A : Process,
-  B : Process,
-  P : Process,
+  A : Protocol,
+  B : Protocol,
+  P : Protocol,
 {
   make_cont_sum ::
     < Z,

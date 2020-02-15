@@ -6,9 +6,9 @@ use async_std::sync::{ Sender, Receiver, channel };
 use crate::process::{ Val, SendValue };
 
 use crate::base::{
-  Process,
-  Processes,
-  ProcessLens,
+  Protocol,
+  Context,
+  ContextLens,
   PartialSession,
   run_partial_session,
   create_partial_session,
@@ -29,8 +29,8 @@ pub fn send_value_async
     >
 where
   T   : Send + 'static,
-  P   : Process + 'static,
-  Ins : Processes + 'static,
+  P   : Protocol + 'static,
+  Ins : Context + 'static,
   Func :
     FnOnce() -> Fut
       + Send + 'static,
@@ -81,8 +81,8 @@ pub fn send_value
     >
 where
   T   : Send + 'static,
-  P   : Process + 'static,
-  Ins : Processes + 'static
+  P   : Protocol + 'static,
+  Ins : Context + 'static
 {
   send_value_async ( async move || {
     ( val, cont )
@@ -101,9 +101,9 @@ pub fn receive_value_from
   ) ->
     PartialSession < I, Q >
 where
-  P : Process + 'static,
-  Q : Process + 'static,
-  I : Processes + 'static,
+  P : Protocol + 'static,
+  Q : Protocol + 'static,
+  I : Context + 'static,
   T : Send + 'static,
   Func :
     FnOnce( T ) -> Fut
@@ -117,7 +117,7 @@ where
         >
     > + Send,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       SendValue < T, P >,
       P
@@ -130,7 +130,7 @@ where
     | {
       let (receiver1, ins2) =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             SendValue < T, P >,
             P
@@ -142,7 +142,7 @@ where
 
       let ins3 =
         < N as
-          ProcessLens <
+          ContextLens <
             I,
             SendValue < T, P >,
             P

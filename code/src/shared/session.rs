@@ -8,19 +8,19 @@ use async_std::sync::{ Sender, Receiver, channel };
 
 use super::process::{
   Lock,
-  SharedProcess,
-  SharedTyCon,
+  SharedProtocol,
+  SharedTyApp,
   LinearToShared,
   SharedToLinear,
 };
 
 use crate::base::{
-  Process,
-  Inactive,
-  Processes,
-  EmptyList,
-  Appendable,
-  ProcessLens,
+  Protocol,
+  Empty,
+  Context,
+  EmptyContext,
+  AppendContext,
+  ContextLens,
   PartialSession,
   run_partial_session,
   create_partial_session,
@@ -32,7 +32,7 @@ use crate::processes::{
 
 pub struct SuspendedSharedSession < P >
 where
-  P : SharedProcess
+  P : SharedProtocol
 {
   exec_shared_session :
     Box < dyn
@@ -52,7 +52,7 @@ where
 
 pub struct SharedSession < P >
 where
-  P : SharedProcess
+  P : SharedProtocol
 {
   recv_shared_session :
     Sender <
@@ -67,7 +67,7 @@ where
 impl < P > Clone for
   SharedSession < P >
 where
-  P : SharedProcess
+  P : SharedProtocol
 {
   fn clone(&self) -> Self {
     SharedSession {
@@ -81,7 +81,7 @@ pub fn run_shared_session
   ( session : SuspendedSharedSession < P > )
   -> SharedSession < P >
 where
-  P : SharedProcess + 'static
+  P : SharedProtocol + 'static
 {
   let (sender1, receiver1) = channel (999);
   let (sender2, receiver2) = channel (999);
@@ -127,15 +127,15 @@ pub fn
   ( cont : PartialSession <
       (Lock < F >, ()),
       < F as
-        SharedTyCon < F >
-      > :: ToProcess
+        SharedTyApp < F >
+      > :: ToProtocol
     >
   ) ->
     SuspendedSharedSession <
       LinearToShared < F >
     >
 where
-  F : SharedTyCon < F > + Send + 'static
+  F : SharedTyApp < F > + Send + 'static
 {
   SuspendedSharedSession {
     exec_shared_session : Box::new (
@@ -183,8 +183,8 @@ pub fn
       SharedToLinear < F >
     >
 where
-  F : SharedTyCon < F > + Send + 'static,
-  I : EmptyList + 'static
+  F : SharedTyApp < F > + Send + 'static,
+  I : EmptyContext + 'static
 {
   create_partial_session (
     async move |
@@ -192,9 +192,9 @@ where
         : ( Receiver <
               Sender <
                 Receiver<
-                  < < F as SharedTyCon < F > >
-                    :: ToProcess
-                    as Process
+                  < < F as SharedTyApp < F > >
+                    :: ToProtocol
+                    as Protocol
                   > :: Value
                 >
               >
@@ -232,13 +232,13 @@ pub fn
   ) ->
     PartialSession < I, P >
 where
-  F : SharedTyCon < F > + 'static,
-  P : Process + 'static,
-  I : Processes + NextSelector + 'static,
-  I : Appendable <
+  F : SharedTyApp < F > + 'static,
+  P : Protocol + 'static,
+  I : Context + NextSelector + 'static,
+  I : AppendContext <
         ( < F as
-            SharedTyCon < F >
-          > :: ToProcess
+            SharedTyApp < F >
+          > :: ToProtocol
         , ()
         )
       >,
@@ -247,10 +247,10 @@ where
         ->
           PartialSession <
             < I as
-              Appendable <
+              AppendContext <
                 ( < F as
-                    SharedTyCon < F >
-                  > :: ToProcess
+                    SharedTyApp < F >
+                  > :: ToProtocol
                 , ()
                 )
               >
@@ -280,10 +280,10 @@ where
 
         let ins2 =
           < I as
-            Appendable <
+            AppendContext <
               ( < F as
-                  SharedTyCon < F >
-                > :: ToProcess
+                  SharedTyApp < F >
+                > :: ToProtocol
               , ()
               )
             >
@@ -315,14 +315,14 @@ pub fn
       P
     >
 where
-  P : Process + 'static,
-  I : Processes + 'static,
-  F : SharedTyCon < F > + Send + 'static,
+  P : Protocol + 'static,
+  I : Context + 'static,
+  F : SharedTyApp < F > + Send + 'static,
   N :
-    ProcessLens <
+    ContextLens <
       I,
       SharedToLinear < F >,
-      Inactive
+      Empty
     >,
 {
   create_partial_session (
