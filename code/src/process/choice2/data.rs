@@ -15,8 +15,8 @@ where
   T1 : TyApp < A >,
   T2 : TyApp < A >,
 {
-  field1 : T1 :: Type,
-  field2 : T2 :: Type
+  pub field1 : T1 :: Type,
+  pub field2 : T2 :: Type
 }
 
 pub enum Sum < A, B >
@@ -72,6 +72,17 @@ where
     T2 :: Type;
 }
 
+pub trait LiftFieldBorrow < T1, T2, A >
+where
+  T1 : TyApp < A >,
+  T2 : TyApp < A >
+{
+  fn lift_field_borrow (
+    field : &T1 :: Type
+  ) ->
+    T2 :: Type;
+}
+
 pub trait LiftSum < T1, T2, F >
   : SumRow < T1 > + SumRow < T2 >
 {
@@ -80,6 +91,20 @@ pub trait LiftSum < T1, T2, F >
       < Self as
         SumRow < T1 >
       > :: Field
+  ) ->
+    < Self as
+      SumRow < T2 >
+    > :: Field;
+}
+
+pub trait LiftSumBorrow < T1, T2, F >
+  : SumRow < T1 > + SumRow < T2 >
+{
+  fn lift_sum_borrow (
+    sum :
+      & < Self as
+          SumRow < T1 >
+        > :: Field
   ) ->
     < Self as
       SumRow < T2 >
@@ -305,9 +330,15 @@ impl < T1, T2, F >
   ()
 {
   fn lift_sum ( bot : Bottom ) -> Bottom
-  {
-    match bot {}
-  }
+  { bot }
+}
+
+impl < T1, T2, F >
+  LiftSumBorrow < T1, T2, F > for
+  ()
+{
+  fn lift_sum_borrow ( bot : &Bottom ) -> Bottom
+  { match *bot {} }
 }
 
 impl < T1, T2, F, A, B >
@@ -344,6 +375,46 @@ where
       Sum::Inr(b) => {
         Sum::Inr (
           B :: lift_sum ( b )
+        )
+      }
+    }
+  }
+}
+
+impl < T1, T2, F, A, B >
+  LiftSumBorrow < T1, T2, F > for
+  (A, B)
+where
+  T1 : TyApp < A >,
+  T2 : TyApp < A >,
+  F : LiftFieldBorrow < T1, T2, A >,
+  B : LiftSumBorrow < T1, T2, F >,
+{
+  fn lift_sum_borrow (
+    sum :
+      &Sum <
+        T1 :: Type,
+        < B as
+          SumRow < T1 >
+        > :: Field
+      >
+  ) ->
+    Sum <
+      T2 :: Type,
+      < B as
+        SumRow < T2 >
+      > :: Field
+    >
+  {
+    match sum {
+      Sum::Inl(a) => {
+        Sum::Inl (
+          F :: lift_field_borrow ( a )
+        )
+      },
+      Sum::Inr(b) => {
+        Sum::Inr (
+          B :: lift_sum_borrow ( b )
         )
       }
     }
