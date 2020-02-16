@@ -170,12 +170,12 @@ pub fn channel_session ()
     include_session (
       make_receiver ( channel.clone() ),
       | receiver | {
-        unfix_session ( receiver,
+        unfix_session_for ( receiver,
           choose_left ( receiver,
             receive_value_from ( receiver, async move | val | {
               info!("[Consumer 1] Receive first value: {}", val);
 
-              unfix_session ( receiver,
+              unfix_session_for ( receiver,
                 choose_right ( receiver,
                   wait ( receiver,
                     terminate () ) ) )

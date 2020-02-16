@@ -30,6 +30,7 @@ pub use self::end::{
 pub use self::fix::{
   fix_session,
   unfix_session,
+  unfix_session_for,
 };
 
 pub use self::forward::{

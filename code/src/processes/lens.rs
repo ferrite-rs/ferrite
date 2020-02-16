@@ -3,7 +3,6 @@ use crate::base::{
   Nat,
   Z,
   S,
-  mk_succ,
   Empty,
   Context,
   ContextLens,
@@ -43,7 +42,7 @@ where
   fn make_selector () ->
     Self :: Selector
   {
-    return mk_succ ();
+    Self :: Selector :: nat ()
   }
 }
 
@@ -167,5 +166,9 @@ pub fn select_0 () -> Z {
   Z {}
 }
 
-pub fn select_1 () -> Selector1 { mk_succ () }
-pub fn select_2 () -> Selector2 { mk_succ () }
+pub fn select_1 () -> Selector1 {
+  Selector1 :: nat ()
+}
+pub fn select_2 () -> Selector2 {
+  Selector2 :: nat ()
+}

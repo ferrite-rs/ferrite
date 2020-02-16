@@ -1,3 +1,4 @@
+#![feature(type_ascription)]
 #![feature(async_closure)]
 #[macro_use]
 

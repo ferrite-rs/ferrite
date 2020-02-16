@@ -1,34 +1,35 @@
 
-use std::marker::PhantomData;
-
 pub trait Nat
   : Send + 'static
-{}
-
-#[derive(Copy, Clone)]
-pub struct Z {}
-
-#[derive(Copy, Clone)]
-pub struct S < N > {
-  n : PhantomData < N >
+{
+  fn nat() -> Self;
 }
 
-impl Nat for Z {}
+#[derive(Copy, Clone)]
+pub struct Z ();
+
+#[derive(Copy, Clone)]
+pub struct S < N > (N);
+
+impl Nat for Z {
+  fn nat() -> Z { Z() }
+}
 
 impl < N > Nat
   for S < N >
 where
   N : Nat
-{}
-
-pub fn mk_zero () -> Z {
-  Z {}
+{
+  fn nat() ->
+    S < N >
+  {
+    S ( N::nat() )
+  }
 }
 
-pub fn mk_succ < N > () ->
-  S < N >
+pub fn succ < N >
+  ( n : N )
+  -> S < N >
 {
-  S {
-    n : PhantomData
-  }
+  S ( n )
 }

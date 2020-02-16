@@ -19,7 +19,7 @@ impl < N >
   Protocol for
   S < N >
 where
-  N : Nat
+  N : Protocol
 {
-  type Value = S < N >;
+  type Value = S < N :: Value >;
 }

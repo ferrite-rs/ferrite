@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use crate::base::nat::*;
 use async_std::sync::{ Sender, Receiver };
 
@@ -5,9 +6,16 @@ pub trait TyApp < A > {
   type Type;
 }
 
+pub struct Recur < A > ( PhantomData<A> );
+
 pub struct Fix < F >
 where
-  F : TyApp < Fix < F > >
+  F :
+    TyApp <
+      Recur <
+        Fix < F >
+      >
+    >
 {
   unfix : Box < F :: Type >
 }
@@ -16,7 +24,12 @@ pub fn fix < F >
   (x : F :: Type)
   -> Fix < F >
 where
-  F : TyApp < Fix < F > >
+  F :
+    TyApp <
+      Recur <
+        Fix < F >
+      >
+    >
 {
   Fix {
     unfix : Box::new ( x )
@@ -27,41 +40,83 @@ pub fn unfix < F >
   (x : Fix < F >)
   -> F :: Type
 where
-  F : TyApp < Fix < F > >
+  F :
+    TyApp <
+      Recur <
+        Fix < F >
+      >
+    >
 {
   *x.unfix
 }
 
 impl < A, F >
-  TyApp < A > for
+  TyApp <
+    A
+  > for
   Fix < F >
 where
-  F : TyApp < A >,
-  F : TyApp < Fix < F > >,
-  < F as
-    TyApp < A >
-  > :: Type :
+  F :
     TyApp <
+      S < A >
+    >,
+  F :
+    TyApp < Recur <
+      Fix < F >
+    > >,
+  < F as
+    TyApp <
+      S < A >
+    >
+  > :: Type :
+    TyApp < Recur <
       Fix <
         < F as
-          TyApp < A >
+          TyApp <
+            S < A >
+          >
         > :: Type
       >
-    >,
+    > >,
 {
   type Type =
     Fix <
       < F as
-        TyApp < A >
+        TyApp <
+          S < A >
+        >
       > :: Type
     >;
 }
 
 impl < A >
-  TyApp < A > for
+  TyApp < Recur < A > > for
   Z
 {
   type Type = A;
+}
+
+impl < A >
+  TyApp < S < A > > for
+  Z
+{
+  type Type = Z;
+}
+
+impl < A, N >
+  TyApp < S < A > > for
+  S < N >
+where
+  N : TyApp < A >
+{
+  type Type = S < N::Type >;
+}
+
+impl < A, N >
+  TyApp < Recur < A > > for
+  S < N >
+{
+  type Type = N;
 }
 
 impl < A >
@@ -69,15 +124,6 @@ impl < A >
   ()
 {
   type Type = ();
-}
-
-impl < A, N >
-  TyApp < A > for
-  S < N >
-where
-  N : Nat
-{
-  type Type = N;
 }
 
 impl < A, X >

@@ -96,7 +96,7 @@ fn read_queue () ->
     > >
 {
   receive_channel ( | queue | {
-    unfix_session ( queue,
+    unfix_session_for ( queue,
       case ( queue, move | option | {
         match option {
           Either::Left( ret ) => {

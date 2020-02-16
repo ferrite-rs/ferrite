@@ -1,7 +1,6 @@
 use std::marker::PhantomData;
 
 use crate::base::*;
-use crate::processes::lens::*;
 use async_std::sync::Receiver;
 
 pub trait ProtocolSum2
@@ -126,7 +125,7 @@ where
   fn select_current () ->
     Self :: SelectCurrent
   {
-    mk_succ ()
+    Self :: SelectCurrent :: nat ()
   }
 
   fn value_sum_to_selector_sum

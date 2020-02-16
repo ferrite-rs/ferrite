@@ -448,7 +448,7 @@ where
     -> Self :: SelectorSum
   {
     Sum::Inl (
-      mk_succ()
+      Self :: select_current ()
     )
   }
 

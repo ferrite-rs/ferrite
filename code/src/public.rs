@@ -54,6 +54,7 @@ pub use crate::session::public::{
 
   fix_session,
   unfix_session,
+  unfix_session_for,
 
   forward,
 
