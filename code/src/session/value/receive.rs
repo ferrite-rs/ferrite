@@ -128,7 +128,7 @@ where
             ReceiveValue < T, Q >,
             Q
           >
-        > :: merge_channels( receiver2, ins2);
+        > :: merge_channels( receiver2, ins2 );
 
       let child1 = task::spawn(async move {
         sender2.send( Val {

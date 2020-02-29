@@ -18,6 +18,21 @@ type Stream =
               S < Z >
             > > > > > >;
 
+fn stream_server (seed: i64)
+  -> Session < Stream >
+{
+  fix_session (
+    receive_value ( async move | password | {
+      if password == "secret" {
+        offer_left (
+          stream_server ( seed ) )
+      } else {
+        offer_right (
+          fix_session (
+            send_stream ( seed )
+          ) ) } }) )
+}
+
 fn send_stream ( seed : i64 ) ->
   Session <
     SendValue <
@@ -44,21 +59,6 @@ fn send_stream ( seed : i64 ) ->
           Either::Right (ret) => {
             ret ( stream_server ( seed + 1 ) )
           }, } }) ) } )
-}
-
-fn stream_server (seed: i64)
-  -> Session < Stream >
-{
-  fix_session (
-    receive_value ( async move | password | {
-      if password == "secret" {
-        offer_left (
-          stream_server ( seed ) )
-      } else {
-        offer_right (
-          fix_session (
-            send_stream ( seed )
-          ) ) } }) )
 }
 
 pub fn nested_fix_session () ->
