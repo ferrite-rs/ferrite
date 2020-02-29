@@ -3,18 +3,15 @@ use async_std::task;
 use async_macros::join;
 use async_std::sync::{ channel };
 
-use crate::processes::{
-  NextSelector
-};
-
 use crate::base::{
+  Nat,
   Protocol,
   Session,
   Context,
   AppendContext,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 pub struct PersistentSession < P >
@@ -62,12 +59,12 @@ pub fn
   ) ->
     PartialSession < I, Q >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + NextSelector + 'static,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   I : AppendContext < ( P, () ) >,
   F : FnOnce
-        ( < I as NextSelector > :: Selector )
+        ( I::Length )
         ->
           PartialSession <
             < I as
@@ -81,10 +78,10 @@ where
   let session2 = session1.clone();
 
   let cont = cont_builder (
-    < I as NextSelector > :: make_selector ()
+    I::Length::nat()
   );
 
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender1 | {
       let session3 = (session2.new_session)();
 

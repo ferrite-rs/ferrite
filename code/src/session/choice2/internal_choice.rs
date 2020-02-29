@@ -14,7 +14,7 @@ pub use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 pub use crate::processes::*;
@@ -392,7 +392,7 @@ pub fn case
     PartialSession < C, A >
 where
   A : Protocol,
-  C : Context + 'static,
+  C : Context,
   N :
     ContextLens <
       C,
@@ -493,7 +493,7 @@ where
       > :: Field
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender | {
       let (sum_chan, ins2) =
         < N as

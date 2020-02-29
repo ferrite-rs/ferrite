@@ -30,7 +30,7 @@ pub use self::processes::{
 pub use self::session::{
   Session,
   PartialSession,
-  create_partial_session,
+  unsafe_create_session,
   run_partial_session
 };
 

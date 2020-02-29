@@ -11,7 +11,7 @@ use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 /*
@@ -25,8 +25,8 @@ pub fn receive_value
      PartialSession < Ins, ReceiveValue < T, P > >
 where
   T : Send + 'static,
-  P : Protocol + 'static,
-  Ins : Context + 'static,
+  P : Protocol,
+  Ins : Context,
   Func :
     FnOnce(T) -> Fut
     + Send + 'static,
@@ -35,7 +35,7 @@ where
       Output = PartialSession < Ins, P >
     > + Send
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins : Ins::Values,
       sender1 : Sender < (
@@ -80,9 +80,9 @@ pub fn send_value_to_async
   ) ->
     PartialSession < I, P >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   T : Send + 'static,
   Func :
     FnOnce() -> Fut
@@ -103,7 +103,7 @@ where
       Q
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins1: I :: Values,
       sender1 : Sender < P::Value >
@@ -158,9 +158,9 @@ pub fn send_value_to
   ) ->
     PartialSession < I, P >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   T : Send + 'static,
   N :
     ContextLens <

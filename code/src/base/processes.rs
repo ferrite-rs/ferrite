@@ -1,13 +1,16 @@
+use crate::base::nat::{ Nat };
 
 /// A list of processes for input. It has multiple implementations including
 /// [crate::base::Context].
-pub trait Context {
+pub trait Context : 'static {
   type Values : Sized + Send;
+
+  type Length : Nat;
 }
 
 /// An ordered linked list of processes.
 pub trait EmptyContext : Context {
-  fn make_empty_list () ->
+  fn empty_values () ->
     < Self as Context > :: Values;
 }
 

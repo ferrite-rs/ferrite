@@ -6,6 +6,7 @@ use std::collections::{ LinkedList };
 use crate::process::{ End };
 
 use crate::base::{
+  Nat,
   Protocol,
   Session,
   Empty,
@@ -14,11 +15,10 @@ use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 use crate::processes::{
-  NextSelector,
   append_emtpy_slot
 };
 
@@ -36,12 +36,12 @@ pub fn
   ) ->
     PartialSession < I, Q >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + NextSelector + 'static,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   I : AppendContext < ( P, () ) >,
   F : FnOnce
-        ( < I as NextSelector > :: Selector )
+        ( I :: Length )
         ->
           PartialSession <
             < I as
@@ -53,10 +53,10 @@ where
           >
 {
   let cont = cont_builder (
-    < I as NextSelector > :: make_selector ()
+    I::Length::nat ()
   );
 
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender1 | {
       let (sender2, receiver2) = channel(1);
 
@@ -90,11 +90,11 @@ pub fn wait_session
   ) ->
     PartialSession < I, P >
 where
-  P : Protocol + 'static,
-  I : NextSelector + 'static,
+  P : Protocol,
+  I : Context,
   I : AppendContext < (End, ()) >,
   I : AppendContext < (Empty, ()) >,
-  < I as NextSelector >::Selector :
+  I::Length :
     ContextLens <
       < I as
         AppendContext < (End, ()) >
@@ -124,11 +124,10 @@ pub fn wait_sessions
   ) ->
     PartialSession < I, P >
 where
-  P : Protocol + 'static,
-  I : NextSelector + 'static,
+  P : Protocol,
   I : AppendContext < (End, ()) >,
   I : AppendContext < (Empty, ()) >,
-  < I as NextSelector >::Selector :
+  I::Length :
     ContextLens <
       < I as
         AppendContext < (End, ()) >

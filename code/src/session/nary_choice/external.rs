@@ -60,7 +60,7 @@ where
       Self :: SelectedProtocol
     >,
 {
-  type SelectedProtocol : Protocol + 'static;
+  type SelectedProtocol : Protocol;
 
   fn to_selector_sum ()
     -> Self :: SelectorSum
@@ -109,8 +109,8 @@ impl
   ExternalSum < I >
   for P
 where
-  P : Protocol + 'static,
-  I : Context + 'static
+  P : Protocol,
+  I : Context
 {
   type CurrentSession =
     PartialSession < I, P >;
@@ -123,8 +123,8 @@ impl
   ExternalSum < I >
   for Sum < P, R >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   R : ExternalSum < I > + 'static,
 {
   type CurrentSession =
@@ -146,8 +146,8 @@ impl
     ParentSession, I
   > for P
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   ParentSession : 'static,
 {
   type CurrentCont =
@@ -205,8 +205,8 @@ impl
     < ParentSession, I >
   for Sum < P, R >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   ParentSession : 'static,
   R :
     ExternalCont <
@@ -332,9 +332,9 @@ impl
   >
   for P
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
-  Source : Protocol + 'static,
+  P : Protocol,
+  I : Context,
+  Source : Protocol,
   N :
     ContextLens <
       I,
@@ -375,9 +375,9 @@ impl
   >
   for Sum < P, Rest >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
-  Source : Protocol + 'static,
+  P : Protocol,
+  I : Context,
+  Source : Protocol,
   Rest : ExternalSelect <
     N, I, Source, Selector
   > + 'static,
@@ -431,9 +431,9 @@ impl
   >
   for Sum < P, Rest >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
-  Source : Protocol + 'static,
+  P : Protocol,
+  I : Context,
+  Source : Protocol,
   Rest : ExternalSum < I > + 'static,
   N :
     ContextLens <
@@ -485,7 +485,7 @@ pub fn offer_choice
       ExternalChoice < Sum >
     >
 where
-  I : Context + 'static,
+  I : Context,
   Sum : ExternalSum < I > + 'static,
   Sum :
     ExternalCont <
@@ -503,7 +503,7 @@ where
       >
     + Send + 'static
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins,
       sender :
@@ -561,8 +561,8 @@ pub fn choose
       I, P
     >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   Sum :
     ExternalSelect <
       N,
@@ -577,7 +577,7 @@ where
       Sum :: SelectedProtocol,
     >,
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender | {
       let (receiver, ins2) =
         N :: split_channels ( ins1 );

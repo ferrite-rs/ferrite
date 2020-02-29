@@ -118,10 +118,10 @@ impl
   >
   for P
 where
-  P : Protocol + 'static,
-  Out : Protocol + 'static,
+  P : Protocol,
+  Out : Protocol,
   ParentSum : ProtocolSum2,
-  I : Context + 'static,
+  I : Context,
   N :
     ContextLens <
       I,
@@ -146,14 +146,14 @@ impl
   >
   for Sum < P, Rest >
 where
-  P : Protocol + 'static,
-  Out : Protocol + 'static,
+  P : Protocol,
+  Out : Protocol,
   ParentSum : ProtocolSum2,
   Rest :
     InternalSessionSum <
       N, I, ParentSum, Out
     > + 'static,
-  I : Context + 'static,
+  I : Context,
   N :
     ContextLens <
       I,
@@ -184,11 +184,11 @@ impl
   >
   for P
 where
-  P : Protocol + 'static,
-  Out : Protocol + 'static,
+  P : Protocol,
+  Out : Protocol,
   ParentSum : ProtocolSum2,
   ParentSession : 'static,
-  I : Context + 'static,
+  I : Context,
   N :
     ContextLens <
       I,
@@ -280,15 +280,15 @@ impl
   >
   for Sum < P, Rest >
 where
-  P : Protocol + 'static,
-  Out : Protocol + 'static,
+  P : Protocol,
+  Out : Protocol,
   ParentSum : ProtocolSum2,
   ParentSession : 'static,
   Rest :
     InternalSessionCont <
       ParentSession, N, I, ParentSum, Out
     > + 'static,
-  I : Context + 'static,
+  I : Context,
   N :
     ContextLens <
       I,
@@ -466,12 +466,12 @@ pub fn offer_case
       InternalChoice < Sum >
     >
 where
-  I : Context + 'static,
+  I : Context,
   Sum :
     SelectSum < Selector >
     + 'static
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins, sender1 | {
       let (sender2, receiver2) = channel (1);
 
@@ -499,8 +499,8 @@ pub fn case
   ) ->
     PartialSession < I, P >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   F :
     FnOnce (
       Sum :: ContSum
@@ -530,7 +530,7 @@ where
       P
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender | {
       let (sum_chan, ins2) =
         < N as

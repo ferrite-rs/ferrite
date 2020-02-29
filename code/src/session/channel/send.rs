@@ -16,7 +16,7 @@ use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 use crate::processes::{
@@ -44,9 +44,9 @@ pub fn send_channel_from
       SendChannel< P, Q >
     >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   N :
     ContextLens <
       I,
@@ -54,7 +54,7 @@ where
       Empty
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender1 | {
       let (p_chan, ins2) =
         < N as
@@ -112,10 +112,10 @@ pub fn receive_channel_from
   ) ->
     PartialSession < I, Q >
 where
-  P1 : Protocol + 'static,
-  P2 : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + 'static,
+  P1 : Protocol,
+  P2 : Protocol,
+  Q : Protocol,
+  I : Context,
   N :: Target :
     NextSelector,
   N :: Target :
@@ -148,7 +148,7 @@ where
     > :: make_selector ()
   );
 
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
         < N as
@@ -214,7 +214,7 @@ where
   InsP: 'static,
   InsQ: 'static
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins,
       sender: Sender<(
@@ -268,10 +268,10 @@ pub fn receive_channel_from_slot
   ) ->
     PartialSession < I, Q >
 where
-  P1 : Protocol + 'static,
-  P2 : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + 'static,
+  P1 : Protocol,
+  P2 : Protocol,
+  Q : Protocol,
+  I : Context,
   SourceLens :
     ContextLens <
       I,
@@ -285,7 +285,7 @@ where
       P1
     >,
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender1 | {
       let ( pair_chan, ins2 ) =
         < SourceLens as

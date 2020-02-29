@@ -22,7 +22,7 @@ pub fn fix_session
       FixProtocol < F >
     >
 where
-  I : Context + 'static,
+  I : Context,
   F : Protocol,
   F :
     TyApp < Recur <
@@ -54,7 +54,7 @@ where
   > :: Type :
     Send
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins,
       sender1 :
@@ -107,7 +107,7 @@ pub fn unfix_session
       > :: Type
     >
 where
-  I : Context + 'static,
+  I : Context,
   F : Protocol,
   F :
     TyApp < Recur <
@@ -139,7 +139,7 @@ where
   > :: Type :
     Send
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins,
       sender1 :
@@ -182,9 +182,9 @@ pub fn succ_session
   -> PartialSession < I, S < P > >
 where
   P : Protocol,
-  I : Context + 'static,
+  I : Context,
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins, sender | {
       let (sender2, receiver) = channel(1);
 
@@ -214,7 +214,7 @@ pub fn unfix_session_for
     PartialSession < I, P >
 where
   P : Protocol,
-  I : Context + 'static,
+  I : Context,
   F : Protocol,
   F :
     TyApp < Recur <
@@ -256,7 +256,7 @@ where
       > :: Type,
     >
 {
-  create_partial_session(
+  unsafe_create_session(
     async move | ins1, sender1 | {
       let (receiver1, ins2) =
         N :: split_channels ( ins1 );

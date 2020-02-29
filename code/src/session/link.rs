@@ -10,7 +10,7 @@ use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 /*
@@ -36,9 +36,9 @@ pub fn link
   ) ->
     PartialSession < I, P >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   N :
     ContextLens <
       I,
@@ -46,7 +46,7 @@ where
       Q
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, p_sender | {
       let (q_sender, q_receiver) = channel(1);
 

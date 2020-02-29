@@ -7,6 +7,7 @@ use async_std::sync::{
 };
 
 use crate::base::{
+  Nat,
   Protocol,
   Session,
   Empty,
@@ -15,7 +16,7 @@ use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 use crate::processes::{
@@ -34,41 +35,35 @@ use crate::session::include::{ include_session };
       receive_channel(cont) :: Δ  ⊢ P ⊸ Q
  */
 pub fn receive_channel
-  < Ins, P, Q, F >
-  ( cont_builder : F )
+  < C, A, B >
+  ( cont_builder : impl
+      FnOnce ( C::Length ) ->
+        PartialSession <
+          C :: AppendResult,
+          B
+        >
+  )
   ->
     PartialSession <
-      Ins,
-      ReceiveChannel < P, Q >
+      C,
+      ReceiveChannel < A, B >
     >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  Ins : Context + 'static,
-  Ins : NextSelector,
-  Ins : AppendContext < ( P, () ) >,
-  F : FnOnce
-        ( < Ins as NextSelector > :: Selector )
-        ->
-          PartialSession <
-            < Ins as
-              AppendContext <
-                ( P, () )
-              >
-            > :: AppendResult,
-            Q
-          >
+  A : Protocol,
+  B : Protocol,
+  C : Context,
+  C : AppendContext < ( A, () ) >,
 {
   let cont = cont_builder (
-    < Ins as NextSelector > :: make_selector ()
+    C::Length::nat()
   );
 
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender | {
       let (sender1, receiver1) :
         ( Sender < (
-            Receiver < P::Value >,
-            Sender < Q::Value >
+            Receiver < A::Value >,
+            Sender < B::Value >
           ) >,
           _ )
         = channel(1);
@@ -76,17 +71,13 @@ where
       sender.send(sender1).await;
 
       let (receiver2, sender2) :
-        ( Receiver< P::Value >,
-          Sender < Q::Value >
+        ( Receiver< A::Value >,
+          Sender < B::Value >
         )
         = receiver1.recv().await.unwrap();
 
-      let ins2 =
-        < Ins as
-          AppendContext <
-            ( P, () )
-          >
-        > :: append_channels ( ins1, (receiver2, ()) );
+      let ins2 = C :: append_channels (
+            ins1, (receiver2, ()) );
 
         run_partial_session
           ( cont, ins2, sender2
@@ -106,15 +97,15 @@ pub fn receive_channel_slot
 ) ->
   PartialSession < I, ReceiveChannel < P, Q > >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
   N :
     ContextLens <
       I, Empty, P
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender | {
       let ((), ins2) =
         < N as
@@ -177,10 +168,10 @@ pub fn send_channel_to
   ) ->
     PartialSession < I, Q >
 where
-  I : Context + 'static,
-  P1 : Protocol + 'static,
-  P2 : Protocol + 'static,
-  Q : Protocol + 'static,
+  I : Context,
+  P1 : Protocol,
+  P2 : Protocol,
+  Q : Protocol,
   SourceLens :
     ContextLens <
       I,
@@ -194,7 +185,7 @@ where
       P2
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender1 | {
       let (receiver1, ins2) =
         < SourceLens as
@@ -271,8 +262,8 @@ pub fn apply_channel
 ) ->
   Session < Q >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
+  P : Protocol,
+  Q : Protocol,
 {
   include_session ( p1, | c1 | {
     include_session ( p2, | c2 | {

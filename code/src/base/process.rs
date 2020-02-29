@@ -1,8 +1,7 @@
 use crate::base::nat::*;
 
 /// A process / session type. This can be used as either input or output process.
-pub trait Protocol
-  : Send + 'static
+pub trait Protocol : Send + 'static
 {
   type Value : Sized + Send;
 }

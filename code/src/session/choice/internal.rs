@@ -13,7 +13,7 @@ use crate::base::{
   Context,
   ContextLens,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 /*
@@ -42,11 +42,11 @@ pub fn offer_left
       InternalChoice < P, Q >
     >
 where
-  P : Protocol + 'static,
-  Q : Protocol + 'static,
-  I : Context + 'static
+  P : Protocol,
+  Q : Protocol,
+  I : Context
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins,
       sender: Sender<
@@ -82,7 +82,7 @@ pub fn offer_right
     Q   : 'static,
     Ins : 'static
 {
-  return create_partial_session (
+  return unsafe_create_session (
     async move |
       ins,
       sender: Sender<
@@ -235,10 +235,10 @@ pub fn case
   ) ->
     PartialSession < I, S >
 where
-  I : Context + 'static,
-  P1 : Protocol + 'static,
-  P2 : Protocol + 'static,
-  S : Protocol + 'static,
+  I : Context,
+  P1 : Protocol,
+  P2 : Protocol,
+  S : Protocol,
   F : FnOnce (
         ReturnChoice < N, I, P1, P2, S >
       ) ->
@@ -281,7 +281,7 @@ where
         > :: Deleted
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender | {
       let (variant_chan, ins2) =
         < N as

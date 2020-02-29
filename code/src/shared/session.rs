@@ -23,7 +23,7 @@ use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 use crate::processes::{
@@ -186,7 +186,7 @@ where
   F : SharedTyApp < F > + Send + 'static,
   I : EmptyContext + 'static
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       (receiver1, _)
         : ( Receiver <
@@ -263,7 +263,7 @@ where
     < I as NextSelector > :: make_selector ()
   );
 
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender1 | {
       let (sender2, receiver2) = channel (999);
 
@@ -325,7 +325,7 @@ where
       Empty
     >,
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender1 | {
       let (receiver2, ins2) =
         N :: split_channels ( ins1 );

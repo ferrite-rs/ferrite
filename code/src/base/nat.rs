@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 
 pub trait Nat
   : Send + 'static
@@ -9,7 +10,7 @@ pub trait Nat
 pub struct Z ();
 
 #[derive(Copy, Clone)]
-pub struct S < N > (N);
+pub struct S < N > (PhantomData<N>);
 
 impl Nat for Z {
   fn nat() -> Z { Z() }
@@ -23,13 +24,13 @@ where
   fn nat() ->
     S < N >
   {
-    S ( N::nat() )
+    S ( PhantomData )
   }
 }
 
 pub fn succ < N >
-  ( n : N )
+  ( _ : N )
   -> S < N >
 {
-  S ( n )
+  S ( PhantomData )
 }

@@ -5,6 +5,8 @@ use crate::base::{
   AppendContext,
   Reversible,
   Slot,
+  Z,
+  S,
 };
 
 // Type level list manipulation tricks copied from https://github.com/lloydmeta/frunk
@@ -15,28 +17,26 @@ use crate::base::{
 
 impl Context for () {
   type Values = ();
+
+  type Length = Z;
 }
 
 impl EmptyContext for () {
-  fn make_empty_list () -> () {
-    return ();
+  fn empty_values () {
+    ()
   }
 }
 
-impl
-  < R >
+impl < R >
   EmptyContext for
   ( Empty, R )
 where
-  R : Context + EmptyContext
+  R : EmptyContext
 {
-  fn make_empty_list () ->
-    ((), < R as Context > :: Values)
+  fn empty_values () ->
+      ((), R::Values)
   {
-    return (
-      (),
-      < R as EmptyContext > :: make_empty_list()
-    );
+    ( (), R:: empty_values() )
   }
 }
 
@@ -49,9 +49,11 @@ where
   R: Context
 {
   type Values =
-    ( P :: SlotValue,
+    ( P :: Value,
       R::Values
     );
+
+  type Length = S < R::Length >;
 }
 
 impl <R: Context> AppendContext <R> for () {
@@ -106,12 +108,12 @@ where
 
   fn append_channels(
     (p, r) : (
-      < P as Slot > :: SlotValue,
+      < P as Slot > :: Value,
       <R as Context>::Values
     ),
     s : <S as Context>::Values
   ) -> (
-    < P as Slot > :: SlotValue,
+    < P as Slot > :: Value,
     <
       < R as AppendContext<S> >::AppendResult
       as Context
@@ -122,7 +124,7 @@ where
 
   fn split_channels(
     (p, r): (
-      < P as Slot > :: SlotValue,
+      < P as Slot > :: Value,
       <
         < R as AppendContext<S> >::AppendResult
         as Context

@@ -16,10 +16,10 @@ pub fn
   < Ins >
   (session : PartialSession < Ins, End >)
 where
-  Ins : EmptyContext + 'static
+  Ins : EmptyContext
 {
   let (sender, receiver) = channel(1);
-  let ins = < Ins as EmptyContext > :: make_empty_list ();
+  let ins = < Ins as EmptyContext > :: empty_values ();
 
   task::block_on(async {
     let child1 = task::spawn(async {

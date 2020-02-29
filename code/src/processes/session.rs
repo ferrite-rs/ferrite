@@ -10,9 +10,9 @@ where
   Ins : EmptyContext + 'static,
   P : Protocol + 'static
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | (), sender | {
-      let ins = < Ins as EmptyContext > :: make_empty_list();
+      let ins = < Ins as EmptyContext > :: empty_values();
       run_partial_session ( cont, ins, sender ).await;
     })
 }
@@ -25,7 +25,7 @@ where
   Ins : EmptyContext + 'static,
   P : Protocol + 'static
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       _,
       sender
@@ -49,7 +49,7 @@ where
   I : Context + 'static,
   I : AppendContext < ( Empty, () ) >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender | {
       let (ins2, _) =
         < I as

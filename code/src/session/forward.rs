@@ -6,7 +6,7 @@ use crate::base::{
   EmptyContext,
   ContextLens,
   PartialSession,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 pub fn forward
@@ -18,8 +18,8 @@ pub fn forward
       P
     >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   N :: Target : EmptyContext,
   N :
     ContextLens <
@@ -28,7 +28,7 @@ where
       Empty
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins, sender | {
       let (receiver, _) =
         < N as

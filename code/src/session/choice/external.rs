@@ -7,7 +7,7 @@ use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 use crate::process::{
@@ -118,9 +118,9 @@ pub fn offer_choice < Ins, P, Q, F >
       ExternalChoice < P, Q >
     >
 where
-  P   : Protocol + 'static,
-  Q   : Protocol + 'static,
-  Ins : Context + 'static,
+  P   : Protocol,
+  Q   : Protocol,
+  Ins : Context,
   F   : FnOnce(
           ReturnChoice < Ins, P, Q >
         ) -> ExternalChoiceResult<
@@ -128,7 +128,7 @@ where
            PartialSession < Ins, Q >
         > + Send + 'static
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins : Ins::Values,
       sender: Sender<
@@ -228,10 +228,10 @@ pub fn choose_left
       I, S
     >
 where
-  I : Context + 'static,
-  P1 : Protocol + 'static,
-  P2 : Protocol + 'static,
-  S : Protocol + 'static,
+  I : Context,
+  P1 : Protocol,
+  P2 : Protocol,
+  S : Protocol,
   N :
     ContextLens <
       I,
@@ -239,7 +239,7 @@ where
       P1
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move | ins1, sender | {
       let (offerer_chan, ins2) =
         N :: split_channels ( ins1 );
@@ -280,10 +280,10 @@ pub fn choose_right
   ) ->
     PartialSession < I, S >
 where
-  I : Context + 'static,
-  P1 : Protocol + 'static,
-  P2 : Protocol + 'static,
-  S : Protocol + 'static,
+  I : Context,
+  P1 : Protocol,
+  P2 : Protocol,
+  S : Protocol,
   N :
     ContextLens <
       I,
@@ -291,7 +291,7 @@ where
       P2
     >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins1,
       sender: Sender < S::Value >

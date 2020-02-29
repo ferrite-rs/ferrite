@@ -13,7 +13,7 @@ use crate::base::{
   ContextLens,
   PartialSession,
   run_partial_session,
-  create_partial_session,
+  unsafe_create_session,
 };
 
 /*
@@ -28,14 +28,14 @@ pub fn terminate_async < Ins, Func, Fut >
   ( cleaner: Func )
   -> PartialSession < Ins, End >
 where
-  Ins : EmptyContext + 'static,
+  Ins : EmptyContext,
   Func :
     FnOnce() -> Fut
       + Send + 'static,
   Fut :
     Future < Output = () > + Send
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |_, sender: Sender<()>| {
       cleaner().await;
       sender.send(()).await;
@@ -46,7 +46,7 @@ pub fn terminate < Ins >
   () ->
     PartialSession < Ins, End >
 where
-  Ins : EmptyContext + 'static
+  Ins : EmptyContext
 {
   terminate_async ( async || { } )
 }
@@ -73,8 +73,8 @@ pub fn wait_async
   ) ->
     PartialSession < I, P >
 where
-  I : Context + 'static,
-  P : Protocol + 'static,
+  I : Context,
+  P : Protocol,
   Func :
     FnOnce () -> Fut
       + Send + 'static,
@@ -88,7 +88,7 @@ where
     > + Send,
   N : ContextLens < I, End, Empty >
 {
-  create_partial_session (
+  unsafe_create_session (
     async move |
       ins1 : I :: Values,
       sender
@@ -131,8 +131,8 @@ pub fn wait
   ) ->
     PartialSession < I, P >
 where
-  I : Context + 'static,
-  P : Protocol + 'static,
+  I : Context,
+  P : Protocol,
   N : ContextLens < I, End, Empty >
 {
   wait_async ( lens, async move || {

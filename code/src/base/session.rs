@@ -12,19 +12,19 @@ pub type Session < P > =
   PartialSession < (), P >;
 
 pub struct PartialSession
-  < I, P >
+  < C, A >
 where
-  P: Protocol,
-  I: Context
+  A: Protocol,
+  C: Context
 {
   executor : Box <
-    dyn FnOnce( I::Values, Sender < P::Value > )
+    dyn FnOnce( C::Values, Sender < A::Value > )
       -> Pin < Box < dyn Future < Output=() > + Send > >
     + Send
   >
 }
 
-pub fn create_partial_session
+pub fn unsafe_create_session
   < I, P, Func, Fut >
   (
     executor : Func
