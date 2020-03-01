@@ -24,11 +24,11 @@ use crate::base::{
 
     Create a unit process (1) out of nothing.
  */
-pub fn terminate_async < Ins, Func, Fut >
+pub fn terminate_async < C, Func, Fut >
   ( cleaner: Func )
-  -> PartialSession < Ins, End >
+  -> PartialSession < C, End >
 where
-  Ins : EmptyContext,
+  C : EmptyContext,
   Func :
     FnOnce() -> Fut
       + Send + 'static,
@@ -42,11 +42,11 @@ where
     })
 }
 
-pub fn terminate < Ins >
+pub fn terminate < C >
   () ->
-    PartialSession < Ins, End >
+    PartialSession < C, End >
 where
-  Ins : EmptyContext
+  C : EmptyContext
 {
   terminate_async ( async || { } )
 }

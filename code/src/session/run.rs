@@ -13,13 +13,13 @@ use crate::base::{
 
 pub fn
   run_session
-  < Ins >
-  (session : PartialSession < Ins, End >)
+  < C >
+  (session : PartialSession < C, End >)
 where
-  Ins : EmptyContext
+  C : EmptyContext
 {
   let (sender, receiver) = channel(1);
-  let ins = < Ins as EmptyContext > :: empty_values ();
+  let ins = < C as EmptyContext > :: empty_values ();
 
   task::block_on(async {
     let child1 = task::spawn(async {

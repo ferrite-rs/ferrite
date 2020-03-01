@@ -20,24 +20,24 @@ use crate::base::{
       send_input(cont_builder) :: Δ ⊢ T ⊃ P
  */
 pub fn receive_value
-  < T, Ins, P, Func, Fut >
+  < T, C, P, Func, Fut >
   ( cont_builder : Func ) ->
-     PartialSession < Ins, ReceiveValue < T, P > >
+     PartialSession < C, ReceiveValue < T, P > >
 where
   T : Send + 'static,
   P : Protocol,
-  Ins : Context,
+  C : Context,
   Func :
     FnOnce(T) -> Fut
     + Send + 'static,
   Fut :
     Future <
-      Output = PartialSession < Ins, P >
+      Output = PartialSession < C, P >
     > + Send
 {
   unsafe_create_session (
     async move |
-      ins : Ins::Values,
+      ins : C::Values,
       sender1 : Sender <
         Sender <(
           Val < T >,

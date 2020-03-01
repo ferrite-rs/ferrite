@@ -3,26 +3,26 @@ use crate::base::*;
 use crate::processes::lens::*;
 
 pub fn session
-  < Ins, P >
-  (cont : PartialSession < Ins, P >)
+  < C, P >
+  (cont : PartialSession < C, P >)
   -> Session < P >
 where
-  Ins : EmptyContext + 'static,
+  C : EmptyContext + 'static,
   P : Protocol + 'static
 {
   unsafe_create_session (
     async move | (), sender | {
-      let ins = < Ins as EmptyContext > :: empty_values();
+      let ins = < C as EmptyContext > :: empty_values();
       run_partial_session ( cont, ins, sender ).await;
     })
 }
 
 pub fn partial_session
-  < Ins, P >
+  < C, P >
   (cont : Session < P >)
-  -> PartialSession < Ins, P >
+  -> PartialSession < C, P >
 where
-  Ins : EmptyContext + 'static,
+  C : EmptyContext + 'static,
   P : Protocol + 'static
 {
   unsafe_create_session (

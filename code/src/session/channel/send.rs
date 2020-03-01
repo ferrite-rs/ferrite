@@ -194,25 +194,25 @@ where
     Takes in two session builders and return a new session builder
     with its inputs combined and outputs a parallel processes
  */
-pub fn fork <P, Q, InsP, InsQ>
+pub fn fork <P, Q, CP, CQ>
   (
-    cont1:  PartialSession <InsP, P>,
-    cont2:  PartialSession <InsQ, Q>
+    cont1:  PartialSession <CP, P>,
+    cont2:  PartialSession <CQ, Q>
   ) ->
      PartialSession <
-      < InsP as AppendContext<InsQ> >::AppendResult,
+      < CP as AppendContext<CQ> >::AppendResult,
       SendChannel<P, Q>
     >
 where
   P: Protocol,
   Q: Protocol,
-  InsP: Context,
-  InsQ: Context,
-  InsP: AppendContext<InsQ>,
+  CP: Context,
+  CQ: Context,
+  CP: AppendContext<CQ>,
   P: 'static,
   Q: 'static,
-  InsP: 'static,
-  InsQ: 'static
+  CP: 'static,
+  CQ: 'static
 {
   unsafe_create_session (
     async move |
@@ -222,7 +222,7 @@ where
         Receiver< Q::Value >
       )>
     | {
-      let (ins1, ins2) = < InsP as AppendContext<InsQ> >::split_channels(ins);
+      let (ins1, ins2) = < CP as AppendContext<CQ> >::split_channels(ins);
 
       let (sender1, receiver1) = channel(1);
       let (sender2, receiver2) = channel(1);

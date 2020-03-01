@@ -6,8 +6,8 @@
 //! - [`crate::base::Protocol`] - Protocol expressions in session types with
 //!   translation to Rust channel types.
 
-mod process;
-mod processes;
+mod protocol;
+mod context;
 mod session;
 mod lens;
 mod nat;
@@ -16,11 +16,11 @@ mod fix;
 
 pub mod public;
 
-pub use self::process::{
+pub use self::protocol::{
   Protocol
 };
 
-pub use self::processes::{
+pub use self::context::{
   Context,
   EmptyContext,
   AppendContext,

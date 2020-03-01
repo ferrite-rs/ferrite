@@ -71,16 +71,16 @@ where
 }
 
 pub fn offer_right
-  < Ins, P, Q >
-  ( cont:  PartialSession < Ins, Q >
-  ) ->  PartialSession < Ins, InternalChoice <P, Q> >
+  < C, P, Q >
+  ( cont:  PartialSession < C, Q >
+  ) ->  PartialSession < C, InternalChoice <P, Q> >
   where
     P   : Protocol,
     Q   : Protocol,
-    Ins : Context,
+    C : Context,
     P   : 'static,
     Q   : 'static,
-    Ins : 'static
+    C : 'static
 {
   return unsafe_create_session (
     async move |
@@ -118,26 +118,26 @@ pub fn offer_right
  */
 
 pub struct InternalChoiceResult
-  < Ins1, Ins2, P >
+  < C1, C2, P >
 where
-  Ins1 : Context,
-  Ins2 : Context,
+  C1 : Context,
+  C2 : Context,
   P : Protocol
 {
   result: Either <
-    PartialSession < Ins1, P >,
-    PartialSession < Ins2, P >
+    PartialSession < C1, P >,
+    PartialSession < C2, P >
   >
 }
 
 fn left_choice
-  < Ins1, Ins2, P >
-  ( res : PartialSession < Ins1, P > )
+  < C1, C2, P >
+  ( res : PartialSession < C1, P > )
   ->
-    InternalChoiceResult < Ins1, Ins2, P >
+    InternalChoiceResult < C1, C2, P >
 where
-  Ins1 : Context,
-  Ins2 : Context,
+  C1 : Context,
+  C2 : Context,
   P : Protocol
 {
   return InternalChoiceResult {
@@ -146,13 +146,13 @@ where
 }
 
 fn right_choice
-  < Ins1, Ins2, P >
-  ( res : PartialSession < Ins2, P > )
+  < C1, C2, P >
+  ( res : PartialSession < C2, P > )
   ->
-    InternalChoiceResult < Ins1, Ins2, P >
+    InternalChoiceResult < C1, C2, P >
 where
-  Ins1 : Context,
-  Ins2 : Context,
+  C1 : Context,
+  C2 : Context,
   P : Protocol
 {
   return InternalChoiceResult {

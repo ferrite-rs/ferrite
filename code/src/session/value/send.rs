@@ -20,28 +20,28 @@ use crate::base::{
       send_value_async(cont_builder) :: Δ ⊢  T ∧ P
  */
 pub fn send_value_async
-  < T, Ins, P, Func, Fut >
+  < T, C, P, Func, Fut >
   ( cont_builder: Func
   ) ->
     PartialSession <
-      Ins,
+      C,
       SendValue < T, P >
     >
 where
   T   : Send + 'static,
   P   : Protocol,
-  Ins : Context,
+  C : Context,
   Func :
     FnOnce() -> Fut
       + Send + 'static,
   Fut :
     Future <
-      Output = ( T,  PartialSession < Ins, P > )
+      Output = ( T,  PartialSession < C, P > )
     > + Send
 {
   unsafe_create_session (
     async move |
-      ins : Ins::Values,
+      ins : C::Values,
       sender1 : Sender < (
         Val < T >,
         Receiver < P::Value >
@@ -71,18 +71,18 @@ where
 }
 
 pub fn send_value
-  < T, Ins, P >
+  < T, C, P >
   ( val : T,
-    cont : PartialSession < Ins, P >
+    cont : PartialSession < C, P >
   ) ->
     PartialSession <
-      Ins,
+      C,
       SendValue < T, P >
     >
 where
   T   : Send + 'static,
   P   : Protocol,
-  Ins : Context
+  C : Context
 {
   send_value_async ( async move || {
     ( val, cont )

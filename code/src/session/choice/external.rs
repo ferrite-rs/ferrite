@@ -94,43 +94,43 @@ fn right_choice < L, R > (res: R)
        )
     ->  PartialSession ins (ExternalChoice p q)
  */
-pub type ReturnChoice < Ins, P, Q > =
+pub type ReturnChoice < C, P, Q > =
   Either <
     Box < dyn FnOnce (
-       PartialSession < Ins, P >
+       PartialSession < C, P >
     ) -> ExternalChoiceResult <
-       PartialSession < Ins, P >,
-       PartialSession < Ins, Q >
+       PartialSession < C, P >,
+       PartialSession < C, Q >
     > + Send >,
     Box< dyn FnOnce (
-       PartialSession < Ins, Q >
+       PartialSession < C, Q >
     ) -> ExternalChoiceResult <
-       PartialSession < Ins, P >,
-       PartialSession < Ins, Q >
+       PartialSession < C, P >,
+       PartialSession < C, Q >
     > + Send >
   >;
 
-pub fn offer_choice < Ins, P, Q, F >
+pub fn offer_choice < C, P, Q, F >
   ( cont_builder : F )
   ->
     PartialSession <
-      Ins,
+      C,
       ExternalChoice < P, Q >
     >
 where
   P   : Protocol,
   Q   : Protocol,
-  Ins : Context,
+  C : Context,
   F   : FnOnce(
-          ReturnChoice < Ins, P, Q >
+          ReturnChoice < C, P, Q >
         ) -> ExternalChoiceResult<
-           PartialSession < Ins, P >,
-           PartialSession < Ins, Q >
+           PartialSession < C, P >,
+           PartialSession < C, Q >
         > + Send + 'static
 {
   unsafe_create_session (
     async move |
-      ins : Ins::Values,
+      ins : C::Values,
       sender: Sender<
         Box<
           dyn FnOnce(Choice) ->
@@ -152,7 +152,7 @@ where
           match choice {
             Choice::Left => {
               let in_choice :
-                ReturnChoice <Ins, P, Q>
+                ReturnChoice <C, P, Q>
               = Either::Left(
                 Box::new(
                   left_choice
@@ -181,7 +181,7 @@ where
             },
 
             Choice::Right => {
-              let in_choice : ReturnChoice <Ins, P, Q>
+              let in_choice : ReturnChoice <C, P, Q>
               = Either::Right(Box::new(right_choice));
 
               let cont_variant = cont_builder(in_choice).result;

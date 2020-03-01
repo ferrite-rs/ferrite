@@ -1,8 +1,8 @@
 use async_std::sync::Receiver;
 
 use crate::base::nat::{ S, Z };
-use crate::base::process::{ Protocol };
-use crate::base::processes::{ Context };
+use crate::base::protocol::{ Protocol };
+use crate::base::context::{ Context };
 
 pub trait Slot : 'static {
   type Value : Send;

@@ -3,8 +3,8 @@ use std::pin::Pin;
 use std::future::Future;
 use async_std::sync::Sender;
 
-use crate::base::process::{ Protocol };
-use crate::base::processes::{ Context };
+use crate::base::protocol::{ Protocol };
+use crate::base::context::{ Context };
 
 /// A session builder is a consumer for the given list of
 /// input processes and output a process with given Out type.

@@ -1,5 +1,5 @@
 
-pub use super::process::public::{ Protocol };
+pub use super::protocol::public::{ Protocol };
 
 pub use super::{
   Context,
