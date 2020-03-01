@@ -53,6 +53,7 @@ pub use crate::session::public::{
   terminate_nil,
 
   fix_session,
+  succ_session,
   unfix_session,
   unfix_session_for,
 

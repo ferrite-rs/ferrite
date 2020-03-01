@@ -25,20 +25,18 @@ where
 }
 
 pub fn unsafe_create_session
-  < I, P, Func, Fut >
+  < I, P, Fut >
   (
-    executor : Func
+    executor : impl
+      FnOnce( I::Values, Sender < P::Value > )
+        -> Fut
+      + Send + 'static
   ) ->
     PartialSession < I, P >
 where
-  P: Protocol + 'static,
-  I: Context + 'static,
-  Func :
-    FnOnce( I::Values, Sender < P::Value > )
-      -> Fut
-    + Send + 'static,
-  Fut :
-    Future < Output=() > + Send
+  P : Protocol + 'static,
+  I : Context + 'static,
+  Fut : Future < Output=() > + Send
 {
   let executor2
     : Box <

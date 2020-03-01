@@ -29,6 +29,7 @@ pub use self::end::{
 
 pub use self::fix::{
   fix_session,
+  succ_session,
   unfix_session,
   unfix_session_for,
 };

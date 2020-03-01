@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use async_std::sync::{ Sender, Receiver };
+use async_std::sync::{ Sender };
 
 use super::data::Val;
 use crate::base as base;
@@ -21,10 +21,13 @@ where
   T : Send + 'static,
   P : Protocol
 {
-  type Value = (
-    Sender < Val < T > >,
-    Receiver < P::Value >
-  );
+  type Value =
+    Sender <(
+      Val < T >,
+      Sender <
+        P::Value
+      >
+    )>;
 }
 
 impl

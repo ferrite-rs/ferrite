@@ -1,7 +1,7 @@
 use async_std::task;
 use async_macros::join;
 use std::future::{ Future };
-use async_std::sync::{ Sender, Receiver, channel };
+use async_std::sync::{ Sender, channel };
 
 use crate::process::{ Val, ReceiveValue };
 
@@ -38,24 +38,22 @@ where
   unsafe_create_session (
     async move |
       ins : Ins::Values,
-      sender1 : Sender < (
-        Sender < Val < T > >,
-        Receiver < P::Value >
-      ) >
+      sender1 : Sender <
+        Sender <(
+          Val < T >,
+          Sender < P::Value >
+        )>,
+      >
     | {
-      let (sender2, receiver2)
-        : (Sender < Val < T > >, _)
-        = channel(1);
-
-      let (sender3, receiver3) = channel(1);
+      let (sender2, receiver2) = channel(1);
 
       let child1 = task::spawn ( async move {
-        sender1.send((sender2, receiver3)).await;
+        sender1.send(sender2).await;
       });
 
 
       let child2 = task::spawn ( async move {
-        let val = receiver2.recv().await.unwrap();
+        let (val, sender3) = receiver2.recv().await.unwrap();
 
         let cont = cont_builder(val.val).await;
 
@@ -118,8 +116,11 @@ where
         >
         :: split_channels ( ins1 );
 
-      let (sender2, receiver2) = receiver1.recv().await.unwrap();
+      let sender2 = receiver1.recv().await.unwrap();
+
       let (val, cont) = cont_builder().await;
+
+      let (sender3, receiver3) = channel(1);
 
       let ins3 =
         < N as
@@ -128,12 +129,13 @@ where
             ReceiveValue < T, Q >,
             Q
           >
-        > :: merge_channels( receiver2, ins2 );
+        > :: merge_channels( receiver3, ins2 );
 
       let child1 = task::spawn(async move {
-        sender2.send( Val {
-          val: val
-        }).await;
+        sender2.send( (
+          Val { val: val },
+          sender3
+        ) ).await;
       });
 
       let child2 = task::spawn(async move {
