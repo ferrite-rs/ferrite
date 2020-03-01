@@ -29,8 +29,8 @@ where
   P1 : Slot,
   P2 : Slot,
 {
-  type Deleted : Context + 'static;
-  type Target : Context + 'static;
+  type Deleted : Context;
+  type Target : Context;
 
   fn split_channels (
     channels :
@@ -64,9 +64,9 @@ impl
   > for
   Z
 where
-  P1 : Slot + 'static,
-  P2 : Slot + 'static,
-  R : Context + 'static
+  P1 : Slot,
+  P2 : Slot,
+  R : Context
 {
   type Deleted = (Empty, R);
   type Target = (P2, R);
@@ -112,10 +112,10 @@ impl
   > for
   S < N >
 where
-  P : Slot + 'static,
-  Q1 : Slot + 'static,
-  Q2 : Slot + 'static,
-  R : Context + 'static,
+  P : Slot,
+  Q1 : Slot,
+  Q2 : Slot,
+  R : Context,
   N : ContextLens < R, Q1, Q2 >,
 {
   type Deleted =

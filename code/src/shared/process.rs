@@ -5,7 +5,7 @@ use crate::base as base;
 use base::{ Protocol };
 use async_std::sync::{ Sender, Receiver };
 
-pub trait SharedProtocol {
+pub trait SharedProtocol : 'static {
   type SharedValue : Send;
 }
 
@@ -64,7 +64,7 @@ impl < F >
   SharedProtocol for
   LinearToShared < F >
 where
-  F : SharedTyApp < F >
+  F : SharedTyApp < F > + 'static
 {
   type SharedValue =
     < < F as SharedTyApp < F > >
@@ -92,5 +92,5 @@ impl < F >
   public::SharedProtocol for
   LinearToShared < F >
 where
-  F : SharedTyApp < F >
+  F : SharedTyApp < F > + 'static
 { }

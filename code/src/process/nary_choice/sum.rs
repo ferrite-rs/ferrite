@@ -21,7 +21,7 @@ pub trait ProtocolSum2
 }
 
 pub trait SelectSum < N > : ProtocolSum2 {
-  type SelectedProtocol : Protocol + 'static;
+  type SelectedProtocol : Protocol;
 
   fn inject_selected
     ( receiver :
@@ -153,7 +153,7 @@ impl
   SelectSum < Z >
   for P
 where
-  P : Protocol + 'static
+  P : Protocol
 {
   type SelectedProtocol = P;
 
@@ -176,7 +176,7 @@ impl
   >
   for Sum < P, R >
 where
-  P : Protocol + 'static,
+  P : Protocol,
   R : ProtocolSum2,
 {
   type SelectedProtocol = P;

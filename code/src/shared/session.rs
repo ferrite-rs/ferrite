@@ -81,7 +81,7 @@ pub fn run_shared_session
   ( session : SuspendedSharedSession < P > )
   -> SharedSession < P >
 where
-  P : SharedProtocol + 'static
+  P : SharedProtocol
 {
   let (sender1, receiver1) = channel (999);
   let (sender2, receiver2) = channel (999);
@@ -184,7 +184,7 @@ pub fn
     >
 where
   F : SharedTyApp < F > + Send + 'static,
-  I : EmptyContext + 'static
+  I : EmptyContext
 {
   unsafe_create_session (
     async move |
@@ -233,7 +233,7 @@ pub fn
     PartialSession < I, P >
 where
   F : SharedTyApp < F > + 'static,
-  P : Protocol + 'static,
+  P : Protocol,
   I : Context + NextSelector + 'static,
   I : AppendContext <
         ( < F as
@@ -315,8 +315,8 @@ pub fn
       P
     >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   F : SharedTyApp < F > + Send + 'static,
   N :
     ContextLens <

@@ -34,8 +34,8 @@ pub fn unsafe_create_session
   ) ->
     PartialSession < I, P >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   Fut : Future < Output=() > + Send
 {
   let executor2

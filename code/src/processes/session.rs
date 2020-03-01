@@ -7,8 +7,8 @@ pub fn session
   (cont : PartialSession < C, P >)
   -> Session < P >
 where
-  C : EmptyContext + 'static,
-  P : Protocol + 'static
+  C : EmptyContext,
+  P : Protocol
 {
   unsafe_create_session (
     async move | (), sender | {
@@ -22,8 +22,8 @@ pub fn partial_session
   (cont : Session < P >)
   -> PartialSession < C, P >
 where
-  C : EmptyContext + 'static,
-  P : Protocol + 'static
+  C : EmptyContext,
+  P : Protocol
 {
   unsafe_create_session (
     async move |
@@ -45,8 +45,8 @@ pub fn append_emtpy_slot
       P
     >
 where
-  P : Protocol + 'static,
-  I : Context + 'static,
+  P : Protocol,
+  I : Context,
   I : AppendContext < ( Empty, () ) >
 {
   unsafe_create_session (
@@ -65,7 +65,7 @@ pub fn session_1
   ( cont : F ) ->
     Session < P >
 where
-  P : Protocol + 'static,
+  P : Protocol,
   F : FnOnce (Z) ->
         PartialSession <
           ( Empty, () ),
@@ -80,7 +80,7 @@ pub fn session_2
   ( cont : F ) ->
     Session < P >
 where
-  P : Protocol + 'static,
+  P : Protocol,
   F : FnOnce (Z, Selector1) ->
         PartialSession <
           ( Empty, ( Empty, () )),
@@ -98,8 +98,8 @@ pub fn partial_session_1
       Q
     >
 where
-  P1 : Slot + 'static,
-  Q : Protocol + 'static,
+  P1 : Slot,
+  Q : Protocol,
   F : FnOnce (Z) ->
         PartialSession <
           (P1, ()),
@@ -117,9 +117,9 @@ pub fn partial_session_2
       Q
     >
 where
-  P1 : Slot + 'static,
-  P2 : Slot + 'static,
-  Q : Protocol + 'static,
+  P1 : Slot,
+  P2 : Slot,
+  Q : Protocol,
   F : FnOnce (Z, Selector1) ->
         PartialSession <
           (P1, (P2, ())),
