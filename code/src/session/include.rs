@@ -1,6 +1,3 @@
-use async_std::task;
-use async_macros::join;
-use async_std::sync::{ channel };
 use std::collections::{ LinkedList };
 
 use crate::process::{ End };
@@ -14,8 +11,6 @@ use crate::base::{
   AppendContext,
   ContextLens,
   PartialSession,
-  run_partial_session,
-  unsafe_create_session,
 };
 
 use crate::processes::{
@@ -28,59 +23,59 @@ use crate::session::end::{
   wait_async,
 };
 
+use crate::session::link::cut;
+
 pub fn
   include_session
-  < I, P, Q, F >
-  ( session1 : Session < P >,
-    cont_builder : F
+  < C, A, B >
+  ( session1 : Session < A >,
+    cont_builder : impl FnOnce
+      ( C :: Length )
+      ->
+        PartialSession <
+          < C as
+            AppendContext <
+              ( A, () )
+            >
+          > :: AppendResult,
+          B
+        >
   ) ->
-    PartialSession < I, Q >
+    PartialSession < C, B >
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
-  I : AppendContext < ( P, () ) >,
-  F : FnOnce
-        ( I :: Length )
-        ->
-          PartialSession <
-            < I as
-              AppendContext <
-                ( P, () )
-              >
-            > :: AppendResult,
-            Q
-          >
+  A : Protocol,
+  B : Protocol,
+  C : Context,
+  C : AppendContext < ( A, () ) >,
+  C : AppendContext < ( Empty, () ) >,
+  C::Length :
+    ContextLens <
+      < C as
+        AppendContext < ( Empty, () ) >
+      > :: AppendResult,
+      Empty,
+      A,
+      Target =
+        < C as
+          AppendContext < ( A, () ) >
+        > :: AppendResult,
+      Deleted = C
+    >
 {
   let cont = cont_builder (
-    I::Length::nat ()
+    C::Length::nat ()
   );
 
-  unsafe_create_session (
-    async move | ins1, sender1 | {
-      let (sender2, receiver2) = channel(1);
-
-      let child1 = task::spawn(async move {
-        run_partial_session
-          ( session1, (), sender2
-          ).await;
-      });
-
-      let ins2 =
-        < I as
-          AppendContext <
-            ( P, () )
-          >
-        > :: append_channels ( ins1, (receiver2, ()) );
-
-      let child2 = task::spawn(async move {
-        run_partial_session
-          ( cont, ins2, sender1
-          ).await;
-      });
-
-      join!(child1, child2).await;
-    })
+  cut ::
+    < C::Length,
+      (),
+      < C as
+        AppendContext < ( Empty, () ) >
+      > :: AppendResult,
+      A,
+      B
+    >
+    ( C::Length::nat (), session1, cont )
 }
 
 pub fn wait_session
@@ -105,7 +100,20 @@ where
         < I as
           AppendContext < (Empty, ()) >
         >::AppendResult
+    >,
+  I::Length :
+    ContextLens <
+      < I as AppendContext<(Empty, ())>
+      >::AppendResult,
+      Empty,
+      End,
+      Target =
+        < I as
+          AppendContext < (End, ()) >
+        >::AppendResult,
+      Deleted = I
     >
+
 {
   include_session ( session1, move | chan | {
     wait_async ( chan, async move || {
@@ -138,6 +146,18 @@ where
         < I as
           AppendContext < (Empty, ()) >
         >::AppendResult
+    >,
+  I::Length :
+    ContextLens <
+      < I as AppendContext<(Empty, ())>
+      >::AppendResult,
+      Empty,
+      End,
+      Target =
+        < I as
+          AppendContext < (End, ()) >
+        >::AppendResult,
+      Deleted = I
     >
 {
   wait_session (

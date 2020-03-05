@@ -64,7 +64,7 @@ pub use crate::session::public::{
   wait_sessions,
   join_sessions,
 
-  link,
+  cut,
 
   clone_session,
   PersistentSession,

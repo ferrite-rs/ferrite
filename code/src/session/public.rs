@@ -19,7 +19,7 @@ pub use super::{
   wait_sessions,
   join_sessions,
 
-  link,
+  cut,
 
   clone_session,
   PersistentSession,

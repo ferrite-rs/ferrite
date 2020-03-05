@@ -46,7 +46,7 @@ pub use self::include::{
 };
 
 pub use self::link::{
-  link,
+  cut,
 };
 
 pub use self::persistent::{

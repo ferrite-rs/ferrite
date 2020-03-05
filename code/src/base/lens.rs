@@ -68,7 +68,7 @@ where
   P2 : Slot,
   R : Context
 {
-  type Deleted = (Empty, R);
+  type Deleted = R;
   type Target = (P2, R);
 
   fn split_channels (
@@ -78,22 +78,18 @@ where
       > :: Values
   ) ->
     ( < P1 as Slot > :: Value,
-      ( (),
-        < R as Context
-        > :: Values
-      )
+      < R as Context
+      > :: Values
     )
   {
-    return (p, ((), r));
+    return (p, r);
   }
 
   fn merge_channels
     ( p : < P2 as Slot > :: Value,
-      ((), r) :
-        ( (),
-          < R as Context
-          > :: Values
-        )
+      r :
+        < R as Context
+        > :: Values
     ) ->
       < ( P2, R )
         as Context

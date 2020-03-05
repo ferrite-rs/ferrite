@@ -4,7 +4,7 @@ use async_std::sync::{ channel };
 
 use crate::base::{
   Protocol,
-  Session,
+  AppendContext,
   Empty,
   Context,
   ContextLens,
@@ -21,50 +21,50 @@ use crate::base::{
        link(cont1, cont2) :: Δ1, Δ2, Δ3 ⊢ P
  */
 
-pub fn link
-  < I, P, Q,
-    N
-  >
+pub fn cut
+  < N, C1, C2, A, B >
   ( _ : N,
     cont1 :
-      Session < Q >,
+      PartialSession < C1, A >,
     cont2 :
       PartialSession <
         N :: Target,
-        P
+        B
       >
   ) ->
-    PartialSession < I, P >
+    PartialSession < C1::AppendResult, B >
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
+  A : Protocol,
+  B : Protocol,
+  C1 : Context,
+  C2 : Context,
+  C1 : AppendContext < N::Deleted >,
   N :
     ContextLens <
-      I,
+      C2,
       Empty,
-      Q
+      A
     >
 {
   unsafe_create_session (
-    async move | ins1, p_sender | {
-      let (q_sender, q_receiver) = channel(1);
+    async move | ins1, b_sender | {
+      let (ins2, ins3) =
+        C1 :: split_channels (ins1);
 
-      let (_, ins2) =
-        N :: split_channels (ins1);
+      let (a_sender, a_receiver) = channel(1);
 
-      let ins3 =
-        N :: merge_channels (q_receiver, ins2);
+      let ins4 =
+        N :: merge_channels ( a_receiver, ins3 );
 
       let child1 = task::spawn(async {
         run_partial_session
-          ( cont1, (), q_sender
+          ( cont1, ins2, a_sender
           ).await;
       });
 
       let child2 = task::spawn(async {
         run_partial_session
-          ( cont2, ins3, p_sender
+          ( cont2, ins4, b_sender
           ).await;
       });
 
