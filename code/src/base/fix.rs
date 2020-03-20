@@ -2,6 +2,10 @@ use std::marker::PhantomData;
 use crate::base::nat::*;
 use async_std::sync::{ Sender, Receiver };
 
+/*
+  class TyApp self where
+    type family Apply self a
+ */
 pub trait TyApp < A > {
   type Type;
 }

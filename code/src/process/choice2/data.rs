@@ -25,6 +25,12 @@ pub enum Sum < A, B >
   Inr ( B ),
 }
 
+/*
+  class
+    (forall t . Send (Field self t))
+    => SumRow self where
+      type family ToRow self t :: Type
+ */
 pub trait SumRow < T >
 {
   type Field : Send;
@@ -34,10 +40,30 @@ pub trait Iso {
   type Canon;
 }
 
+/*
+  class Inject self a where
+    inject :: a -> self
+ */
 pub trait Inject < A > {
   fn inject ( a : A ) -> Self;
 }
 
+/*
+  class
+    (SumRow self)
+    => IsoRow self where
+      type family Canon self t :: Type
+
+      toCanon
+        :: forall t
+         . ToRow self t
+        -> Canon self t
+
+      fromCanon
+        :: forall t
+         . Canon self t
+        -> ToRow self t
+ */
 pub trait IsoRow < T >
   : Iso + SumRow < T >
 where
@@ -61,6 +87,15 @@ where
   ;
 }
 
+/*
+  class
+    ( TyApp t1, TyApp t2 )
+    => LiftField t1 t2 where
+      liftField
+        :: forall a
+         . Apply t1 a
+        -> Apply t2 a
+ */
 pub trait LiftField < T1, T2, A >
 where
   T1 : TyApp < A >,
@@ -83,6 +118,15 @@ where
     T2 :: Type;
 }
 
+/*
+  class
+    ( SumRow self )
+    => LiftSum self where
+      liftSum
+        :: forall t1 t2
+         . Field self t1
+        -> Field self t2
+ */
 pub trait LiftSum < T1, T2, F >
   : SumRow < T1 > + SumRow < T2 >
 {
@@ -111,28 +155,62 @@ pub trait LiftSumBorrow < T1, T2, F >
     > :: Field;
 }
 
-pub trait LiftField2 < T1, T2, A, T3, Root >
+/*
+  class
+    ( forall root t1 t2 .
+        ( TyApp t1, TyApp t2 )
+        => TyApp (ToRoot c t1 t2 root)
+    )
+    => HasRoot c where
+      type family ToRoot c t1 t2 root :: Type
+
+  class
+    ( HasRoot c )
+    => LiftField2 c t1 t2 where
+      lfitField
+        :: forall a root
+         . (Apply t2 a -> root)
+        -> Apply t1 a
+        -> Apply (ToRoot c t1 t2 root) a
+ */
+pub trait LiftField2 < T1, T2, Root, A >
 where
   T1 : TyApp < A >,
   T2 : TyApp < A >,
-  T3 : TyApp < A >,
 {
+  type RootType : TyApp < A >;
+
   fn lift_field (
-    inject : impl Fn (T3 :: Type) -> Root + Send + 'static,
+    inject :
+      impl Fn (T2 :: Type) -> Root
+      + Send + 'static,
     field : T1 :: Type
   ) ->
-    T2 :: Type;
+    < Self :: RootType
+      as TyApp < A >
+    >:: Type;
 }
 
-pub trait LiftSum2 < T1, T2, F, T3, Root >
+/*
+  class
+    ( HasRoot c )
+    => LiftSum2 self c t1 t2 where
+      liftSum
+        :: forall root
+         . (forall t . ToRow self t -> root)
+        -> ToRow self t1
+        -> ToRow self (ToRoot c t1 t2)
+ */
+pub trait LiftSum2 < F, T1, T2, Root >
   : SumRow < T1 >
   + SumRow < T2 >
-  + SumRow < T3 >
 {
+  type RootSum;
+
   fn lift_sum (
     inject:
       impl Fn
-        ( < Self as SumRow < T3 > >:: Field ) ->
+        ( < Self as SumRow < T2 > >:: Field ) ->
           Root
           + Send + 'static,
     sum :
@@ -140,10 +218,19 @@ pub trait LiftSum2 < T1, T2, F, T3, Root >
         SumRow < T1 >
       > :: Field
   ) ->
-    < Self as
-      SumRow < T2 >
-    > :: Field;
+    Self :: RootSum;
 }
+
+pub trait LiftSum3 < F, T1, T2, Root, T3 >
+  : LiftSum2 <
+      F, T1, T2, Root,
+      RootSum =
+        < Self as
+          SumRow < T3 >
+        > :: Field
+    >
+  + SumRow < T3 >
+{ }
 
 pub trait IntersectSum < T1, T2 >
   : SumRow < T1 >
@@ -486,10 +573,12 @@ where
 }
 
 
-impl < T1, T2, F, T3, Root >
-  LiftSum2 < T1, T2, F, T3, Root > for
+impl < F, T1, T2, Root >
+  LiftSum2 < F, T1, T2, Root > for
   ()
 {
+  type RootSum = Bottom;
+
   fn lift_sum (
     _ : impl Fn ( Bottom ) -> Root,
     bot : Bottom
@@ -499,26 +588,38 @@ impl < T1, T2, F, T3, Root >
   }
 }
 
-impl < T1, T2, F, T3, Root, A, B >
-  LiftSum2 < T1, T2, F, T3, Root > for
+
+impl < F, T1, T2, Root, T3 >
+  LiftSum3 < F, T1, T2, Root, T3 > for
+  ()
+{ }
+
+impl < F, T1, T2, Root, T3, A, B >
+  LiftSum2 < F, T1, T2, Root > for
   (A, B)
 where
   T1 : TyApp < A >,
   T2 : TyApp < A >,
   T3 : TyApp < A >,
-  F : LiftField2 < T1, T2, A, T3, Root >,
-  B : LiftSum2 < T1, T2, F, T3, Root >,
+  F : LiftField2 < T1, T2, Root, A, RootType=T3 >,
+  B : LiftSum2 < F, T1, T2, Root >,
   T1::Type : Send,
   T2::Type : Send,
   T3::Type : Send,
 {
+  type RootSum =
+    Sum <
+      T3 :: Type,
+      B::RootSum
+    >;
+
   fn lift_sum (
     inject1 :
       impl Fn
         ( Sum <
-            T3 :: Type,
+            T2 :: Type,
             < B as
-              SumRow < T3 >
+              SumRow < T2 >
             > :: Field
           >
         ) ->
@@ -532,17 +633,12 @@ where
         > :: Field
       >
   ) ->
-    Sum <
-      T2 :: Type,
-      < B as
-        SumRow < T2 >
-      > :: Field
-    >
+    Self :: RootSum
   {
     match sum {
       Sum::Inl(a) => {
         let inject2 =
-          move | b : T3 :: Type | ->
+          move | b : T2 :: Type | ->
             Root
           {
             inject1 ( Sum::Inl (b) )
@@ -557,7 +653,7 @@ where
           move |
             b :
               < B as
-                SumRow < T3 >
+                SumRow < T2 >
               > :: Field
           | ->
             Root
@@ -572,6 +668,21 @@ where
     }
   }
 }
+
+
+impl < F, T1, T2, Root, T3, A, B >
+  LiftSum3 < F, T1, T2, Root, T3 > for
+  (A, B)
+where
+  T1 : TyApp < A >,
+  T2 : TyApp < A >,
+  T3 : TyApp < A >,
+  F : LiftField2 < T1, T2, Root, A, RootType=T3 >,
+  B : LiftSum3 < F, T1, T2, Root, T3 >,
+  T1::Type : Send,
+  T2::Type : Send,
+  T3::Type : Send,
+{ }
 
 
 impl < T, F, R >

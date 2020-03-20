@@ -262,15 +262,13 @@ where
   }
 }
 
-
 impl
   < A, Root, N, I, P, Row >
   LiftField2
   < (),
-    InternalCont < N, I, P, Row, Root >,
-    A,
     ContextCon < N, I, P, Row >,
-    Root
+    Root,
+    A,
   > for
   MakeCont
 where
@@ -286,6 +284,7 @@ where
       A
     >
 {
+  type RootType = InternalCont < N, I, P, Row, Root >;
 
   fn lift_field (
     inject :
@@ -312,24 +311,24 @@ fn id < A > (a : A) -> A {
 }
 
 fn make_cont_sum
-  < N, I, P, T, Row >
+  < N, I, P, T, Row, T3 >
   ( selector :
       < Row::Canon as
         SumRow < T >
       > :: Field
   ) ->
     < Row::Canon as
-      SumRow <
-        InternalCont <
-          N, I, P, Row,
-          < Row::Canon as
-            SumRow <
-              ContextCon < N, I, P, Row >
-            >
-          > :: Field
-        >
+      LiftSum2 <
+        MakeCont,
+        T,
+        ContextCon < N, I, P, Row >,
+        < Row::Canon as
+          SumRow <
+            ContextCon < N, I, P, Row >
+          >
+        > :: Field
       >
-    > :: Field
+    > ::RootSum
 where
   P : Protocol,
   I : Context,
@@ -342,34 +341,16 @@ where
       ContextCon < N, I, P, Row >
     >,
   Row::Canon :
-    SumRow <
-      InternalCont <
-        N, I, P, Row,
-        < Row::Canon as
-          SumRow <
-            ContextCon < N, I, P, Row >
-          >
-        > :: Field
-      >
-    >,
-  Row::Canon :
-    LiftSum2 <
-      T,
-      InternalCont <
-        N, I, P, Row,
-        < Row::Canon as
-          SumRow <
-            ContextCon < N, I, P, Row >
-          >
-        > :: Field
-      >,
+    LiftSum3 <
       MakeCont,
+      T,
       ContextCon < N, I, P, Row >,
       < Row::Canon as
         SumRow <
           ContextCon < N, I, P, Row >
         >
-      > :: Field
+      > :: Field,
+      T3
     >,
   < Row::Canon as
     SumRow <
@@ -385,32 +366,12 @@ where
 }
 
 pub fn case
-  < Row, N, C, A, Canon, F >
+  < Row, N, C, A, Canon, T3 >
   ( _ : N,
-    cont1 : F
-  ) ->
-    PartialSession < C, A >
-where
-  A : Protocol,
-  C : Context,
-  N :
-    ContextLens <
-      C,
-      InternalChoice < Row >,
-      Empty
-    > + 'static,
-  F :
-    FnOnce (
+    cont1 : impl FnOnce (
       < Row as
         SumRow <
-          InternalCont <
-            N, C, A, Row,
-            < Canon as
-              SumRow <
-                ContextCon < N, C, A, Row >
-              >
-            > :: Field
-          >
+          T3
         >
       > :: Field
     ) ->
@@ -420,24 +381,23 @@ where
         >
       > :: Field
       + Send + 'static,
+  ) ->
+    PartialSession < C, A >
+where
+  A : Protocol,
+  C : Context,
   Row : Send + 'static,
   Row : Iso < Canon = Canon >,
-  Canon :
-    SumRow < () >,
+  Row : IsoRow < T3 >,
   Canon : 'static,
-  Row :
-    IsoRow <
-      InternalCont <
-        N, C, A, Row,
-        < Canon as
-          SumRow <
-            ContextCon < N, C, A, Row >
-          >
-        > :: Field
-      >
-    >,
-  Canon :
-    SumRow < ReceiverCon >,
+  Canon : SumRow < () >,
+  N :
+    ContextLens <
+      C,
+      InternalChoice < Row >,
+      Empty
+    > + 'static,
+  Canon : SumRow < ReceiverCon >,
   Canon :
     SumRow <
       ContextCon < N, C, A, Row >
@@ -463,34 +423,16 @@ where
       Pin < Box < dyn Future < Output=() > + Send > >
     >,
   Canon :
-    SumRow <
-      InternalCont <
-        N, C, A, Row,
-        < Canon as
-          SumRow <
-            ContextCon < N, C, A, Row >
-          >
-        > :: Field
-      >
-    >,
-  Canon :
-    LiftSum2 <
-      (),
-      InternalCont <
-        N, C, A, Row,
-        < Canon as
-          SumRow <
-            ContextCon < N, C, A, Row >
-          >
-        > :: Field
-      >,
+    LiftSum3 <
       MakeCont,
+      (),
       ContextCon < N, C, A, Row >,
       < Canon as
         SumRow <
           ContextCon < N, C, A, Row >
         >
-      > :: Field
+      > :: Field,
+      T3,
     >
 {
   unsafe_create_session (
@@ -516,20 +458,13 @@ where
         = Canon::lift_sum_borrow ( &receiver_sum );
 
       let cont2 = make_cont_sum ::
-        < N, C, A, (), Row >
+        < N, C, A, (), Row, T3 >
         ( selector );
 
       let cont3 =
         < Row as
           IsoRow <
-            InternalCont <
-              N, C, A, Row,
-              < Canon as
-                SumRow <
-                  ContextCon < N, C, A, Row >
-                >
-              > :: Field
-            >
+            T3
           >
         > :: from_canon ( cont2 );
 
@@ -571,90 +506,4 @@ where
         }
       }
     })
-}
-
-pub type EitherField < A, B, T > =
-  Either <
-    < T as TyApp<A> > :: Type,
-    < T as TyApp<B> > :: Type
-  >;
-
-pub enum Either < A, B > {
-  Left ( A ),
-  Right ( B ),
-}
-
-impl < T, A, B >
-  SumRow < T > for
-  Either < A, B >
-where
-  T : TyApp < A >,
-  T : TyApp < B >,
-  < T as TyApp<A> > :: Type : Send,
-  < T as TyApp<B> > :: Type : Send,
-{
-  type Field = Either <
-    < T as TyApp<A> > :: Type,
-    < T as TyApp<B> > :: Type
-  >;
-}
-
-impl < A, B >
-  Iso
-  for Either < A, B >
-{
-  type Canon = ( A, ( B, () ) );
-}
-
-impl < A, B, T >
-  IsoRow < T >
-  for Either < A, B >
-where
-  T : TyApp < A >,
-  T : TyApp < B >,
-  < T as TyApp<A> > :: Type : Send,
-  < T as TyApp<B> > :: Type : Send,
-{
-  fn to_canon (
-    row : EitherField < A, B, T >
-  ) ->
-    < Self :: Canon
-      as SumRow < T >
-    > :: Field
-  {
-    match row {
-      Either::Left ( a ) => {
-        Sum::Inl ( a )
-      },
-      Either::Right ( a ) => {
-        Sum::Inr (
-          Sum::Inl ( a ) )
-      }
-    }
-  }
-
-  fn from_canon (
-    row :
-      < Self :: Canon
-        as SumRow < T >
-      > :: Field
-  ) ->
-    EitherField < A, B, T >
-  {
-    match row {
-      Sum::Inl ( a ) => {
-        Either::Left( a )
-      },
-      Sum::Inr ( row2 ) => {
-        match row2 {
-          Sum::Inl ( a ) => {
-            Either::Right( a )
-          },
-          Sum::Inr ( bot ) => {
-            match bot {}
-          }
-        }
-      }
-    }
-  }
 }
