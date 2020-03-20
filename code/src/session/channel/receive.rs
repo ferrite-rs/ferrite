@@ -35,7 +35,7 @@ pub fn receive_channel
   ( cont_builder : impl
       FnOnce ( C::Length ) ->
         PartialSession <
-          C :: AppendResult,
+          C :: Appended,
           B
         >
   )

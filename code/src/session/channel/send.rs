@@ -138,7 +138,7 @@ where
               as AppendContext <
                 ( P1, () )
               >
-            > :: AppendResult,
+            > :: Appended,
             Q
           >
 {
@@ -200,7 +200,7 @@ pub fn fork <P, Q, CP, CQ>
     cont2:  PartialSession <CQ, Q>
   ) ->
      PartialSession <
-      < CP as AppendContext<CQ> >::AppendResult,
+      < CP as AppendContext<CQ> >::Appended,
       SendChannel<P, Q>
     >
 where

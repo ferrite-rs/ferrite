@@ -254,7 +254,7 @@ where
                 , ()
                 )
               >
-            > :: AppendResult,
+            > :: Appended,
             P
           >
 {

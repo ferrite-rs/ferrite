@@ -32,7 +32,7 @@ pub fn cut
         B
       >
   ) ->
-    PartialSession < C1::AppendResult, B >
+    PartialSession < C1::Appended, B >
 where
   A : Protocol,
   B : Protocol,

@@ -71,7 +71,7 @@ where
               AppendContext <
                 ( P, () )
               >
-            > :: AppendResult,
+            > :: Appended,
             Q
           >
 {

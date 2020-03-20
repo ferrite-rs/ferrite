@@ -1,3 +1,6 @@
+use async_std::task;
+use async_macros::join;
+use async_std::sync::{ channel };
 use std::collections::{ LinkedList };
 
 use crate::process::{ End };
@@ -11,6 +14,8 @@ use crate::base::{
   AppendContext,
   ContextLens,
   PartialSession,
+  unsafe_create_session,
+  run_partial_session,
 };
 
 use crate::processes::{
@@ -27,9 +32,63 @@ use crate::session::link::cut;
 
 pub fn
   include_session
-  < C, A, B >
-  ( session1 : Session < A >,
+  < I, P, Q >
+  ( session1 : Session < P >,
     cont_builder : impl FnOnce
+      ( I :: Length )
+      ->
+        PartialSession <
+          I :: Appended,
+          Q
+        >
+  ) ->
+    PartialSession < I, Q >
+where
+  P : Protocol,
+  Q : Protocol,
+  I : Context,
+  I : AppendContext < ( P, () ) >,
+{
+  let cont = cont_builder (
+    I::Length::nat ()
+  );
+
+  unsafe_create_session (
+    async move | ins1, sender1 | {
+      let (sender2, receiver2) = channel(1);
+
+      let child1 = task::spawn(async move {
+        run_partial_session
+          ( session1, (), sender2
+          ).await;
+      });
+
+      let ins2 =
+        < I as
+          AppendContext <
+            ( P, () )
+          >
+        > :: append_channels ( ins1, (receiver2, ()) );
+
+      let child2 = task::spawn(async move {
+        run_partial_session
+          ( cont, ins2, sender1
+          ).await;
+      });
+
+      join!(child1, child2).await;
+    })
+}
+
+// Version of include_session that uses cut to prove that
+// it is derivable from cut. The required constraint is
+// more complicated so we don't use this in practice other
+// than proving that it also works the same way.
+pub fn
+  include_session_cut
+  < C, A, B >
+  ( session : Session < A >,
+    cont : impl FnOnce
       ( C :: Length )
       ->
         PartialSession <
@@ -37,7 +96,7 @@ pub fn
             AppendContext <
               ( A, () )
             >
-          > :: AppendResult,
+          > :: Appended,
           B
         >
   ) ->
@@ -52,30 +111,18 @@ where
     ContextLens <
       < C as
         AppendContext < ( Empty, () ) >
-      > :: AppendResult,
+      > :: Appended,
       Empty,
       A,
       Target =
         < C as
           AppendContext < ( A, () ) >
-        > :: AppendResult,
+        > :: Appended,
       Deleted = C
     >
 {
-  let cont = cont_builder (
-    C::Length::nat ()
-  );
-
-  cut ::
-    < C::Length,
-      (),
-      < C as
-        AppendContext < ( Empty, () ) >
-      > :: AppendResult,
-      A,
-      B
-    >
-    ( C::Length::nat (), session1, cont )
+  cut ( C::Length::nat (), session,
+        cont ( C::Length::nat () ) )
 }
 
 pub fn wait_session
@@ -93,27 +140,14 @@ where
     ContextLens <
       < I as
         AppendContext < (End, ()) >
-      >::AppendResult,
+      >::Appended,
       End,
       Empty,
       Target =
         < I as
           AppendContext < (Empty, ()) >
-        >::AppendResult
-    >,
-  I::Length :
-    ContextLens <
-      < I as AppendContext<(Empty, ())>
-      >::AppendResult,
-      Empty,
-      End,
-      Target =
-        < I as
-          AppendContext < (End, ()) >
-        >::AppendResult,
-      Deleted = I
+        >::Appended
     >
-
 {
   include_session ( session1, move | chan | {
     wait_async ( chan, async move || {
@@ -139,25 +173,13 @@ where
     ContextLens <
       < I as
         AppendContext < (End, ()) >
-      >::AppendResult,
+      >::Appended,
       End,
       Empty,
       Target =
         < I as
           AppendContext < (Empty, ()) >
-        >::AppendResult
-    >,
-  I::Length :
-    ContextLens <
-      < I as AppendContext<(Empty, ())>
-      >::AppendResult,
-      Empty,
-      End,
-      Target =
-        < I as
-          AppendContext < (End, ()) >
-        >::AppendResult,
-      Deleted = I
+        >::Appended
     >
 {
   wait_session (

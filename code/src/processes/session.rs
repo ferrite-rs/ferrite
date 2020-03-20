@@ -41,7 +41,7 @@ pub fn append_emtpy_slot
     PartialSession <
       < I as
         AppendContext < ( Empty, () ) >
-      > :: AppendResult,
+      > :: Appended,
       P
     >
 where

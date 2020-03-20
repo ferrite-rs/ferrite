@@ -40,6 +40,7 @@ pub use self::forward::{
 
 pub use self::include::{
   include_session,
+  include_session_cut,
   wait_session,
   wait_sessions,
   join_sessions,

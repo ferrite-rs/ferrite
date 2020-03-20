@@ -19,16 +19,16 @@ pub trait
 where
   R : Context
 {
-  type AppendResult : Context;
+  type Appended : Context;
 
   fn append_channels(
     channels1: <Self as Context>::Values,
     channels2: <R as Context>::Values
   ) ->
-    <Self::AppendResult as Context>::Values;
+    <Self::Appended as Context>::Values;
 
   fn split_channels(
-    channels: <Self::AppendResult as Context>::Values
+    channels: <Self::Appended as Context>::Values
   ) -> (
     <Self as Context>::Values,
     <R as Context>::Values

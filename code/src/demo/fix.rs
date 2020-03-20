@@ -64,7 +64,7 @@ fn send_stream ( seed : i64 ) ->
 pub fn nested_fix_session () ->
   Session < End >
 {
-  let p1 : Session < Stream > =
+  let _p1 : Session < Stream > =
     stream_server ( 0 );
 
   unimplemented!()

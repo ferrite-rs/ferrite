@@ -15,6 +15,7 @@ pub use super::{
   forward,
 
   include_session,
+  include_session_cut,
   wait_session,
   wait_sessions,
   join_sessions,

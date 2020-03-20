@@ -6,7 +6,7 @@ use crate::public::choice as choice;
 pub fn choice2_demo ()
   -> Session < End >
 {
-  let client :
+  let _client :
     Session <
       ReceiveChannel <
         choice::InternalChoice <

@@ -57,7 +57,7 @@ where
 }
 
 impl <R: Context> AppendContext <R> for () {
-  type AppendResult = R;
+  type Appended = R;
 
   fn append_channels(
     _: (),
@@ -100,10 +100,10 @@ where
   S: Context,
   R: AppendContext < S >
 {
-  type AppendResult =
+  type Appended =
     (
       P,
-      < R as AppendContext < S > > :: AppendResult
+      < R as AppendContext < S > > :: Appended
     );
 
   fn append_channels(
@@ -115,7 +115,7 @@ where
   ) -> (
     < P as Slot > :: Value,
     <
-      < R as AppendContext<S> >::AppendResult
+      < R as AppendContext<S> >::Appended
       as Context
     >::Values
   ) {
@@ -126,7 +126,7 @@ where
     (p, r): (
       < P as Slot > :: Value,
       <
-        < R as AppendContext<S> >::AppendResult
+        < R as AppendContext<S> >::Appended
         as Context
       >::Values
     )
