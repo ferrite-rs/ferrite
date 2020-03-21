@@ -13,8 +13,13 @@ mod lens;
 mod nat;
 mod prism;
 mod fix;
+mod core;
 
 pub mod public;
+
+pub use self::core::{
+  Refl
+};
 
 pub use self::protocol::{
   Protocol

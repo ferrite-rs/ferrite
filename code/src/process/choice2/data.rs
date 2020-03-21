@@ -156,81 +156,93 @@ pub trait LiftSumBorrow < T1, T2, F >
 }
 
 /*
-  class
-    ( forall root t1 t2 .
-        ( TyApp t1, TyApp t2 )
-        => TyApp (ToRoot c t1 t2 root)
-    )
-    => HasRoot c where
-      type family ToRoot c t1 t2 root :: Type
+  class FieldLifter f where
+    type family Source f root
+    type family Target f root
+    type family Root f root
 
-  class
-    ( HasRoot c )
-    => LiftField2 c t1 t2 where
-      lfitField
-        :: forall a root
-         . (Apply t2 a -> root)
-        -> Apply t1 a
-        -> Apply (ToRoot c t1 t2 root) a
+    liftField
+      :: forall root a
+       . (Apply (Target f root) a -> root)
+      -> Apply (Source f root) a
+      -> Apply (Root f root) a
  */
-pub trait LiftField2 < T1, T2, Root, A >
-where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >,
+pub trait FieldLifterType < Root >
 {
-  type RootType : TyApp < A >;
+  type Source;
+  type Target;
 
+  type Injected;
+}
+
+pub trait FieldLifter < Root, A >
+  : FieldLifterType < Root >
+where
+  Self :: Source : TyApp < A >,
+  Self :: Target : TyApp < A >,
+  Self :: Injected : TyApp < A >,
+{
   fn lift_field (
     inject :
-      impl Fn (T2 :: Type) -> Root
+      impl Fn
+        ( < Self :: Target
+            as TyApp < A >
+          >:: Type)
+        -> Root
       + Send + 'static,
-    field : T1 :: Type
+    field :
+      < Self :: Source
+        as TyApp < A >
+      > :: Type
   ) ->
-    < Self :: RootType
+    < Self :: Injected
       as TyApp < A >
     >:: Type;
 }
 
 /*
-  class
-    ( HasRoot c )
-    => LiftSum2 self c t1 t2 where
+  class SumRow row
+    => LiftSum row where
       liftSum
-        :: forall root
-         . (forall t . ToRow self t -> root)
-        -> ToRow self t1
-        -> ToRow self (ToRoot c t1 t2)
+        :: forall f root
+         . (FieldLifter f)
+        => (ToRow row (Target f root) -> root)
+        -> ToRow row (Source f root)
+        -> ToRow row (Root f root)
  */
-pub trait LiftSum2 < F, T1, T2, Root >
-  : SumRow < T1 >
-  + SumRow < T2 >
+pub trait LiftSum2 < F, Root >
+  : SumRow < F :: Source >
+  + SumRow < F :: Target >
+  + SumRow < F :: Injected >
+where
+  F : FieldLifterType < Root >
 {
-  type RootSum;
-
   fn lift_sum (
-    inject:
-      impl Fn
-        ( < Self as SumRow < T2 > >:: Field ) ->
-          Root
-          + Send + 'static,
+    inject: impl Fn
+      ( < Self as
+          SumRow < F :: Target >
+        >:: Field
+      ) ->
+        Root
+        + Send + 'static,
     sum :
       < Self as
-        SumRow < T1 >
+        SumRow < F :: Source >
       > :: Field
   ) ->
-    Self :: RootSum;
+    < Self as
+      SumRow < F :: Injected >
+    > :: Field;
 }
 
-pub trait LiftSum3 < F, T1, T2, Root, T3 >
-  : LiftSum2 <
-      F, T1, T2, Root,
-      RootSum =
-        < Self as
-          SumRow < T3 >
-        > :: Field
-    >
-  + SumRow < T3 >
-{ }
+pub trait LiftSum3 < F >
+  : LiftSum2 < F, Self >
+  + Sized
+where
+  F : FieldLifterType < Self >
+{
+
+}
 
 pub trait IntersectSum < T1, T2 >
   : SumRow < T1 >
@@ -573,12 +585,12 @@ where
 }
 
 
-impl < F, T1, T2, Root >
-  LiftSum2 < F, T1, T2, Root > for
+impl < F, Root >
+  LiftSum2 < F, Root > for
   ()
+where
+  F : FieldLifterType < Root >
 {
-  type RootSum = Bottom;
-
   fn lift_sum (
     _ : impl Fn ( Bottom ) -> Root,
     bot : Bottom
@@ -588,38 +600,34 @@ impl < F, T1, T2, Root >
   }
 }
 
-
-impl < F, T1, T2, Root, T3 >
-  LiftSum3 < F, T1, T2, Root, T3 > for
-  ()
-{ }
-
-impl < F, T1, T2, Root, T3, A, B >
-  LiftSum2 < F, T1, T2, Root > for
+impl < F, Root, A, B >
+  LiftSum2 < F, Root > for
   (A, B)
 where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >,
-  T3 : TyApp < A >,
-  F : LiftField2 < T1, T2, Root, A, RootType=T3 >,
-  B : LiftSum2 < F, T1, T2, Root >,
-  T1::Type : Send,
-  T2::Type : Send,
-  T3::Type : Send,
+  F : FieldLifter < Root, A >,
+  B : LiftSum2 < F, Root >,
+  F :: Source : TyApp < A >,
+  F :: Target : TyApp < A >,
+  F :: Injected : TyApp < A >,
+  < F :: Source
+    as TyApp < A >
+  > :: Type : Send,
+  < F :: Target
+    as TyApp < A >
+  > :: Type : Send,
+  < F :: Injected
+    as TyApp < A >
+  > :: Type : Send,
 {
-  type RootSum =
-    Sum <
-      T3 :: Type,
-      B::RootSum
-    >;
-
   fn lift_sum (
     inject1 :
       impl Fn
         ( Sum <
-            T2 :: Type,
+            < F :: Target
+              as TyApp < A >
+            > :: Type,
             < B as
-              SumRow < T2 >
+              SumRow < F :: Target >
             > :: Field
           >
         ) ->
@@ -627,18 +635,27 @@ where
           + Send + 'static,
     sum :
       Sum <
-        T1 :: Type,
+        < F :: Source
+          as TyApp < A >
+        > :: Type,
         < B as
-          SumRow < T1 >
+          SumRow < F :: Source >
         > :: Field
       >
   ) ->
-    Self :: RootSum
+    < Self as
+      SumRow < F :: Injected >
+    > :: Field
   {
     match sum {
       Sum::Inl(a) => {
         let inject2 =
-          move | b : T2 :: Type | ->
+          move |
+            b :
+              < F :: Target
+                as TyApp < A >
+              > :: Type
+          | ->
             Root
           {
             inject1 ( Sum::Inl (b) )
@@ -653,7 +670,7 @@ where
           move |
             b :
               < B as
-                SumRow < T2 >
+                SumRow < F :: Target >
               > :: Field
           | ->
             Root
@@ -670,19 +687,19 @@ where
 }
 
 
-impl < F, T1, T2, Root, T3, A, B >
-  LiftSum3 < F, T1, T2, Root, T3 > for
-  (A, B)
-where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >,
-  T3 : TyApp < A >,
-  F : LiftField2 < T1, T2, Root, A, RootType=T3 >,
-  B : LiftSum3 < F, T1, T2, Root, T3 >,
-  T1::Type : Send,
-  T2::Type : Send,
-  T3::Type : Send,
-{ }
+// impl < F, T1, T2, Root, T3, A, B >
+//   LiftSum3 < F, T1, T2, Root, T3 > for
+//   (A, B)
+// where
+//   T1 : TyApp < A >,
+//   T2 : TyApp < A >,
+//   T3 : TyApp < A >,
+//   F : LiftField2 < T1, T2, Root, A, RootType=T3 >,
+//   B : LiftSum3 < F, T1, T2, Root, T3 >,
+//   T1::Type : Send,
+//   T2::Type : Send,
+//   T3::Type : Send,
+// { }
 
 
 impl < T, F, R >
