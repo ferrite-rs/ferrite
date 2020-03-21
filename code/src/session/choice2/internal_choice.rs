@@ -316,20 +316,23 @@ where
   }
 }
 
+type RootCont < Row, N, C, A, Canon > =
+  InternalCont <
+    N, C, A, Row,
+    < Canon as
+      SumRow <
+        ContextCon < N, C, A, Row >
+      >
+    > :: Field
+  >;
+
 pub fn case
   < Row, N, C, A, Canon >
   ( _ : N,
     cont1 : impl FnOnce (
       < Row as
         SumRow <
-          InternalCont <
-            N, C, A, Row,
-            < Canon as
-              SumRow <
-                ContextCon < N, C, A, Row >
-              >
-            > :: Field
-          >
+          RootCont < Row, N, C, A, Canon >
         >
       > :: Field
     ) ->
@@ -349,14 +352,7 @@ where
   Canon : 'static,
   Canon : SumRow < () >,
   Row : IsoRow <
-    InternalCont <
-      N, C, A, Row,
-      < Canon as
-        SumRow <
-          ContextCon < N, C, A, Row >
-        >
-      > :: Field
-    >
+    RootCont < Row, N, C, A, Canon >
   >,
   N :
     ContextLens <
@@ -387,7 +383,9 @@ where
         ContextCon < N, C, A, Row >
       >,
       RunCont < N, C, A, Row >,
-      Pin < Box < dyn Future < Output=() > + Send > >
+      Pin < Box < dyn
+        Future < Output=() > + Send
+      > >
     >,
   Canon :
     LiftSum3 <
@@ -425,14 +423,7 @@ where
       let cont3 =
         < Row as
           IsoRow <
-            InternalCont <
-              N, C, A, Row,
-              < Canon as
-                SumRow <
-                  ContextCon < N, C, A, Row >
-                >
-              > :: Field
-            >
+            RootCont < Row, N, C, A, Canon >
           >
         > :: from_canon ( cont2 );
 

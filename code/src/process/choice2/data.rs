@@ -41,14 +41,6 @@ pub trait Iso {
 }
 
 /*
-  class Inject self a where
-    inject :: a -> self
- */
-pub trait Inject < A > {
-  fn inject ( a : A ) -> Self;
-}
-
-/*
   class
     (SumRow self)
     => IsoRow self where
@@ -116,29 +108,6 @@ where
     field : &T1 :: Type
   ) ->
     T2 :: Type;
-}
-
-/*
-  class
-    ( SumRow self )
-    => LiftSum self where
-      liftSum
-        :: forall t1 t2
-         . Field self t1
-        -> Field self t2
- */
-pub trait LiftSum < T1, T2, F >
-  : SumRow < T1 > + SumRow < T2 >
-{
-  fn lift_sum (
-    sum :
-      < Self as
-        SumRow < T1 >
-      > :: Field
-  ) ->
-    < Self as
-      SumRow < T2 >
-    > :: Field;
 }
 
 pub trait LiftSumBorrow < T1, T2, F >
@@ -344,25 +313,6 @@ pub trait ElimSum < T, F, R >
     R;
 }
 
-pub trait IntroField < T, A >
-where
-  T : TyApp < A >
-{
-  fn intro_field () ->
-    T :: Type
-  ;
-}
-
-pub trait IntroSum < N, T, F >
-  : SumRow < T >
-where
-  N : Nat
-{
-  fn intro_sum () ->
-    Self :: Field
-  ;
-}
-
 impl Iso for () {
   type Canon = ();
 }
@@ -375,7 +325,6 @@ where
 {
   type Canon = ( A, R :: Canon );
 }
-
 
 impl < T >
   IsoRow < T >
@@ -461,24 +410,6 @@ where
     >;
 }
 
-impl Inject < Bottom > for Bottom {
-  fn inject ( a : Bottom ) -> Bottom {
-    a
-  }
-}
-
-impl < A, B, C >
-  Inject < C > for
-  Sum < A, B >
-where
-  B : Inject < C >
-{
-  fn inject ( c : C ) -> Sum < A, B >
-  {
-    Sum::Inr ( B::inject(c) )
-  }
-}
-
 impl < T1, T2 >
   IntersectSum < T1, T2 > for
   ()
@@ -540,61 +471,11 @@ where
 }
 
 impl < T1, T2, F >
-  LiftSum < T1, T2, F > for
-  ()
-{
-  fn lift_sum ( bot : Bottom ) -> Bottom
-  { bot }
-}
-
-impl < T1, T2, F >
   LiftSumBorrow < T1, T2, F > for
   ()
 {
   fn lift_sum_borrow ( bot : &Bottom ) -> Bottom
   { match *bot {} }
-}
-
-impl < T1, T2, F, A, B >
-  LiftSum < T1, T2, F > for
-  (A, B)
-where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >,
-  F : LiftField < T1, T2, A >,
-  B : LiftSum < T1, T2, F >,
-  T1::Type : Send,
-  T2::Type : Send,
-{
-  fn lift_sum (
-    sum :
-      Sum <
-        T1 :: Type,
-        < B as
-          SumRow < T1 >
-        > :: Field
-      >
-  ) ->
-    Sum <
-      T2 :: Type,
-      < B as
-        SumRow < T2 >
-      > :: Field
-    >
-  {
-    match sum {
-      Sum::Inl(a) => {
-        Sum::Inl (
-          F :: lift_field ( a )
-        )
-      },
-      Sum::Inr(b) => {
-        Sum::Inr (
-          B :: lift_sum ( b )
-        )
-      }
-    }
-  }
 }
 
 impl < T1, T2, F, A, B >
@@ -638,7 +519,6 @@ where
     }
   }
 }
-
 
 impl < F, Root >
   LiftSum2 < F, Root > for
@@ -741,22 +621,6 @@ where
   }
 }
 
-
-// impl < F, T1, T2, Root, T3, A, B >
-//   LiftSum3 < F, T1, T2, Root, T3 > for
-//   (A, B)
-// where
-//   T1 : TyApp < A >,
-//   T2 : TyApp < A >,
-//   T3 : TyApp < A >,
-//   F : LiftField2 < T1, T2, Root, A, RootType=T3 >,
-//   B : LiftSum3 < F, T1, T2, Root, T3 >,
-//   T1::Type : Send,
-//   T2::Type : Send,
-//   T3::Type : Send,
-// { }
-
-
 impl < T, F, R >
   ElimSum < T, F, R > for
   ()
@@ -793,45 +657,6 @@ where
         B :: elim_sum ( f, b )
       }
     }
-  }
-}
-
-impl < T, F, A, B >
-  IntroSum < Z, T, F > for
-  ( A, B )
-where
-  T : TyApp < A >,
-  B : SumRow < T >,
-  F : IntroField < T, A >,
-  T::Type : Send,
-{
-  fn intro_sum () ->
-    Sum <
-      T :: Type,
-      B :: Field
-    >
-  {
-    Sum::Inl( F :: intro_field () )
-  }
-}
-
-impl < N, T, F, A, B >
-  IntroSum < S < N >, T, F > for
-  ( A, B )
-where
-  N : Nat,
-  T : TyApp < A >,
-  B : SumRow < T >,
-  B : IntroSum < N, T, F >,
-  T::Type : Send,
-{
-  fn intro_sum () ->
-    Sum <
-      T :: Type,
-      B :: Field
-    >
-  {
-    Sum :: Inr ( B :: intro_sum () )
   }
 }
 
