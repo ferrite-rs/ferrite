@@ -235,13 +235,68 @@ where
     > :: Field;
 }
 
-pub trait LiftSum3 < F >
-  : LiftSum2 < F, Self >
+pub trait LiftSum3 < F, Target >
+  : SumRow < Target >
+  + LiftSum2 < F,
+      < Self as
+        SumRow < Target >
+      > :: Field
+    >
   + Sized
 where
-  F : FieldLifterType < Self >
+  F :
+    FieldLifterType <
+      < Self as
+        SumRow < Target >
+      > :: Field,
+      Target = Target
+    >
 {
+  fn lift_sum3 (
+    sum :
+      < Self as
+        SumRow < F :: Source >
+      > :: Field
+  ) ->
+    < Self as
+      SumRow < F :: Injected >
+    > :: Field;
+}
 
+impl < A, F, Target >
+  LiftSum3 < F, Target >
+  for A
+where
+  A : Sized,
+  A : SumRow < Target >,
+  A : LiftSum2 < F,
+        < A as
+          SumRow < Target >
+        > :: Field
+      >,
+  F :
+    FieldLifterType <
+      < Self as
+        SumRow < Target >
+      > :: Field,
+      Target = Target
+    >,
+{
+  fn lift_sum3 (
+    sum :
+      < Self as
+        SumRow < F :: Source >
+      > :: Field
+  ) ->
+    < Self as
+      SumRow < F :: Injected >
+    > :: Field
+  {
+    A::lift_sum (
+      |x| { x },
+      sum
+    )
+  }
 }
 
 pub trait IntersectSum < T1, T2 >

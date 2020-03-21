@@ -390,13 +390,9 @@ where
       Pin < Box < dyn Future < Output=() > + Send > >
     >,
   Canon :
-    LiftSum2 <
+    LiftSum3 <
       MakeCont < N, C, A, Row >,
-      < Canon as
-        SumRow <
-          ContextCon < N, C, A, Row >
-        >
-      > :: Field,
+      ContextCon < N, C, A, Row >,
     >,
 {
   unsafe_create_session (
@@ -422,8 +418,7 @@ where
         = Canon::lift_sum_borrow ( &receiver_sum );
 
       let cont2 =
-        Canon :: lift_sum (
-          |x| {x},
+        Canon :: lift_sum3 (
           selector
         );
 
