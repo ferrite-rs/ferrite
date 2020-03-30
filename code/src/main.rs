@@ -34,9 +34,9 @@ pub fn main() {
   // run_session(counter_session());
   // run_session ( shared_counter_session() );
 
-  run_session (
-    demo::channel::channel_session()
-  );
+  // run_session (
+  //   demo::channel::channel_session()
+  // );
 
   // run_session (
   //   demo::nary_choice::nary_choice_demo()
@@ -45,6 +45,10 @@ pub fn main() {
   // run_session (
   //   demo::queue::queue_session()
   // );
+
+  run_session (
+    demo::stream::stream_session()
+  );
 
   info!("[Main] Main program terminating");
 }

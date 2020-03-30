@@ -2,6 +2,7 @@ pub mod public;
 
 mod run;
 mod end;
+mod wrap;
 mod fix;
 mod link;
 mod value;
@@ -86,4 +87,9 @@ pub use self::choice::{
   case,
   offer_left,
   offer_right,
+};
+
+pub use self::wrap::{
+  wrap_session,
+  unwrap_session,
 };

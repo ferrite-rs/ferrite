@@ -29,6 +29,9 @@ pub use crate::process::public::{
 
   SendChannel,
   ReceiveChannel,
+
+  Wrap,
+  Wrapper,
 };
 
 pub use crate::processes::public::{
@@ -96,6 +99,9 @@ pub use crate::session::public::{
   case,
   offer_left,
   offer_right,
+
+  wrap_session,
+  unwrap_session,
 };
 
 pub use crate::shared::public::{

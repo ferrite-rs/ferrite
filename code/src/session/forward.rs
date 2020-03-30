@@ -30,14 +30,7 @@ where
 {
   unsafe_create_session (
     async move | ins, sender | {
-      let (receiver, _) =
-        < N as
-          ContextLens <
-            I,
-            P,
-            Empty
-          >
-        > :: split_channels ( ins );
+      let (receiver, _) = N :: split_channels ( ins );
 
       let val = receiver.recv().await.unwrap();
       sender.send( val ).await;

@@ -12,4 +12,7 @@ pub use super::{
 
   SendChannel,
   ReceiveChannel,
+
+  Wrap,
+  Wrapper,
 };

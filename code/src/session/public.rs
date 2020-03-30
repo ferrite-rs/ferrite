@@ -51,4 +51,7 @@ pub use super::{
   case,
   offer_left,
   offer_right,
+
+  wrap_session,
+  unwrap_session,
 };
