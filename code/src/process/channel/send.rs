@@ -17,9 +17,9 @@ where
   P: Protocol,
   Q: Protocol
 {
-  type Value = (
-    Receiver< P::Value >,
-    Receiver< Q::Value >
+  type Payload = (
+    Receiver< P::Payload >,
+    Receiver< Q::Payload >
   );
 }
 

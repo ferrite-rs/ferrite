@@ -23,7 +23,7 @@ where
   >  :: Field
     : Send,
 {
-  type Value =
+  type Payload =
     Sender <
       ( < Row as
           SumRow < () >

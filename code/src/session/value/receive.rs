@@ -41,7 +41,7 @@ where
       sender1 : Sender <
         Sender <(
           Val < T >,
-          Sender < P::Value >
+          Sender < P::Payload >
         )>,
       >
     | {
@@ -104,17 +104,10 @@ where
   unsafe_create_session (
     async move |
       ins1: I :: Values,
-      sender1 : Sender < P::Value >
+      sender1 : Sender < P::Payload >
     | {
       let (receiver1, ins2) =
-        < N as
-          ContextLens <
-            I,
-            ReceiveValue < T, Q >,
-            Q
-          >
-        >
-        :: split_channels ( ins1 );
+        N :: split_channels ( ins1 );
 
       let sender2 = receiver1.recv().await.unwrap();
 
@@ -123,13 +116,7 @@ where
       let (sender3, receiver3) = channel(1);
 
       let ins3 =
-        < N as
-          ContextLens <
-            I,
-            ReceiveValue < T, Q >,
-            Q
-          >
-        > :: merge_channels( receiver3, ins2 );
+        N :: merge_channels( receiver3, ins2 );
 
       let child1 = task::spawn(async move {
         sender2.send( (

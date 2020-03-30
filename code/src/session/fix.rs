@@ -28,10 +28,10 @@ where
     TyApp < Recur <
       FixProtocol < F >
     > >,
-  F :: Value :
+  F :: Payload :
     TyApp <
       Recur <
-        Fix < F :: Value >
+        Fix < F :: Payload >
       >,
       Type =
         < < F as
@@ -40,16 +40,16 @@ where
             > >
           > :: Type
           as Protocol
-        > :: Value,
+        > :: Payload,
     >,
   < F as
     TyApp < Recur <
       FixProtocol < F >
     > >
   > :: Type : Protocol,
-  < F :: Value as
+  < F :: Payload as
     TyApp < Recur <
-        Fix < F :: Value >
+        Fix < F :: Payload >
       > >
   > :: Type :
     Send
@@ -59,7 +59,7 @@ where
       ins,
       sender1 :
         Sender <
-          Fix < F :: Value >
+          Fix < F :: Payload >
         >
     | {
       let (sender2, receiver)
@@ -70,7 +70,7 @@ where
                   > >
                 > :: Type
                 as Protocol
-              > :: Value
+              > :: Payload
             >
           , _
           )
@@ -113,10 +113,10 @@ where
     TyApp < Recur <
       FixProtocol < F >
     > >,
-  F :: Value :
+  F :: Payload :
     TyApp <
       Recur <
-        Fix < F :: Value >
+        Fix < F :: Payload >
       >,
       Type =
         < < F as
@@ -125,16 +125,16 @@ where
             > >
           > :: Type
           as Protocol
-        > :: Value,
+        > :: Payload,
     >,
   < F as
     TyApp < Recur <
       FixProtocol < F >
     > >
   > :: Type : Protocol,
-  < F :: Value as
+  < F :: Payload as
     TyApp < Recur <
-        Fix < F :: Value >
+        Fix < F :: Payload >
       > >
   > :: Type :
     Send
@@ -150,12 +150,12 @@ where
               > >
             > :: Type
             as Protocol
-          > :: Value
+          > :: Payload
         >
     | {
       let (sender2, receiver)
         : ( Sender <
-              Fix < F :: Value >
+              Fix < F :: Payload >
             >
           , _
           )
@@ -220,10 +220,10 @@ where
     TyApp < Recur <
       FixProtocol < F >
     > >,
-  F :: Value :
+  F :: Payload :
     TyApp <
       Recur <
-        Fix < F :: Value >
+        Fix < F :: Payload >
       >,
       Type =
         < < F as
@@ -232,16 +232,16 @@ where
             > >
           > :: Type
           as Protocol
-        > :: Value,
+        > :: Payload,
     >,
   < F as
     TyApp < Recur <
       FixProtocol < F >
     > >
   > :: Type : Protocol,
-  < F :: Value as
+  < F :: Payload as
     TyApp < Recur <
-      Fix < F :: Value >
+      Fix < F :: Payload >
     > >
   > :: Type :
     Send,
@@ -269,7 +269,7 @@ where
                   > >
                 > :: Type
                 as Protocol
-              > :: Value
+              > :: Payload
             >
           , _
           )

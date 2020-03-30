@@ -3,7 +3,7 @@ use crate::base::nat::*;
 /// A process / session type. This can be used as either input or output process.
 pub trait Protocol : Send + 'static
 {
-  type Value : Sized + Send;
+  type Payload : Sized + Send;
 }
 
 pub mod public {
@@ -11,7 +11,7 @@ pub mod public {
 }
 
 impl Protocol for Z {
-  type Value = Z;
+  type Payload = Z;
 }
 
 impl < N >
@@ -20,5 +20,5 @@ impl < N >
 where
   N : Protocol
 {
-  type Value = S < N :: Value >;
+  type Payload = S < N :: Payload >;
 }

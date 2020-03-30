@@ -21,11 +21,11 @@ where
   T : Send + 'static,
   P : Protocol
 {
-  type Value =
+  type Payload =
     Sender <(
       Val < T >,
       Sender <
-        P::Value
+        P::Payload
       >
     )>;
 }

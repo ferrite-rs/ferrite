@@ -28,7 +28,7 @@ pub trait SelectSum < N > : ProtocolSum2 {
         Receiver <
           < Self :: SelectedProtocol
             as Protocol
-          > :: Value
+          > :: Payload
         >
     ) ->
       Self :: ValueSum;
@@ -51,7 +51,7 @@ impl
 where
   Sum : ProtocolSum2
 {
-  type Value = Sum :: ValueSum;
+  type Payload = Sum :: ValueSum;
 }
 
 impl
@@ -61,7 +61,7 @@ impl
 where
   Sum : ProtocolSum2
 {
-  type Value =
+  type Payload =
     Box <
       dyn FnOnce
         ( Sum :: SelectorSum
@@ -76,7 +76,7 @@ where
   P : Protocol
 {
   type ValueSum =
-    Receiver < P :: Value >;
+    Receiver < P :: Payload >;
 
   type SelectCurrent = Z;
   type SelectorSum = Z;
@@ -106,7 +106,7 @@ where
   type ValueSum =
     Sum <
       Receiver <
-        P :: Value
+        P :: Payload
       >,
       R :: ValueSum
     >;
@@ -160,7 +160,7 @@ where
   fn inject_selected
     ( receiver :
         Receiver <
-          P :: Value
+          P :: Payload
         >
     ) ->
       Self :: ValueSum
@@ -184,7 +184,7 @@ where
   fn inject_selected
     ( receiver :
         Receiver <
-          P :: Value
+          P :: Payload
         >
     ) ->
       Self :: ValueSum
@@ -214,7 +214,7 @@ where
         Receiver <
           < Self :: SelectedProtocol
             as Protocol
-          > :: Value
+          > :: Payload
         >
     ) ->
       Self :: ValueSum

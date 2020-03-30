@@ -13,11 +13,9 @@ pub fn choice2_demo ()
           choice::Either <
             SendValue < String, End >,
             ReceiveValue < i32, End >
-          >
-        >,
+          > >,
         End
-      >
-    > =
+      > > =
   receive_channel ( | chan | {
     choice::case ( chan, move | choice1 | {
       match choice1 {

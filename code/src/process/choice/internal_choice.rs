@@ -24,10 +24,10 @@ where
   P: Protocol,
   Q: Protocol
 {
-  type Value =
+  type Payload =
     Either <
-      Receiver < P::Value >,
-      Receiver < Q::Value >
+      Receiver < P::Payload >,
+      Receiver < Q::Payload >
     >;
 }
 

@@ -10,18 +10,18 @@ impl < F >
   FixProtocol < F >
 where
   F : Protocol,
-  F :: Value :
+  F :: Payload :
     TyApp < Recur <
-      Fix < F :: Value >
+      Fix < F :: Payload >
     > >,
-  < F :: Value as
+  < F :: Payload as
     TyApp < Recur <
-      Fix < F :: Value >
+      Fix < F :: Payload >
     > >
   > :: Type :
     Send
 {
-  type Value = Fix < F :: Value >;
+  type Payload = Fix < F :: Payload >;
 }
 
 impl < A, F >

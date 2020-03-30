@@ -13,7 +13,7 @@ where
   P : Protocol
 {
   type Value = Receiver <
-    < P as Protocol > :: Value
+    < P as Protocol > :: Payload
   >;
 }
 

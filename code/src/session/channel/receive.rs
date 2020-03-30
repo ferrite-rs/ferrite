@@ -1,8 +1,6 @@
 use async_std::task;
 use async_macros::join;
 use async_std::sync::{
-  Sender,
-  Receiver,
   channel,
 };
 
@@ -56,20 +54,12 @@ where
 
   unsafe_create_session (
     async move | ins1, sender | {
-      let (sender1, receiver1) :
-        ( Sender < (
-            Receiver < A::Value >,
-            Sender < B::Value >
-          ) >,
-          _ )
+      let (sender1, receiver1)
         = channel(1);
 
       sender.send(sender1).await;
 
-      let (receiver2, sender2) :
-        ( Receiver< A::Value >,
-          Sender < B::Value >
-        )
+      let (receiver2, sender2)
         = receiver1.recv().await.unwrap();
 
       let ins2 = C :: append_channels (
@@ -110,11 +100,7 @@ where
           >
         > :: split_channels (ins1);
 
-      let (sender1, receiver1) :
-        (Sender <(
-          Receiver < P::Value >,
-          Sender < Q::Value >
-        )>, _)
+      let (sender1, receiver1)
         = channel(1);
 
       let child1 = task::spawn(async move {
@@ -122,9 +108,7 @@ where
       });
 
       let child2 = task::spawn(async move {
-        let (receiver2, sender2) :
-          ( Receiver < P::Value >,
-            Sender < Q::Value > )
+        let (receiver2, sender2)
           = receiver1.recv().await.unwrap();
 
         let ins3 =
@@ -151,72 +135,48 @@ where
       send_channel_to(cont) :: P, P ⊸ Q, Δ ⊢ S
  */
 pub fn send_channel_to
-  < TargetLens, SourceLens,
-    I, P1, P2, Q
+  < NF, NA,
+    C, A1, A2, B
   >
-  ( _ : TargetLens,
-    _ : SourceLens,
+  ( _ : NF,
+    _ : NA,
     cont :
       PartialSession <
-        TargetLens :: Target,
-        Q
+        NF :: Target,
+        B
       >
   ) ->
-    PartialSession < I, Q >
+    PartialSession < C, B >
 where
-  I : Context,
-  P1 : Protocol,
-  P2 : Protocol,
-  Q : Protocol,
-  SourceLens :
+  C : Context,
+  A1 : Protocol,
+  A2 : Protocol,
+  B : Protocol,
+  NA :
     ContextLens <
-      I,
-      P1,
+      C,
+      A1,
       Empty
     >,
-  TargetLens :
+  NF :
     ContextLens <
-      SourceLens :: Target,
-      ReceiveChannel < P1, P2 >,
-      P2
+      NA :: Target,
+      ReceiveChannel < A1, A2 >,
+      A2
     >
 {
   unsafe_create_session (
     async move | ins1, sender1 | {
       let (receiver1, ins2) =
-        < SourceLens as
-          ContextLens <
-            I,
-            P1,
-            Empty
-          >
-        > :: split_channels (ins1);
+        NA :: split_channels (ins1);
 
       let ins3 =
-        < SourceLens as
-          ContextLens <
-            I,
-            P1,
-            Empty
-          >
-        > :: merge_channels ((), ins2);
+        NA :: merge_channels ((), ins2);
 
       let (receiver2, ins4) =
-        < TargetLens as
-          ContextLens <
-            SourceLens :: Target,
-            ReceiveChannel < P1, P2 >,
-            P2
-          >
-        > :: split_channels (ins3);
+        NF :: split_channels (ins3);
 
-      let sender2 :
-        Sender <
-          ( Receiver < P1 :: Value >,
-            Sender < P2 :: Value >
-          )
-        >
-        = receiver2.recv().await.unwrap();
+      let sender2 = receiver2.recv().await.unwrap();
 
       let (sender3, receiver3) = channel(1);
 
@@ -225,13 +185,7 @@ where
       });
 
       let ins5 =
-        < TargetLens as
-          ContextLens <
-            SourceLens :: Target,
-            ReceiveChannel < P1, P2 >,
-            P2
-          >
-        > :: merge_channels (receiver3, ins4);
+        NF :: merge_channels (receiver3, ins4);
 
       let child2 = task::spawn(async move {
         run_partial_session

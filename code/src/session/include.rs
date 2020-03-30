@@ -106,23 +106,12 @@ where
   B : Protocol,
   C : Context,
   C : AppendContext < ( A, () ) >,
-  C : AppendContext < ( Empty, () ) >,
-  C::Length :
-    ContextLens <
-      < C as
-        AppendContext < ( Empty, () ) >
-      > :: Appended,
-      Empty,
-      A,
-      Target =
-        < C as
-          AppendContext < ( A, () ) >
-        > :: Appended,
-      Deleted = C
-    >
+  C : AppendContext < (),
+        Appended = C
+      >
 {
-  cut ( C::Length::nat (), session,
-        cont ( C::Length::nat () ) )
+  cut :: <C, (), _, _ >
+    ( cont ( C::Length::nat () ), session )
 }
 
 pub fn wait_session

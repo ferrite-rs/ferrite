@@ -39,7 +39,7 @@ impl < F >
 where
   F : Send + 'static
 {
-  type Value = ();
+  type Payload = ();
 }
 
 impl < F >
@@ -49,13 +49,13 @@ where
   F : SharedTyApp < F >
       + Send + 'static
 {
-  type Value =
+  type Payload =
     Sender <
       Receiver<
         < < F as SharedTyApp < F > >
           :: ToProtocol
           as Protocol
-        > :: Value
+        > :: Payload
       >
     >;
 }
@@ -70,7 +70,7 @@ where
     < < F as SharedTyApp < F > >
       :: ToProtocol
       as Protocol
-    > :: Value;
+    > :: Payload;
 }
 
 impl < F >

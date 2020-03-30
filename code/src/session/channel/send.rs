@@ -1,8 +1,6 @@
 use async_std::task;
 use async_macros::join;
 use async_std::sync::{
-  Sender,
-  Receiver,
   channel
 };
 
@@ -215,13 +213,7 @@ where
   CQ: 'static
 {
   unsafe_create_session (
-    async move |
-      ins,
-      sender: Sender<(
-        Receiver< P::Value >,
-        Receiver< Q::Value >
-      )>
-    | {
+    async move | ins, sender | {
       let (ins1, ins2) = < CP as AppendContext<CQ> >::split_channels(ins);
 
       let (sender1, receiver1) = channel(1);

@@ -11,7 +11,7 @@ pub struct End {
 }
 
 impl Protocol for End {
-  type Value = ();
+  type Payload = ();
 }
 
 impl base::public::Protocol for End {}

@@ -68,7 +68,7 @@ where
         < N :: Deleted
           as Context
         > :: Values,
-      sender : Sender < Out :: Value >,
+      sender : Sender < Out :: Payload >,
       val_sum : Self :: ValueSum,
       sesssion_sum : Self :: SessionSum,
     ) ->
@@ -249,7 +249,7 @@ where
           > :: Deleted
           as Context
         > :: Values,
-      sender : Sender < Out :: Value >,
+      sender : Sender < Out :: Payload >,
       val : Self :: ValueSum,
       session : Self :: CurrentSession,
     ) ->
@@ -402,7 +402,7 @@ where
           >:: Deleted
           as Context
         > :: Values,
-      sender : Sender < Out :: Value >,
+      sender : Sender < Out :: Payload >,
       val_sum : Self :: ValueSum,
       session_sum : Self :: SessionSum,
     ) ->

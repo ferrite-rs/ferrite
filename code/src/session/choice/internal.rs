@@ -51,8 +51,8 @@ where
       ins,
       sender: Sender<
         Either<
-          Receiver<P::Value>,
-          Receiver<Q::Value> > >
+          Receiver<P::Payload>,
+          Receiver<Q::Payload> > >
     | {
       let (in_sender, in_receiver) = channel(1);
 
@@ -87,8 +87,8 @@ pub fn offer_right
       ins,
       sender: Sender<
         Either<
-          Receiver<P::Value>,
-          Receiver<Q::Value> > >
+          Receiver<P::Payload>,
+          Receiver<Q::Payload> > >
     | {
       let (in_sender, in_receiver) = channel(1);
 

@@ -195,7 +195,7 @@ where
                   < < F as SharedTyApp < F > >
                     :: ToProtocol
                     as Protocol
-                  > :: Value
+                  > :: Payload
                 >
               >
             >,

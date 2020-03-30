@@ -44,7 +44,7 @@ where
       ins : C::Values,
       sender1 : Sender < (
         Val < T >,
-        Receiver < P::Value >
+        Receiver < P::Payload >
       ) >
     | {
       let (sender2, receiver2) = channel(1);
@@ -126,7 +126,7 @@ where
   unsafe_create_session (
     async move |
       ins1 : I :: Values,
-      sender : Sender < Q :: Value >
+      sender : Sender < Q :: Payload >
     | {
       let (receiver1, ins2) =
         < N as

@@ -259,7 +259,7 @@ impl < P >
 where
   P : Protocol
 {
-  type Value = P :: Value;
+  type Value = P :: Payload;
 }
 
 impl < P >

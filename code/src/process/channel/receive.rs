@@ -20,10 +20,10 @@ where
   P: Protocol,
   Q: Protocol
 {
-  type Value =
+  type Payload =
     Sender < (
-      Receiver < P :: Value >,
-      Sender < Q :: Value >
+      Receiver < P :: Payload >,
+      Sender < Q :: Payload >
     ) >;
 }
 

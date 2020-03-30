@@ -60,7 +60,7 @@ where
     < N :: Deleted
       as Context
     > :: Values,
-  sender : Sender < A :: Value >
+  sender : Sender < A :: Payload >
 }
 
 impl < I, P >
@@ -185,7 +185,7 @@ where
   A : Protocol
 {
   fn lift_field_borrow (
-    _ : &Receiver < A :: Value >
+    _ : &Receiver < A :: Payload >
   ) ->
     ()
   { () }

@@ -352,7 +352,7 @@ where
 
   fn select_ins (
     receiver :
-      Receiver < P :: Value >,
+      Receiver < P :: Payload >,
     ins :
       < N :: Deleted
         as Context

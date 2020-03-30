@@ -22,11 +22,11 @@ where
   P: Protocol,
   Q: Protocol
 {
-  type Value = Box<
+  type Payload = Box<
     dyn FnOnce(Choice) ->
       Either <
-        Receiver < P::Value >,
-        Receiver < Q::Value >
+        Receiver < P::Payload >,
+        Receiver < Q::Payload >
       >
     + Send >;
 }

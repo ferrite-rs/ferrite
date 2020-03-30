@@ -20,7 +20,7 @@ where
   >  :: Field
     : Send,
 {
-  type Value =
+  type Payload =
     < Row::Canon as
       SumRow < ReceiverCon >
     >  :: Field;

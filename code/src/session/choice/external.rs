@@ -135,8 +135,8 @@ where
         Box<
           dyn FnOnce(Choice) ->
             Either<
-              Receiver < P::Value >,
-              Receiver < Q::Value >
+              Receiver < P::Payload >,
+              Receiver < Q::Payload >
             >
           + Send
         >
@@ -145,8 +145,8 @@ where
       sender.send(Box::new(
         move |choice : Choice| ->
           Either<
-            Receiver < P::Value >,
-            Receiver < Q::Value >
+            Receiver < P::Payload >,
+            Receiver < Q::Payload >
           >
         {
           match choice {
@@ -292,10 +292,7 @@ where
     >
 {
   unsafe_create_session (
-    async move |
-      ins1,
-      sender: Sender < S::Value >
-    | {
+    async move | ins1, sender | {
       let (offerer_chan, ins2) =
         < N as
           ContextLens <
