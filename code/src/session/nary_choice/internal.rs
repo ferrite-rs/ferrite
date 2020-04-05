@@ -64,7 +64,7 @@ where
   ;
 
   fn run_cont
-    ( ins :
+    ( ctx :
         < N :: Deleted
           as Context
         > :: Values,
@@ -239,7 +239,7 @@ where
   }
 
   fn run_cont
-    ( ins :
+    ( ctx :
         < < N as
             ContextLens <
               I,
@@ -258,18 +258,18 @@ where
         + Send
       > >
   {
-    let ins2 =
+    let ctx2 =
       < N as
         ContextLens <
           I,
           InternalChoice < ParentSum >,
           P
         >
-      > :: merge_channels ( val, ins );
+      > :: insert_target ( val, ctx );
 
     Box::pin (
-      run_partial_session
-        ( session, ins2, sender ))
+      unsafe_run_session
+        ( session, ctx2, sender ))
   }
 }
 
@@ -392,7 +392,7 @@ where
   }
 
   fn run_cont
-    ( ins :
+    ( ctx :
         < < N as
             ContextLens <
               I,
@@ -415,18 +415,18 @@ where
       Sum::Inl (val) => {
         match session_sum {
           Sum::Inl (session) => {
-            let ins2 =
+            let ctx2 =
               < N as
                 ContextLens <
                   I,
                   InternalChoice < ParentSum >,
                   P
                 >
-              > :: merge_channels ( val, ins );
+              > :: insert_target ( val, ctx );
 
             Box::pin (
-              run_partial_session
-                ( session, ins2, sender ))
+              unsafe_run_session
+                ( session, ctx2, sender ))
           },
           Sum::Inr (_) => {
             panic!(
@@ -442,7 +442,7 @@ where
           },
           Sum::Inr (session_sum2) => {
             Rest :: run_cont
-              ( ins, sender,
+              ( ctx, sender,
                 val_sum2, session_sum2
               )
           }
@@ -472,12 +472,12 @@ where
     + 'static
 {
   unsafe_create_session (
-    async move | ins, sender1 | {
+    async move | ctx, sender1 | {
       let (sender2, receiver2) = channel (1);
 
       let child1 = task::spawn(async {
-        run_partial_session
-          ( cont, ins, sender2
+        unsafe_run_session
+          ( cont, ctx, sender2
           ).await;
       });
 
@@ -531,15 +531,15 @@ where
     >
 {
   unsafe_create_session (
-    async move | ins1, sender | {
-      let (sum_chan, ins2) =
+    async move | ctx1, sender | {
+      let (sum_chan, ctx2) =
         < N as
           ContextLens <
             I,
             InternalChoice < Sum >,
             Empty
           >
-        > :: split_channels ( ins1 );
+        > :: extract_source ( ctx1 );
 
       let val_sum = sum_chan.recv().await.unwrap();
 
@@ -558,7 +558,7 @@ where
         cont_builder (cont_sum).result;
 
       Sum :: run_cont
-        ( ins2,
+        ( ctx2,
           sender,
           val_sum,
           session_sum

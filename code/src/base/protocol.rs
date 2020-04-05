@@ -10,6 +10,13 @@ pub mod public {
   pub trait Protocol : super::Protocol {}
 }
 
+impl < A >
+  public::Protocol
+  for A
+where
+  A : Protocol
+{}
+
 impl Protocol for Z {
   type Payload = Z;
 }

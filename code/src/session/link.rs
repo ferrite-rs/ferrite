@@ -7,7 +7,7 @@ use crate::base::{
   AppendContext,
   Context,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -46,28 +46,28 @@ where
   C1 : AppendContext < C2 >,
 {
   unsafe_create_session (
-    async move | ins1, b_sender | {
-      let (ins2, ins3) =
+    async move | ctx1, b_sender | {
+      let (ctx2, ctx3) =
         < C1 as
           AppendContext < C2 >
-        > :: split_channels (ins1);
+        > :: split_context (ctx1);
 
       let (a_sender, a_receiver) = channel(1);
 
-      let ins4 =
+      let ctx4 =
         < C1 as
           AppendContext < (A, ()) >
-        > :: append_channels ( ins2, (a_receiver, ()) );
+        > :: append_context ( ctx2, (a_receiver, ()) );
 
       let child1 = task::spawn(async {
-        run_partial_session
-          ( cont1, ins4, b_sender
+        unsafe_run_session
+          ( cont1, ctx4, b_sender
           ).await;
       });
 
       let child2 = task::spawn(async {
-        run_partial_session
-          ( cont2, ins3, a_sender
+        unsafe_run_session
+          ( cont2, ctx3, a_sender
           ).await;
       });
 

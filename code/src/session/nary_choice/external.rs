@@ -40,7 +40,7 @@ where
   ;
 
   fn run_session_sum
-    ( ins : I :: Values,
+    ( ctx : I :: Values,
       session_sum : Self :: SessionSum
     ) ->
       Self :: ValueSum
@@ -66,9 +66,9 @@ where
     -> Self :: SelectorSum
   ;
 
-  fn select_ins (
+  fn select_ctx (
     val_sum : Self :: ValueSum,
-    ins :
+    ctx :
       < N :: Deleted
         as Context
       > :: Values
@@ -180,7 +180,7 @@ where
   }
 
   fn run_session_sum
-    ( ins : I :: Values,
+    ( ctx : I :: Values,
       session : Self :: CurrentSession
     ) ->
       Self :: ValueSum
@@ -188,9 +188,9 @@ where
     let (sender2, receiver2) = channel(1);
 
     task::spawn(async {
-      run_partial_session (
+      unsafe_run_session (
         session,
-        ins,
+        ctx,
         sender2
       ).await;
     });
@@ -296,7 +296,7 @@ where
   }
 
   fn run_session_sum
-    ( ins : I :: Values,
+    ( ctx : I :: Values,
       session_sum : Self :: SessionSum
     ) ->
       Self :: ValueSum
@@ -306,9 +306,9 @@ where
         let (sender2, receiver2) = channel(1);
 
         task::spawn(async {
-          run_partial_session (
+          unsafe_run_session (
             session,
-            ins,
+            ctx,
             sender2
           ).await;
         });
@@ -318,7 +318,7 @@ where
       Sum::Inr (session_sum2) => {
         Sum::Inr (
           R :: run_session_sum (
-            ins, session_sum2
+            ctx, session_sum2
           ))
       }
     }
@@ -350,10 +350,10 @@ where
     Z {}
   }
 
-  fn select_ins (
+  fn select_ctx (
     receiver :
       Receiver < P :: Payload >,
-    ins :
+    ctx :
       < N :: Deleted
         as Context
       > :: Values
@@ -362,8 +362,8 @@ where
       as Context
     > :: Values
   {
-    N :: merge_channels
-      ( receiver, ins )
+    N :: insert_target
+      ( receiver, ctx )
   }
 }
 
@@ -399,9 +399,9 @@ where
     )
   }
 
-  fn select_ins (
+  fn select_ctx (
     val_sum : Self :: ValueSum,
-    ins :
+    ctx :
       < N :: Deleted
         as Context
       > :: Values
@@ -416,8 +416,8 @@ where
           "impossible happened: received mismatch value_sum");
       },
       Sum::Inr (val_sum2) => {
-        Rest :: select_ins
-          ( val_sum2, ins )
+        Rest :: select_ctx
+          ( val_sum2, ctx )
       }
     }
   }
@@ -452,9 +452,9 @@ where
     )
   }
 
-  fn select_ins (
+  fn select_ctx (
     val_sum : Self :: ValueSum,
-    ins :
+    ctx :
       < N :: Deleted
         as Context
       > :: Values
@@ -465,8 +465,8 @@ where
   {
     match val_sum {
       Sum::Inl (receiver) => {
-        N :: merge_channels
-          ( receiver, ins )
+        N :: insert_target
+          ( receiver, ctx )
       },
       Sum::Inr (_) => {
         panic!(
@@ -505,7 +505,7 @@ where
 {
   unsafe_create_session (
     async move |
-      ins,
+      ctx,
       sender :
         Sender <
           Box <
@@ -536,7 +536,7 @@ where
 
           let val_sum
             = Sum :: run_session_sum
-              ( ins,
+              ( ctx,
                 choice_res.result
               );
 
@@ -578,9 +578,9 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ins1, sender | {
-      let (receiver, ins2) =
-        N :: split_channels ( ins1 );
+    async move | ctx1, sender | {
+      let (receiver, ctx2) =
+        N :: extract_source ( ctx1 );
 
       let offerer =
         receiver.recv().await.unwrap();
@@ -590,14 +590,14 @@ where
           Sum::to_selector_sum()
         );
 
-      let ins3 =
-        Sum :: select_ins (
+      let ctx3 =
+        Sum :: select_ctx (
           value_sum,
-          ins2
+          ctx2
         );
 
-      run_partial_session
-        ( cont, ins3, sender
+      unsafe_run_session
+        ( cont, ctx3, sender
         ).await;
     })
 }

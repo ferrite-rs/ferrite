@@ -14,7 +14,7 @@ pub use crate::base::{
   Refl,
   ContextLens,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -56,7 +56,7 @@ where
   > :: Field :
     Send
 {
-  ins :
+  ctx :
     < N :: Deleted
       as Context
     > :: Values,
@@ -244,24 +244,24 @@ where
   ) ->
     Pin < Box < dyn Future < Output=() > + Send > >
   {
-    let ins1 = self.ins;
+    let ctx1 = self.ctx;
     let sender = self.sender;
 
     let receiver = merged.field1;
     let cont = merged.field2;
 
 
-    let ins2 =
+    let ctx2 =
       < N as
         ContextLens <
           C,
           InternalChoice < Row >,
           A
         >
-      > :: merge_channels ( receiver, ins1 );
+      > :: insert_target ( receiver, ctx1 );
 
     Box::pin(
-      run_partial_session ( cont, ins2, sender ) )
+      unsafe_run_session ( cont, ctx2, sender ) )
   }
 }
 
@@ -394,15 +394,15 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ins1, sender | {
-      let (sum_chan, ins2) =
+    async move | ctx1, sender | {
+      let (sum_chan, ctx2) =
         < N as
           ContextLens <
             C,
             InternalChoice < Row >,
             Empty
           >
-        > :: split_channels ( ins1 );
+        > :: extract_source ( ctx1 );
 
       let receiver_sum
         : < Canon as
@@ -453,7 +453,7 @@ where
           let runner
             : RunCont < N, C, A, Row > =
             RunCont {
-              ins : ins2,
+              ctx : ctx2,
               sender : sender
             };
 

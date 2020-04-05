@@ -14,8 +14,6 @@ impl Protocol for End {
   type Payload = ();
 }
 
-impl base::public::Protocol for End {}
-
 impl < A >
   TyApp < A >
   for End

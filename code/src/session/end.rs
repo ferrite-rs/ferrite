@@ -1,5 +1,4 @@
 
-use async_std::sync::{ Sender };
 use std::future::{ Future };
 
 use crate::process::{ End };
@@ -12,7 +11,7 @@ use crate::base::{
   EmptyContext,
   ContextLens,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -36,7 +35,7 @@ where
     Future < Output = () > + Send
 {
   unsafe_create_session (
-    async move |_, sender: Sender<()>| {
+    async move | _, sender | {
       cleaner().await;
       sender.send(()).await;
     })
@@ -67,55 +66,39 @@ pub fn terminate_nil
  */
 
 pub fn wait_async
-  < N, I, P, Func, Fut >
+  < N, C, A, Fut >
   ( _ : N,
-    cont_builder : Func
+    cont_builder : impl
+      FnOnce () -> Fut
+      + Send + 'static
   ) ->
-    PartialSession < I, P >
+    PartialSession < C, A >
 where
-  I : Context,
-  P : Protocol,
-  Func :
-    FnOnce () -> Fut
-      + Send + 'static,
+  C : Context,
+  A : Protocol,
   Fut :
     Future <
       Output =
         PartialSession <
           N :: Target,
-          P
+          A
         >
     > + Send,
-  N : ContextLens < I, End, Empty >
+  N : ContextLens < C, End, Empty >
 {
   unsafe_create_session (
-    async move |
-      ins1 : I :: Values,
-      sender
-    | {
-      let (wait_chan, ins2) =
-        < N as
-          ContextLens <
-            I,
-            End,
-            Empty
-          >
-        > :: split_channels (ins1);
+    async move | ctx1, sender | {
+      let (receiver, ctx2) =
+        N :: extract_source (ctx1);
 
-      let ins3 =
-        < N as
-          ContextLens <
-            I,
-            End,
-            Empty
-          >
-        > :: merge_channels ((), ins2);
+      let ctx3 =
+        N :: insert_target ((), ctx2);
 
-      wait_chan.recv().await.unwrap();
+      receiver.recv().await.unwrap();
       let cont = cont_builder().await;
 
-      run_partial_session
-        ( cont, ins3, sender
+      unsafe_run_session
+        ( cont, ctx3, sender
         ).await;
     })
 }

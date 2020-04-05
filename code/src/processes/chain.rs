@@ -59,7 +59,7 @@ where
 impl <R: Context> AppendContext <R> for () {
   type Appended = R;
 
-  fn append_channels(
+  fn append_context(
     _: (),
     r: <R as Context>::Values
   ) ->
@@ -68,7 +68,7 @@ impl <R: Context> AppendContext <R> for () {
     return r;
   }
 
-  fn split_channels(
+  fn split_context (
     r: <R as Context>::Values
   ) -> (
     (),
@@ -106,35 +106,34 @@ where
       < R as AppendContext < S > > :: Appended
     );
 
-  fn append_channels(
+  fn append_context (
     (p, r) : (
-      < P as Slot > :: Value,
-      <R as Context>::Values
+      P :: Value,
+      R ::Values
     ),
     s : <S as Context>::Values
   ) -> (
     < P as Slot > :: Value,
     <
-      < R as AppendContext<S> >::Appended
+      R :: Appended
       as Context
     >::Values
   ) {
-    return (p, < R as AppendContext<S> >::append_channels(r, s));
+    return (p, < R as AppendContext<S> >::append_context(r, s));
   }
 
-  fn split_channels(
+  fn split_context (
     (p, r): (
-      < P as Slot > :: Value,
-      <
-        < R as AppendContext<S> >::Appended
+      P :: Value,
+      < R::Appended
         as Context
-      >::Values
+      > :: Values
     )
   ) -> (
     < ( P, R ) as Context > :: Values,
-    <S as Context>::Values
+    < S as Context >::Values
   ) {
-    let (r2, s) = < R as AppendContext<S> >::split_channels(r);
+    let (r2, s) = R :: split_context(r);
     return ((p, r2), s);
   }
 }

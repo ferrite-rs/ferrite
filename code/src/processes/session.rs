@@ -12,8 +12,8 @@ where
 {
   unsafe_create_session (
     async move | (), sender | {
-      let ins = < C as EmptyContext > :: empty_values();
-      run_partial_session ( cont, ins, sender ).await;
+      let ctx = < C as EmptyContext > :: empty_values();
+      unsafe_run_session ( cont, ctx, sender ).await;
     })
 }
 
@@ -30,7 +30,7 @@ where
       _,
       sender
     | {
-      run_partial_session ( cont, (), sender ).await
+      unsafe_run_session ( cont, (), sender ).await
     })
 }
 
@@ -50,13 +50,13 @@ where
   I : AppendContext < ( Empty, () ) >
 {
   unsafe_create_session (
-    async move | ins1, sender | {
-      let (ins2, _) =
+    async move | ctx1, sender | {
+      let (ctx2, _) =
         < I as
           AppendContext < ( Empty, () ) >
-        > :: split_channels ( ins1 );
+        > :: split_context ( ctx1 );
 
-      run_partial_session ( cont, ins2, sender ).await
+      unsafe_run_session ( cont, ctx2, sender ).await
     })
 }
 

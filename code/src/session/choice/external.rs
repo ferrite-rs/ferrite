@@ -6,7 +6,7 @@ use crate::base::{
   Context,
   ContextLens,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -81,18 +81,18 @@ fn right_choice < L, R > (res: R)
   ExternalChoiceResult.
 
   offerChoice
-      :: forall ins p q .
+      :: forall ctx p q .
       ( Protocol p
       , Protocol q
-      , Context ins
+      , Context ctx
       )
     => (forall r
         . Either
-            (Receiver (Session ins p) -> r)
-            (Receiver (Session ins q) -> r)
-        -> Either (Session ins p) (Session ins q)
+            (Receiver (Session ctx p) -> r)
+            (Receiver (Session ctx q) -> r)
+        -> Either (Session ctx p) (Session ctx q)
        )
-    ->  PartialSession ins (ExternalChoice p q)
+    ->  PartialSession ctx (ExternalChoice p q)
  */
 pub type ReturnChoice < C, P, Q > =
   Either <
@@ -130,7 +130,7 @@ where
 {
   unsafe_create_session (
     async move |
-      ins : C::Values,
+      ctx : C::Values,
       sender: Sender<
         Box<
           dyn FnOnce(Choice) ->
@@ -166,8 +166,8 @@ where
                   let (sender, receiver) = channel(1);
 
                   task::spawn(async {
-                    run_partial_session
-                      ( cont, ins, sender
+                    unsafe_run_session
+                      ( cont, ctx, sender
                       ).await;
                   });
 
@@ -195,8 +195,8 @@ where
                   let (sender, receiver) = channel(1);
 
                   task::spawn(async {
-                    run_partial_session
-                      ( cont, ins, sender
+                    unsafe_run_session
+                      ( cont, ctx, sender
                       ).await;
                   });
 
@@ -240,20 +240,20 @@ where
     >
 {
   unsafe_create_session (
-    async move | ins1, sender | {
-      let (offerer_chan, ins2) =
-        N :: split_channels ( ins1 );
+    async move | ctx1, sender | {
+      let (offerer_chan, ctx2) =
+        N :: extract_source ( ctx1 );
 
       let offerer = offerer_chan.recv().await.unwrap();
       let input_variant = offerer(Choice::Left);
 
       match input_variant {
         Either::Left(input_chan) => {
-          let ins3 =
-            N :: merge_channels( input_chan, ins2 );
+          let ctx3 =
+            N :: insert_target( input_chan, ctx2 );
 
-            run_partial_session
-              ( cont, ins3, sender
+            unsafe_run_session
+              ( cont, ctx3, sender
               ).await;
         },
         Either::Right(_) => {
@@ -292,8 +292,8 @@ where
     >
 {
   unsafe_create_session (
-    async move | ins1, sender | {
-      let (offerer_chan, ins2) =
+    async move | ctx1, sender | {
+      let (offerer_chan, ctx2) =
         < N as
           ContextLens <
             I,
@@ -301,7 +301,7 @@ where
             P2
           >
         >
-        :: split_channels ( ins1 );
+        :: extract_source ( ctx1 );
 
       let offerer = offerer_chan.recv().await.unwrap();
       let input_variant = offerer(Choice::Right);
@@ -312,7 +312,7 @@ where
           panic!("expected offerer to provide right result");
         },
         Either::Right (input_chan) => {
-          let ins3 =
+          let ctx3 =
             < N as
               ContextLens <
                 I,
@@ -320,10 +320,10 @@ where
                 P2
               >
             >
-            :: merge_channels( input_chan, ins2 );
+            :: insert_target( input_chan, ctx2 );
 
-          run_partial_session
-            ( cont, ins3, sender
+          unsafe_run_session
+            ( cont, ctx3, sender
             ).await;
         }
       }

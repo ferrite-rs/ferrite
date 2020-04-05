@@ -31,15 +31,6 @@ where
     + Send >;
 }
 
-impl
-  < P, Q >
-  base::public::Protocol for
-  ExternalChoice < P, Q >
-where
-  P: base::public::Protocol,
-  Q: base::public::Protocol
-{ }
-
 impl < A, T, X, Y >
   TyApp < A > for
   Box <

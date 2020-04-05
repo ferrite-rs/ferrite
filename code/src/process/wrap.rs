@@ -17,10 +17,3 @@ where
 {
   type Payload = Box < () >;
 }
-
-impl < T >
-  base::public::Protocol for
-  Wrap < T >
-where
-  T : Send + 'static,
-{ }

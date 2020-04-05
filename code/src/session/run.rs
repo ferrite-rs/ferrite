@@ -8,7 +8,7 @@ use crate::process::{ End };
 use crate::base::{
   EmptyContext,
   PartialSession,
-  run_partial_session
+  unsafe_run_session
 };
 
 pub fn
@@ -19,12 +19,12 @@ where
   C : EmptyContext
 {
   let (sender, receiver) = channel(1);
-  let ins = < C as EmptyContext > :: empty_values ();
+  let ctx = < C as EmptyContext > :: empty_values ();
 
   task::block_on(async {
     let child1 = task::spawn(async {
-      run_partial_session
-        ( session, ins, sender
+      unsafe_run_session
+        ( session, ctx, sender
         ).await;
     });
 

@@ -29,8 +29,8 @@ where
     >
 {
   unsafe_create_session (
-    async move | ins, sender | {
-      let (receiver, _) = N :: split_channels ( ins );
+    async move | ctx, sender | {
+      let (receiver, _) = N :: extract_source ( ctx );
 
       let val = receiver.recv().await.unwrap();
       sender.send( val ).await;

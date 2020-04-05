@@ -31,15 +31,6 @@ where
     >;
 }
 
-impl
-  < P, Q >
-  base::public::Protocol for
-  InternalChoice < P, Q >
-where
-  P: base::public::Protocol,
-  Q: base::public::Protocol
-{ }
-
 impl < A, X, Y >
   TyApp < A > for
   InternalChoice < X, Y >

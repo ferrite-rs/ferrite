@@ -10,7 +10,7 @@ use crate::base::{
   Context,
   ContextLens,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -20,28 +20,27 @@ use crate::base::{
       send_input(cont_builder) :: Δ ⊢ T ⊃ P
  */
 pub fn receive_value
-  < T, C, P, Func, Fut >
-  ( cont_builder : Func ) ->
-     PartialSession < C, ReceiveValue < T, P > >
+  < T, C, A, Fut >
+  ( cont_builder : impl
+      FnOnce (T) -> Fut + Send + 'static
+  ) ->
+     PartialSession < C, ReceiveValue < T, A > >
 where
   T : Send + 'static,
-  P : Protocol,
+  A : Protocol,
   C : Context,
-  Func :
-    FnOnce(T) -> Fut
-    + Send + 'static,
   Fut :
     Future <
-      Output = PartialSession < C, P >
+      Output = PartialSession < C, A >
     > + Send
 {
   unsafe_create_session (
     async move |
-      ins : C::Values,
+      ctx,
       sender1 : Sender <
         Sender <(
           Val < T >,
-          Sender < P::Payload >
+          Sender < A::Payload >
         )>,
       >
     | {
@@ -57,8 +56,8 @@ where
 
         let cont = cont_builder(val.val).await;
 
-        run_partial_session
-          ( cont, ins, sender3
+        unsafe_run_session
+          ( cont, ctx, sender3
           ).await;
       });
 
@@ -72,42 +71,37 @@ where
       send_value_to_async(cont_builder) :: T ⊃ Q, Δ ⊢ P
  */
 pub fn send_value_to_async
-  < N, I, P, Q, T, Func, Fut >
+  < N, T, C, A, B, Fut >
   ( _ : N,
-    cont_builder : Func
+    cont_builder : impl
+      FnOnce() -> Fut
+      + Send + 'static
   ) ->
-    PartialSession < I, P >
+    PartialSession < C, B >
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
+  A : Protocol,
+  B : Protocol,
+  C : Context,
   T : Send + 'static,
-  Func :
-    FnOnce() -> Fut
-    + Send + 'static,
   Fut :
     Future <
       Output =
         ( T,
           PartialSession <
             N :: Target,
-            P
+            B
           > )
     > + Send,
   N :
     ContextLens <
-      I,
-      ReceiveValue < T, Q >,
-      Q
+      C,
+      ReceiveValue < T, A >,
+      A
     >
 {
   unsafe_create_session (
-    async move |
-      ins1: I :: Values,
-      sender1 : Sender < P::Payload >
-    | {
-      let (receiver1, ins2) =
-        N :: split_channels ( ins1 );
+    async move | ctx1, sender1 | {
+      let (receiver1, ctx2) = N :: extract_source ( ctx1 );
 
       let sender2 = receiver1.recv().await.unwrap();
 
@@ -115,8 +109,7 @@ where
 
       let (sender3, receiver3) = channel(1);
 
-      let ins3 =
-        N :: merge_channels( receiver3, ins2 );
+      let ctx3 = N :: insert_target( receiver3, ctx2 );
 
       let child1 = task::spawn(async move {
         sender2.send( (
@@ -126,8 +119,8 @@ where
       });
 
       let child2 = task::spawn(async move {
-        run_partial_session
-          (cont, ins3, sender1
+        unsafe_run_session
+          (cont, ctx3, sender1
           ).await;
       });
 

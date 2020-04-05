@@ -12,7 +12,7 @@ use crate::base::{
   Protocol,
   Context,
   ContextLens,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -26,13 +26,13 @@ use crate::base::{
     offer_left(cont) :: Δ ⊢ P ⊕ Q
 
   offerLeft
-    :: forall ins p q
+    :: forall ctx p q
        ( Protocol p
        , Protocol q
-       , Context ins
+       , Context ctx
        )
-    =>  PartialSession ins p
-    ->  PartialSession ins (InternalChoice p q)
+    =>  PartialSession ctx p
+    ->  PartialSession ctx (InternalChoice p q)
  */
 pub fn offer_left
   < I, P, Q >
@@ -48,7 +48,7 @@ where
 {
   unsafe_create_session (
     async move |
-      ins,
+      ctx,
       sender: Sender<
         Either<
           Receiver<P::Payload>,
@@ -57,8 +57,8 @@ where
       let (in_sender, in_receiver) = channel(1);
 
       let child1 = task::spawn(async {
-        run_partial_session
-          ( cont, ins, in_sender
+        unsafe_run_session
+          ( cont, ctx, in_sender
           ).await;
       });
 
@@ -84,7 +84,7 @@ pub fn offer_right
 {
   return unsafe_create_session (
     async move |
-      ins,
+      ctx,
       sender: Sender<
         Either<
           Receiver<P::Payload>,
@@ -93,8 +93,8 @@ pub fn offer_right
       let (in_sender, in_receiver) = channel(1);
 
       let child1 = task::spawn(async {
-        run_partial_session
-          ( cont, ins, in_sender
+        unsafe_run_session
+          ( cont, ctx, in_sender
           ).await;
       });
 
@@ -282,15 +282,15 @@ where
     >
 {
   unsafe_create_session (
-    async move | ins1, sender | {
-      let (variant_chan, ins2) =
+    async move | ctx1, sender | {
+      let (variant_chan, ctx2) =
         < N as
           ContextLens <
             I,
             InternalChoice < P1, P2 >,
             P1
           >
-        > :: split_channels ( ins1 );
+        > :: extract_source ( ctx1 );
 
       let variant = variant_chan.recv().await.unwrap();
 
@@ -302,19 +302,19 @@ where
 
           let cont_variant = cont_builder(in_choice).result;
 
-          let ins3 =
+          let ctx3 =
             < N as
               ContextLens <
                 I,
                 InternalChoice < P1, P2 >,
                 P1
               >
-            > :: merge_channels ( p1, ins2 );
+            > :: insert_target ( p1, ctx2 );
 
           match cont_variant {
             Either::Left(cont) => {
-              run_partial_session
-                ( cont, ins3, sender
+              unsafe_run_session
+                ( cont, ctx3, sender
                 ).await;
             }
             Either::Right(_) => {
@@ -329,22 +329,22 @@ where
 
           let cont_variant = cont_builder(in_choice).result;
 
-          let ins3 =
+          let ctx3 =
             < N as
               ContextLens <
                 I,
                 InternalChoice < P1, P2 >,
                 P2
               >
-            > :: merge_channels ( p2, ins2 );
+            > :: insert_target ( p2, ctx2 );
 
           match cont_variant {
             Either::Left(_) => {
               panic!("expected cont_builder to provide right result");
             }
             Either::Right(cont) => {
-              run_partial_session
-                  ( cont, ins3, sender).await;
+              unsafe_run_session
+                  ( cont, ctx3, sender).await;
               }
             }
           }

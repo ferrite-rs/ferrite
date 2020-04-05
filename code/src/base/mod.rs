@@ -36,7 +36,7 @@ pub use self::session::{
   Session,
   PartialSession,
   unsafe_create_session,
-  run_partial_session
+  unsafe_run_session
 };
 
 pub use self::lens::{

@@ -10,7 +10,7 @@ use crate::base::{
   Context,
   ContextLens,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -41,7 +41,7 @@ where
 {
   unsafe_create_session (
     async move |
-      ins : C::Values,
+      ctx : C::Values,
       sender1 : Sender < (
         Val < T >,
         Receiver < P::Payload >
@@ -61,8 +61,8 @@ where
       });
 
       let child2 = task::spawn(async move {
-        run_partial_session
-          ( cont, ins, sender2
+        unsafe_run_session
+          ( cont, ctx, sender2
           ).await;
       });
 
@@ -125,10 +125,10 @@ where
 {
   unsafe_create_session (
     async move |
-      ins1 : I :: Values,
+      ctx1 : I :: Values,
       sender : Sender < Q :: Payload >
     | {
-      let (receiver1, ins2) =
+      let (receiver1, ctx2) =
         < N as
           ContextLens <
             I,
@@ -136,11 +136,11 @@ where
             P
           >
         >
-        :: split_channels ( ins1 );
+        :: extract_source ( ctx1 );
 
       let (val, receiver2) = receiver1.recv().await.unwrap();
 
-      let ins3 =
+      let ctx3 =
         < N as
           ContextLens <
             I,
@@ -148,12 +148,12 @@ where
             P
           >
         >
-        :: merge_channels (receiver2, ins2);
+        :: insert_target (receiver2, ctx2);
 
       let cont = cont_builder(val.val).await;
 
-      run_partial_session
-        ( cont, ins3, sender
+      unsafe_run_session
+        ( cont, ctx3, sender
         ).await;
     })
 }

@@ -22,7 +22,7 @@ use crate::base::{
   AppendContext,
   ContextLens,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -83,8 +83,8 @@ pub fn run_shared_session
 where
   P : SharedProtocol
 {
-  let (sender1, receiver1) = channel (999);
-  let (sender2, receiver2) = channel (999);
+  let (sender1, receiver1) = channel (1);
+  let (sender2, receiver2) = channel (1);
 
   task::spawn(async move {
     // debug!("[run_shared_session] exec_shared_session");
@@ -141,12 +141,12 @@ where
     exec_shared_session : Box::new (
       move | sender1 | {
         Box::pin ( async move {
-          let (sender2, receiver2) = channel (999);
-          let (sender3, receiver3) = channel (999);
+          let (sender2, receiver2) = channel (1);
+          let (sender3, receiver3) = channel (1);
 
           let child1 = task::spawn ( async move {
             // debug!("[accept_shared_session] calling cont");
-            run_partial_session
+            unsafe_run_session
               ( cont, (receiver2, ()), sender3 ).await;
             // debug!("[accept_shared_session] returned from cont");
           });
@@ -264,8 +264,8 @@ where
   );
 
   unsafe_create_session (
-    async move | ins1, sender1 | {
-      let (sender2, receiver2) = channel (999);
+    async move | ctx1, sender1 | {
+      let (sender2, receiver2) = channel (1);
 
       let child1 = task::spawn ( async move {
         // debug!("[acquire_shared_session] sending sender2");
@@ -278,7 +278,7 @@ where
         let receiver4 = receiver2.recv().await.unwrap();
         // debug!("[acquire_shared_session] received receiver4");
 
-        let ins2 =
+        let ctx2 =
           < I as
             AppendContext <
               ( < F as
@@ -287,10 +287,10 @@ where
               , ()
               )
             >
-          > :: append_channels ( ins1, (receiver4, ()) );
+          > :: append_context ( ctx1, (receiver4, ()) );
 
-        run_partial_session
-          ( cont, ins2, sender1
+        unsafe_run_session
+          ( cont, ctx2, sender1
           ).await;
 
         // debug!("[acquire_shared_session] ran cont");
@@ -326,18 +326,18 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ins1, sender1 | {
-      let (receiver2, ins2) =
-        N :: split_channels ( ins1 );
+    async move | ctx1, sender1 | {
+      let (receiver2, ctx2) =
+        N :: extract_source ( ctx1 );
 
-      let ins3 =
-        N :: merge_channels ( (), ins2 );
+      let ctx3 =
+        N :: insert_target ( (), ctx2 );
 
       // debug!("[release_shared_session] waiting receiver2");
       receiver2.recv().await.unwrap();
       // debug!("[release_shared_session] received receiver2");
-      run_partial_session
-        ( cont, ins3, sender1
+      unsafe_run_session
+        ( cont, ctx3, sender1
         ).await;
       // debug!("[release_shared_session] ran cont");
     })

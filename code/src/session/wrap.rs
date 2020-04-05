@@ -62,7 +62,7 @@ where
   T : Send + 'static,
 {
   unsafe_create_session (
-    async move | ins, sender1 | {
+    async move | ctx, sender1 | {
       let (sender2, receiver) = channel(1);
 
       let child1 = task::spawn(async move {
@@ -71,8 +71,8 @@ where
       });
 
       let child2 = task::spawn(
-        run_partial_session
-          ( cont, ins, sender2
+        unsafe_run_session
+          ( cont, ctx, sender2
           ) );
 
       join!(child1, child2).await;
@@ -101,13 +101,13 @@ where
     >
 {
   unsafe_create_session(
-    async move | ins1, sender1 | {
-      let (receiver1, ins2) = N :: split_channels ( ins1 );
+    async move | ctx1, sender1 | {
+      let (receiver1, ctx2) = N :: extract_source ( ctx1 );
 
       let (sender2, receiver2) = channel(1);
 
-      let ins3 =
-        N :: merge_channels ( receiver2, ins2 );
+      let ctx3 =
+        N :: insert_target ( receiver2, ctx2 );
 
       let child1 = task::spawn ( async move {
         let wrapped = receiver1.recv().await.unwrap();
@@ -115,8 +115,8 @@ where
       });
 
       let child2 = task::spawn(
-        run_partial_session
-          ( cont, ins3, sender1
+        unsafe_run_session
+          ( cont, ctx3, sender1
           ));
 
       join!(child1, child2).await;

@@ -13,7 +13,7 @@ use crate::base::{
   AppendContext,
   ContextLens,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -53,7 +53,7 @@ where
   );
 
   unsafe_create_session (
-    async move | ins1, sender | {
+    async move | ctx1, sender | {
       let (sender1, receiver1)
         = channel(1);
 
@@ -62,11 +62,11 @@ where
       let (receiver2, sender2)
         = receiver1.recv().await.unwrap();
 
-      let ins2 = C :: append_channels (
-            ins1, (receiver2, ()) );
+      let ctx2 = C :: append_context (
+            ctx1, (receiver2, ()) );
 
-        run_partial_session
-          ( cont, ins2, sender2
+        unsafe_run_session
+          ( cont, ctx2, sender2
           ).await;
     })
 }
@@ -92,13 +92,13 @@ where
     >
 {
   unsafe_create_session (
-    async move | ins1, sender | {
-      let ((), ins2) =
+    async move | ctx1, sender | {
+      let ((), ctx2) =
         < N as
           ContextLens <
             I, Empty, P
           >
-        > :: split_channels (ins1);
+        > :: extract_source (ctx1);
 
       let (sender1, receiver1)
         = channel(1);
@@ -111,15 +111,15 @@ where
         let (receiver2, sender2)
           = receiver1.recv().await.unwrap();
 
-        let ins3 =
+        let ctx3 =
           < N as
             ContextLens <
               I, Empty, P
             >
-          > :: merge_channels (receiver2, ins2);
+          > :: insert_target (receiver2, ctx2);
 
-          run_partial_session
-            ( cont, ins3, sender2
+          unsafe_run_session
+            ( cont, ctx3, sender2
             ).await;
       });
 
@@ -166,15 +166,15 @@ where
     >
 {
   unsafe_create_session (
-    async move | ins1, sender1 | {
-      let (receiver1, ins2) =
-        NA :: split_channels (ins1);
+    async move | ctx1, sender1 | {
+      let (receiver1, ctx2) =
+        NA :: extract_source (ctx1);
 
-      let ins3 =
-        NA :: merge_channels ((), ins2);
+      let ctx3 =
+        NA :: insert_target ((), ctx2);
 
-      let (receiver2, ins4) =
-        NF :: split_channels (ins3);
+      let (receiver2, ctx4) =
+        NF :: extract_source (ctx3);
 
       let sender2 = receiver2.recv().await.unwrap();
 
@@ -184,12 +184,12 @@ where
         sender2.send((receiver1, sender3)).await;
       });
 
-      let ins5 =
-        NF :: merge_channels (receiver3, ins4);
+      let ctx5 =
+        NF :: insert_target (receiver3, ctx4);
 
       let child2 = task::spawn(async move {
-        run_partial_session
-          ( cont, ins5, sender1
+        unsafe_run_session
+          ( cont, ctx5, sender1
           ).await;
       });
 

@@ -27,16 +27,6 @@ where
     ) >;
 }
 
-impl
-  < P, Q >
-  base::public::Protocol for
-  ReceiveChannel < P, Q >
-where
-  P: base::public::Protocol,
-  Q: base::public::Protocol
-{ }
-
-
 impl < A, P, Q >
   TyApp < A > for
   ReceiveChannel < P, Q >

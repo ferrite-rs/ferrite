@@ -74,21 +74,6 @@ where
 }
 
 impl < F >
-  base::public::Protocol for
-  SharedToLinear < F >
-where
-  F : Send + 'static
-{ }
-
-impl < F >
-  base::public::Protocol for
-  Lock < F >
-where
-  F : SharedTyApp < F >
-      + Send + 'static
-{ }
-
-impl < F >
   public::SharedProtocol for
   LinearToShared < F >
 where

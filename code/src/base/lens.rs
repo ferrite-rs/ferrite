@@ -23,27 +23,26 @@ impl Slot for Empty {
   type Value = ();
 }
 
-pub trait ContextLens < I, P1, P2 >
+pub trait ContextLens < C, A1, A2 >
 where
-  I : Context,
-  P1 : Slot,
-  P2 : Slot,
+  C : Context,
+  A1 : Slot,
+  A2 : Slot,
 {
   type Deleted : Context;
   type Target : Context;
 
-  fn split_channels (
-    channels :
-      < I as Context > :: Values
+  fn extract_source (
+    channels : C :: Values
   ) ->
-    ( < P1 as Slot > :: Value,
+    ( A1 :: Value,
       < Self::Deleted
         as Context
       > :: Values
     );
 
-  fn merge_channels (
-    receiver : < P2 as Slot > :: Value,
+  fn insert_target (
+    receiver : A2 :: Value,
     channels :
       < Self::Deleted
         as Context >
@@ -56,110 +55,82 @@ where
 
 
 impl
-  < P1, P2, R >
+  < C, A1, A2 >
   ContextLens <
-    ( P1, R ),
-    P1,
-    P2
+    ( A1, C ),
+    A1,
+    A2
   > for
   Z
 where
-  P1 : Slot,
-  P2 : Slot,
-  R : Context
+  A1 : Slot,
+  A2 : Slot,
+  C : Context
 {
-  type Deleted = R;
-  type Target = (P2, R);
+  type Deleted = C;
+  type Target = (A2, C);
 
-  fn split_channels (
-    (p, r) :
-      < ( P1, R )
-        as Context
-      > :: Values
+  fn extract_source (
+    ctx : ( A1::Value, C::Values )
   ) ->
-    ( < P1 as Slot > :: Value,
-      < R as Context
-      > :: Values
-    )
+    ( A1::Value, C::Values )
   {
-    return (p, r);
+    ctx
   }
 
-  fn merge_channels
-    ( p : < P2 as Slot > :: Value,
-      r :
-        < R as Context
-        > :: Values
+  fn insert_target
+    ( p : A2 :: Value,
+      r : C :: Values
     ) ->
-      < ( P2, R )
-        as Context
-      > :: Values
+      ( A2::Value, C::Values )
   {
-    return (p, r);
+    (p, r)
   }
 }
 
 impl
-  < P, Q1, Q2, R, N >
+  < B, A1, A2, C, N >
   ContextLens <
-    ( P, R ),
-    Q1,
-    Q2
+    ( B, C ),
+    A1,
+    A2
   > for
   S < N >
 where
-  P : Slot,
-  Q1 : Slot,
-  Q2 : Slot,
-  R : Context,
-  N : ContextLens < R, Q1, Q2 >,
+  B : Slot,
+  A1 : Slot,
+  A2 : Slot,
+  C : Context,
+  N : ContextLens < C, A1, A2 >,
 {
   type Deleted =
-    ( P,
+    ( B,
       N :: Deleted
     );
 
   type Target =
-    ( P,
+    ( B,
       N :: Target
     );
 
-  fn split_channels (
-    (p, r1) :
-      < ( P, R ) as Context >
-      :: Values
+  fn extract_source (
+    (p, r1) : ( B::Value, C::Values )
   ) ->
-    ( < Q1 as Slot > :: Value,
-      < ( P,
-          N :: Deleted
-        ) as Context
-      > :: Values
+    ( A1 :: Value,
+      ( B::Value, < N::Deleted as Context >::Values )
     )
   {
-    let (q, r2) =
-      < N as ContextLens < R, Q1, Q2 >
-      > :: split_channels ( r1 );
-
-    return ( q, ( p, r2 ) );
+    let (q, r2) = N :: extract_source ( r1 );
+    ( q, ( p, r2 ) )
   }
 
-  fn merge_channels (
-    q : < Q2 as Slot > :: Value,
-    (p, r1) :
-      < ( P,
-          N ::Deleted
-        ) as Context
-      > :: Values
+  fn insert_target (
+    q : A2 :: Value,
+    (p, r1) : ( B::Value, < N::Deleted as Context >::Values )
   ) ->
-    < ( P,
-        N :: Target
-      ) as Context
-    > :: Values
+    ( B::Value, < N::Target as Context >::Values )
   {
-    let r2 =
-      < N as ContextLens < R, Q1, Q2 >
-      > :: merge_channels ( q, r1 );
-
-    return ( p, r2 );
+    let r2 = N :: insert_target ( q, r1 );
+    ( p, r2 )
   }
 }

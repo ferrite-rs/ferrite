@@ -21,13 +21,13 @@ where
 {
   type Appended : Context;
 
-  fn append_channels(
+  fn append_context (
     channels1: <Self as Context>::Values,
     channels2: <R as Context>::Values
   ) ->
     <Self::Appended as Context>::Values;
 
-  fn split_channels(
+  fn split_context (
     channels: <Self::Appended as Context>::Values
   ) -> (
     <Self as Context>::Values,

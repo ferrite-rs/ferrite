@@ -45,9 +45,9 @@ where
         + Send
       >
     = Box::new (
-        move | ins, sender | {
+        move | ctx, sender | {
           Box::pin ( async {
-            executor ( ins, sender ).await;
+            executor ( ctx, sender ).await;
           } )
         });
 
@@ -56,15 +56,15 @@ where
   }
 }
 
-pub async fn run_partial_session
-  < I, P >
-  ( session : PartialSession < I, P >
-  , ins : I :: Values
-  , sender : Sender < P :: Payload >
+pub async fn unsafe_run_session
+  < C, A >
+  ( session : PartialSession < C, A >
+  , ctx : C :: Values
+  , sender : Sender < A :: Payload >
   )
 where
-  P: Protocol,
-  I: Context
+  A: Protocol,
+  C: Context
 {
-  (session.executor)(ins, sender).await;
+  (session.executor)(ctx, sender).await;
 }

@@ -35,12 +35,3 @@ where
       P :: Type
     >;
 }
-
-impl
-  < T, P >
-  base::public::Protocol for
-  SendValue < T, P >
-where
-  T : Send + 'static,
-  P : Protocol
-{ }

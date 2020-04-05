@@ -30,15 +30,6 @@ where
     )>;
 }
 
-impl
-  < T, P >
-  base::public::Protocol for
-  ReceiveValue < T, P >
-where
-  T : Send + 'static,
-  P : Protocol
-{ }
-
 impl < A, T, P >
   TyApp < A > for
   ReceiveValue < T, P >

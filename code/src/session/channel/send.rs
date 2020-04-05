@@ -13,7 +13,7 @@ use crate::base::{
   AppendContext,
   ContextLens,
   PartialSession,
-  run_partial_session,
+  unsafe_run_session,
   unsafe_create_session,
 };
 
@@ -53,23 +53,23 @@ where
     >
 {
   unsafe_create_session (
-    async move | ins1, sender1 | {
-      let (p_chan, ins2) =
+    async move | ctx1, sender1 | {
+      let (p_chan, ctx2) =
         < N as
           ContextLens <
             I, P, Empty
           >
-        > :: split_channels (ins1);
+        > :: extract_source (ctx1);
 
       let (sender2, receiver2) = channel(1);
       let (sender3, receiver3) = channel(1);
 
-      let ins3 =
+      let ctx3 =
         < N as
           ContextLens <
             I, P, Empty
           >
-        > :: merge_channels ((), ins2);
+        > :: insert_target ((), ctx2);
 
       let child1 = task::spawn(async move {
         // receive the input x from the input channel
@@ -84,8 +84,8 @@ where
 
       let child3 = task::spawn(async {
         // the continuation Q only starts after that
-        run_partial_session
-          ( cont, ins3, sender3
+        unsafe_run_session
+          ( cont, ctx3, sender3
           ).await;
       });
 
@@ -147,36 +147,36 @@ where
   );
 
   unsafe_create_session (
-    async move | ins1, sender1 | {
-      let ( pair_chan, ins2 ) =
+    async move | ctx1, sender1 | {
+      let ( pair_chan, ctx2 ) =
         < N as
           ContextLens <
             I,
             SendChannel < P1, P2 >,
             P2
           >
-        > :: split_channels ( ins1 );
+        > :: extract_source ( ctx1 );
 
       let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
 
-      let ins3 =
+      let ctx3 =
         < N as
           ContextLens <
             I,
             SendChannel < P1, P2 >,
             P2
           >
-        > :: merge_channels ( y_chan, ins2 );
+        > :: insert_target ( y_chan, ctx2 );
 
-      let ins4 =
+      let ctx4 =
         < N :: Target as
           AppendContext <
             ( P1, () )
           >
-        > :: append_channels (ins3, (p_chan, ()));
+        > :: append_context (ctx3, (p_chan, ()));
 
-        run_partial_session
-          ( cont, ins4, sender1
+        unsafe_run_session
+          ( cont, ctx4, sender1
           ).await;
     })
 }
@@ -213,8 +213,8 @@ where
   CQ: 'static
 {
   unsafe_create_session (
-    async move | ins, sender | {
-      let (ins1, ins2) = < CP as AppendContext<CQ> >::split_channels(ins);
+    async move | ctx, sender | {
+      let (ctx1, ctx2) = CP :: split_context(ctx);
 
       let (sender1, receiver1) = channel(1);
       let (sender2, receiver2) = channel(1);
@@ -222,8 +222,8 @@ where
       // the first thread spawns immediately
 
       let child1 = task::spawn(async move {
-        run_partial_session
-          ( cont1, ins1, sender1
+        unsafe_run_session
+          ( cont1, ctx1, sender1
           ).await;
       });
 
@@ -236,8 +236,8 @@ where
       // the second thread is blocked until the first channel is being accessed
 
       let child3 = task::spawn(async move {
-        run_partial_session
-          ( cont2, ins2, sender2
+        unsafe_run_session
+          ( cont2, ctx2, sender2
           ).await;
       });
 
@@ -278,48 +278,48 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ins1, sender1 | {
-      let ( pair_chan, ins2 ) =
+    async move | ctx1, sender1 | {
+      let ( pair_chan, ctx2 ) =
         < SourceLens as
           ContextLens <
             I,
             SendChannel < P1, P2 >,
             P2
           >
-        > :: split_channels ( ins1 );
+        > :: extract_source ( ctx1 );
 
       let (p_chan, y_chan) =
         pair_chan.recv().await.unwrap();
 
-      let ins3 =
+      let ctx3 =
         < SourceLens as
           ContextLens <
             I,
             SendChannel < P1, P2 >,
             P2
           >
-        > :: merge_channels ( y_chan, ins2 );
+        > :: insert_target ( y_chan, ctx2 );
 
-      let ((), ins4) =
+      let ((), ctx4) =
         < TargetLens as
           ContextLens <
             SourceLens :: Target,
             Empty,
             P1
           >
-        > :: split_channels ( ins3 );
+        > :: extract_source ( ctx3 );
 
-      let ins5 =
+      let ctx5 =
         < TargetLens as
           ContextLens <
             SourceLens :: Target,
             Empty,
             P1
           >
-        > :: merge_channels ( p_chan, ins4 );
+        > :: insert_target ( p_chan, ctx4 );
 
-        run_partial_session
-          ( cont, ins5, sender1
+        unsafe_run_session
+          ( cont, ctx5, sender1
           ).await;
     })
 }

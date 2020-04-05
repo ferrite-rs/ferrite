@@ -9,6 +9,6 @@ mod basic_test {
 
   //   // let (sender, receiver) = channel(1);
 
-  //   // run_partial_session(unit, (), sender);
+  //   // unsafe_run_session(unit, (), sender);
   // }
 }
