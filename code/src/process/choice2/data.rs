@@ -15,8 +15,8 @@ where
   T1 : TyApp < A >,
   T2 : TyApp < A >,
 {
-  pub field1 : T1 :: Type,
-  pub field2 : T2 :: Type
+  pub field1 : T1 :: Applied,
+  pub field2 : T2 :: Applied
 }
 
 pub enum Sum < A, B >
@@ -29,7 +29,7 @@ pub enum Sum < A, B >
   class
     (forall t . Send (Field self t))
     => SumRow self where
-      type family ToRow self t :: Type
+      type family ToRow self t :: Applied
  */
 pub trait SumRow < T >
 {
@@ -44,7 +44,7 @@ pub trait Iso {
   class
     (SumRow self)
     => IsoRow self where
-      type family Canon self t :: Type
+      type family Canon self t :: Applied
 
       toCanon
         :: forall t
@@ -94,9 +94,9 @@ where
   T2 : TyApp < A >
 {
   fn lift_field (
-    field : T1 :: Type
+    field : T1 :: Applied
   ) ->
-    T2 :: Type;
+    T2 :: Applied;
 }
 
 pub trait LiftFieldBorrow < T1, T2, A >
@@ -105,9 +105,9 @@ where
   T2 : TyApp < A >
 {
   fn lift_field_borrow (
-    field : &T1 :: Type
+    field : &T1 :: Applied
   ) ->
-    T2 :: Type;
+    T2 :: Applied;
 }
 
 pub trait LiftSumBorrow < T1, T2, F >
@@ -136,7 +136,7 @@ pub trait LiftSumBorrow < T1, T2, F >
       -> Apply (Source f root) a
       -> Apply (Root f root) a
  */
-pub trait FieldLifterType < Root >
+pub trait FieldLifterApplied < Root >
 {
   type Source;
   type Target;
@@ -145,7 +145,7 @@ pub trait FieldLifterType < Root >
 }
 
 pub trait FieldLifter < Root, A >
-  : FieldLifterType < Root >
+  : FieldLifterApplied < Root >
 where
   Self :: Source : TyApp < A >,
   Self :: Target : TyApp < A >,
@@ -156,17 +156,17 @@ where
       impl Fn
         ( < Self :: Target
             as TyApp < A >
-          >:: Type)
+          >:: Applied)
         -> Root
       + Send + 'static,
     field :
       < Self :: Source
         as TyApp < A >
-      > :: Type
+      > :: Applied
   ) ->
     < Self :: Injected
       as TyApp < A >
-    >:: Type;
+    >:: Applied;
 }
 
 /*
@@ -184,7 +184,7 @@ pub trait LiftSum2 < F, Root >
   + SumRow < F :: Target >
   + SumRow < F :: Injected >
 where
-  F : FieldLifterType < Root >
+  F : FieldLifterApplied < Root >
 {
   fn lift_sum (
     inject: impl Fn
@@ -214,7 +214,7 @@ pub trait LiftSum3 < F, Target >
   + Sized
 where
   F :
-    FieldLifterType <
+    FieldLifterApplied <
       < Self as
         SumRow < Target >
       > :: Field,
@@ -244,7 +244,7 @@ where
         > :: Field
       >,
   F :
-    FieldLifterType <
+    FieldLifterApplied <
       < Self as
         SumRow < Target >
       > :: Field,
@@ -297,7 +297,7 @@ where
 {
   fn elim_field (
     self,
-    a : T :: Type
+    a : T :: Applied
   ) ->
     R
   ;
@@ -348,22 +348,22 @@ where
   R : Iso < Canon = R >,
   R : SumRow < T >,
   T : TyApp < A >,
-  T::Type : Send,
+  T::Applied : Send,
 {
   fn to_canon (
     row :
-      Sum < T :: Type, R :: Field >
+      Sum < T :: Applied, R :: Field >
   ) ->
-      Sum < T :: Type, R :: Field >
+      Sum < T :: Applied, R :: Field >
   {
     row
   }
 
   fn from_canon (
     row :
-      Sum < T :: Type, R :: Field >
+      Sum < T :: Applied, R :: Field >
   ) ->
-    Sum < T :: Type, R :: Field >
+    Sum < T :: Applied, R :: Field >
   {
     row
   }
@@ -376,7 +376,7 @@ where
   T1 : TyApp < A >,
   T2 : TyApp < A >,
 {
-  type Type = MergeField < T1, T2, A >;
+  type Applied = MergeField < T1, T2, A >;
 }
 
 impl < P >
@@ -385,7 +385,7 @@ impl < P >
 where
   P : Protocol
 {
-  type Type = Receiver < P :: Payload >;
+  type Applied = Receiver < P :: Payload >;
 }
 
 impl < T >
@@ -401,11 +401,11 @@ impl < T, A, R >
 where
   T : TyApp < A >,
   R : SumRow < T >,
-  T::Type : Send
+  T::Applied : Send
 {
   type Field =
     Sum <
-      T :: Type,
+      T :: Applied,
       R :: Field
     >;
 }
@@ -431,8 +431,8 @@ where
   T1 : TyApp < A >,
   T2 : TyApp < A >,
   R : IntersectSum < T1, T2 >,
-  T1::Type : Send,
-  T2::Type : Send,
+  T1::Applied : Send,
+  T2::Applied : Send,
 {
   fn intersect (
     row1 :
@@ -486,20 +486,20 @@ where
   T2 : TyApp < A >,
   F : LiftFieldBorrow < T1, T2, A >,
   B : LiftSumBorrow < T1, T2, F >,
-  T1::Type : Send,
-  T2::Type : Send,
+  T1::Applied : Send,
+  T2::Applied : Send,
 {
   fn lift_sum_borrow (
     sum :
       &Sum <
-        T1 :: Type,
+        T1 :: Applied,
         < B as
           SumRow < T1 >
         > :: Field
       >
   ) ->
     Sum <
-      T2 :: Type,
+      T2 :: Applied,
       < B as
         SumRow < T2 >
       > :: Field
@@ -524,7 +524,7 @@ impl < F, Root >
   LiftSum2 < F, Root > for
   ()
 where
-  F : FieldLifterType < Root >
+  F : FieldLifterApplied < Root >
 {
   fn lift_sum (
     _ : impl Fn ( Bottom ) -> Root,
@@ -546,13 +546,13 @@ where
   F :: Injected : TyApp < A >,
   < F :: Source
     as TyApp < A >
-  > :: Type : Send,
+  > :: Applied : Send,
   < F :: Target
     as TyApp < A >
-  > :: Type : Send,
+  > :: Applied : Send,
   < F :: Injected
     as TyApp < A >
-  > :: Type : Send,
+  > :: Applied : Send,
 {
   fn lift_sum (
     inject1 :
@@ -560,7 +560,7 @@ where
         ( Sum <
             < F :: Target
               as TyApp < A >
-            > :: Type,
+            > :: Applied,
             < B as
               SumRow < F :: Target >
             > :: Field
@@ -572,7 +572,7 @@ where
       Sum <
         < F :: Source
           as TyApp < A >
-        > :: Type,
+        > :: Applied,
         < B as
           SumRow < F :: Source >
         > :: Field
@@ -589,7 +589,7 @@ where
             b :
               < F :: Target
                 as TyApp < A >
-              > :: Type
+              > :: Applied
           | ->
             Root
           {
@@ -637,13 +637,13 @@ where
   T : TyApp < A >,
   B : ElimSum < T, F, R >,
   F : ElimField < T, A, R >,
-  T::Type : Send,
+  T::Applied : Send,
 {
   fn elim_sum (
     f : F,
     row :
       Sum <
-        T :: Type,
+        T :: Applied,
         B :: Field
       >
   ) ->
@@ -664,7 +664,7 @@ impl < A >
   TyApp < A > for
   Bottom
 {
-  type Type = Bottom;
+  type Applied = Bottom;
 }
 
 impl < X , A, B >
@@ -674,9 +674,9 @@ where
   A : TyApp < X >,
   B : TyApp < X >,
 {
-  type Type =
+  type Applied =
     Sum <
-      A :: Type,
-      B :: Type
+      A :: Applied,
+      B :: Applied
     >;
 }

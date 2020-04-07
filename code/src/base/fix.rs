@@ -7,7 +7,7 @@ use async_std::sync::{ Sender, Receiver };
     type family Apply self a
  */
 pub trait TyApp < A > {
-  type Type;
+  type Applied;
 }
 
 pub struct Recur < A > ( PhantomData<A> );
@@ -21,11 +21,11 @@ where
       >
     >
 {
-  unfix : Box < F :: Type >
+  unfix : Box < F :: Applied >
 }
 
 pub fn fix < F >
-  (x : F :: Type)
+  (x : F :: Applied)
   -> Fix < F >
 where
   F :
@@ -42,7 +42,7 @@ where
 
 pub fn unfix < F >
   (x : Fix < F >)
-  -> F :: Type
+  -> F :: Applied
 where
   F :
     TyApp <
@@ -72,24 +72,24 @@ where
     TyApp <
       S < A >
     >
-  > :: Type :
+  > :: Applied :
     TyApp < Recur <
       Fix <
         < F as
           TyApp <
             S < A >
           >
-        > :: Type
+        > :: Applied
       >
     > >,
 {
-  type Type =
+  type Applied =
     Fix <
       < F as
         TyApp <
           S < A >
         >
-      > :: Type
+      > :: Applied
     >;
 }
 
@@ -97,14 +97,21 @@ impl < A >
   TyApp < Recur < A > > for
   Z
 {
-  type Type = A;
+  type Applied = A;
+}
+
+impl
+  TyApp < Z > for
+  Z
+{
+  type Applied = Z;
 }
 
 impl < A >
   TyApp < S < A > > for
   Z
 {
-  type Type = Z;
+  type Applied = Z;
 }
 
 impl < A, N >
@@ -113,21 +120,28 @@ impl < A, N >
 where
   N : TyApp < A >
 {
-  type Type = S < N::Type >;
+  type Applied = S < N::Applied >;
 }
 
 impl < A, N >
   TyApp < Recur < A > > for
   S < N >
 {
-  type Type = N;
+  type Applied = N;
+}
+
+impl < N >
+  TyApp < Z > for
+  S < N >
+{
+  type Applied = S < N >;
 }
 
 impl < A >
   TyApp < A > for
   ()
 {
-  type Type = ();
+  type Applied = ();
 }
 
 impl < A, X >
@@ -136,7 +150,7 @@ impl < A, X >
 where
   X : TyApp < A >
 {
-  type Type = Box < X :: Type >;
+  type Applied = Box < X :: Applied >;
 }
 
 impl < A, X >
@@ -145,7 +159,7 @@ impl < A, X >
 where
   X : TyApp < A >
 {
-  type Type = Receiver < X :: Type >;
+  type Applied = Receiver < X :: Applied >;
 }
 
 impl < A, X >
@@ -154,7 +168,7 @@ impl < A, X >
 where
   X : TyApp < A >
 {
-  type Type = Sender < X :: Type >;
+  type Applied = Sender < X :: Applied >;
 }
 
 impl < A, X, Y >
@@ -164,8 +178,8 @@ where
   X : TyApp < A >,
   Y : TyApp < A >,
 {
-  type Type =
-    ( X :: Type,
-      Y :: Type
+  type Applied =
+    ( X :: Applied,
+      Y :: Applied
     );
 }

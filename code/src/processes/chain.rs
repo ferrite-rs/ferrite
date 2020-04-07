@@ -9,7 +9,7 @@ use crate::base::{
   S,
 };
 
-// Type level list manipulation tricks copied from https://github.com/lloydmeta/frunk
+// Applied level list manipulation tricks copied from https://github.com/lloydmeta/frunk
 
 /*
   Concrete implementation for process linked list.

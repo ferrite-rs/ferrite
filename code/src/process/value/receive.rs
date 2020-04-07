@@ -36,9 +36,9 @@ impl < A, T, P >
 where
   P : TyApp < A >,
 {
-  type Type =
+  type Applied =
     ReceiveValue <
       T,
-      P :: Type
+      P :: Applied
     >;
 }

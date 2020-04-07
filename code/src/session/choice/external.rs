@@ -50,11 +50,11 @@ fn right_choice < L, R > (res: R)
 
     data Choice = Left | Right
 
-    choiceType :: Type -> Type -> Choice -> Type
-    choiceType a _ Left = a
-    choiceType _ b Right = b
+    choiceApplied :: Applied -> Applied -> Choice -> Applied
+    choiceApplied a _ Left = a
+    choiceApplied _ b Right = b
 
-    ContBuilder :: (a: Type) -> (b: Type) -> (c: Choice) -> (choiceType a b c)
+    ContBuilder :: (a: Applied) -> (b: Applied) -> (c: Choice) -> (choiceApplied a b c)
 
   But we don't really have dependent type in Rust. Fortunately there is a
   way to emulate dependent type indexed by types with finite terms, i.e. Bool.

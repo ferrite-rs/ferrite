@@ -42,12 +42,12 @@ where
   X : TyApp < A >,
   Y : TyApp < A >,
 {
-  type Type =
+  type Applied =
     Box <
       dyn FnOnce (T) ->
         Either <
-          X :: Type,
-          Y :: Type
+          X :: Applied,
+          Y :: Applied
         >
       + Send
     >;
@@ -60,9 +60,9 @@ where
   P : TyApp < A >,
   Q : TyApp < A >,
 {
-  type Type =
+  type Applied =
   ExternalChoice <
-      P :: Type,
-      Q :: Type
+      P :: Applied,
+      Q :: Applied
     >;
 }

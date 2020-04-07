@@ -30,9 +30,9 @@ where
   P : TyApp < A >,
   Q : TyApp < A >,
 {
-  type Type =
+  type Applied =
   SendChannel <
-      P :: Type,
-      Q :: Type
+      P :: Applied,
+      Q :: Applied
     >;
 }

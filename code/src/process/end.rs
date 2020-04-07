@@ -18,5 +18,5 @@ impl < A >
   TyApp < A >
   for End
 {
-  type Type = End;
+  type Applied = End;
 }

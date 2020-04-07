@@ -18,9 +18,9 @@ where
   X : TyApp < A >,
   Y : TyApp < A >,
 {
-  type Type =
+  type Applied =
     Either <
-      X :: Type,
-      Y :: Type
+      X :: Applied,
+      Y :: Applied
     >;
 }

@@ -23,15 +23,15 @@ where
   );
 }
 
-impl < A, T, P >
-  TyApp < A > for
-  SendValue < T, P >
+impl < X, T, A >
+  TyApp < X > for
+  SendValue < T, A >
 where
-  P : TyApp < A >,
+  A : TyApp < X >,
 {
-  type Type =
+  type Applied =
     SendValue <
       T,
-      P :: Type
+      A :: Applied
     >;
 }

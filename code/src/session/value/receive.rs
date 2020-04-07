@@ -22,7 +22,8 @@ use crate::base::{
 pub fn receive_value
   < T, C, A, Fut >
   ( cont_builder : impl
-      FnOnce (T) -> Fut + Send + 'static
+      FnOnce (T) -> Fut
+      + Send + 'static
   ) ->
      PartialSession < C, ReceiveValue < T, A > >
 where

@@ -70,7 +70,7 @@ where
   P : Protocol,
   I : Context,
 {
-  type Type =
+  type Applied =
     PartialSession < I, P >;
 }
 
@@ -90,7 +90,7 @@ where
       P
     >
 {
-  type Type =
+  type Applied =
     PartialSession <
       N :: Target,
       Q
@@ -171,7 +171,7 @@ where
       P
     >,
 {
-  type Type =
+  type Applied =
     InjectSession <
       N, I, P, Q, Row, Root
     >;
@@ -267,7 +267,7 @@ where
 
 impl
   < Root, N, I, P, Row >
-  FieldLifterType < Root >
+  FieldLifterApplied < Root >
   for MakeCont < N, I, P, Row >
 {
   type Source = ();

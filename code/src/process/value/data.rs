@@ -9,5 +9,5 @@ impl
   TyApp < A > for
   Val < X >
 {
-  type Type = Val < X >;
+  type Applied = Val < X >;
 }

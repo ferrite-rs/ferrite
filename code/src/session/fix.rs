@@ -6,52 +6,54 @@ use async_std::task;
 use async_std::sync::{ Sender, channel };
 
 pub fn fix_session
-  < F, I >
+  < G, F, I >
   ( cont:
       PartialSession <
         I,
         < F as
           TyApp < Recur <
-            FixProtocol < F >
+            FixProtocol < G >
           > >
-        > :: Type
+        > :: Applied
       >
   ) ->
     PartialSession <
       I,
-      FixProtocol < F >
+      FixProtocol < G >
     >
 where
+  G : Send + 'static,
+  G : TyApp < Z, Applied=F >,
   I : Context,
   F : Protocol,
   F :
     TyApp < Recur <
-      FixProtocol < F >
+      FixProtocol < G >
     > >,
   F :: Payload :
     TyApp <
       Recur <
         Fix < F :: Payload >
       >,
-      Type =
+      Applied =
         < < F as
             TyApp < Recur <
-              FixProtocol < F >
+              FixProtocol < G >
             > >
-          > :: Type
+          > :: Applied
           as Protocol
         > :: Payload,
     >,
   < F as
     TyApp < Recur <
-      FixProtocol < F >
+      FixProtocol < G >
     > >
-  > :: Type : Protocol,
+  > :: Applied : Protocol,
   < F :: Payload as
     TyApp < Recur <
         Fix < F :: Payload >
       > >
-  > :: Type :
+  > :: Applied :
     Send
 {
   unsafe_create_session (
@@ -66,9 +68,9 @@ where
         : ( Sender <
               < < F as
                   TyApp < Recur <
-                    FixProtocol < F >
+                    FixProtocol < G >
                   > >
-                > :: Type
+                > :: Applied
                 as Protocol
               > :: Payload
             >
@@ -91,52 +93,54 @@ where
 }
 
 pub fn unfix_session
-  < F, I >
+  < G, F, I >
   ( cont:
       PartialSession <
         I,
-        FixProtocol < F >
+        FixProtocol < G >
       >
   ) ->
     PartialSession <
       I,
       < F as
         TyApp < Recur <
-          FixProtocol < F >
+          FixProtocol < G >
         > >
-      > :: Type
+      > :: Applied
     >
 where
+  G : Send + 'static,
+  G : TyApp < Z, Applied=F >,
   I : Context,
   F : Protocol,
   F :
     TyApp < Recur <
-      FixProtocol < F >
+      FixProtocol < G >
     > >,
   F :: Payload :
     TyApp <
       Recur <
         Fix < F :: Payload >
       >,
-      Type =
+      Applied =
         < < F as
             TyApp < Recur <
-              FixProtocol < F >
+              FixProtocol < G >
             > >
-          > :: Type
+          > :: Applied
           as Protocol
         > :: Payload,
     >,
   < F as
     TyApp < Recur <
-      FixProtocol < F >
+      FixProtocol < G >
     > >
-  > :: Type : Protocol,
+  > :: Applied : Protocol,
   < F :: Payload as
     TyApp < Recur <
         Fix < F :: Payload >
       > >
-  > :: Type :
+  > :: Applied :
     Send
 {
   unsafe_create_session (
@@ -146,9 +150,9 @@ where
         Sender <
           < < F as
               TyApp < Recur <
-                FixProtocol < F >
+                FixProtocol < G >
               > >
-            > :: Type
+            > :: Applied
             as Protocol
           > :: Payload
         >
@@ -203,7 +207,7 @@ where
 }
 
 pub fn unfix_session_for
-  < I, P, F, N >
+  < I, P, G, F, N >
   ( _ : N,
     cont :
       PartialSession <
@@ -215,45 +219,47 @@ pub fn unfix_session_for
 where
   P : Protocol,
   I : Context,
+  G : Send + 'static,
+  G : TyApp < Z, Applied=F >,
   F : Protocol,
   F :
     TyApp < Recur <
-      FixProtocol < F >
+      FixProtocol < G >
     > >,
   F :: Payload :
     TyApp <
       Recur <
         Fix < F :: Payload >
       >,
-      Type =
+      Applied =
         < < F as
             TyApp < Recur <
-              FixProtocol < F >
+              FixProtocol < G >
             > >
-          > :: Type
+          > :: Applied
           as Protocol
         > :: Payload,
     >,
   < F as
     TyApp < Recur <
-      FixProtocol < F >
+      FixProtocol < G >
     > >
-  > :: Type : Protocol,
+  > :: Applied : Protocol,
   < F :: Payload as
     TyApp < Recur <
       Fix < F :: Payload >
     > >
-  > :: Type :
+  > :: Applied :
     Send,
   N :
     ContextLens <
       I,
-      FixProtocol < F >,
+      FixProtocol < G >,
       < F as
         TyApp < Recur <
-          FixProtocol < F >
+          FixProtocol < G >
         > >
-      > :: Type,
+      > :: Applied,
     >
 {
   unsafe_create_session(
@@ -265,9 +271,9 @@ where
         : ( Sender <
               < < F as
                   TyApp < Recur <
-                    FixProtocol < F >
+                    FixProtocol < G >
                   > >
-                > :: Type
+                > :: Applied
                 as Protocol
               > :: Payload
             >

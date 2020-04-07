@@ -7,8 +7,8 @@ pub use crate::process::choice2::*;
 
 pub type EitherField < A, B, T > =
   Either <
-    < T as TyApp<A> > :: Type,
-    < T as TyApp<B> > :: Type
+    < T as TyApp<A> > :: Applied,
+    < T as TyApp<B> > :: Applied
   >;
 
 pub enum Either < A, B > {
@@ -22,12 +22,12 @@ impl < T, A, B >
 where
   T : TyApp < A >,
   T : TyApp < B >,
-  < T as TyApp<A> > :: Type : Send,
-  < T as TyApp<B> > :: Type : Send,
+  < T as TyApp<A> > :: Applied : Send,
+  < T as TyApp<B> > :: Applied : Send,
 {
   type Field = Either <
-    < T as TyApp<A> > :: Type,
-    < T as TyApp<B> > :: Type
+    < T as TyApp<A> > :: Applied,
+    < T as TyApp<B> > :: Applied
   >;
 }
 
@@ -44,8 +44,8 @@ impl < A, B, T >
 where
   T : TyApp < A >,
   T : TyApp < B >,
-  < T as TyApp<A> > :: Type : Send,
-  < T as TyApp<B> > :: Type : Send,
+  < T as TyApp<A> > :: Applied : Send,
+  < T as TyApp<B> > :: Applied : Send,
 {
   fn to_canon (
     row : EitherField < A, B, T >
