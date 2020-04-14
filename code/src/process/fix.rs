@@ -1,29 +1,6 @@
 use std::marker::PhantomData;
 use crate::base::*;
 
-
-pub struct FixProtocol2 < F > {
-  f : PhantomData < F >
-}
-
-impl < F >
-  Protocol for
-  FixProtocol2 < F >
-where
-  F : Send + 'static,
-  F : TyApp < FixProtocol2 < F > >,
-  < F as
-    TyApp < FixProtocol2 < F > >
-  > :: Applied : Protocol
-{
-  type Payload =
-    < < F as
-        TyApp < FixProtocol2 < F > >
-      > :: Applied
-      as Protocol
-    > :: Payload;
-}
-
 pub struct FixProtocol < F > {
   f : PhantomData < F >
 }
@@ -36,11 +13,11 @@ where
   G : TyApp < Z, Applied=F >,
   F : Protocol,
   F :: Payload :
-    TyApp < Recur <
+    TyApp < Unfix <
       Fix < F :: Payload >
     > >,
   < F :: Payload as
-    TyApp < Recur <
+    TyApp < Unfix <
       Fix < F :: Payload >
     > >
   > :: Applied :
@@ -60,7 +37,7 @@ where
       S < A >
     >,
   F :
-    TyApp < Recur <
+    TyApp < Unfix <
       FixProtocol < F >
     > >,
   < F as
@@ -68,7 +45,7 @@ where
       S < A >
     >
   > :: Applied :
-    TyApp < Recur <
+    TyApp < Unfix <
       FixProtocol <
         < F as
           TyApp <

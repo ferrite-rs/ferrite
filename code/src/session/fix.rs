@@ -6,76 +6,43 @@ use async_std::task;
 use async_std::sync::{ Sender, channel };
 
 pub fn fix_session
-  < G, F, I >
-  ( cont:
-      PartialSession <
-        I,
-        < F as
-          TyApp < Recur <
-            FixProtocol < G >
-          > >
-        > :: Applied
-      >
-  ) ->
+  < F0, F1, F2, P1, P2, C >
+  ( cont: PartialSession < C, F2 > )
+  ->
     PartialSession <
-      I,
-      FixProtocol < G >
+      C,
+      FixProtocol < F0 >
     >
 where
-  G : Send + 'static,
-  G : TyApp < Z, Applied=F >,
-  I : Context,
-  F : Protocol,
-  F :
-    TyApp < Recur <
-      FixProtocol < G >
-    > >,
-  F :: Payload :
+  C : Context,
+  F0 : Send + 'static,
+  P1 : Send + 'static,
+  P2 : Send + 'static,
+  F0 : TyApp < Z, Applied=F1 >,
+  F1 : Protocol < Payload = P1 >,
+  F2 : Protocol < Payload = P2 >,
+  F1 :
     TyApp <
-      Recur <
-        Fix < F :: Payload >
+      Unfix <
+        FixProtocol < F0 >
       >,
-      Applied =
-        < < F as
-            TyApp < Recur <
-              FixProtocol < G >
-            > >
-          > :: Applied
-          as Protocol
-        > :: Payload,
+      Applied = F2
     >,
-  < F as
-    TyApp < Recur <
-      FixProtocol < G >
-    > >
-  > :: Applied : Protocol,
-  < F :: Payload as
-    TyApp < Recur <
-        Fix < F :: Payload >
-      > >
-  > :: Applied :
-    Send
+  P1 :
+    TyApp <
+      Unfix <
+        Fix < P1 >
+      >,
+      Applied = P2,
+    >,
 {
   unsafe_create_session (
     async move |
       ctx,
-      sender1 :
-        Sender <
-          Fix < F :: Payload >
-        >
+      sender1 : Sender < Fix < P1 > >
     | {
       let (sender2, receiver)
-        : ( Sender <
-              < < F as
-                  TyApp < Recur <
-                    FixProtocol < G >
-                  > >
-                > :: Applied
-                as Protocol
-              > :: Payload
-            >
-          , _
-          )
+        : ( Sender < P2 >, _ )
         = channel(1);
 
       let child1 = task::spawn(async move {
@@ -85,86 +52,52 @@ where
 
       let child2 = task::spawn(
         unsafe_run_session
-          ( cont, ctx, sender2
-          ) );
+          ( cont, ctx, sender2 ) );
 
       join!(child1, child2).await;
     })
 }
 
 pub fn unfix_session
-  < G, F, I >
+  < F0, F1, F2, P1, P2, C >
   ( cont:
       PartialSession <
-        I,
-        FixProtocol < G >
+        C,
+        FixProtocol < F0 >
       >
   ) ->
-    PartialSession <
-      I,
-      < F as
-        TyApp < Recur <
-          FixProtocol < G >
-        > >
-      > :: Applied
-    >
+    PartialSession < C, F2 >
 where
-  G : Send + 'static,
-  G : TyApp < Z, Applied=F >,
-  I : Context,
-  F : Protocol,
-  F :
-    TyApp < Recur <
-      FixProtocol < G >
-    > >,
-  F :: Payload :
+  C : Context,
+  F0 : Send + 'static,
+  P1 : Send + 'static,
+  P2 : Send + 'static,
+  F0 : TyApp < Z, Applied = F1 >,
+  F1 : Protocol < Payload = P1 >,
+  F2 : Protocol < Payload = P2 >,
+  F1 :
     TyApp <
-      Recur <
-        Fix < F :: Payload >
+      Unfix <
+        FixProtocol < F0 >
       >,
-      Applied =
-        < < F as
-            TyApp < Recur <
-              FixProtocol < G >
-            > >
-          > :: Applied
-          as Protocol
-        > :: Payload,
+      Applied = F2
     >,
-  < F as
-    TyApp < Recur <
-      FixProtocol < G >
-    > >
-  > :: Applied : Protocol,
-  < F :: Payload as
-    TyApp < Recur <
-        Fix < F :: Payload >
-      > >
-  > :: Applied :
-    Send
+  P1 :
+    TyApp <
+      Unfix <
+        Fix < P1 >
+      >,
+      Applied = P2,
+    >,
 {
   unsafe_create_session (
     async move |
       ctx,
-      sender1 :
-        Sender <
-          < < F as
-              TyApp < Recur <
-                FixProtocol < G >
-              > >
-            > :: Applied
-            as Protocol
-          > :: Payload
-        >
+      sender1 : Sender < P2 >
     | {
       let (sender2, receiver)
-        : ( Sender <
-              Fix < F :: Payload >
-            >
-          , _
-          )
+        : ( Sender < Fix < P1 > > , _ )
         = channel(1);
-
 
       let child1 = task::spawn(async move {
         let val = receiver.recv().await.unwrap();
@@ -223,17 +156,17 @@ where
   G : TyApp < Z, Applied=F >,
   F : Protocol,
   F :
-    TyApp < Recur <
+    TyApp < Unfix <
       FixProtocol < G >
     > >,
   F :: Payload :
     TyApp <
-      Recur <
+      Unfix <
         Fix < F :: Payload >
       >,
       Applied =
         < < F as
-            TyApp < Recur <
+            TyApp < Unfix <
               FixProtocol < G >
             > >
           > :: Applied
@@ -241,12 +174,12 @@ where
         > :: Payload,
     >,
   < F as
-    TyApp < Recur <
+    TyApp < Unfix <
       FixProtocol < G >
     > >
   > :: Applied : Protocol,
   < F :: Payload as
-    TyApp < Recur <
+    TyApp < Unfix <
       Fix < F :: Payload >
     > >
   > :: Applied :
@@ -256,7 +189,7 @@ where
       I,
       FixProtocol < G >,
       < F as
-        TyApp < Recur <
+        TyApp < Unfix <
           FixProtocol < G >
         > >
       > :: Applied,
@@ -270,7 +203,7 @@ where
         let (sender2, receiver2)
         : ( Sender <
               < < F as
-                  TyApp < Recur <
+                  TyApp < Unfix <
                     FixProtocol < G >
                   > >
                 > :: Applied

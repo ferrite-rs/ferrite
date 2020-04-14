@@ -13,6 +13,7 @@ pub mod nary_choice;
 pub mod canvas;
 pub mod fix;
 pub mod stream;
+pub mod stream2;
 
 pub use pair::*;
 pub use hello::*;

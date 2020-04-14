@@ -10,13 +10,13 @@ pub trait TyApp < A > {
   type Applied;
 }
 
-pub struct Recur < A > ( PhantomData<A> );
+pub struct Unfix < A > ( PhantomData<A> );
 
 pub struct Fix < F >
 where
   F :
     TyApp <
-      Recur <
+      Unfix <
         Fix < F >
       >
     >
@@ -30,7 +30,7 @@ pub fn fix < F >
 where
   F :
     TyApp <
-      Recur <
+      Unfix <
         Fix < F >
       >
     >
@@ -46,7 +46,7 @@ pub fn unfix < F >
 where
   F :
     TyApp <
-      Recur <
+      Unfix <
         Fix < F >
       >
     >
@@ -55,17 +55,15 @@ where
 }
 
 impl < A, F >
-  TyApp <
-    A
-  > for
-  Fix < F >
+  TyApp < A >
+  for Fix < F >
 where
   F :
     TyApp <
       S < A >
     >,
   F :
-    TyApp < Recur <
+    TyApp < Unfix <
       Fix < F >
     > >,
   < F as
@@ -73,7 +71,7 @@ where
       S < A >
     >
   > :: Applied :
-    TyApp < Recur <
+    TyApp < Unfix <
       Fix <
         < F as
           TyApp <
@@ -94,7 +92,7 @@ where
 }
 
 impl < A >
-  TyApp < Recur < A > > for
+  TyApp < Unfix < A > > for
   Z
 {
   type Applied = A;
@@ -124,7 +122,7 @@ where
 }
 
 impl < A, N >
-  TyApp < Recur < A > > for
+  TyApp < Unfix < A > > for
   S < N >
 {
   type Applied = N;

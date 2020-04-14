@@ -46,8 +46,12 @@ pub fn main() {
   //   demo::queue::queue_session()
   // );
 
+  // run_session (
+  //   demo::stream::stream_session()
+  // );
+
   run_session (
-    demo::stream::stream_session()
+    demo::stream2::stream_session()
   );
 
   info!("[Main] Main program terminating");
