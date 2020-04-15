@@ -4,7 +4,7 @@ use async_std::task::sleep;
 
 use crate::public::*;
 
-type IntStream = FixProtocol <
+type IntStream = Fix <
   SendValue < i32, Z > >;
 
 fn producer (count: i32) ->

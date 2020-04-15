@@ -67,8 +67,8 @@ where
     ( ctx :
         < N :: Deleted
           as Context
-        > :: Values,
-      sender : Sender < Out :: Payload >,
+        > :: Endpoints,
+      sender : Sender < Out >,
       val_sum : Self :: ValueSum,
       sesssion_sum : Self :: SessionSum,
     ) ->
@@ -248,8 +248,8 @@ where
             >
           > :: Deleted
           as Context
-        > :: Values,
-      sender : Sender < Out :: Payload >,
+        > :: Endpoints,
+      sender : Sender < Out >,
       val : Self :: ValueSum,
       session : Self :: CurrentSession,
     ) ->
@@ -401,8 +401,8 @@ where
             >
           >:: Deleted
           as Context
-        > :: Values,
-      sender : Sender < Out :: Payload >,
+        > :: Endpoints,
+      sender : Sender < Out >,
       val_sum : Self :: ValueSum,
       session_sum : Self :: SessionSum,
     ) ->
@@ -482,9 +482,9 @@ where
       });
 
       let child2 = task::spawn(async move {
-        sender1.send(
-          Sum :: inject_selected ( receiver2 )
-        ).await;
+        sender1.send( InternalChoice {
+          value_sum : Sum :: inject_selected ( receiver2 )
+        } ).await;
       });
 
       join!(child1, child2).await;
@@ -541,7 +541,8 @@ where
           >
         > :: extract_source ( ctx1 );
 
-      let val_sum = sum_chan.recv().await.unwrap();
+      let InternalChoice { value_sum : val_sum }
+        = sum_chan.recv().await.unwrap();
 
       let selector =
         Sum ::

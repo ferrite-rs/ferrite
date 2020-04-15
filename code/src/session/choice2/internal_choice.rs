@@ -59,8 +59,8 @@ where
   ctx :
     < N :: Deleted
       as Context
-    > :: Values,
-  sender : Sender < A :: Payload >
+    > :: Endpoints,
+  sender : Sender < A >
 }
 
 impl < I, P >
@@ -81,8 +81,15 @@ where
   P : Protocol,
   Q : Protocol,
   I : Context,
-  InternalChoice < Row > :
-    Protocol,
+  Row : Iso,
+  Row :
+    Send + 'static,
+  Row::Canon :
+    SumRow < ReceiverCon >,
+  < Row::Canon as
+    SumRow < ReceiverCon >
+  >  :: Field
+    : Send,
   N :
     ContextLens <
       I,
@@ -103,8 +110,15 @@ where
   P : Protocol,
   Q : Protocol,
   I : Context,
-  InternalChoice < Row > :
-    Protocol,
+  Row : Iso,
+  Row :
+    Send + 'static,
+  Row::Canon :
+    SumRow < ReceiverCon >,
+  < Row::Canon as
+    SumRow < ReceiverCon >
+  >  :: Field
+    : Send,
   N :
     ContextLens <
       I,
@@ -143,8 +157,15 @@ where
   P : Protocol,
   Q : Protocol,
   I : Context,
-  InternalChoice < Row > :
-    Protocol,
+  Row : Iso,
+  Row :
+    Send + 'static,
+  Row::Canon :
+    SumRow < ReceiverCon >,
+  < Row::Canon as
+    SumRow < ReceiverCon >
+  >  :: Field
+    : Send,
   N :
     ContextLens <
       I,
@@ -162,8 +183,15 @@ where
   P : Protocol,
   Q : Protocol,
   I : Context,
-  InternalChoice < Row > :
-    Protocol,
+  Row : Iso,
+  Row :
+    Send + 'static,
+  Row::Canon :
+    SumRow < ReceiverCon >,
+  < Row::Canon as
+    SumRow < ReceiverCon >
+  >  :: Field
+    : Send,
   N :
     ContextLens <
       I,
@@ -185,7 +213,7 @@ where
   A : Protocol
 {
   fn lift_field_borrow (
-    _ : &Receiver < A :: Payload >
+    _ : &Receiver < A >
   ) ->
     ()
   { () }
@@ -287,6 +315,16 @@ where
   A : Protocol,
   P : Protocol,
   I : Context,
+  Row : Send + 'static,
+  Row : Iso,
+  Row :
+    Send + 'static,
+  Row::Canon :
+    SumRow < ReceiverCon >,
+  < Row::Canon as
+    SumRow < ReceiverCon >
+  >  :: Field
+    : Send,
   InternalChoice < Row > :
     Protocol,
   N :
@@ -404,12 +442,8 @@ where
           >
         > :: extract_source ( ctx1 );
 
-      let receiver_sum
-        : < Canon as
-            SumRow < ReceiverCon >
-          >  :: Field
-        =
-        sum_chan.recv().await.unwrap();
+      let InternalChoice { field : receiver_sum }
+        = sum_chan.recv().await.unwrap();
 
       let selector
         : < Canon as SumRow < () > > :: Field

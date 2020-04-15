@@ -3,7 +3,7 @@ use async_std::task;
 pub use crate::base::*;
 pub use crate::processes::*;
 pub use crate::process::nary_choice::*;
-use async_std::sync::{ Sender, Receiver, channel };
+use async_std::sync::{ Receiver, channel };
 
 pub trait ExternalSum < I >
   : ProtocolSum2
@@ -40,7 +40,7 @@ where
   ;
 
   fn run_session_sum
-    ( ctx : I :: Values,
+    ( ctx : I :: Endpoints,
       session_sum : Self :: SessionSum
     ) ->
       Self :: ValueSum
@@ -71,11 +71,11 @@ where
     ctx :
       < N :: Deleted
         as Context
-      > :: Values
+      > :: Endpoints
   ) ->
     < N :: Target
       as Context
-    > :: Values
+    > :: Endpoints
   ;
 }
 
@@ -180,7 +180,7 @@ where
   }
 
   fn run_session_sum
-    ( ctx : I :: Values,
+    ( ctx : I :: Endpoints,
       session : Self :: CurrentSession
     ) ->
       Self :: ValueSum
@@ -296,7 +296,7 @@ where
   }
 
   fn run_session_sum
-    ( ctx : I :: Values,
+    ( ctx : I :: Endpoints,
       session_sum : Self :: SessionSum
     ) ->
       Self :: ValueSum
@@ -352,15 +352,15 @@ where
 
   fn select_ctx (
     receiver :
-      Receiver < P :: Payload >,
+      Receiver < P >,
     ctx :
       < N :: Deleted
         as Context
-      > :: Values
+      > :: Endpoints
   ) ->
     < N :: Target
       as Context
-    > :: Values
+    > :: Endpoints
   {
     N :: insert_target
       ( receiver, ctx )
@@ -404,11 +404,11 @@ where
     ctx :
       < N :: Deleted
         as Context
-      > :: Values
+      > :: Endpoints
   ) ->
     < N :: Target
       as Context
-    > :: Values
+    > :: Endpoints
   {
     match val_sum {
       Sum::Inl (_) => {
@@ -457,11 +457,11 @@ where
     ctx :
       < N :: Deleted
         as Context
-      > :: Values
+      > :: Endpoints
   ) ->
     < N :: Target
       as Context
-    > :: Values
+    > :: Endpoints
   {
     match val_sum {
       Sum::Inl (receiver) => {
@@ -504,19 +504,7 @@ where
     + Send + 'static
 {
   unsafe_create_session (
-    async move |
-      ctx,
-      sender :
-        Sender <
-          Box <
-            dyn FnOnce
-              ( Sum :: SelectorSum
-              ) ->
-                Sum :: ValueSum
-            + Send
-          >
-        >
-    | {
+    async move | ctx, sender | {
       let cont1 =
         move |
           selector : Sum :: SelectorSum
@@ -543,7 +531,9 @@ where
           val_sum
         };
 
-      sender.send ( Box::new ( cont1 )).await;
+      sender.send ( ExternalChoice {
+        cont_sum : Box::new ( cont1 )
+      } ).await;
     })
 }
 
@@ -582,8 +572,8 @@ where
       let (receiver, ctx2) =
         N :: extract_source ( ctx1 );
 
-      let offerer =
-        receiver.recv().await.unwrap();
+      let ExternalChoice { cont_sum : offerer }
+        = receiver.recv().await.unwrap();
 
       let value_sum =
         offerer (

@@ -1,7 +1,6 @@
 
 pub use super::{
   End,
-  FixProtocol,
   Choice,
   Either,
   ExternalChoice,

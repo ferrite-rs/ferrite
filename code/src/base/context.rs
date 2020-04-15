@@ -3,7 +3,7 @@ use crate::base::nat::{ Nat };
 /// A list of processes for input. It has multiple implementations including
 /// [crate::base::Context].
 pub trait Context : 'static {
-  type Values : Sized + Send;
+  type Endpoints : Sized + Send;
 
   type Length : Nat;
 }
@@ -11,7 +11,7 @@ pub trait Context : 'static {
 /// An ordered linked list of processes.
 pub trait EmptyContext : Context {
   fn empty_values () ->
-    < Self as Context > :: Values;
+    < Self as Context > :: Endpoints;
 }
 
 pub trait
@@ -22,16 +22,16 @@ where
   type Appended : Context;
 
   fn append_context (
-    channels1: <Self as Context>::Values,
-    channels2: <R as Context>::Values
+    channels1: <Self as Context>::Endpoints,
+    channels2: <R as Context>::Endpoints
   ) ->
-    <Self::Appended as Context>::Values;
+    <Self::Appended as Context>::Endpoints;
 
   fn split_context (
-    channels: <Self::Appended as Context>::Values
+    channels: <Self::Appended as Context>::Endpoints
   ) -> (
-    <Self as Context>::Values,
-    <R as Context>::Values
+    <Self as Context>::Endpoints,
+    <R as Context>::Endpoints
   );
 }
 
@@ -39,12 +39,12 @@ pub trait Reversible : Context {
   type Reversed : Context;
 
   fn reverse_channels(
-    channels: <Self as Context>::Values,
+    channels: <Self as Context>::Endpoints,
   ) ->
-    <Self::Reversed as Context>::Values;
+    <Self::Reversed as Context>::Endpoints;
 
   fn unreverse_channels(
-    channels: <Self::Reversed as Context>::Values,
+    channels: <Self::Reversed as Context>::Endpoints,
   ) ->
-    Self::Values;
+    Self::Endpoints;
 }

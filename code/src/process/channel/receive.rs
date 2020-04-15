@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use async_std::sync::{ Sender, Receiver };
 
 use crate::base as base;
@@ -7,10 +6,12 @@ use base::{ TyApp, Protocol };
 
 pub struct ReceiveChannel
   < P, Q >
-{
-  p: PhantomData<P>,
-  q: PhantomData<Q>
-}
+( pub (crate)
+  Sender < (
+    Receiver < P >,
+    Sender < Q >
+  ) >
+);
 
 impl
   < P, Q >
@@ -19,13 +20,7 @@ impl
 where
   P: Protocol,
   Q: Protocol
-{
-  type Payload =
-    Sender < (
-      Receiver < P :: Payload >,
-      Sender < Q :: Payload >
-    ) >;
-}
+{ }
 
 impl < A, P, Q >
   TyApp < A > for

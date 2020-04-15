@@ -5,12 +5,12 @@ use async_std::task::sleep;
 use crate::public::*;
 
 type Stream =
-  FixProtocol <
+  Fix <
     ReceiveValue <
       String,
       InternalChoice <
         Z,
-        FixProtocol <
+        Fix <
           SendValue <
             i64,
             ExternalChoice <
@@ -38,7 +38,7 @@ fn send_stream ( seed : i64 ) ->
     SendValue <
       i64,
       ExternalChoice <
-        FixProtocol <
+        Fix <
           SendValue <
             i64,
             ExternalChoice <

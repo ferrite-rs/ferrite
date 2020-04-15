@@ -55,35 +55,26 @@ where
   unsafe_create_session (
     async move | ctx1, sender1 | {
       let (p_chan, ctx2) =
-        < N as
-          ContextLens <
-            I, P, Empty
-          >
-        > :: extract_source (ctx1);
+        N :: extract_source (ctx1);
 
       let (sender2, receiver2) = channel(1);
       let (sender3, receiver3) = channel(1);
 
       let ctx3 =
-        < N as
-          ContextLens <
-            I, P, Empty
-          >
-        > :: insert_target ((), ctx2);
+        N :: insert_target ((), ctx2);
 
       let child1 = task::spawn(async move {
-        // receive the input x from the input channel
         let p = p_chan.recv().await.unwrap();
         sender2.send(p).await;
       });
 
       let child2 = task::spawn(async move {
-        // blocks until the channel pairs are sent
-        sender1.send((receiver2, receiver3)).await;
+        sender1.send(
+          SendChannel ( receiver2, receiver3 )
+        ).await;
       });
 
       let child3 = task::spawn(async {
-        // the continuation Q only starts after that
         unsafe_run_session
           ( cont, ctx3, sender3
           ).await;
@@ -157,7 +148,8 @@ where
           >
         > :: extract_source ( ctx1 );
 
-      let (p_chan, y_chan) = pair_chan.recv().await.unwrap();
+      let SendChannel ( p_chan, y_chan )
+        = pair_chan.recv().await.unwrap();
 
       let ctx3 =
         < N as
@@ -230,7 +222,9 @@ where
       // the sender here blocks until the inner channel pairs
       // are received on the other side
       let child2 = task::spawn(async move {
-        sender.send((receiver1, receiver2)).await;
+        sender.send(
+          SendChannel ( receiver1, receiver2 )
+        ).await;
       });
 
       // the second thread is blocked until the first channel is being accessed
@@ -280,43 +274,16 @@ where
   unsafe_create_session (
     async move | ctx1, sender1 | {
       let ( pair_chan, ctx2 ) =
-        < SourceLens as
-          ContextLens <
-            I,
-            SendChannel < P1, P2 >,
-            P2
-          >
-        > :: extract_source ( ctx1 );
+        SourceLens :: extract_source ( ctx1 );
 
-      let (p_chan, y_chan) =
+      let SendChannel ( p_chan, y_chan ) =
         pair_chan.recv().await.unwrap();
 
-      let ctx3 =
-        < SourceLens as
-          ContextLens <
-            I,
-            SendChannel < P1, P2 >,
-            P2
-          >
-        > :: insert_target ( y_chan, ctx2 );
+      let ctx3 = SourceLens :: insert_target ( y_chan, ctx2 );
 
-      let ((), ctx4) =
-        < TargetLens as
-          ContextLens <
-            SourceLens :: Target,
-            Empty,
-            P1
-          >
-        > :: extract_source ( ctx3 );
+      let ((), ctx4) = TargetLens :: extract_source ( ctx3 );
 
-      let ctx5 =
-        < TargetLens as
-          ContextLens <
-            SourceLens :: Target,
-            Empty,
-            P1
-          >
-        > :: insert_target ( p_chan, ctx4 );
+      let ctx5 = TargetLens :: insert_target ( p_chan, ctx4 );
 
         unsafe_run_session
           ( cont, ctx5, sender1

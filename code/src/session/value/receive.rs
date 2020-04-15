@@ -3,7 +3,7 @@ use async_macros::join;
 use std::future::{ Future };
 use async_std::sync::{ Sender, channel };
 
-use crate::process::{ Val, ReceiveValue };
+use crate::process::{ ReceiveValue };
 
 use crate::base::{
   Protocol,
@@ -39,23 +39,23 @@ where
     async move |
       ctx,
       sender1 : Sender <
-        Sender <(
-          Val < T >,
-          Sender < A::Payload >
-        )>,
+        ReceiveValue < T, A >,
       >
     | {
       let (sender2, receiver2) = channel(1);
 
       let child1 = task::spawn ( async move {
-        sender1.send(sender2).await;
+        sender1.send(
+          ReceiveValue ( sender2 )
+        ).await;
       });
 
 
       let child2 = task::spawn ( async move {
-        let (val, sender3) = receiver2.recv().await.unwrap();
+        let ( val, sender3 )
+          = receiver2.recv().await.unwrap();
 
-        let cont = cont_builder(val.val).await;
+        let cont = cont_builder(val).await;
 
         unsafe_run_session
           ( cont, ctx, sender3
@@ -104,7 +104,8 @@ where
     async move | ctx1, sender1 | {
       let (receiver1, ctx2) = N :: extract_source ( ctx1 );
 
-      let sender2 = receiver1.recv().await.unwrap();
+      let ReceiveValue ( sender2 )
+        = receiver1.recv().await.unwrap();
 
       let (val, cont) = cont_builder().await;
 
@@ -114,7 +115,7 @@ where
 
       let child1 = task::spawn(async move {
         sender2.send( (
-          Val { val: val },
+          val,
           sender3
         ) ).await;
       });

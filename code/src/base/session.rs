@@ -18,7 +18,7 @@ where
   C: Context
 {
   executor : Box <
-    dyn FnOnce( C::Values, Sender < A::Payload > )
+    dyn FnOnce( C::Endpoints, Sender < A > )
       -> Pin < Box < dyn Future < Output=() > + Send > >
     + Send
   >
@@ -28,7 +28,7 @@ pub fn unsafe_create_session
   < I, P, Fut >
   (
     executor : impl
-      FnOnce( I::Values, Sender < P::Payload > )
+      FnOnce( I::Endpoints, Sender < P > )
         -> Fut
       + Send + 'static
   ) ->
@@ -40,7 +40,7 @@ where
 {
   let executor2
     : Box <
-        dyn FnOnce( I::Values, Sender < P::Payload > )
+        dyn FnOnce( I::Endpoints, Sender < P > )
           -> Pin < Box < dyn Future < Output=() > + Send > >
         + Send
       >
@@ -59,8 +59,8 @@ where
 pub async fn unsafe_run_session
   < C, A >
   ( session : PartialSession < C, A >
-  , ctx : C :: Values
-  , sender : Sender < A :: Payload >
+  , ctx : C :: Endpoints
+  , sender : Sender < A >
   )
 where
   A: Protocol,

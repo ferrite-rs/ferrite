@@ -1,5 +1,5 @@
 use async_std::task;
-use async_std::sync::{ Sender, Receiver, channel };
+use async_std::sync::{ Receiver, channel };
 
 use crate::base::{
   Protocol,
@@ -129,83 +129,73 @@ where
         > + Send + 'static
 {
   unsafe_create_session (
-    async move |
-      ctx : C::Values,
-      sender: Sender<
-        Box<
-          dyn FnOnce(Choice) ->
+    async move | ctx, sender | {
+      sender.send ( ExternalChoice (
+        Box::new(
+          move |choice : Choice| ->
             Either<
-              Receiver < P::Payload >,
-              Receiver < Q::Payload >
+              Receiver < P >,
+              Receiver < Q >
             >
-          + Send
-        >
-      >
-    | {
-      sender.send(Box::new(
-        move |choice : Choice| ->
-          Either<
-            Receiver < P::Payload >,
-            Receiver < Q::Payload >
-          >
-        {
-          match choice {
-            Choice::Left => {
-              let in_choice :
-                ReturnChoice <C, P, Q>
-              = Either::Left(
-                Box::new(
-                  left_choice
-                )
-              );
+          {
+            match choice {
+              Choice::Left => {
+                let in_choice :
+                  ReturnChoice < C, P, Q >
+                = Either::Left(
+                  Box::new (
+                    left_choice
+                  )
+                );
 
-              let cont_variant = cont_builder(in_choice).result;
+                let cont_variant = cont_builder(in_choice).result;
 
-              match cont_variant {
-                Either::Left(cont) => {
-                  let (sender, receiver) = channel(1);
+                match cont_variant {
+                  Either::Left(cont) => {
+                    let (sender, receiver) = channel(1);
 
-                  task::spawn(async {
-                    unsafe_run_session
-                      ( cont, ctx, sender
-                      ).await;
-                  });
+                    task::spawn(async {
+                      unsafe_run_session
+                        ( cont, ctx, sender
+                        ).await;
+                    });
 
-                  return Either::Left(receiver);
-                },
+                    return Either::Left(receiver);
+                  },
 
-                Either::Right(_) => {
-                  panic!("expected cont_builder to provide left result");
+                  Either::Right(_) => {
+                    panic!("expected cont_builder to provide left result");
+                  }
                 }
-              }
-            },
+              },
 
-            Choice::Right => {
-              let in_choice : ReturnChoice <C, P, Q>
-              = Either::Right(Box::new(right_choice));
+              Choice::Right => {
+                let in_choice : ReturnChoice <C, P, Q>
+                = Either::Right(Box::new(right_choice));
 
-              let cont_variant = cont_builder(in_choice).result;
+                let cont_variant = cont_builder(in_choice).result;
 
-              match cont_variant {
-                Either::Left(_) => {
-                  panic!("expected cont_builder to provide right result");
-                },
+                match cont_variant {
+                  Either::Left(_) => {
+                    panic!("expected cont_builder to provide right result");
+                  },
 
-                Either::Right(cont) => {
-                  let (sender, receiver) = channel(1);
+                  Either::Right(cont) => {
+                    let (sender, receiver) = channel(1);
 
-                  task::spawn(async {
-                    unsafe_run_session
-                      ( cont, ctx, sender
-                      ).await;
-                  });
+                    task::spawn(async {
+                      unsafe_run_session
+                        ( cont, ctx, sender
+                        ).await;
+                    });
 
-                  return Either::Right(receiver);
+                    return Either::Right(receiver);
+                  }
                 }
               }
             }
-          }
-        })).await;
+          })
+      ) ).await;
     })
 }
 
@@ -241,11 +231,10 @@ where
 {
   unsafe_create_session (
     async move | ctx1, sender | {
-      let (offerer_chan, ctx2) =
-        N :: extract_source ( ctx1 );
+      let (offerer_chan, ctx2) = N :: extract_source ( ctx1 );
 
-      let offerer = offerer_chan.recv().await.unwrap();
-      let input_variant = offerer(Choice::Left);
+      let ExternalChoice ( offerer ) = offerer_chan.recv().await.unwrap();
+      let input_variant = offerer ( Choice::Left );
 
       match input_variant {
         Either::Left(input_chan) => {
@@ -293,18 +282,12 @@ where
 {
   unsafe_create_session (
     async move | ctx1, sender | {
-      let (offerer_chan, ctx2) =
-        < N as
-          ContextLens <
-            I,
-            ExternalChoice < P1, P2 >,
-            P2
-          >
-        >
-        :: extract_source ( ctx1 );
+      let (offerer_chan, ctx2) = N :: extract_source ( ctx1 );
 
-      let offerer = offerer_chan.recv().await.unwrap();
-      let input_variant = offerer(Choice::Right);
+      let ExternalChoice ( offerer )
+        = offerer_chan.recv().await.unwrap();
+
+      let input_variant = offerer ( Choice::Right );
 
       match input_variant {
         Either::Left (_) => {

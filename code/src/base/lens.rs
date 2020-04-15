@@ -5,22 +5,20 @@ use crate::base::protocol::{ Protocol };
 use crate::base::context::{ Context };
 
 pub trait Slot : 'static {
-  type Value : Send;
+  type Endpoint : Send;
 }
 
 impl < P > Slot for P
 where
   P : Protocol
 {
-  type Value = Receiver <
-    < P as Protocol > :: Payload
-  >;
+  type Endpoint = Receiver < P >;
 }
 
 pub struct Empty { }
 
 impl Slot for Empty {
-  type Value = ();
+  type Endpoint = ();
 }
 
 pub trait ContextLens < C, A1, A2 >
@@ -33,24 +31,24 @@ where
   type Target : Context;
 
   fn extract_source (
-    channels : C :: Values
+    channels : C :: Endpoints
   ) ->
-    ( A1 :: Value,
+    ( A1 :: Endpoint,
       < Self::Deleted
         as Context
-      > :: Values
+      > :: Endpoints
     );
 
   fn insert_target (
-    receiver : A2 :: Value,
+    receiver : A2 :: Endpoint,
     channels :
       < Self::Deleted
         as Context >
-      :: Values
+      :: Endpoints
   ) ->
     < Self::Target
       as Context
-    > :: Values;
+    > :: Endpoints;
 }
 
 
@@ -71,18 +69,18 @@ where
   type Target = (A2, C);
 
   fn extract_source (
-    ctx : ( A1::Value, C::Values )
+    ctx : ( A1::Endpoint, C::Endpoints )
   ) ->
-    ( A1::Value, C::Values )
+    ( A1::Endpoint, C::Endpoints )
   {
     ctx
   }
 
   fn insert_target
-    ( p : A2 :: Value,
-      r : C :: Values
+    ( p : A2 :: Endpoint,
+      r : C :: Endpoints
     ) ->
-      ( A2::Value, C::Values )
+      ( A2::Endpoint, C::Endpoints )
   {
     (p, r)
   }
@@ -114,10 +112,10 @@ where
     );
 
   fn extract_source (
-    (p, r1) : ( B::Value, C::Values )
+    (p, r1) : ( B::Endpoint, C::Endpoints )
   ) ->
-    ( A1 :: Value,
-      ( B::Value, < N::Deleted as Context >::Values )
+    ( A1 :: Endpoint,
+      ( B::Endpoint, < N::Deleted as Context >::Endpoints )
     )
   {
     let (q, r2) = N :: extract_source ( r1 );
@@ -125,10 +123,10 @@ where
   }
 
   fn insert_target (
-    q : A2 :: Value,
-    (p, r1) : ( B::Value, < N::Deleted as Context >::Values )
+    q : A2 :: Endpoint,
+    (p, r1) : ( B :: Endpoint, < N::Deleted as Context >::Endpoints )
   ) ->
-    ( B::Value, < N::Target as Context >::Values )
+    ( B::Endpoint, < N::Target as Context >::Endpoints )
   {
     let r2 = N :: insert_target ( q, r1 );
     ( p, r2 )

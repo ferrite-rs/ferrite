@@ -57,7 +57,9 @@ where
       let (sender1, receiver1)
         = channel(1);
 
-      sender.send(sender1).await;
+      sender.send(
+        ReceiveChannel ( sender1 )
+      ).await;
 
       let (receiver2, sender2)
         = receiver1.recv().await.unwrap();
@@ -93,18 +95,15 @@ where
 {
   unsafe_create_session (
     async move | ctx1, sender | {
-      let ((), ctx2) =
-        < N as
-          ContextLens <
-            I, Empty, P
-          >
-        > :: extract_source (ctx1);
+      let ((), ctx2) = N :: extract_source (ctx1);
 
       let (sender1, receiver1)
         = channel(1);
 
       let child1 = task::spawn(async move {
-        sender.send(sender1).await;
+        sender.send(
+          ReceiveChannel ( sender1 )
+        ).await;
       });
 
       let child2 = task::spawn(async move {
@@ -176,7 +175,8 @@ where
       let (receiver2, ctx4) =
         NF :: extract_source (ctx3);
 
-      let sender2 = receiver2.recv().await.unwrap();
+      let ReceiveChannel ( sender2 )
+        = receiver2.recv().await.unwrap();
 
       let (sender3, receiver3) = channel(1);
 

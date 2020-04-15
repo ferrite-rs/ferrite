@@ -11,7 +11,7 @@ pub trait ProtocolField < P >
 where
   P : Protocol
 {
-  type Value : Send;
+  type Endpoint : Send;
 }
 
 pub trait ConvergeSum < T, P, R >
@@ -21,14 +21,14 @@ where
 {
   fn match_proc
     ( self,
-      val : T :: Value ) ->
+      val : T :: Endpoint ) ->
       R
   ;
 }
 
 pub trait ProtocolSum < T >
 {
-  type ValueSum : Send;
+  type EndpointSum : Send;
 }
 
 pub trait ProtocolPrism
@@ -39,14 +39,14 @@ where
   T : ProtocolField < P >
 {
   fn intro_sum
-    ( val : T :: Value )
-    -> S :: ValueSum;
+    ( val : T :: Endpoint )
+    -> S :: EndpointSum;
 
   fn elim_sum
-    ( val_sum : S :: ValueSum )
+    ( val_sum : S :: EndpointSum )
     ->
       Option <
-        T :: Value
+        T :: Endpoint
       >;
 }
 
@@ -61,18 +61,18 @@ pub trait MergeProtocolSum < T1, T2 >
     sum1 :
       < Self as
         ProtocolSum < T1 >
-      > :: ValueSum,
+      > :: EndpointSum,
     sum2 :
       < Self as
         ProtocolSum < T2 >
-      > :: ValueSum
+      > :: EndpointSum
   ) ->
     Option <
       < Self as
         ProtocolSum <
           ToMerge < T1, T2 >
         >
-      > :: ValueSum
+      > :: EndpointSum
     >
   ;
 }
@@ -100,7 +100,7 @@ where
   P : Protocol,
   T : ProtocolField < P >,
 {
-  type ValueSum = T :: Value;
+  type EndpointSum = T :: Endpoint;
 }
 
 impl
@@ -113,16 +113,16 @@ where
   T : ProtocolField < P >
 {
   fn intro_sum
-    ( val : T :: Value )
-    -> T :: Value
+    ( val : T :: Endpoint )
+    -> T :: Endpoint
   {
     val
   }
 
   fn elim_sum
-    ( val : T :: Value )
+    ( val : T :: Endpoint )
     ->
-      Option < T :: Value >
+      Option < T :: Endpoint >
   {
     Some ( val )
   }
@@ -142,11 +142,11 @@ where
   T : ProtocolField < P >
 {
   fn intro_sum
-    ( val : T :: Value )
+    ( val : T :: Endpoint )
     ->
       Sum <
-        T :: Value,
-        R :: ValueSum
+        T :: Endpoint,
+        R :: EndpointSum
       >
   {
     Sum::Inl ( val )
@@ -155,12 +155,12 @@ where
   fn elim_sum
     ( val_sum :
       Sum <
-        T :: Value,
-        R :: ValueSum
+        T :: Endpoint,
+        R :: EndpointSum
       >
     ) ->
       Option <
-        T :: Value
+        T :: Endpoint
       >
   {
     match val_sum {
@@ -196,13 +196,13 @@ where
     ( val :
         < T as
           ProtocolField < P >
-        > :: Value )
+        > :: Endpoint )
     ->
       Sum <
         < T as
           ProtocolField < Q >
-        > :: Value,
-        R :: ValueSum
+        > :: Endpoint,
+        R :: EndpointSum
       >
   {
     Sum::Inr (
@@ -215,14 +215,14 @@ where
       Sum <
         < T as
           ProtocolField < Q >
-        > :: Value,
-        R :: ValueSum
+        > :: Endpoint,
+        R :: EndpointSum
       >
     ) ->
       Option <
         < T as
           ProtocolField < P >
-        > :: Value
+        > :: Endpoint
       >
   {
     match val_sum {
@@ -246,10 +246,10 @@ where
   T : ProtocolField < P >,
   R : ProtocolSum < T >
 {
-  type ValueSum =
+  type EndpointSum =
     Sum <
-      T :: Value,
-      R :: ValueSum
+      T :: Endpoint,
+      R :: EndpointSum
     >;
 }
 
@@ -259,7 +259,7 @@ impl < P >
 where
   P : Protocol
 {
-  type Value = P :: Payload;
+  type Endpoint = P;
 }
 
 impl < P >
@@ -268,7 +268,7 @@ impl < P >
 where
   P : Protocol
 {
-  type Value = ();
+  type Endpoint = ();
 }
 
 impl < I, P >
@@ -278,7 +278,7 @@ where
   P : Protocol,
   I : Context
 {
-  type Value =
+  type Endpoint =
     PartialSession < I, P >;
 }
 
@@ -291,8 +291,8 @@ where
   T1 : ProtocolField < P >,
   T2 : ProtocolField < P >,
 {
-  type Value =
-    ( T1 :: Value,
-      T2 :: Value
+  type Endpoint =
+    ( T1 :: Endpoint,
+      T2 :: Endpoint
     );
 }

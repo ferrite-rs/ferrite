@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use async_std::sync::{ Receiver };
 
 use crate::base as base;
@@ -8,11 +7,16 @@ use base::{ TyApp, Protocol };
 use super::data::{ Choice, Either };
 
 pub struct ExternalChoice
-  < P, Q >
-{
-  p: PhantomData < P >,
-  q: PhantomData < Q >
-}
+  < A, B >
+( pub (crate)
+  Box < dyn
+    FnOnce(Choice) ->
+      Either <
+        Receiver < A >,
+        Receiver < B >
+      >
+    + Send >
+);
 
 impl
   < P, Q >
@@ -21,15 +25,7 @@ impl
 where
   P: Protocol,
   Q: Protocol
-{
-  type Payload = Box<
-    dyn FnOnce(Choice) ->
-      Either <
-        Receiver < P::Payload >,
-        Receiver < Q::Payload >
-      >
-    + Send >;
-}
+{ }
 
 impl < A, T, X, Y >
   TyApp < A > for
@@ -62,7 +58,7 @@ where
 {
   type Applied =
   ExternalChoice <
-      P :: Applied,
-      Q :: Applied
-    >;
+    P :: Applied,
+    Q :: Applied
+  >;
 }

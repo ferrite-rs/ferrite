@@ -38,7 +38,9 @@ where
     Box < dyn
       FnOnce
         ( Sender <
-            Receiver < P::SharedValue >
+            Receiver <
+              P :: ToLinear
+            >
           >
         ) ->
           Pin < Box <
@@ -58,7 +60,7 @@ where
     Sender <
       Sender <
         Receiver <
-          P::SharedValue
+          P :: ToLinear
         >
       >
     >
@@ -96,7 +98,7 @@ where
     loop {
       let sender3
         : Option <
-            Sender < Receiver < P :: SharedValue > >
+            Sender < Receiver < P :: ToLinear > >
           >
         = receiver2.recv().await;
 
@@ -126,9 +128,7 @@ pub fn
   < F >
   ( cont : PartialSession <
       (Lock < F >, ()),
-      < F as
-        SharedTyApp < F >
-      > :: ToProtocol
+      F :: ToProtocol
     >
   ) ->
     SuspendedSharedSession <
@@ -139,10 +139,19 @@ where
 {
   SuspendedSharedSession {
     exec_shared_session : Box::new (
-      move | sender1 | {
+      move |
+        sender1 :
+          Sender < Receiver <
+            F :: ToProtocol
+          > >
+      | {
         Box::pin ( async move {
-          let (sender2, receiver2) = channel (1);
-          let (sender3, receiver3) = channel (1);
+          let (sender2, receiver2)
+            : (Sender < Lock < F > >, _)
+            = channel (1);
+          let (sender3, receiver3)
+            : (Sender < F :: ToProtocol >, _)
+            = channel (1);
 
           let child1 = task::spawn ( async move {
             // debug!("[accept_shared_session] calling cont");
@@ -155,13 +164,17 @@ where
 
           let child2 = task::spawn ( async move {
             // debug!("[accept_shared_session] sending receiver3");
-            sender1.send(receiver3).await;
+            sender1.send(
+              receiver3
+            ).await;
             // debug!("[accept_shared_session] sent receiver3");
           });
 
           let child3 = task::spawn ( async move {
             // debug!("[accept_shared_session] sending sender12");
-            sender2.send(sender12).await;
+            sender2.send(
+              Lock { unlock : sender12 }
+            ).await;
             // debug!("[accept_shared_session] sent sender12");
           });
 
@@ -190,22 +203,16 @@ where
     async move |
       (receiver1, _)
         : ( Receiver <
-              Sender <
-                Receiver<
-                  < < F as SharedTyApp < F > >
-                    :: ToProtocol
-                    as Protocol
-                  > :: Payload
-                >
-              >
+              Lock < F >
             >,
-            I :: Values
+            I :: Endpoints
           ),
       sender1
     | {
       let child1 = task::spawn ( async move {
         // debug!("[detach_shared_session] receiving sender2");
-        let sender2 = receiver1.recv().await.unwrap();
+        let Lock { unlock :  sender2 }
+          = receiver1.recv().await.unwrap();
 
         // debug!("[detach_shared_session] received sender2");
         (cont.exec_shared_session)(sender2).await;
@@ -214,7 +221,9 @@ where
 
       let child2 = task::spawn ( async move {
         // debug!("[detach_shared_session] sending sender1");
-        sender1.send(()).await;
+        sender1.send (
+          SharedToLinear :: new ()
+        ).await;
         // debug!("[detach_shared_session] sent sender1");
       });
 
@@ -232,7 +241,7 @@ pub fn
   ) ->
     PartialSession < I, P >
 where
-  F : SharedTyApp < F > + 'static,
+  F : SharedTyApp < F > + 'static + Send,
   P : Protocol,
   I : Context + NextSelector + 'static,
   I : AppendContext <

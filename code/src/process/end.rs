@@ -3,16 +3,9 @@ use crate::base as base;
 
 use base::{ TyApp, Protocol };
 
-/*
-  The unit process representing termination.
- */
-pub struct End {
+pub struct End ();
 
-}
-
-impl Protocol for End {
-  type Payload = ();
-}
+impl Protocol for End { }
 
 impl < A >
   TyApp < A >

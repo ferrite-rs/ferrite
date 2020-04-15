@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use crate::base::*;
 use async_std::sync::Receiver;
 
@@ -26,22 +24,30 @@ pub trait SelectSum < N > : ProtocolSum2 {
   fn inject_selected
     ( receiver :
         Receiver <
-          < Self :: SelectedProtocol
-            as Protocol
-          > :: Payload
+          Self :: SelectedProtocol
         >
     ) ->
       Self :: ValueSum;
 }
 
-pub struct InternalChoice < Choice >
-{
-  c : PhantomData < Choice >
+pub struct InternalChoice < Sum >
+where
+  Sum : ProtocolSum2
+{ pub (crate) value_sum:
+    Sum :: ValueSum
 }
 
-pub struct ExternalChoice < Choice >
-{
-  c : PhantomData < Choice >
+pub struct ExternalChoice < Sum >
+where
+  Sum : ProtocolSum2
+{ pub (crate) cont_sum:
+    Box <
+      dyn FnOnce
+        ( Sum :: SelectorSum
+        ) ->
+          Sum :: ValueSum
+      + Send
+    >
 }
 
 impl
@@ -50,9 +56,7 @@ impl
   InternalChoice < Sum >
 where
   Sum : ProtocolSum2
-{
-  type Payload = Sum :: ValueSum;
-}
+{ }
 
 impl
   < Sum >
@@ -60,23 +64,14 @@ impl
   ExternalChoice < Sum >
 where
   Sum : ProtocolSum2
-{
-  type Payload =
-    Box <
-      dyn FnOnce
-        ( Sum :: SelectorSum
-        ) ->
-          Sum :: ValueSum
-      + Send
-    >;
-}
+{ }
 
 impl < P > ProtocolSum2 for P
 where
   P : Protocol
 {
   type ValueSum =
-    Receiver < P :: Payload >;
+    Receiver < P >;
 
   type SelectCurrent = Z;
   type SelectorSum = Z;
@@ -105,9 +100,7 @@ where
 {
   type ValueSum =
     Sum <
-      Receiver <
-        P :: Payload
-      >,
+      Receiver < P >,
       R :: ValueSum
     >;
 
@@ -159,9 +152,7 @@ where
 
   fn inject_selected
     ( receiver :
-        Receiver <
-          P :: Payload
-        >
+        Receiver < P >
     ) ->
       Self :: ValueSum
   {
@@ -183,9 +174,7 @@ where
 
   fn inject_selected
     ( receiver :
-        Receiver <
-          P :: Payload
-        >
+        Receiver < P >
     ) ->
       Self :: ValueSum
   {
@@ -212,9 +201,7 @@ where
   fn inject_selected
     ( receiver :
         Receiver <
-          < Self :: SelectedProtocol
-            as Protocol
-          > :: Payload
+          Self :: SelectedProtocol
         >
     ) ->
       Self :: ValueSum

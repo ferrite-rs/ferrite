@@ -1,9 +1,9 @@
 use async_std::task;
 use async_macros::join;
 use std::future::{ Future };
-use async_std::sync::{ Sender, Receiver, channel };
+use async_std::sync::{ Sender, channel };
 
-use crate::process::{ Val, SendValue };
+use crate::process::{ SendValue };
 
 use crate::base::{
   Protocol,
@@ -41,11 +41,8 @@ where
 {
   unsafe_create_session (
     async move |
-      ctx : C::Values,
-      sender1 : Sender < (
-        Val < T >,
-        Receiver < P::Payload >
-      ) >
+      ctx : C::Endpoints,
+      sender1 : Sender < SendValue < T, P > >
     | {
       let (sender2, receiver2) = channel(1);
 
@@ -53,11 +50,10 @@ where
 
       let child1 = task::spawn(async move {
         sender1.send(
-          ( Val {
-              val : result
-            },
-            receiver2
-          ) ).await;
+          SendValue
+            ( result,
+              receiver2
+            ) ).await;
       });
 
       let child2 = task::spawn(async move {
@@ -125,8 +121,8 @@ where
 {
   unsafe_create_session (
     async move |
-      ctx1 : I :: Values,
-      sender : Sender < Q :: Payload >
+      ctx1 : I :: Endpoints,
+      sender : Sender < Q >
     | {
       let (receiver1, ctx2) =
         < N as
@@ -138,19 +134,12 @@ where
         >
         :: extract_source ( ctx1 );
 
-      let (val, receiver2) = receiver1.recv().await.unwrap();
+      let SendValue ( val, receiver2 )
+        = receiver1.recv().await.unwrap();
 
-      let ctx3 =
-        < N as
-          ContextLens <
-            I,
-            SendValue < T, P >,
-            P
-          >
-        >
-        :: insert_target (receiver2, ctx2);
+      let ctx3 = N :: insert_target (receiver2, ctx2);
 
-      let cont = cont_builder(val.val).await;
+      let cont = cont_builder(val).await;
 
       unsafe_run_session
         ( cont, ctx3, sender

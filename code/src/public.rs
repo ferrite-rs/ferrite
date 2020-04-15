@@ -17,8 +17,6 @@ pub use crate::base::public::*;
 pub use crate::process::public::{
   End,
 
-  FixProtocol,
-
   Choice,
   Either,
   ExternalChoice,

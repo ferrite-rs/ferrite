@@ -1,48 +1,10 @@
 use async_macros::join;
 
-use std::mem::transmute;
 use async_std::task;
 use async_std::sync::{ channel };
 
 use crate::base::*;
 use crate::process::*;
-
-fn wrap < T >
-  ( val :
-      < T :: Unwrap
-        as Protocol
-      > :: Payload
-  ) -> Box < () >
-where
-  T : Wrapper
-{
-  let boxed = Box::new ( val );
-
-  unsafe {
-    transmute( boxed )
-  }
-}
-
-fn unwrap < T >
-  ( wrapped : Box < () > ) ->
-  < T :: Unwrap
-    as Protocol
-  > :: Payload
-where
-  T : Wrapper
-{
-  let boxed :
-    Box <
-      < T :: Unwrap
-        as Protocol
-      > :: Payload
-    >
-    = unsafe {
-      transmute ( wrapped )
-    };
-
-  *boxed
-}
 
 pub fn wrap_session
   < C, T >
@@ -60,6 +22,7 @@ where
   C : Context,
   T : Wrapper,
   T : Send + 'static,
+  T :: Unwrap : Protocol,
 {
   unsafe_create_session (
     async move | ctx, sender1 | {
@@ -67,7 +30,9 @@ where
 
       let child1 = task::spawn(async move {
         let val = receiver.recv().await.unwrap();
-        sender1.send ( wrap :: < T > ( val ) ).await;
+        sender1.send (
+          Wrap { unwrap : Box::new ( val ) }
+        ).await;
       });
 
       let child2 = task::spawn(
@@ -111,7 +76,7 @@ where
 
       let child1 = task::spawn ( async move {
         let wrapped = receiver1.recv().await.unwrap();
-        sender2.send( unwrap :: < T > ( wrapped ) ).await;
+        sender2.send( *wrapped.unwrap ).await;
       });
 
       let child2 = task::spawn(

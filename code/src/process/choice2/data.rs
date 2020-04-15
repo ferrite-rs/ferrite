@@ -385,7 +385,7 @@ impl < P >
 where
   P : Protocol
 {
-  type Applied = Receiver < P :: Payload >;
+  type Applied = Receiver < P >;
 }
 
 impl < T >

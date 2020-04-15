@@ -21,6 +21,7 @@ impl < F >
   SharedTyApp < F > for
   Z
 where
+  F : Protocol,
   F : Send + 'static
 {
   type ToProtocol = SharedToLinear < F >;

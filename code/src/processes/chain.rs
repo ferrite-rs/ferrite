@@ -16,7 +16,7 @@ use crate::base::{
  */
 
 impl Context for () {
-  type Values = ();
+  type Endpoints = ();
 
   type Length = Z;
 }
@@ -34,7 +34,7 @@ where
   R : EmptyContext
 {
   fn empty_values () ->
-      ((), R::Values)
+      ((), R::Endpoints)
   {
     ( (), R:: empty_values() )
   }
@@ -48,9 +48,9 @@ where
   P: Slot,
   R: Context
 {
-  type Values =
-    ( P :: Value,
-      R::Values
+  type Endpoints =
+    ( P :: Endpoint,
+      R::Endpoints
     );
 
   type Length = S < R::Length >;
@@ -61,18 +61,18 @@ impl <R: Context> AppendContext <R> for () {
 
   fn append_context(
     _: (),
-    r: <R as Context>::Values
+    r: <R as Context>::Endpoints
   ) ->
-    <R as Context>::Values
+    <R as Context>::Endpoints
   {
     return r;
   }
 
   fn split_context (
-    r: <R as Context>::Values
+    r: <R as Context>::Endpoints
   ) -> (
     (),
-    <R as Context>::Values
+    <R as Context>::Endpoints
   ) {
     return ((), r)
   }
@@ -108,30 +108,30 @@ where
 
   fn append_context (
     (p, r) : (
-      P :: Value,
-      R ::Values
+      P :: Endpoint,
+      R ::Endpoints
     ),
-    s : <S as Context>::Values
+    s : <S as Context>::Endpoints
   ) -> (
-    < P as Slot > :: Value,
+    < P as Slot > :: Endpoint,
     <
       R :: Appended
       as Context
-    >::Values
+    >::Endpoints
   ) {
     return (p, < R as AppendContext<S> >::append_context(r, s));
   }
 
   fn split_context (
     (p, r): (
-      P :: Value,
+      P :: Endpoint,
       < R::Appended
         as Context
-      > :: Values
+      > :: Endpoints
     )
   ) -> (
-    < ( P, R ) as Context > :: Values,
-    < S as Context >::Values
+    < ( P, R ) as Context > :: Endpoints,
+    < S as Context >::Endpoints
   ) {
     let (r2, s) = R :: split_context(r);
     return ((p, r2), s);

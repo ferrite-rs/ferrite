@@ -1,6 +1,6 @@
 use async_std::task;
 use async_macros::join;
-use async_std::sync::{ Sender, Receiver, channel };
+use async_std::sync::{ channel };
 
 use crate::process::{
   Either,
@@ -47,13 +47,7 @@ where
   I : Context
 {
   unsafe_create_session (
-    async move |
-      ctx,
-      sender: Sender<
-        Either<
-          Receiver<P::Payload>,
-          Receiver<Q::Payload> > >
-    | {
+    async move | ctx, sender | {
       let (in_sender, in_receiver) = channel(1);
 
       let child1 = task::spawn(async {
@@ -63,7 +57,10 @@ where
       });
 
       let child2 = task::spawn(async move {
-        sender.send(Either::Left(in_receiver)).await;
+        sender.send(
+          InternalChoice (
+            Either::Left ( in_receiver )
+          ) ).await;
       });
 
       join!(child1, child2).await;
@@ -75,21 +72,12 @@ pub fn offer_right
   ( cont:  PartialSession < C, Q >
   ) ->  PartialSession < C, InternalChoice <P, Q> >
   where
-    P   : Protocol,
-    Q   : Protocol,
+    P : Protocol,
+    Q : Protocol,
     C : Context,
-    P   : 'static,
-    Q   : 'static,
-    C : 'static
 {
   return unsafe_create_session (
-    async move |
-      ctx,
-      sender: Sender<
-        Either<
-          Receiver<P::Payload>,
-          Receiver<Q::Payload> > >
-    | {
+    async move | ctx, sender | {
       let (in_sender, in_receiver) = channel(1);
 
       let child1 = task::spawn(async {
@@ -99,7 +87,10 @@ pub fn offer_right
       });
 
       let child2 = task::spawn(async move {
-        sender.send(Either::Right(in_receiver)).await;
+        sender.send (
+          InternalChoice (
+            Either::Right ( in_receiver )
+          ) ).await;
       });
 
       join!(child1, child2).await;
@@ -229,56 +220,39 @@ type ReturnChoice < N, I, P1, P2, S > =
   >;
 
 pub fn case
-  < N, I, P1, P2, S, F >
+  < N, I, P1, P2, S, D, T1, T2 >
   ( _ : N,
-    cont_builder : F
+    cont_builder : impl
+      FnOnce (
+        ReturnChoice < N, I, P1, P2, S >
+      ) ->
+        InternalChoiceResult < T1, T2, S >
+      + Send + 'static
   ) ->
     PartialSession < I, S >
 where
   I : Context,
+  D : Context,
+  T1 : Context,
+  T2 : Context,
   P1 : Protocol,
   P2 : Protocol,
   S : Protocol,
-  F : FnOnce (
-        ReturnChoice < N, I, P1, P2, S >
-      ) ->
-        InternalChoiceResult <
-          < N as
-            ContextLens <
-              I,
-              InternalChoice < P1, P2 >,
-              P1
-            >
-          > :: Target,
-          < N as
-            ContextLens <
-              I,
-              InternalChoice < P1, P2 >,
-              P2
-            >
-          > :: Target,
-          S
-        >
-      + Send + 'static,
   N :
     ContextLens <
       I,
       InternalChoice < P1, P2 >,
-      P1
+      P1,
+      Target = T1,
+      Deleted = D
     >,
   N :
     ContextLens <
       I,
       InternalChoice < P1, P2 >,
       P2,
-      Deleted =
-        < N as
-          ContextLens <
-            I,
-            InternalChoice < P1, P2 >,
-            P1
-          >
-        > :: Deleted
+      Target = T2,
+      Deleted = D
     >
 {
   unsafe_create_session (
@@ -292,7 +266,8 @@ where
           >
         > :: extract_source ( ctx1 );
 
-      let variant = variant_chan.recv().await.unwrap();
+      let InternalChoice ( variant )
+        = variant_chan.recv().await.unwrap();
 
       match variant {
         Either::Left( p1 ) => {

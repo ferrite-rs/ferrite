@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use async_std::sync::{ Receiver };
 
 use crate::base as base;
@@ -10,11 +9,13 @@ use super::data::{ Either };
 /*
   data InternalChoice p q = InternalChoice
  */
-pub struct InternalChoice < P, Q >
-{
-  p : PhantomData < P >,
-  q : PhantomData < Q >
-}
+pub struct InternalChoice < A, B >
+( pub (crate)
+  Either <
+    Receiver < A >,
+    Receiver < B >
+  >
+);
 
 impl
   < P, Q >
@@ -23,13 +24,7 @@ impl
 where
   P: Protocol,
   Q: Protocol
-{
-  type Payload =
-    Either <
-      Receiver < P::Payload >,
-      Receiver < Q::Payload >
-    >;
-}
+{ }
 
 impl < A, X, Y >
   TyApp < A > for
