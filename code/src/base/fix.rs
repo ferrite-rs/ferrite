@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 use crate::base::nat::*;
-use async_std::sync::{ Sender, Receiver };
 
 /*
   class TyApp self where
@@ -140,33 +139,6 @@ impl < A >
   ()
 {
   type Applied = ();
-}
-
-impl < A, X >
-  TyApp < A > for
-  Box < X >
-where
-  X : TyApp < A >
-{
-  type Applied = Box < X :: Applied >;
-}
-
-impl < A, X >
-  TyApp < A > for
-  Receiver < X >
-where
-  X : TyApp < A >
-{
-  type Applied = Receiver < X :: Applied >;
-}
-
-impl < A, X >
-  TyApp < A > for
-  Sender < X >
-where
-  X : TyApp < A >
-{
-  type Applied = Sender < X :: Applied >;
 }
 
 impl < A, X, Y >

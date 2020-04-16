@@ -15,7 +15,7 @@ where
     SumRow < ReceiverCon >
   >  :: Field
     : Send,
-{ pub (crate) sender :
+{ pub sender :
     Sender <
       ( < Row as
           SumRow < () >
