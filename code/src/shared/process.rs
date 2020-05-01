@@ -6,34 +6,36 @@ use base::{ Protocol };
 use async_std::sync::{ Sender, Receiver };
 
 pub trait SharedProtocol : Send + 'static
-{
-  type ToLinear : Protocol;
-}
+{ }
 
 pub mod public {
   pub trait SharedProtocol : super::SharedProtocol {}
 }
 
-pub trait SharedTyApp < R >
+pub trait SharedTypeApp < R >
 {
-  type ToProtocol : Protocol;
+  type Applied : Protocol;
 }
 
 pub struct Lock < F >
 where
-  F : SharedTyApp < F >
+  F : SharedTypeApp < F >
     + Send + 'static
 {
   pub (crate) unlock:
     Sender <
       Receiver<
-        F :: ToProtocol
+        LinearToShared < F >
       >
     >
 }
 
 pub struct LinearToShared < F >
-( pub (crate) PhantomData < F > );
+where
+  F : SharedTypeApp < F >
+{ pub (crate) linear :
+    F :: Applied
+}
 
 pub struct SharedToLinear < F >
 ( pub (crate) PhantomData < F > );
@@ -54,7 +56,7 @@ impl < F >
   Protocol for
   Lock < F >
 where
-  F : SharedTyApp < F >
+  F : SharedTypeApp < F >
       + Send + 'static
 { }
 
@@ -62,14 +64,12 @@ impl < F >
   SharedProtocol for
   LinearToShared < F >
 where
-  F : SharedTyApp < F > + 'static + Send
-{
-  type ToLinear = F :: ToProtocol;
-}
+  F : SharedTypeApp < F > + 'static + Send
+{ }
 
 impl < F >
   public::SharedProtocol for
   LinearToShared < F >
 where
-  F : SharedTyApp < F > + 'static + Send
+  F : SharedTypeApp < F > + 'static + Send
 { }

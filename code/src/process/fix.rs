@@ -6,7 +6,7 @@ impl < F >
 where
   F : Protocol + Send,
   F :
-    TyApp < Unfix <
+    TypeApp < Unfix <
       Fix < F >
     > >,
   F :: Applied :

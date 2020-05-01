@@ -17,7 +17,7 @@ where
   F1 : Protocol,
   F2 : Protocol,
   F1 :
-    TyApp <
+    TypeApp <
       Unfix <
         Fix < F1 >
       >,
@@ -57,7 +57,7 @@ where
   F1 : Protocol,
   F2 : Protocol,
   F1 :
-    TyApp <
+    TypeApp <
       Unfix <
         Fix < F1 >
       >,
@@ -123,7 +123,7 @@ where
   I : Context,
   F : Protocol,
   F :
-    TyApp < Unfix <
+    TypeApp < Unfix <
       Fix < F >
     > >,
   F :: Applied : Protocol,

@@ -2,7 +2,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ TyApp, Protocol };
+use base::{ TypeApp, Protocol };
 
 pub struct SendValue < T, A >
 (
@@ -17,10 +17,10 @@ where
 { }
 
 impl < X, T, A >
-  TyApp < X > for
+  TypeApp < X > for
   SendValue < T, A >
 where
-  A : TyApp < X >,
+  A : TypeApp < X >,
 {
   type Applied =
     SendValue <

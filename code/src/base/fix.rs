@@ -2,10 +2,10 @@ use std::marker::PhantomData;
 use crate::base::nat::*;
 
 /*
-  class TyApp self where
+  class TypeApp self where
     type family Apply self a
  */
-pub trait TyApp < A > {
+pub trait TypeApp < A > {
   type Applied;
 }
 
@@ -14,7 +14,7 @@ pub struct Unfix < A > ( PhantomData<A> );
 pub struct Fix < F >
 where
   F :
-    TyApp <
+    TypeApp <
       Unfix <
         Fix < F >
       >
@@ -28,7 +28,7 @@ pub fn fix < F >
   -> Fix < F >
 where
   F :
-    TyApp <
+    TypeApp <
       Unfix <
         Fix < F >
       >
@@ -44,7 +44,7 @@ pub fn unfix < F >
   -> F :: Applied
 where
   F :
-    TyApp <
+    TypeApp <
       Unfix <
         Fix < F >
       >
@@ -54,26 +54,26 @@ where
 }
 
 impl < A, F >
-  TyApp < A >
+  TypeApp < A >
   for Fix < F >
 where
   F :
-    TyApp <
+    TypeApp <
       S < A >
     >,
   F :
-    TyApp < Unfix <
+    TypeApp < Unfix <
       Fix < F >
     > >,
   < F as
-    TyApp <
+    TypeApp <
       S < A >
     >
   > :: Applied :
-    TyApp < Unfix <
+    TypeApp < Unfix <
       Fix <
         < F as
-          TyApp <
+          TypeApp <
             S < A >
           >
         > :: Applied
@@ -83,7 +83,7 @@ where
   type Applied =
     Fix <
       < F as
-        TyApp <
+        TypeApp <
           S < A >
         >
       > :: Applied
@@ -91,62 +91,62 @@ where
 }
 
 impl < A >
-  TyApp < Unfix < A > > for
+  TypeApp < Unfix < A > > for
   Z
 {
   type Applied = A;
 }
 
 impl
-  TyApp < Z > for
+  TypeApp < Z > for
   Z
 {
   type Applied = Z;
 }
 
 impl < A >
-  TyApp < S < A > > for
+  TypeApp < S < A > > for
   Z
 {
   type Applied = Z;
 }
 
 impl < A, N >
-  TyApp < S < A > > for
+  TypeApp < S < A > > for
   S < N >
 where
-  N : TyApp < A >
+  N : TypeApp < A >
 {
   type Applied = S < N::Applied >;
 }
 
 impl < A, N >
-  TyApp < Unfix < A > > for
+  TypeApp < Unfix < A > > for
   S < N >
 {
   type Applied = N;
 }
 
 impl < N >
-  TyApp < Z > for
+  TypeApp < Z > for
   S < N >
 {
   type Applied = S < N >;
 }
 
 impl < A >
-  TyApp < A > for
+  TypeApp < A > for
   ()
 {
   type Applied = ();
 }
 
 impl < A, X, Y >
-  TyApp < A > for
+  TypeApp < A > for
   ( X, Y )
 where
-  X : TyApp < A >,
-  Y : TyApp < A >,
+  X : TypeApp < A >,
+  Y : TypeApp < A >,
 {
   type Applied =
     ( X :: Applied,

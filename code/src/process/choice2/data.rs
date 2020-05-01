@@ -12,8 +12,8 @@ pub struct ReceiverCon {}
 
 pub struct MergeField < T1, T2, A >
 where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >,
+  T1 : TypeApp < A >,
+  T2 : TypeApp < A >,
 {
   pub field1 : T1 :: Applied,
   pub field2 : T2 :: Applied
@@ -81,7 +81,7 @@ where
 
 /*
   class
-    ( TyApp t1, TyApp t2 )
+    ( TypeApp t1, TypeApp t2 )
     => LiftField t1 t2 where
       liftField
         :: forall a
@@ -90,8 +90,8 @@ where
  */
 pub trait LiftField < T1, T2, A >
 where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >
+  T1 : TypeApp < A >,
+  T2 : TypeApp < A >
 {
   fn lift_field (
     field : T1 :: Applied
@@ -101,8 +101,8 @@ where
 
 pub trait LiftFieldBorrow < T1, T2, A >
 where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >
+  T1 : TypeApp < A >,
+  T2 : TypeApp < A >
 {
   fn lift_field_borrow (
     field : &T1 :: Applied
@@ -147,25 +147,25 @@ pub trait FieldLifterApplied < Root >
 pub trait FieldLifter < Root, A >
   : FieldLifterApplied < Root >
 where
-  Self :: Source : TyApp < A >,
-  Self :: Target : TyApp < A >,
-  Self :: Injected : TyApp < A >,
+  Self :: Source : TypeApp < A >,
+  Self :: Target : TypeApp < A >,
+  Self :: Injected : TypeApp < A >,
 {
   fn lift_field (
     inject :
       impl Fn
         ( < Self :: Target
-            as TyApp < A >
+            as TypeApp < A >
           >:: Applied)
         -> Root
       + Send + 'static,
     field :
       < Self :: Source
-        as TyApp < A >
+        as TypeApp < A >
       > :: Applied
   ) ->
     < Self :: Injected
-      as TyApp < A >
+      as TypeApp < A >
     >:: Applied;
 }
 
@@ -293,7 +293,7 @@ pub trait IntersectSum < T1, T2 >
 
 pub trait ElimField < T, A, R >
 where
-  T : TyApp < A >
+  T : TypeApp < A >
 {
   fn elim_field (
     self,
@@ -347,7 +347,7 @@ impl < T, A, R >
 where
   R : Iso < Canon = R >,
   R : SumRow < T >,
-  T : TyApp < A >,
+  T : TypeApp < A >,
   T::Applied : Send,
 {
   fn to_canon (
@@ -370,17 +370,17 @@ where
 }
 
 impl < T1, T2, A >
-  TyApp < A >
+  TypeApp < A >
   for Merge < T1, T2 >
 where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >,
+  T1 : TypeApp < A >,
+  T2 : TypeApp < A >,
 {
   type Applied = MergeField < T1, T2, A >;
 }
 
 impl < P >
-  TyApp < P > for
+  TypeApp < P > for
   ReceiverCon
 where
   P : Protocol
@@ -399,7 +399,7 @@ impl < T, A, R >
   SumRow < T > for
   ( A, R )
 where
-  T : TyApp < A >,
+  T : TypeApp < A >,
   R : SumRow < T >,
   T::Applied : Send
 {
@@ -428,8 +428,8 @@ impl < T1, T2, A, R >
   IntersectSum < T1, T2 > for
   ( A, R )
 where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >,
+  T1 : TypeApp < A >,
+  T2 : TypeApp < A >,
   R : IntersectSum < T1, T2 >,
   T1::Applied : Send,
   T2::Applied : Send,
@@ -482,8 +482,8 @@ impl < T1, T2, F, A, B >
   LiftSumBorrow < T1, T2, F > for
   (A, B)
 where
-  T1 : TyApp < A >,
-  T2 : TyApp < A >,
+  T1 : TypeApp < A >,
+  T2 : TypeApp < A >,
   F : LiftFieldBorrow < T1, T2, A >,
   B : LiftSumBorrow < T1, T2, F >,
   T1::Applied : Send,
@@ -541,17 +541,17 @@ impl < F, Root, A, B >
 where
   F : FieldLifter < Root, A >,
   B : LiftSum2 < F, Root >,
-  F :: Source : TyApp < A >,
-  F :: Target : TyApp < A >,
-  F :: Injected : TyApp < A >,
+  F :: Source : TypeApp < A >,
+  F :: Target : TypeApp < A >,
+  F :: Injected : TypeApp < A >,
   < F :: Source
-    as TyApp < A >
+    as TypeApp < A >
   > :: Applied : Send,
   < F :: Target
-    as TyApp < A >
+    as TypeApp < A >
   > :: Applied : Send,
   < F :: Injected
-    as TyApp < A >
+    as TypeApp < A >
   > :: Applied : Send,
 {
   fn lift_sum (
@@ -559,7 +559,7 @@ where
       impl Fn
         ( Sum <
             < F :: Target
-              as TyApp < A >
+              as TypeApp < A >
             > :: Applied,
             < B as
               SumRow < F :: Target >
@@ -571,7 +571,7 @@ where
     sum :
       Sum <
         < F :: Source
-          as TyApp < A >
+          as TypeApp < A >
         > :: Applied,
         < B as
           SumRow < F :: Source >
@@ -588,7 +588,7 @@ where
           move |
             b :
               < F :: Target
-                as TyApp < A >
+                as TypeApp < A >
               > :: Applied
           | ->
             Root
@@ -634,7 +634,7 @@ impl < A, B, T, F, R >
   ElimSum < T, F, R > for
   (A, B)
 where
-  T : TyApp < A >,
+  T : TypeApp < A >,
   B : ElimSum < T, F, R >,
   F : ElimField < T, A, R >,
   T::Applied : Send,
@@ -661,18 +661,18 @@ where
 }
 
 impl < A >
-  TyApp < A > for
+  TypeApp < A > for
   Bottom
 {
   type Applied = Bottom;
 }
 
 impl < X , A, B >
-  TyApp < X > for
+  TypeApp < X > for
   Sum < A, B >
 where
-  A : TyApp < X >,
-  B : TyApp < X >,
+  A : TypeApp < X >,
+  B : TypeApp < X >,
 {
   type Applied =
     Sum <

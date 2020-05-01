@@ -2,7 +2,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ TyApp, Protocol };
+use base::{ TypeApp, Protocol };
 
 use super::data::{ Choice, Either };
 
@@ -28,15 +28,15 @@ where
 { }
 
 impl < A, T, X, Y >
-  TyApp < A > for
+  TypeApp < A > for
   Box <
     dyn FnOnce (T) ->
       Either < X, Y >
     + Send
   >
 where
-  X : TyApp < A >,
-  Y : TyApp < A >,
+  X : TypeApp < A >,
+  Y : TypeApp < A >,
 {
   type Applied =
     Box <
@@ -50,11 +50,11 @@ where
 }
 
 impl < A, P, Q >
-  TyApp < A > for
+  TypeApp < A > for
   ExternalChoice < P, Q >
 where
-  P : TyApp < A >,
-  Q : TyApp < A >,
+  P : TypeApp < A >,
+  Q : TypeApp < A >,
 {
   type Applied =
   ExternalChoice <

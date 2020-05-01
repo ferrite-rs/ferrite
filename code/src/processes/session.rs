@@ -26,10 +26,7 @@ where
   P : Protocol
 {
   unsafe_create_session (
-    async move |
-      _,
-      sender
-    | {
+    async move | _, sender | {
       unsafe_run_session ( cont, (), sender ).await
     })
 }

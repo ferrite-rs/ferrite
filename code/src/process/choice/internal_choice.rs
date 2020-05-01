@@ -2,7 +2,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ TyApp, Protocol };
+use base::{ TypeApp, Protocol };
 
 use super::data::{ Either };
 
@@ -27,11 +27,11 @@ where
 { }
 
 impl < A, X, Y >
-  TyApp < A > for
+  TypeApp < A > for
   InternalChoice < X, Y >
 where
-  X : TyApp < A >,
-  Y : TyApp < A >,
+  X : TypeApp < A >,
+  Y : TypeApp < A >,
 {
   type Applied =
     InternalChoice <

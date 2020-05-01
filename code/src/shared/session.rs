@@ -9,13 +9,14 @@ use async_std::sync::{ Sender, Receiver, channel };
 use super::process::{
   Lock,
   SharedProtocol,
-  SharedTyApp,
+  SharedTypeApp,
   LinearToShared,
   SharedToLinear,
 };
 
 use crate::base::{
   Protocol,
+  Nat,
   Empty,
   Context,
   EmptyContext,
@@ -24,10 +25,6 @@ use crate::base::{
   PartialSession,
   unsafe_run_session,
   unsafe_create_session,
-};
-
-use crate::processes::{
-  NextSelector
 };
 
 pub struct SuspendedSharedSession < P >
@@ -39,7 +36,7 @@ where
       FnOnce
         ( Sender <
             Receiver <
-              P :: ToLinear
+              P
             >
           >
         ) ->
@@ -60,7 +57,7 @@ where
     Sender <
       Sender <
         Receiver <
-          P :: ToLinear
+          P
         >
       >
     >
@@ -98,7 +95,7 @@ where
     loop {
       let sender3
         : Option <
-            Sender < Receiver < P :: ToLinear > >
+            Sender < Receiver < P > >
           >
         = receiver2.recv().await;
 
@@ -128,41 +125,51 @@ pub fn
   < F >
   ( cont : PartialSession <
       (Lock < F >, ()),
-      F :: ToProtocol
+      F :: Applied
     >
   ) ->
     SuspendedSharedSession <
       LinearToShared < F >
     >
 where
-  F : SharedTyApp < F > + Send + 'static
+  F : SharedTypeApp < F > + Send + 'static
 {
   SuspendedSharedSession {
     exec_shared_session : Box::new (
       move |
         sender1 :
           Sender < Receiver <
-            F :: ToProtocol
+            LinearToShared < F >
           > >
       | {
         Box::pin ( async move {
           let (sender2, receiver2)
             : (Sender < Lock < F > >, _)
             = channel (1);
+
           let (sender3, receiver3)
-            : (Sender < F :: ToProtocol >, _)
+            : (Sender < LinearToShared < F > >, _)
+            = channel (1);
+
+          let (sender4, receiver4)
+            : (Sender < F :: Applied >, _)
             = channel (1);
 
           let child1 = task::spawn ( async move {
             // debug!("[accept_shared_session] calling cont");
             unsafe_run_session
-              ( cont, (receiver2, ()), sender3 ).await;
+              ( cont, (receiver2, ()), sender4 ).await;
             // debug!("[accept_shared_session] returned from cont");
+          });
+
+          let child2 = task::spawn ( async move {
+            let linear = receiver4.recv().await.unwrap();
+            sender3.send ( LinearToShared { linear: linear } ).await;
           });
 
           let sender12 = sender1.clone();
 
-          let child2 = task::spawn ( async move {
+          let child3 = task::spawn ( async move {
             // debug!("[accept_shared_session] sending receiver3");
             sender1.send(
               receiver3
@@ -170,7 +177,7 @@ where
             // debug!("[accept_shared_session] sent receiver3");
           });
 
-          let child3 = task::spawn ( async move {
+          let child4 = task::spawn ( async move {
             // debug!("[accept_shared_session] sending sender12");
             sender2.send(
               Lock { unlock : sender12 }
@@ -178,7 +185,7 @@ where
             // debug!("[accept_shared_session] sent sender12");
           });
 
-          join! ( child1, child2, child3 ).await;
+          join! ( child1, child2, child3, child4 ).await;
         })
       })
   }
@@ -196,7 +203,7 @@ pub fn
       SharedToLinear < F >
     >
 where
-  F : SharedTyApp < F > + Send + 'static,
+  F : SharedTypeApp < F > + Send + 'static,
   I : EmptyContext
 {
   unsafe_create_session (
@@ -233,48 +240,37 @@ where
 
 pub fn
   acquire_shared_session
-  < F, I, P, Cont >
+  < F, C, A >
   ( shared : SharedSession <
       LinearToShared < F >
     >,
-    cont_builder : Cont
-  ) ->
-    PartialSession < I, P >
-where
-  F : SharedTyApp < F > + 'static + Send,
-  P : Protocol,
-  I : Context + NextSelector + 'static,
-  I : AppendContext <
-        ( < F as
-            SharedTyApp < F >
-          > :: ToProtocol
-        , ()
-        )
-      >,
-  Cont : FnOnce
-        ( < I as NextSelector > :: Selector )
+    cont_builder : impl
+      FnOnce
+        ( C :: Length )
         ->
           PartialSession <
-            < I as
-              AppendContext <
-                ( < F as
-                    SharedTyApp < F >
-                  > :: ToProtocol
-                , ()
-                )
-              >
-            > :: Appended,
-            P
+            C :: Appended,
+            A
           >
+  ) ->
+    PartialSession < C, A >
+where
+  F : SharedTypeApp < F > + 'static + Send,
+  A : Protocol,
+  C : Context,
+  C :
+    AppendContext <
+      ( F :: Applied , () )
+    >,
 {
-
   let cont = cont_builder (
-    < I as NextSelector > :: make_selector ()
+    < C:: Length as Nat > :: nat ()
   );
 
   unsafe_create_session (
     async move | ctx1, sender1 | {
       let (sender2, receiver2) = channel (1);
+      let (sender3, receiver3) = channel (1);
 
       let child1 = task::spawn ( async move {
         // debug!("[acquire_shared_session] sending sender2");
@@ -288,19 +284,21 @@ where
         // debug!("[acquire_shared_session] received receiver4");
 
         let ctx2 =
-          < I as
-            AppendContext <
-              ( < F as
-                  SharedTyApp < F >
-                > :: ToProtocol
-              , ()
-              )
-            >
-          > :: append_context ( ctx1, (receiver4, ()) );
+          C :: append_context ( ctx1, (receiver3, ()) );
 
-        unsafe_run_session
-          ( cont, ctx2, sender1
-          ).await;
+
+        let child21 = task::spawn ( async move {
+          let LinearToShared { linear } = receiver4.recv().await.unwrap();
+          sender3.send(linear).await;
+        });
+
+        let child22 = task::spawn ( async move {
+          unsafe_run_session
+            ( cont, ctx2, sender1
+            ).await;
+        });
+
+        join! (child21, child22).await;
 
         // debug!("[acquire_shared_session] ran cont");
       });
@@ -326,7 +324,7 @@ pub fn
 where
   P : Protocol,
   I : Context,
-  F : SharedTyApp < F > + Send + 'static,
+  F : SharedTypeApp < F > + Send + 'static,
   N :
     ContextLens <
       I,

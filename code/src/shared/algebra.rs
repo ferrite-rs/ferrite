@@ -13,100 +13,100 @@ use crate::process::{
 };
 
 use super::process::{
-  SharedTyApp,
+  SharedTypeApp,
   SharedToLinear,
 };
 
 impl < F >
-  SharedTyApp < F > for
+  SharedTypeApp < F > for
   Z
 where
   F : Protocol,
   F : Send + 'static
 {
-  type ToProtocol = SharedToLinear < F >;
+  type Applied = SharedToLinear < F >;
 }
 
 impl < T, P, R >
-  SharedTyApp < R > for
+  SharedTypeApp < R > for
   SendValue < T, P >
 where
   T : Send + 'static,
-  P : SharedTyApp < R >
+  P : SharedTypeApp < R >
 {
-  type ToProtocol =
+  type Applied =
     SendValue <
       T,
-      P :: ToProtocol
+      P :: Applied
     >;
 }
 
 impl < T, P, R >
-  SharedTyApp < R > for
+  SharedTypeApp < R > for
   ReceiveValue < T, P >
 where
   T : Send + 'static,
-  P : SharedTyApp < R >
+  P : SharedTypeApp < R >
 {
-  type ToProtocol =
+  type Applied =
     ReceiveValue <
       T,
-      P :: ToProtocol
+      P :: Applied
     >;
 }
 
 impl < P, Q, R >
-  SharedTyApp < R > for
+  SharedTypeApp < R > for
   InternalChoice < P, Q >
 where
-  P : SharedTyApp < R >,
-  Q : SharedTyApp < R >,
+  P : SharedTypeApp < R >,
+  Q : SharedTypeApp < R >,
 {
-  type ToProtocol =
+  type Applied =
     InternalChoice <
-      P :: ToProtocol,
-      Q :: ToProtocol
+      P :: Applied,
+      Q :: Applied
     >;
 }
 
 impl < P, Q, R >
-  SharedTyApp < R > for
+  SharedTypeApp < R > for
   ExternalChoice < P, Q >
 where
-  P : SharedTyApp < R >,
-  Q : SharedTyApp < R >,
+  P : SharedTypeApp < R >,
+  Q : SharedTypeApp < R >,
 {
-  type ToProtocol =
+  type Applied =
     ExternalChoice <
-      P :: ToProtocol,
-      Q :: ToProtocol
+      P :: Applied,
+      Q :: Applied
     >;
 }
 
 impl < P, Q, R >
-  SharedTyApp < R > for
+  SharedTypeApp < R > for
   SendChannel < P, Q >
 where
   P : Protocol,
-  Q : SharedTyApp < R >,
+  Q : SharedTypeApp < R >,
 {
-  type ToProtocol =
+  type Applied =
     SendChannel <
       P,
-      Q :: ToProtocol
+      Q :: Applied
     >;
 }
 
 impl < P, Q, R >
-  SharedTyApp < R > for
+  SharedTypeApp < R > for
   ReceiveChannel < P, Q >
 where
   P : Protocol,
-  Q : SharedTyApp < R >,
+  Q : SharedTypeApp < R >,
 {
-  type ToProtocol =
+  type Applied =
     ReceiveChannel <
       P,
-      Q :: ToProtocol
+      Q :: Applied
     >;
 }

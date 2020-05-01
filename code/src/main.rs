@@ -32,7 +32,7 @@ pub fn main() {
   // run_session(concat_session());
   // run_session(queue_session());
   // run_session(counter_session());
-  // run_session ( shared_counter_session() );
+  run_session ( shared_counter_session() );
 
   // run_session (
   //   demo::channel::channel_session()
@@ -50,9 +50,9 @@ pub fn main() {
   //   demo::stream::stream_session()
   // );
 
-  run_session (
-    demo::stream2::stream_session()
-  );
+  // run_session (
+  //   demo::stream2::stream_session()
+  // );
 
   info!("[Main] Main program terminating");
 }

@@ -8,7 +8,7 @@ pub use crate::base::{
   Nat,
   Z,
   Empty,
-  TyApp,
+  TypeApp,
   Protocol,
   Context,
   Refl,
@@ -64,7 +64,7 @@ where
 }
 
 impl < I, P >
-  TyApp < P > for
+  TypeApp < P > for
   SessionCon < I >
 where
   P : Protocol,
@@ -75,7 +75,7 @@ where
 }
 
 impl < N, I, P, Q, Row >
-  TyApp < P > for
+  TypeApp < P > for
   ContextCon < N, I, Q, Row >
 where
   P : Protocol,
@@ -177,7 +177,7 @@ where
 }
 
 impl < N, I, P, Q, Row, Root >
-  TyApp < P > for
+  TypeApp < P > for
   InternalCont < N, I, Q, Row, Root >
 where
   P : Protocol,

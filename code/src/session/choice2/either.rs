@@ -1,5 +1,5 @@
 pub use crate::base::{
-  TyApp
+  TypeApp
 };
 
 pub use crate::processes::*;
@@ -7,8 +7,8 @@ pub use crate::process::choice2::*;
 
 pub type EitherField < A, B, T > =
   Either <
-    < T as TyApp<A> > :: Applied,
-    < T as TyApp<B> > :: Applied
+    < T as TypeApp<A> > :: Applied,
+    < T as TypeApp<B> > :: Applied
   >;
 
 pub enum Either < A, B > {
@@ -20,14 +20,14 @@ impl < T, A, B >
   SumRow < T > for
   Either < A, B >
 where
-  T : TyApp < A >,
-  T : TyApp < B >,
-  < T as TyApp<A> > :: Applied : Send,
-  < T as TyApp<B> > :: Applied : Send,
+  T : TypeApp < A >,
+  T : TypeApp < B >,
+  < T as TypeApp<A> > :: Applied : Send,
+  < T as TypeApp<B> > :: Applied : Send,
 {
   type Field = Either <
-    < T as TyApp<A> > :: Applied,
-    < T as TyApp<B> > :: Applied
+    < T as TypeApp<A> > :: Applied,
+    < T as TypeApp<B> > :: Applied
   >;
 }
 
@@ -42,10 +42,10 @@ impl < A, B, T >
   IsoRow < T >
   for Either < A, B >
 where
-  T : TyApp < A >,
-  T : TyApp < B >,
-  < T as TyApp<A> > :: Applied : Send,
-  < T as TyApp<B> > :: Applied : Send,
+  T : TypeApp < A >,
+  T : TypeApp < B >,
+  < T as TypeApp<A> > :: Applied : Send,
+  < T as TypeApp<B> > :: Applied : Send,
 {
   fn to_canon (
     row : EitherField < A, B, T >

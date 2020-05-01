@@ -8,7 +8,7 @@ mod session;
 pub use process::{
   Lock,
   SharedProtocol,
-  SharedTyApp,
+  SharedTypeApp,
   LinearToShared,
   SharedToLinear,
 };
