@@ -1,5 +1,5 @@
 
-pub use super::process::public::{
+pub use super::protocol::public::{
   SharedProtocol,
 };
 

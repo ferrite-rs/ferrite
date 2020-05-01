@@ -12,19 +12,18 @@ use crate::process::{
   ReceiveChannel,
 };
 
-use super::process::{
-  SharedTypeApp,
-  SharedToLinear,
-};
+pub trait SharedTypeApp < R >
+{
+  type Applied : Protocol;
+}
 
-impl < F >
-  SharedTypeApp < F > for
+impl < R >
+  SharedTypeApp < R > for
   Z
 where
-  F : Protocol,
-  F : Send + 'static
+  R : Protocol,
 {
-  type Applied = SharedToLinear < F >;
+  type Applied = R;
 }
 
 impl < T, P, R >

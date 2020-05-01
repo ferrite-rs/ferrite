@@ -1,23 +1,36 @@
 
 pub mod public;
 
-mod process;
-mod algebra;
+mod fix;
+mod lock;
 mod session;
+mod shared_session;
+mod protocol;
+mod linear_to_shared;
+mod shared_to_linear;
 
-pub use process::{
-  Lock,
+pub use protocol::{
   SharedProtocol,
-  SharedTypeApp,
-  LinearToShared,
-  SharedToLinear,
 };
 
-pub use algebra::{};
+pub use linear_to_shared :: {
+  LinearToShared
+};
 
-pub use session::{
+pub use shared_to_linear :: {
+  SharedToLinear
+};
+
+pub use fix::{
+  SharedTypeApp,
+};
+
+pub use shared_session::{
   SharedSession,
   SuspendedSharedSession,
+};
+
+pub use session::{
   run_shared_session,
   accept_shared_session,
   detach_shared_session,
