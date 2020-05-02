@@ -23,13 +23,15 @@ pub fn make_counter_session
   accept_shared_session (
     send_value_async ( async move || {
       info!("[Server] Producing count {}", count);
-      random_sleep(100, 200).await;
+      random_sleep(100, 1000).await;
       info!("[Server] Produced count {}", count);
 
       ( count,
         detach_shared_session (
           make_counter_session ( count + 1 ) ) )
-    }) ) }
+    })
+  )
+}
 
 pub fn read_counter_session
   ( name : String
@@ -43,21 +45,26 @@ pub fn read_counter_session
 {
   let shared2 = shared.clone();
 
-  acquire_shared_session ( shared, async move | counter | {
-    receive_value_from ( counter, async move | count | {
-      random_sleep(100, 1000).await;
-      info!("[{}] Received count: {}", name, count);
+  step ( async move || {
+    random_sleep(100, 2000).await;
 
-      release_shared_session ( counter, {
-        if stop_at <= count {
-          info!("[{}] terminating", name);
-          terminate()
-        } else {
-          random_sleep(100, 1000).await;
-          partial_session (
-            read_counter_session ( name, stop_at, shared2 ) )
-        }
-      }) }) }) }
+    acquire_shared_session ( shared, async move | counter | {
+      receive_value_from ( counter, async move | count | {
+        info!("[{}] Received count: {}", name, count);
+
+        release_shared_session ( counter, {
+          if stop_at <= count {
+            info!("[{}] terminating", name);
+            terminate()
+          } else {
+            partial_session (
+              read_counter_session ( name, stop_at, shared2 ) )
+          }
+        })
+      })
+    })
+  })
+}
 
 pub fn read_counter_session_2
   ( shared_counter:

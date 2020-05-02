@@ -46,6 +46,7 @@ pub use crate::processes::public::{
 
 pub use crate::session::public::{
   run_session,
+  step,
 
   wait,
   wait_async,

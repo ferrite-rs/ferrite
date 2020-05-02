@@ -11,9 +11,11 @@ where
   F : SharedTypeApp < SharedToLinear < F > >
 {
   pub (crate) unlock:
-    Sender <
-      Receiver<
-        LinearToShared < F >
+    Receiver <
+      Sender <
+        Receiver<
+          LinearToShared < F >
+        >
       >
     >
 }

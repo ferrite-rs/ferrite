@@ -12,8 +12,10 @@ where
   executor :
     Box < dyn
       FnOnce
-        ( Sender <
-            Receiver < A >
+        ( Receiver <
+            Sender <
+              Receiver < A >
+            >
           >
         ) ->
           Pin < Box <
@@ -51,7 +53,7 @@ where
 
 pub async fn unsafe_run_shared_session < A >
   ( session: SuspendedSharedSession < A >,
-    sender: Sender < Receiver < A > >
+    sender: Receiver < Sender < Receiver < A > > >
   )
 where
   A : SharedProtocol
@@ -63,8 +65,10 @@ pub fn unsafe_create_shared_session
   < A, Fut >
   ( executor1 : impl
       FnOnce
-        ( Sender <
-            Receiver < A >
+        ( Receiver <
+            Sender <
+              Receiver < A >
+            >
           >
         )
         -> Fut
@@ -78,8 +82,10 @@ where
   let executor
     : Box <
         dyn FnOnce
-          ( Sender <
-              Receiver < A >
+          ( Receiver <
+              Sender <
+                Receiver < A >
+              >
             >
           )
           -> Pin < Box < dyn Future < Output=() > + Send > >

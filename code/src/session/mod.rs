@@ -5,6 +5,7 @@ mod end;
 mod wrap;
 mod fix;
 mod link;
+mod step;
 mod value;
 mod choice;
 mod include;
@@ -18,6 +19,10 @@ pub mod nary_choice;
 
 pub use self::run::{
   run_session,
+};
+
+pub use self::step::{
+  step,
 };
 
 pub use self::end::{

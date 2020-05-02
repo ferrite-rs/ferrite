@@ -1,5 +1,6 @@
 pub use super::{
   run_session,
+  step,
 
   wait,
   wait_async,

@@ -42,7 +42,7 @@ where
 
   task::spawn(async move {
     // debug!("[run_shared_session] exec_shared_session");
-    unsafe_run_shared_session ( session, sender1 ).await;
+    unsafe_run_shared_session ( session, receiver1 ).await;
     // debug!("[run_shared_session] exec_shared_session returned");
   });
 
@@ -57,7 +57,11 @@ where
       debug!("[run_shared_session] received sender3");
       match sender3 {
         Some ( sender4 ) => {
-          let receiver3 = receiver1.recv().await.unwrap();
+          let ( sender5, receiver5 ) = channel (1);
+
+          sender1.send ( sender5 ).await;
+          let receiver3 = receiver5.recv().await.unwrap();
+
           debug!("[run_shared_session] received receiver3");
           sender4.send(receiver3).await;
           debug!("[run_shared_session] sent receiver3");
@@ -90,10 +94,14 @@ where
 {
   unsafe_create_shared_session (
     async move |
-      sender1 :
-        Sender < Receiver <
-          LinearToShared < F >
-        > >
+      receiver1 :
+        Receiver <
+          Sender <
+            Receiver <
+              LinearToShared < F >
+            >
+          >
+        >
     | {
       let (sender2, receiver2)
         : (Sender < Lock < F > >, _)
@@ -107,34 +115,42 @@ where
         : (Sender < F :: Applied >, _)
         = channel (1);
 
-      let sender12 = sender1.clone();
+      let m_sender1 = receiver1.recv().await;
 
-      let child1 = task::spawn ( async move {
-        debug!("[accept_shared_session] calling cont");
-        unsafe_run_session
-          ( cont, (receiver2, ()), sender4 ).await;
-        debug!("[accept_shared_session] returned from cont");
-      });
+      match m_sender1 {
+        Some ( sender1 ) => {
+          let child1 = task::spawn ( async move {
+            debug!("[accept_shared_session] calling cont");
+            unsafe_run_session
+              ( cont, (receiver2, ()), sender4 ).await;
+            debug!("[accept_shared_session] returned from cont");
+          });
 
-      let child2 = task::spawn ( async move {
-        let linear = receiver4.recv().await.unwrap();
-        debug!("[accept_shared_session] received from receiver4");
-        sender3.send ( LinearToShared { linear: linear } ).await;
-      });
+          let child2 = task::spawn ( async move {
+            let linear = receiver4.recv().await.unwrap();
+            debug!("[accept_shared_session] received from receiver4");
+            sender3.send ( LinearToShared { linear: linear } ).await;
+          });
 
-      let child3 = task::spawn ( async move {
-        debug!("[accept_shared_session] sending receiver3");
-        sender1.send( receiver3 ).await;
-        debug!("[accept_shared_session] sent receiver3");
-      });
+          let child3 = task::spawn ( async move {
+            debug!("[accept_shared_session] sending receiver3");
+            sender1.send( receiver3 ).await;
+            debug!("[accept_shared_session] sent receiver3");
+          });
 
-      let child4 = task::spawn ( async move {
-        debug!("[accept_shared_session] sending sender12");
-        sender2.send( Lock { unlock : sender12 } ).await;
-        debug!("[accept_shared_session] sent sender12");
-      });
+          let child4 = task::spawn ( async move {
+            debug!("[accept_shared_session] sending sender12");
+            sender2.send( Lock { unlock : receiver1 } ).await;
+            debug!("[accept_shared_session] sent sender12");
+          });
 
-      join! ( child1, child2, child3, child4 ).await;
+          join! ( child1, child2, child3, child4 ).await;
+        },
+        None => {
+          // shared session is terminated with all references to it
+          // being dropped
+        }
+      }
     }
   )
 }
@@ -167,11 +183,11 @@ where
     | {
       let child1 = task::spawn ( async move {
         debug!("[detach_shared_session] receiving sender2");
-        let Lock { unlock :  sender2 }
+        let Lock { unlock : receiver2 }
           = receiver1.recv().await.unwrap();
 
         debug!("[detach_shared_session] received sender2");
-        unsafe_run_shared_session ( cont, sender2 ).await;
+        unsafe_run_shared_session ( cont, receiver2 ).await;
         debug!("[detach_shared_session] ran cont");
       });
 
