@@ -43,7 +43,7 @@ pub fn make_receiver
 where
   T : Send + 'static
 {
-  acquire_shared_session ( source.clone(), move | chan | {
+  acquire_shared_session ( source.clone(), async move | chan | {
     choose_right ( chan,
       receive_value_from ( chan, async move | m_val | {
         match m_val {
@@ -95,7 +95,7 @@ where
       > >
       + Send + 'static,
 {
-  acquire_shared_session ( source, move | chan | {
+  acquire_shared_session ( source, async move | chan | {
     choose_left ( chan,
       send_value_to_async ( chan, async move || {
         let val = make_val().await;

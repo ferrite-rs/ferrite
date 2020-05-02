@@ -2,6 +2,7 @@ extern crate log;
 
 use crate::public::*;
 
+use rand::prelude::*;
 use std::time::Duration;
 use async_std::task::sleep;
 
@@ -10,6 +11,11 @@ type Counter =
     SendValue < i32, Z >
   >;
 
+async fn random_sleep(start: u64, end: u64) {
+  let sleep_time = thread_rng().gen_range(start, end);
+  sleep( Duration::from_millis ( sleep_time ) ).await;
+}
+
 pub fn make_counter_session
   ( count : i32 ) ->
     SuspendedSharedSession < Counter >
@@ -17,7 +23,7 @@ pub fn make_counter_session
   accept_shared_session (
     send_value_async ( async move || {
       info!("[Server] Producing count {}", count);
-      sleep(Duration::from_secs(1)).await;
+      random_sleep(100, 200).await;
       info!("[Server] Produced count {}", count);
 
       ( count,
@@ -37,20 +43,39 @@ pub fn read_counter_session
 {
   let shared2 = shared.clone();
 
-  acquire_shared_session ( shared, move | counter | {
+  acquire_shared_session ( shared, async move | counter | {
     receive_value_from ( counter, async move | count | {
+      random_sleep(100, 1000).await;
       info!("[{}] Received count: {}", name, count);
-      sleep(Duration::from_secs(1)).await;
 
       release_shared_session ( counter, {
         if stop_at <= count {
           info!("[{}] terminating", name);
           terminate()
         } else {
+          random_sleep(100, 1000).await;
           partial_session (
             read_counter_session ( name, stop_at, shared2 ) )
         }
       }) }) }) }
+
+pub fn read_counter_session_2
+  ( shared_counter:
+      SharedSession <
+        LinearToShared <
+          SendValue < i32, Z >
+        > >
+  ) -> Session < End >
+{
+  acquire_shared_session ( shared_counter, async move | linear_counter | {
+    random_sleep(100, 2000).await;
+    receive_value_from ( linear_counter, async move | count | {
+      info!("Received count: {}", count);
+      release_shared_session ( linear_counter,
+        terminate() )
+    })
+  })
+}
 
 pub fn shared_counter_session ()
   -> Session < End >

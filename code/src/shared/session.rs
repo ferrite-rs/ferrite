@@ -54,13 +54,13 @@ where
           >
         = receiver2.recv().await;
 
-      // debug!("[run_shared_session] received sender3");
+      debug!("[run_shared_session] received sender3");
       match sender3 {
         Some ( sender4 ) => {
           let receiver3 = receiver1.recv().await.unwrap();
-          // debug!("[run_shared_session] received receiver3");
+          debug!("[run_shared_session] received receiver3");
           sender4.send(receiver3).await;
-          // debug!("[run_shared_session] sent receiver3");
+          debug!("[run_shared_session] sent receiver3");
         },
         None => {
           debug!("[run_shared_session] terminating shared session");
@@ -73,8 +73,7 @@ where
   (session2, fut)
 }
 
-pub fn
-  accept_shared_session
+pub fn accept_shared_session
   < F >
   ( cont : PartialSession <
       (Lock < F >, ()),
@@ -85,7 +84,7 @@ pub fn
       LinearToShared < F >
     >
 where
-  F : Send + 'static,
+  F : Protocol,
   F : SharedTypeApp < SharedToLinear < F > >,
   F::Applied : Protocol
 {
@@ -108,34 +107,31 @@ where
         : (Sender < F :: Applied >, _)
         = channel (1);
 
+      let sender12 = sender1.clone();
+
       let child1 = task::spawn ( async move {
-        // debug!("[accept_shared_session] calling cont");
+        debug!("[accept_shared_session] calling cont");
         unsafe_run_session
           ( cont, (receiver2, ()), sender4 ).await;
-        // debug!("[accept_shared_session] returned from cont");
+        debug!("[accept_shared_session] returned from cont");
       });
 
       let child2 = task::spawn ( async move {
         let linear = receiver4.recv().await.unwrap();
+        debug!("[accept_shared_session] received from receiver4");
         sender3.send ( LinearToShared { linear: linear } ).await;
       });
 
-      let sender12 = sender1.clone();
-
       let child3 = task::spawn ( async move {
-        // debug!("[accept_shared_session] sending receiver3");
-        sender1.send(
-          receiver3
-        ).await;
-        // debug!("[accept_shared_session] sent receiver3");
+        debug!("[accept_shared_session] sending receiver3");
+        sender1.send( receiver3 ).await;
+        debug!("[accept_shared_session] sent receiver3");
       });
 
       let child4 = task::spawn ( async move {
-        // debug!("[accept_shared_session] sending sender12");
-        sender2.send(
-          Lock { unlock : sender12 }
-        ).await;
-        // debug!("[accept_shared_session] sent sender12");
+        debug!("[accept_shared_session] sending sender12");
+        sender2.send( Lock { unlock : sender12 } ).await;
+        debug!("[accept_shared_session] sent sender12");
       });
 
       join! ( child1, child2, child3, child4 ).await;
@@ -143,8 +139,7 @@ where
   )
 }
 
-pub fn
-  detach_shared_session
+pub fn detach_shared_session
   < F, C >
   ( cont : SuspendedSharedSession <
       LinearToShared < F >
@@ -155,7 +150,7 @@ pub fn
       SharedToLinear < F >
     >
 where
-  F : Send + 'static,
+  F : Protocol,
   F : SharedTypeApp < SharedToLinear < F > >,
   F::Applied : Protocol,
   C : EmptyContext
@@ -171,65 +166,69 @@ where
       sender1
     | {
       let child1 = task::spawn ( async move {
-        // debug!("[detach_shared_session] receiving sender2");
+        debug!("[detach_shared_session] receiving sender2");
         let Lock { unlock :  sender2 }
           = receiver1.recv().await.unwrap();
 
-        // debug!("[detach_shared_session] received sender2");
+        debug!("[detach_shared_session] received sender2");
         unsafe_run_shared_session ( cont, sender2 ).await;
-        // debug!("[detach_shared_session] ran cont");
+        debug!("[detach_shared_session] ran cont");
       });
 
       let child2 = task::spawn ( async move {
-        // debug!("[detach_shared_session] sending sender1");
+        debug!("[detach_shared_session] sending sender1");
         sender1.send (
           SharedToLinear ( PhantomData )
         ).await;
-        // debug!("[detach_shared_session] sent sender1");
+        debug!("[detach_shared_session] sent sender1");
       });
 
       join! ( child1, child2 ).await;
     })
 }
 
-pub fn
-  acquire_shared_session
-  < F, C, A >
+pub fn acquire_shared_session
+  < F, C, A, Fut >
   ( shared : SharedSession <
       LinearToShared < F >
     >,
     cont_builder : impl
       FnOnce
         ( C :: Length )
-        ->
-          PartialSession <
-            C :: Appended,
-            A
-          >
+        -> Fut
+      + Send + 'static
   ) ->
     PartialSession < C, A >
 where
   C : Context,
   A : Protocol,
-  F : Send + 'static,
+  F : Protocol,
   F : SharedTypeApp < SharedToLinear < F > >,
   C :
     AppendContext <
       ( F::Applied , () )
     >,
+  Fut :
+    Future <
+      Output =
+        PartialSession <
+          C :: Appended,
+          A
+        >
+    > + Send,
   F::Applied : Protocol,
 {
-  let cont = cont_builder (
-    < C::Length as Nat > :: nat ()
-  );
-
   unsafe_create_session (
     async move | ctx1, sender1 | {
+      let cont = cont_builder (
+        < C::Length as Nat > :: nat ()
+      ).await;
+
       let (sender2, receiver2) = channel (1);
 
-      // debug!("[acquire_shared_session] receiving receiver4");
+      debug!("[acquire_shared_session] receiving receiver4");
       let receiver3 = unsafe_receive_shared_session(shared).await;
-      // debug!("[acquire_shared_session] received receiver4");
+      debug!("[acquire_shared_session] received receiver4");
 
       let ctx2 = C :: append_context
         ( ctx1, (receiver2, ()) );
@@ -251,8 +250,7 @@ where
     })
 }
 
-pub fn
-  release_shared_session
+pub fn release_shared_session
   < F, C, A, N >
   ( _ : N,
     cont :
@@ -265,7 +263,7 @@ pub fn
 where
   A : Protocol,
   C : Context,
-  F : Send + 'static,
+  F : Protocol,
   F : SharedTypeApp < SharedToLinear < F > >,
   N :
     ContextLens <
@@ -276,18 +274,16 @@ where
 {
   unsafe_create_session (
     async move | ctx1, sender1 | {
-      let (receiver2, ctx2) =
-        N :: extract_source ( ctx1 );
+      let (receiver2, ctx2) = N :: extract_source ( ctx1 );
 
-      let ctx3 =
-        N :: insert_target ( (), ctx2 );
+      let ctx3 = N :: insert_target ( (), ctx2 );
 
-      // debug!("[release_shared_session] waiting receiver2");
+      debug!("[release_shared_session] waiting receiver2");
       receiver2.recv().await.unwrap();
-      // debug!("[release_shared_session] received receiver2");
+      debug!("[release_shared_session] received receiver2");
       unsafe_run_session
         ( cont, ctx3, sender1
         ).await;
-      // debug!("[release_shared_session] ran cont");
+      debug!("[release_shared_session] ran cont");
     })
 }

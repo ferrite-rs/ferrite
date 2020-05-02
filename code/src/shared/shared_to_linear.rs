@@ -10,5 +10,5 @@ pub struct SharedToLinear < F >
 impl < F > Protocol
   for SharedToLinear < F >
 where
-  F : Send + 'static
+  F : Protocol
 { }
