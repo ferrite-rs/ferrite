@@ -20,39 +20,40 @@ mod public;
 pub use crate::demo::*;
 pub use crate::public::*;
 
-pub fn main() {
+#[async_std::main]
+pub async fn main() {
   // simple_logger::init().unwrap();
   env_logger::init();
 
   info!("[Main] Running main program");
 
-  // run_session(hello_session());
-  // run_session(pair_session());
-  // run_session(restaurant_session());
-  // run_session(concat_session());
-  // run_session(queue_session());
-  // run_session(counter_session());
-  run_session ( shared_counter_session() );
+  // run_session(hello_session()).await;
+  // run_session(pair_session()).await;
+  // run_session(restaurant_session()).await;
+  // run_session(concat_session()).await;
+  // run_session(queue_session()).await;
+  // run_session(counter_session()).await;
+  run_session ( shared_counter_session() ).await;
 
   // run_session (
   //   demo::channel::channel_session()
-  // );
+  // ).await;
 
   // run_session (
   //   demo::nary_choice::nary_choice_demo()
-  // );
+  // ).await;
 
   // run_session (
   //   demo::queue::queue_session()
-  // );
+  // ).await;
 
   // run_session (
   //   demo::stream::stream_session()
-  // );
+  // ).await;
 
   // run_session (
   //   demo::stream2::stream_session()
-  // );
+  // ).await;
 
   info!("[Main] Main program terminating");
 }

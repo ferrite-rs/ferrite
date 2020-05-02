@@ -55,12 +55,7 @@ pub fn read_counter_session
 pub fn shared_counter_session ()
   -> Session < End >
 {
-  let shared :
-    SharedSession <
-      LinearToShared <
-        SendValue < i32, Z >
-      >
-    > =
+  let (shared, _) =
     run_shared_session ( make_counter_session ( 0 ));
 
   let p1 = read_counter_session ( "P1".to_string(), 10, shared.clone() );

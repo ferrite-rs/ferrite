@@ -1,4 +1,5 @@
 
+use crate::base::{ Protocol };
 use super::fix::{ SharedTypeApp };
 use super::protocol::{ SharedProtocol };
 use super::shared_to_linear::{ SharedToLinear };
@@ -15,5 +16,6 @@ impl < F >
   LinearToShared < F >
 where
   F : 'static + Send,
-  F : SharedTypeApp < SharedToLinear < F > >
+  F : SharedTypeApp < SharedToLinear < F > >,
+  F::Applied : Protocol
 { }

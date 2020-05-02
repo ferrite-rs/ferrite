@@ -23,5 +23,6 @@ impl < F >
   Lock < F >
 where
   F : 'static + Send,
-  F : SharedTypeApp < SharedToLinear < F > >
+  F : SharedTypeApp < SharedToLinear < F > >,
+  F::Applied : Protocol
 { }

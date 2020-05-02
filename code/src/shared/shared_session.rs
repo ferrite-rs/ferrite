@@ -107,9 +107,9 @@ pub fn unsafe_offer_shared_session < A >
 where
   A : SharedProtocol
 {
-  let ( sender, recceiver ) = channel(1);
+  let ( sender, receiver ) = channel(1);
 
-  ( SharedSession { endpoint: sender }, recceiver )
+  ( SharedSession { endpoint: sender }, receiver )
 }
 
 pub async fn unsafe_receive_shared_session < A >

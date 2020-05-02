@@ -1,4 +1,3 @@
-
 use crate::base::{ Protocol, Z };
 
 use crate::process::{
@@ -14,14 +13,12 @@ use crate::process::{
 
 pub trait SharedTypeApp < R >
 {
-  type Applied : Protocol;
+  type Applied;
 }
 
 impl < R >
   SharedTypeApp < R > for
   Z
-where
-  R : Protocol,
 {
   type Applied = R;
 }
@@ -100,7 +97,6 @@ impl < P, Q, R >
   SharedTypeApp < R > for
   ReceiveChannel < P, Q >
 where
-  P : Protocol,
   Q : SharedTypeApp < R >,
 {
   type Applied =
