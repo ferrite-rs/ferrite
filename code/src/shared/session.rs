@@ -219,39 +219,28 @@ where
   unsafe_create_session (
     async move | ctx1, sender1 | {
       let (sender2, receiver2) = channel (1);
-      let (sender3, receiver3) = channel (1);
+
+      // debug!("[acquire_shared_session] receiving receiver4");
+      let receiver3 = unsafe_receive_shared_session(shared).await;
+      // debug!("[acquire_shared_session] received receiver4");
+
+      let ctx2 = C :: append_context
+        ( ctx1, (receiver2, ()) );
 
       let child1 = task::spawn ( async move {
-        // debug!("[acquire_shared_session] sending sender2");
-        unsafe_receive_shared_session ( shared, sender2 ).await;
-        // debug!("[acquire_shared_session] sent sender2");
+        let LinearToShared { linear } = receiver3.recv().await.unwrap();
+        sender2.send(linear).await;
       });
 
       let child2 = task::spawn ( async move {
-        // debug!("[acquire_shared_session] receiving receiver4");
-        let receiver4 = receiver2.recv().await.unwrap();
-        // debug!("[acquire_shared_session] received receiver4");
-
-        let ctx2 =
-          C :: append_context ( ctx1, (receiver3, ()) );
-
-        let child21 = task::spawn ( async move {
-          let LinearToShared { linear } = receiver4.recv().await.unwrap();
-          sender3.send(linear).await;
-        });
-
-        let child22 = task::spawn ( async move {
-          unsafe_run_session
-            ( cont, ctx2, sender1
-            ).await;
-        });
-
-        join! (child21, child22).await;
-
-        // debug!("[acquire_shared_session] ran cont");
+        unsafe_run_session
+          ( cont, ctx2, sender1
+          ).await;
       });
 
-      join! (child1, child2).await;
+      join! (child1, child2) .await;
+
+      // debug!("[acquire_shared_session] ran cont");
     })
 }
 

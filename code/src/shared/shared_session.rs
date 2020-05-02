@@ -1,6 +1,6 @@
 
 use std::pin::Pin;
-use std::future::Future;
+use async_std::prelude::{ Future, FutureExt };
 use async_std::sync::{ Sender, Receiver, channel };
 
 use super::protocol::SharedProtocol;
@@ -113,14 +113,19 @@ where
 }
 
 pub async fn unsafe_receive_shared_session < A >
-  ( session : SharedSession < A >,
-    sender :
-      Sender <
-        Receiver < A >
-      >
-  )
+  ( session : SharedSession < A > )
+  -> Receiver < A >
 where
   A : SharedProtocol
 {
-  session.endpoint.send( sender ).await;
+  let (sender, receiver) = channel(1);
+
+  let fut1 = session.endpoint.send( sender );
+  let fut2 = async move {
+    receiver.recv().await.unwrap()
+  };
+
+  let (receiver2, _) = fut2.join(fut1).await;
+
+  receiver2
 }
