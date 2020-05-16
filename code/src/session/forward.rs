@@ -10,21 +10,21 @@ use crate::base::{
 };
 
 pub fn forward
-  < I, P, N >
+  < N, C, A >
   (_ : N)
   ->
     PartialSession <
-      I,
-      P
+      C,
+      A
     >
 where
-  P : Protocol,
-  I : Context,
+  A : Protocol,
+  C : Context,
   N :: Target : EmptyContext,
   N :
     ContextLens <
-      I,
-      P,
+      C,
+      A,
       Empty
     >
 {

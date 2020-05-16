@@ -5,29 +5,29 @@ use async_std::task;
 use async_std::sync::{ Sender, channel };
 
 pub fn fix_session
-  < F1, F2, C >
-  ( cont: PartialSession < C, F2 > )
+  < F, A, C >
+  ( cont: PartialSession < C, A > )
   ->
     PartialSession <
       C,
-      Fix < F1 >
+      Fix < F >
     >
 where
   C : Context,
-  F1 : Protocol,
-  F2 : Protocol,
-  F1 :
+  F : Protocol,
+  A : Protocol,
+  F :
     TypeApp <
       Unfix <
-        Fix < F1 >
+        Fix < F >
       >,
-      Applied = F2
+      Applied = A
     >,
 {
   unsafe_create_session (
     async move | ctx, sender1 | {
       let (sender2, receiver)
-        : ( Sender < F2 >, _ )
+        : ( Sender < A >, _ )
         = channel(1);
 
       let child1 = task::spawn(async move {
@@ -44,24 +44,24 @@ where
 }
 
 pub fn unfix_session
-  < F1, F2, C >
+  < C, F, A >
   ( cont:
       PartialSession <
         C,
-        Fix < F1 >
+        Fix < F >
       >
   ) ->
-    PartialSession < C, F2 >
+    PartialSession < C, A >
 where
   C : Context,
-  F1 : Protocol,
-  F2 : Protocol,
-  F1 :
+  F : Protocol,
+  A : Protocol,
+  F :
     TypeApp <
       Unfix <
-        Fix < F1 >
+        Fix < F >
       >,
-      Applied = F2
+      Applied = A
     >,
 {
   unsafe_create_session (
@@ -109,29 +109,32 @@ where
 }
 
 pub fn unfix_session_for
-  < I, P, F, N >
+  < N, C, A, B, F >
   ( _ : N,
     cont :
       PartialSession <
         N :: Target,
-        P
+        B
       >
   ) ->
-    PartialSession < I, P >
+    PartialSession < C, B >
 where
-  P : Protocol,
-  I : Context,
+  B : Protocol,
+  C : Context,
   F : Protocol,
   F :
-    TypeApp < Unfix <
-      Fix < F >
-    > >,
-  F :: Applied : Protocol,
+    TypeApp <
+      Unfix <
+        Fix < F >
+      >,
+      Applied = A
+    >,
+  A : Protocol,
   N :
     ContextLens <
-      I,
+      C,
       Fix < F >,
-      F :: Applied,
+      A,
     >,
 {
   unsafe_create_session(

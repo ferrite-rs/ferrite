@@ -30,7 +30,7 @@ use crate::session::include::{ include_session };
  */
 pub fn receive_channel
   < C, A, B >
-  ( cont_builder : impl
+  ( cont : impl
       FnOnce ( C::Length ) ->
         PartialSession <
           C :: Appended,
@@ -48,7 +48,7 @@ where
   C : Context,
   C : AppendContext < ( A, () ) >,
 {
-  let cont = cont_builder (
+  let cont2 = cont (
     C::Length::nat()
   );
 
@@ -68,7 +68,7 @@ where
             ctx1, (receiver2, ()) );
 
         unsafe_run_session
-          ( cont, ctx2, sender2
+          ( cont2, ctx2, sender2
           ).await;
     })
 }
@@ -134,14 +134,12 @@ where
       send_channel_to(cont) :: P, P ⊸ Q, Δ ⊢ S
  */
 pub fn send_channel_to
-  < NF, NA,
-    C, A1, A2, B
-  >
-  ( _ : NF,
-    _ : NA,
+  < N1, N2, C, A1, A2, B >
+  ( _ : N1,
+    _ : N2,
     cont :
       PartialSession <
-        NF :: Target,
+        N1 :: Target,
         B
       >
   ) ->
@@ -151,15 +149,15 @@ where
   A1 : Protocol,
   A2 : Protocol,
   B : Protocol,
-  NA :
+  N2 :
     ContextLens <
       C,
       A1,
       Empty
     >,
-  NF :
+  N1 :
     ContextLens <
-      NA :: Target,
+      N2 :: Target,
       ReceiveChannel < A1, A2 >,
       A2
     >
@@ -167,13 +165,13 @@ where
   unsafe_create_session (
     async move | ctx1, sender1 | {
       let (receiver1, ctx2) =
-        NA :: extract_source (ctx1);
+        N2 :: extract_source (ctx1);
 
       let ctx3 =
-        NA :: insert_target ((), ctx2);
+        N2 :: insert_target ((), ctx2);
 
       let (receiver2, ctx4) =
-        NF :: extract_source (ctx3);
+        N1 :: extract_source (ctx3);
 
       let ReceiveChannel ( sender2 )
         = receiver2.recv().await.unwrap();
@@ -185,7 +183,7 @@ where
       });
 
       let ctx5 =
-        NF :: insert_target (receiver3, ctx4);
+        N1 :: insert_target (receiver3, ctx4);
 
       let child2 = task::spawn(async move {
         unsafe_run_session
@@ -205,18 +203,18 @@ where
         apply_channel(p1, p2) :: · ⊢ Q
  */
 pub fn apply_channel
-  < P, Q >
+  < A, B >
 (
-  p1 : Session < ReceiveChannel < P, Q > >,
-  p2 : Session < P >
+  f : Session < ReceiveChannel < A, B > >,
+  a : Session < A >
 ) ->
-  Session < Q >
+  Session < B >
 where
-  P : Protocol,
-  Q : Protocol,
+  A : Protocol,
+  B : Protocol,
 {
-  include_session ( p1, | c1 | {
-    include_session ( p2, | c2 | {
+  include_session ( f, | c1 | {
+    include_session ( a, | c2 | {
       send_channel_to ( c1, c2,
         forward ( c1 )
       )

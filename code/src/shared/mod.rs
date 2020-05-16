@@ -26,8 +26,8 @@ pub use fix::{
 };
 
 pub use shared_session::{
+  SharedChannel,
   SharedSession,
-  SuspendedSharedSession,
 };
 
 pub use session::{

@@ -6,9 +6,9 @@ use rand::prelude::*;
 use std::time::Duration;
 use async_std::task::sleep;
 
-type Counter =
+type SharedCounter =
   LinearToShared <
-    SendValue < i32, Z >
+    SendValue < u64, Z >
   >;
 
 async fn random_sleep(start: u64, end: u64) {
@@ -17,8 +17,8 @@ async fn random_sleep(start: u64, end: u64) {
 }
 
 pub fn make_counter_session
-  ( count : i32 ) ->
-    SuspendedSharedSession < Counter >
+  ( count : u64 ) ->
+    SharedSession < SharedCounter >
 {
   accept_shared_session (
     send_value_async ( async move || {
@@ -35,12 +35,9 @@ pub fn make_counter_session
 
 pub fn read_counter_session
   ( name : String
-  , stop_at : i32
+  , stop_at : u64
   , shared:
-      SharedSession <
-        LinearToShared <
-          SendValue < i32, Z >
-        > >
+      SharedChannel < SharedCounter >
   ) -> Session < End >
 {
   let shared2 = shared.clone();
@@ -68,13 +65,10 @@ pub fn read_counter_session
 
 pub fn read_counter_session_2
   ( shared_counter:
-      SharedSession <
-        LinearToShared <
-          SendValue < i32, Z >
-        > >
+      & SharedChannel < SharedCounter >
   ) -> Session < End >
 {
-  acquire_shared_session ( shared_counter, async move | linear_counter | {
+  shared_counter.acquire ( async move | linear_counter | {
     random_sleep(100, 2000).await;
     receive_value_from ( linear_counter, async move | count | {
       info!("Received count: {}", count);

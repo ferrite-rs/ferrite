@@ -12,7 +12,7 @@ pub fn choice2_demo ()
         choice::InternalChoice <
           choice::Either <
             SendValue < String, End >,
-            ReceiveValue < i32, End >
+            ReceiveValue < u64, End >
           > >,
         End
       > > =

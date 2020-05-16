@@ -26,19 +26,18 @@ use crate::base::{
   unsafe_create_session,
 };
 
-pub fn run_shared_session
-  < P >
-  ( session : SuspendedSharedSession < P > )
+pub fn run_shared_session < A >
+  ( session : SharedSession < A > )
   ->
-  ( SharedSession < P >
+  ( SharedChannel < A >
   , impl Future < Output = () >
   )
 where
-  P : SharedProtocol
+  A : SharedProtocol
 {
   let (sender1, receiver1) = channel (1);
 
-  let ( session2, receiver2 ) = unsafe_offer_shared_session ();
+  let ( session2, receiver2 ) = unsafe_create_shared_channel ();
 
   task::spawn(async move {
     // debug!("[run_shared_session] exec_shared_session");
@@ -48,15 +47,11 @@ where
 
   let fut = task::spawn(async move {
     loop {
-      let sender3
-        : Option <
-            Sender < Receiver < P > >
-          >
-        = receiver2.recv().await;
+      let sender3 = receiver2.recv().await;
 
       debug!("[run_shared_session] received sender3");
       match sender3 {
-        Some ( sender4 ) => {
+        Ok ( sender4 ) => {
           let ( sender5, receiver5 ) = channel (1);
 
           sender1.send ( sender5 ).await;
@@ -66,7 +61,7 @@ where
           sender4.send(receiver3).await;
           debug!("[run_shared_session] sent receiver3");
         },
-        None => {
+        Err (_) => {
           debug!("[run_shared_session] terminating shared session");
           return;
         }
@@ -84,7 +79,7 @@ pub fn accept_shared_session
       F :: Applied
     >
   ) ->
-    SuspendedSharedSession <
+    SharedSession <
       LinearToShared < F >
     >
 where
@@ -118,7 +113,7 @@ where
       let m_sender1 = receiver1.recv().await;
 
       match m_sender1 {
-        Some ( sender1 ) => {
+        Ok ( sender1 ) => {
           let child1 = task::spawn ( async move {
             debug!("[accept_shared_session] calling cont");
             unsafe_run_session
@@ -146,7 +141,7 @@ where
 
           join! ( child1, child2, child3, child4 ).await;
         },
-        None => {
+        Err (_) => {
           // shared session is terminated with all references to it
           // being dropped
         }
@@ -157,7 +152,7 @@ where
 
 pub fn detach_shared_session
   < F, C >
-  ( cont : SuspendedSharedSession <
+  ( cont : SharedSession <
       LinearToShared < F >
     >
   ) ->
@@ -205,7 +200,7 @@ where
 
 pub fn acquire_shared_session
   < F, C, A, Fut >
-  ( shared : SharedSession <
+  ( shared : SharedChannel <
       LinearToShared < F >
     >,
     cont_builder : impl
@@ -243,7 +238,7 @@ where
       let (sender2, receiver2) = channel (1);
 
       debug!("[acquire_shared_session] receiving receiver4");
-      let receiver3 = unsafe_receive_shared_session(shared).await;
+      let receiver3 = unsafe_receive_shared_channel(shared).await;
       debug!("[acquire_shared_session] received receiver4");
 
       let ctx2 = C :: append_context
@@ -302,4 +297,43 @@ where
         ).await;
       debug!("[release_shared_session] ran cont");
     })
+}
+
+impl < F >
+  SharedChannel <
+    LinearToShared < F >
+  >
+where
+  F : Protocol,
+  F : SharedTypeApp < SharedToLinear < F > >,
+  F::Applied : Protocol,
+{
+  pub fn acquire < C, A, Fut >
+    ( &self,
+      cont : impl
+        FnOnce
+          ( C :: Length )
+          -> Fut
+        + Send + 'static
+    ) ->
+      PartialSession < C, A >
+  where
+    C : Context,
+    A : Protocol,
+    C :
+      AppendContext <
+        ( F::Applied , () )
+      >,
+    Fut :
+      Future <
+        Output =
+          PartialSession <
+            C :: Appended,
+            A
+          >
+      > + Send,
+  { acquire_shared_session (
+      self.clone(),
+      cont )
+  }
 }

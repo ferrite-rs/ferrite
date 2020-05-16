@@ -9,9 +9,9 @@ struct WrapIntStream;
 impl Wrapper for WrapIntStream
 { type Unwrap = IntStream; }
 
-type IntStream = SendValue < i32, Wrap < WrapIntStream > >;
+type IntStream = SendValue < u64, Wrap < WrapIntStream > >;
 
-fn producer (count: i32) ->
+fn producer (count: u64) ->
   Session < IntStream >
 {
   send_value_async ( async move || {

@@ -30,27 +30,26 @@ use crate::session::end::{
 
 use crate::session::link::cut;
 
-pub fn
-  include_session
-  < I, P, Q >
-  ( session1 : Session < P >,
+pub fn include_session
+  < C, A, B >
+  ( session1 : Session < A >,
     cont_builder : impl FnOnce
-      ( I :: Length )
+      ( C :: Length )
       ->
         PartialSession <
-          I :: Appended,
-          Q
+          C :: Appended,
+          B
         >
   ) ->
-    PartialSession < I, Q >
+    PartialSession < C, B >
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
-  I : AppendContext < ( P, () ) >,
+  A : Protocol,
+  B : Protocol,
+  C : Context,
+  C : AppendContext < ( A, () ) >,
 {
   let cont = cont_builder (
-    I::Length::nat ()
+    C::Length::nat ()
   );
 
   unsafe_create_session (
@@ -64,11 +63,7 @@ where
       });
 
       let ctx2 =
-        < I as
-          AppendContext <
-            ( P, () )
-          >
-        > :: append_context ( ctx1, (receiver2, ()) );
+        C :: append_context ( ctx1, (receiver2, ()) );
 
       let child2 = task::spawn(async move {
         unsafe_run_session
@@ -110,7 +105,7 @@ where
         Appended = C
       >
 {
-  cut :: <C, (), _, _ >
+  cut :: <C, (), _, _, _, _ >
     ( cont ( C::Length::nat () ), session )
 }
 

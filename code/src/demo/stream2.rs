@@ -5,9 +5,9 @@ use async_std::task::sleep;
 use crate::public::*;
 
 type IntStream = Fix <
-  SendValue < i32, Z > >;
+  SendValue < u64, Z > >;
 
-fn producer (count: i32) ->
+fn producer (count: u64) ->
   Session < IntStream >
 {
   fix_session (

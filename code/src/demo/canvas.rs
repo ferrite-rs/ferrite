@@ -1,13 +1,13 @@
 extern crate log;
 use crate::public::*;
 
-enum CanvasOps {
+pub enum CanvasOps {
   FillText ( String, f32 ),
   MoveTo ( f32, f32 ),
   LineTo ( f32, f32 ),
 }
 
-type Canvas =
+pub type Canvas =
   Fix <
     ExternalChoice <
       SendValue <
@@ -18,7 +18,7 @@ type Canvas =
     >
   >;
 
-type CanvasManager =
+pub type CanvasManager =
   LinearToShared <
     SendChannel <
       Canvas,

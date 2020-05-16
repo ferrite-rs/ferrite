@@ -108,8 +108,8 @@ pub use crate::shared::public::{
   LinearToShared,
   SharedToLinear,
 
+  SharedChannel,
   SharedSession,
-  SuspendedSharedSession,
   run_shared_session,
   accept_shared_session,
   detach_shared_session,

@@ -16,23 +16,40 @@ use crate::process::{
   ExternalChoice
 };
 
-pub struct ExternalChoiceResult < L, R >
+pub struct ContSum < C, A, B >
+where
+  C: Context,
+  A: Protocol,
+  B: Protocol
 {
-  result: Either< L, R >
+  result: Either <
+    PartialSession < C, A >,
+    PartialSession < C, B >
+  >
 }
 
-fn left_choice < L, R > (res: L)
-  -> ExternalChoiceResult< L, R >
+fn left_choice < C, A, B >
+  ( res: PartialSession < C, A > )
+  -> ContSum < C, A, B >
+where
+  C: Context,
+  A: Protocol,
+  B: Protocol
 {
-  return ExternalChoiceResult {
+  return ContSum {
     result: Either::Left(res)
   }
 }
 
-fn right_choice < L, R > (res: R)
-  -> ExternalChoiceResult< L, R >
+fn right_choice < C, A, B >
+  ( res: PartialSession < C, B > )
+  -> ContSum < C, A, B >
+where
+  C: Context,
+  A: Protocol,
+  B: Protocol
 {
-  return ExternalChoiceResult {
+  return ContSum {
     result: Either::Right(res)
   }
 }
@@ -69,16 +86,16 @@ fn right_choice < L, R > (res: R)
 
   There is just one more small issue which is that we also can't really do
   impredicative polymorphism, e.g. generic closure, in Rust. To work around
-  that we define an opaque r type ExternalChoiceResult with private constructors,
-  so that user code can never construct a ExternalChoiceResult on their own.
+  that we define an opaque r type ContSum with private constructors,
+  so that user code can never construct a ContSum on their own.
 
     cont_builder :: forall a b
-      . Either (a -> ExternalChoiceResult) (b -> ExternalChoiceResult)
-      -> ExternalChoiceResult
+      . Either (a -> ContSum) (b -> ContSum)
+      -> ContSum
 
   With that we can call offer_builder with our choice, and be confident that
   offer_builder will produce the a or b that we want and extract it from the
-  ExternalChoiceResult.
+  ContSum.
 
   offerChoice
       :: forall ctx p q .
@@ -94,54 +111,44 @@ fn right_choice < L, R > (res: R)
        )
     ->  PartialSession ctx (ExternalChoice p q)
  */
-pub type ReturnChoice < C, P, Q > =
+pub type InjectCont < C, A, B > =
   Either <
     Box < dyn FnOnce (
-       PartialSession < C, P >
-    ) -> ExternalChoiceResult <
-       PartialSession < C, P >,
-       PartialSession < C, Q >
-    > + Send >,
+       PartialSession < C, A >
+    ) -> ContSum < C, A, B > + Send >,
     Box< dyn FnOnce (
-       PartialSession < C, Q >
-    ) -> ExternalChoiceResult <
-       PartialSession < C, P >,
-       PartialSession < C, Q >
-    > + Send >
+       PartialSession < C, B >
+    ) -> ContSum < C, A, B > + Send >
   >;
 
-pub fn offer_choice < C, P, Q, F >
-  ( cont_builder : F )
+pub fn offer_choice < C, A, B >
+  ( cont_builder : impl FnOnce
+      ( InjectCont < C, A, B > )
+      -> ContSum < C, A, B > + Send + 'static)
   ->
     PartialSession <
       C,
-      ExternalChoice < P, Q >
+      ExternalChoice < A, B >
     >
 where
-  P   : Protocol,
-  Q   : Protocol,
-  C : Context,
-  F   : FnOnce(
-          ReturnChoice < C, P, Q >
-        ) -> ExternalChoiceResult<
-           PartialSession < C, P >,
-           PartialSession < C, Q >
-        > + Send + 'static
+  A : Protocol,
+  B : Protocol,
+  C : Context
 {
   unsafe_create_session (
     async move | ctx, sender | {
       sender.send ( ExternalChoice (
         Box::new(
-          move |choice : Choice| ->
-            Either<
-              Receiver < P >,
-              Receiver < Q >
+          move | choice | ->
+            Either <
+              Receiver < A >,
+              Receiver < B >
             >
           {
             match choice {
               Choice::Left => {
                 let in_choice :
-                  ReturnChoice < C, P, Q >
+                  InjectCont < C, A, B >
                 = Either::Left(
                   Box::new (
                     left_choice
@@ -170,7 +177,7 @@ where
               },
 
               Choice::Right => {
-                let in_choice : ReturnChoice <C, P, Q>
+                let in_choice : InjectCont <C, A, B>
                 = Either::Right(Box::new(right_choice));
 
                 let cont_variant = cont_builder(in_choice).result;
@@ -206,27 +213,27 @@ where
  */
 
 pub fn choose_left
-  < N, I, P1, P2, S >
+  < N, C, A1, A2, B >
   ( _ : N,
     cont:
       PartialSession <
         N :: Target,
-        S
+        B
       >
   ) ->
     PartialSession <
-      I, S
+      C, B
     >
 where
-  I : Context,
-  P1 : Protocol,
-  P2 : Protocol,
-  S : Protocol,
+  C : Context,
+  A1 : Protocol,
+  A2 : Protocol,
+  B : Protocol,
   N :
     ContextLens <
-      I,
-      ExternalChoice< P1, P2 >,
-      P1
+      C,
+      ExternalChoice < A1, A2 >,
+      A1
     >
 {
   unsafe_create_session (
@@ -259,25 +266,25 @@ where
     choose_right(cont) :: Δ, P & Q, Δ' ⊢ S
  */
 pub fn choose_right
-  < N, I, P1, P2, S >
+  < N, C, A1, A2, B >
   ( _ : N,
     cont:
       PartialSession <
         N :: Target,
-        S
+        B
       >
   ) ->
-    PartialSession < I, S >
+    PartialSession < C, B >
 where
-  I : Context,
-  P1 : Protocol,
-  P2 : Protocol,
-  S : Protocol,
+  C : Context,
+  A1 : Protocol,
+  A2 : Protocol,
+  B : Protocol,
   N :
     ContextLens <
-      I,
-      ExternalChoice< P1, P2 >,
-      P2
+      C,
+      ExternalChoice < A1, A2 >,
+      A2
     >
 {
   unsafe_create_session (
@@ -296,14 +303,7 @@ where
         },
         Either::Right (input_chan) => {
           let ctx3 =
-            < N as
-              ContextLens <
-                I,
-                ExternalChoice < P1, P2 >,
-                P2
-              >
-            >
-            :: insert_target( input_chan, ctx2 );
+            N :: insert_target( input_chan, ctx2 );
 
           unsafe_run_session
             ( cont, ctx3, sender

@@ -5,16 +5,16 @@ use async_std::sync::{ Sender, Receiver, channel };
 
 use super::protocol::SharedProtocol;
 
-pub struct SuspendedSharedSession < A >
+pub struct SharedSession < S >
 where
-  A : SharedProtocol
+  S : SharedProtocol
 {
   executor :
     Box < dyn
       FnOnce
         ( Receiver <
             Sender <
-              Receiver < A >
+              Receiver < S >
             >
           >
         ) ->
@@ -27,56 +27,56 @@ where
     >
 }
 
-pub struct SharedSession < A >
+pub struct SharedChannel < S >
 where
-  A : SharedProtocol
+  S : SharedProtocol
 {
   endpoint :
     Sender <
       Sender <
-        Receiver < A >
+        Receiver < S >
       >
     >
 }
 
-impl < A > Clone for
-  SharedSession < A >
+impl < S > Clone for
+  SharedChannel < S >
 where
-  A : SharedProtocol
+  S : SharedProtocol
 {
-  fn clone(&self) -> Self {
-    SharedSession {
+  fn clone ( &self ) -> Self {
+    SharedChannel {
       endpoint : self.endpoint.clone()
     }
   }
 }
 
-pub async fn unsafe_run_shared_session < A >
-  ( session: SuspendedSharedSession < A >,
-    sender: Receiver < Sender < Receiver < A > > >
+pub async fn unsafe_run_shared_session < S >
+  ( session: SharedSession < S >,
+    sender: Receiver < Sender < Receiver < S > > >
   )
 where
-  A : SharedProtocol
+  S : SharedProtocol
 {
   (session.executor)(sender).await;
 }
 
 pub fn unsafe_create_shared_session
-  < A, Fut >
+  < S, Fut >
   ( executor1 : impl
       FnOnce
         ( Receiver <
             Sender <
-              Receiver < A >
+              Receiver < S >
             >
           >
         )
         -> Fut
       + Send + 'static
   ) ->
-    SuspendedSharedSession < A >
+    SharedSession < S >
 where
-  A : SharedProtocol,
+  S : SharedProtocol,
   Fut : Future < Output=() > + Send
 {
   let executor
@@ -84,7 +84,7 @@ where
         dyn FnOnce
           ( Receiver <
               Sender <
-                Receiver < A >
+                Receiver < S >
               >
             >
           )
@@ -98,31 +98,31 @@ where
           } )
         });
 
-  SuspendedSharedSession { executor }
+  SharedSession { executor }
 }
 
-pub fn unsafe_offer_shared_session < A >
+pub fn unsafe_create_shared_channel < S >
   () ->
-    ( SharedSession < A >,
+    ( SharedChannel < S >,
       Receiver <
         Sender <
-          Receiver < A >
+          Receiver < S >
         >
       >
     )
 where
-  A : SharedProtocol
+  S : SharedProtocol
 {
-  let ( sender, receiver ) = channel(1);
+  let ( sender, receiver ) = channel( 1000000 );
 
-  ( SharedSession { endpoint: sender }, receiver )
+  ( SharedChannel { endpoint: sender }, receiver )
 }
 
-pub async fn unsafe_receive_shared_session < A >
-  ( session : SharedSession < A > )
-  -> Receiver < A >
+pub async fn unsafe_receive_shared_channel < S >
+  ( session : SharedChannel < S > )
+  -> Receiver < S >
 where
-  A : SharedProtocol
+  S : SharedProtocol
 {
   let (sender, receiver) = channel(1);
 

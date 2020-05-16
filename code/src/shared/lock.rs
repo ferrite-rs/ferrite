@@ -7,7 +7,6 @@ use super::shared_to_linear::{ SharedToLinear };
 
 pub struct Lock < F >
 where
-  F : Send + 'static,
   F : SharedTypeApp < SharedToLinear < F > >
 {
   pub (crate) unlock:
@@ -24,7 +23,7 @@ impl < F >
   Protocol for
   Lock < F >
 where
-  F : 'static + Send,
+  F : Protocol,
   F : SharedTypeApp < SharedToLinear < F > >,
   F::Applied : Protocol
 { }

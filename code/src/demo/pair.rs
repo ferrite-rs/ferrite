@@ -16,7 +16,7 @@ pub fn pair_session()
    */
   let p1 :
     Session <
-      SendValue < i32, End >
+      SendValue < u64, End >
     >
   = send_value_async ( async move || {
       info!("[P1] Spending 7 seconds to produce first output");
@@ -43,9 +43,9 @@ pub fn pair_session()
   let p2 :
      Session <
       ReceiveChannel <
-        SendValue< i32, End >,
+        SendValue< u64, End >,
         SendChannel <
-          SendValue< i32, End >,
+          SendValue< u64, End >,
           SendValue< String, End >
         >
       >
@@ -87,7 +87,7 @@ pub fn pair_session()
     Session <
       ReceiveChannel <
         SendChannel <
-          SendValue<i32, End>,
+          SendValue<u64, End>,
           SendValue<String, End>
         >,
         ReceiveChannel <
@@ -143,7 +143,7 @@ pub fn pair_session()
   let p5 :
     Session <
       SendChannel <
-        SendValue< i32, End >,
+        SendValue< u64, End >,
         SendValue< String, End >
       >
     >

@@ -7,6 +7,7 @@ use async_std::sync::{
 use crate::process::{ SendChannel };
 
 use crate::base::{
+  Nat,
   Protocol,
   Empty,
   Context,
@@ -17,10 +18,6 @@ use crate::base::{
   unsafe_create_session,
 };
 
-use crate::processes::{
-  NextSelector
-};
-
 /*
     Additive Conjunction, Right Rule
 
@@ -29,26 +26,26 @@ use crate::processes::{
       send_channel_from (cont) :: P, Δ  ⊢ P ⊗ Q
  */
 pub fn send_channel_from
-  < I, P, Q, N >
+  < C, A, B, N >
   ( _ : N,
     cont:
       PartialSession <
         N :: Target,
-        Q
+        B
       >
   ) ->
     PartialSession <
-      I,
-      SendChannel< P, Q >
+      C,
+      SendChannel < A, B >
     >
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
+  A : Protocol,
+  B : Protocol,
+  C : Context,
   N :
     ContextLens <
-      I,
-      P,
+      C,
+      A,
       Empty
     >
 {
@@ -92,78 +89,54 @@ where
     receive_channel_from(cont) :: P ⊗ Q, Δ  ⊢ S
  */
 pub fn receive_channel_from
-  < I, P1, P2, Q,
-    N,
-    F
-  >
+  < C1, C2, A1, A2, B, N >
   ( _ : N,
-    cont_builder: F
-  ) ->
-    PartialSession < I, Q >
-where
-  P1 : Protocol,
-  P2 : Protocol,
-  Q : Protocol,
-  I : Context,
-  N :: Target :
-    NextSelector,
-  N :: Target :
-    AppendContext <
-        ( P1, () )
-      >,
-  N :
-    ContextLens <
-      I,
-      SendChannel < P1, P2 >,
-      P2
-    >,
-  F : FnOnce
-        ( < N :: Target
-            as NextSelector
-          > :: Selector
+    cont_builder: impl
+      FnOnce
+        ( C2 :: Length
         ) ->
           PartialSession <
-            < N :: Target
-              as AppendContext <
-                ( P1, () )
-              >
-            > :: Appended,
-            Q
+            C2 :: Appended,
+            B
           >
+  ) ->
+    PartialSession < C1, B >
+where
+  A1 : Protocol,
+  A2 : Protocol,
+  B : Protocol,
+  C1 : Context,
+  C2 :
+    AppendContext <
+      ( A1, () )
+    >,
+  N :
+    ContextLens <
+      C1,
+      SendChannel < A1, A2 >,
+      A2,
+      Target = C2
+    >,
 {
   let cont = cont_builder (
-    < N :: Target
-      as NextSelector
-    > :: make_selector ()
+    C2 :: Length :: nat ()
   );
 
   unsafe_create_session (
     async move | ctx1, sender1 | {
       let ( pair_chan, ctx2 ) =
-        < N as
-          ContextLens <
-            I,
-            SendChannel < P1, P2 >,
-            P2
-          >
-        > :: extract_source ( ctx1 );
+        N :: extract_source ( ctx1 );
 
       let SendChannel ( p_chan, y_chan )
         = pair_chan.recv().await.unwrap();
 
       let ctx3 =
-        < N as
-          ContextLens <
-            I,
-            SendChannel < P1, P2 >,
-            P2
-          >
-        > :: insert_target ( y_chan, ctx2 );
+        N :: insert_target ( y_chan, ctx2 );
 
       let ctx4 =
         < N :: Target as
           AppendContext <
-            ( P1, () )
+            ( A1, () )
           >
         > :: append_context (ctx3, (p_chan, ()));
 

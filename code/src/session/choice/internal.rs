@@ -35,16 +35,16 @@ use crate::base::{
     ->  PartialSession ctx (InternalChoice p q)
  */
 pub fn offer_left
-  < I, P, Q >
-  ( cont:  PartialSession < I, P >
+  < C, A, B >
+  ( cont:  PartialSession < C, A >
   ) ->
-    PartialSession < I,
-      InternalChoice < P, Q >
+    PartialSession < C,
+      InternalChoice < A, B >
     >
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context
+  A : Protocol,
+  B : Protocol,
+  C : Context
 {
   unsafe_create_session (
     async move | ctx, sender | {
@@ -68,13 +68,13 @@ where
 }
 
 pub fn offer_right
-  < C, P, Q >
-  ( cont:  PartialSession < C, Q >
-  ) ->  PartialSession < C, InternalChoice <P, Q> >
-  where
-    P : Protocol,
-    Q : Protocol,
-    C : Context,
+  < C, A, B >
+  ( cont:  PartialSession < C, B > )
+  -> PartialSession < C, InternalChoice < A, B > >
+where
+  A : Protocol,
+  B : Protocol,
+  C : Context,
 {
   return unsafe_create_session (
     async move | ctx, sender | {
@@ -108,30 +108,17 @@ pub fn offer_right
     case(cont_builder) :: Δ, P ⊕ Q, Δ' ⊢ S
  */
 
-pub struct InternalChoiceResult
-  < C1, C2, P >
-where
-  C1 : Context,
-  C2 : Context,
-  P : Protocol
-{
-  result: Either <
-    PartialSession < C1, P >,
-    PartialSession < C2, P >
-  >
-}
-
 fn left_choice
   < C1, C2, P >
   ( res : PartialSession < C1, P > )
   ->
-    InternalChoiceResult < C1, C2, P >
+    ContSum < C1, C2, P >
 where
   C1 : Context,
   C2 : Context,
   P : Protocol
 {
-  return InternalChoiceResult {
+  return ContSum {
     result: Either::Left(res)
   }
 }
@@ -140,119 +127,78 @@ fn right_choice
   < C1, C2, P >
   ( res : PartialSession < C2, P > )
   ->
-    InternalChoiceResult < C1, C2, P >
+    ContSum < C1, C2, P >
 where
   C1 : Context,
   C2 : Context,
   P : Protocol
 {
-  return InternalChoiceResult {
+  return ContSum {
     result: Either::Right(res)
   }
 }
 
-type ReturnChoice < N, I, P1, P2, S > =
+pub struct ContSum
+  < C1, C2, A >
+where
+  C1 : Context,
+  C2 : Context,
+  A : Protocol
+{
+  result: Either <
+    PartialSession < C1, A >,
+    PartialSession < C2, A >
+  >
+}
+
+type InjectCont < C2, C3, B > =
   Either <
     Box <
-      dyn FnOnce (
-        PartialSession <
-          < N as
-            ContextLens <
-              I,
-              InternalChoice < P1, P2 >,
-              P1
-            >
-          > :: Target,
-          S
-        >
-      ) ->
-        InternalChoiceResult <
-          < N as
-            ContextLens <
-              I,
-              InternalChoice < P1, P2 >,
-              P1
-            >
-          > :: Target,
-          < N as
-            ContextLens <
-              I,
-              InternalChoice < P1, P2 >,
-              P2
-            >
-          > :: Target,
-          S
-        >
+      dyn FnOnce ( PartialSession < C2, B > )
+      -> ContSum < C2, C3, B >
       + Send
     >,
     Box <
-      dyn FnOnce (
-        PartialSession <
-          < N as
-            ContextLens <
-              I,
-              InternalChoice < P1, P2 >,
-              P2
-            >
-          > :: Target,
-          S
-        >
-      ) ->
-        InternalChoiceResult <
-          < N as
-            ContextLens <
-              I,
-              InternalChoice < P1, P2 >,
-              P1
-            >
-          > :: Target,
-          < N as
-            ContextLens <
-              I,
-              InternalChoice < P1, P2 >,
-              P2
-            >
-          > :: Target,
-          S
-        >
+      dyn FnOnce ( PartialSession < C3, B > )
+      -> ContSum < C2, C3, B >
       + Send
     >
   >;
 
 pub fn case
-  < N, I, P1, P2, S, D, T1, T2 >
+  < N, C1, C2, C3, C4, A1, A2, B >
   ( _ : N,
     cont_builder : impl
       FnOnce (
-        ReturnChoice < N, I, P1, P2, S >
+        InjectCont < C2, C3, B >
       ) ->
-        InternalChoiceResult < T1, T2, S >
+        ContSum < C2, C3, B >
       + Send + 'static
   ) ->
-    PartialSession < I, S >
+    PartialSession < C1, B >
 where
-  I : Context,
-  D : Context,
-  T1 : Context,
-  T2 : Context,
-  P1 : Protocol,
-  P2 : Protocol,
-  S : Protocol,
+  C1 : Context,
+  C4 : Context,
+  C2 : Context,
+  C3 : Context,
+  A1 : Protocol,
+  A2 : Protocol,
+  B : Protocol,
   N :
     ContextLens <
-      I,
-      InternalChoice < P1, P2 >,
-      P1,
-      Target = T1,
-      Deleted = D
+      C1,
+      InternalChoice < A1, A2 >,
+      A1,
+      Target = C2,
+      Deleted = C4
     >,
   N :
     ContextLens <
-      I,
-      InternalChoice < P1, P2 >,
-      P2,
-      Target = T2,
-      Deleted = D
+      C1,
+      InternalChoice < A1, A2 >,
+      A2,
+      Target = C3,
+      Deleted = C4
     >
 {
   unsafe_create_session (
@@ -260,9 +206,9 @@ where
       let (variant_chan, ctx2) =
         < N as
           ContextLens <
-            I,
-            InternalChoice < P1, P2 >,
-            P1
+            C1,
+            InternalChoice < A1, A2 >,
+            A1
           >
         > :: extract_source ( ctx1 );
 
@@ -272,7 +218,7 @@ where
       match variant {
         Either::Left( p1 ) => {
           let in_choice
-            : ReturnChoice < N, I, P1, P2, S >
+            : InjectCont < C2, C3, B >
             = Either::Left(Box::new(left_choice));
 
           let cont_variant = cont_builder(in_choice).result;
@@ -280,9 +226,9 @@ where
           let ctx3 =
             < N as
               ContextLens <
-                I,
-                InternalChoice < P1, P2 >,
-                P1
+                C1,
+                InternalChoice < A1, A2 >,
+                A1
               >
             > :: insert_target ( p1, ctx2 );
 
@@ -299,7 +245,7 @@ where
         },
         Either::Right( p2 ) => {
           let in_choice
-            : ReturnChoice < N, I, P1, P2, S >
+            : InjectCont < C2, C3, B >
             = Either::Right(Box::new(right_choice));
 
           let cont_variant = cont_builder(in_choice).result;
@@ -307,9 +253,9 @@ where
           let ctx3 =
             < N as
               ContextLens <
-                I,
-                InternalChoice < P1, P2 >,
-                P2
+                C1,
+                InternalChoice < A1, A2 >,
+                A2
               >
             > :: insert_target ( p2, ctx2 );
 

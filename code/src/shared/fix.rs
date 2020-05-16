@@ -11,43 +11,43 @@ use crate::process::{
   ReceiveChannel,
 };
 
-pub trait SharedTypeApp < R >
+pub trait SharedTypeApp < X >
 {
   type Applied;
 }
 
-impl < R >
-  SharedTypeApp < R > for
+impl < X >
+  SharedTypeApp < X > for
   Z
 {
-  type Applied = R;
+  type Applied = X;
 }
 
-impl < T, P, R >
-  SharedTypeApp < R > for
-  SendValue < T, P >
+impl < T, A, X >
+  SharedTypeApp < X > for
+  SendValue < T, A >
 where
   T : Send + 'static,
-  P : SharedTypeApp < R >
+  A : SharedTypeApp < X >
 {
   type Applied =
     SendValue <
       T,
-      P :: Applied
+      A :: Applied
     >;
 }
 
-impl < T, P, R >
-  SharedTypeApp < R > for
-  ReceiveValue < T, P >
+impl < T, A, X >
+  SharedTypeApp < X > for
+  ReceiveValue < T, A >
 where
   T : Send + 'static,
-  P : SharedTypeApp < R >
+  A : SharedTypeApp < X >
 {
   type Applied =
     ReceiveValue <
       T,
-      P :: Applied
+      A :: Applied
     >;
 }
 
@@ -93,15 +93,15 @@ where
     >;
 }
 
-impl < P, Q, R >
-  SharedTypeApp < R > for
-  ReceiveChannel < P, Q >
+impl < A, B, X >
+  SharedTypeApp < X > for
+  ReceiveChannel < A, B >
 where
-  Q : SharedTypeApp < R >,
+  B : SharedTypeApp < X >,
 {
   type Applied =
     ReceiveChannel <
-      P,
-      Q :: Applied
+      A,
+      B :: Applied
     >;
 }

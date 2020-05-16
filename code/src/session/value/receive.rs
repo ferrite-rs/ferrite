@@ -131,26 +131,26 @@ where
 }
 
 pub fn send_value_to
-  < N, I, P, Q, T >
+  < N, C, A, B, T >
   ( lens : N,
     value : T,
     cont :
       PartialSession <
         N :: Target,
-        P
+        A
       >
   ) ->
-    PartialSession < I, P >
+    PartialSession < C, A >
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
+  A : Protocol,
+  B : Protocol,
+  C : Context,
   T : Send + 'static,
   N :
     ContextLens <
-      I,
-      ReceiveValue < T, Q >,
-      Q
+      C,
+      ReceiveValue < T, B >,
+      B
     >
 {
   send_value_to_async ( lens, async || {

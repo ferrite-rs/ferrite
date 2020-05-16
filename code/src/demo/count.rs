@@ -7,17 +7,17 @@ use std::sync::Mutex;
 use std::time::Duration;
 use async_std::task::sleep;
 
-type CounterSession = SendValue < i32, End >;
+type CounterSession = SendValue < u64, End >;
 
 pub fn make_counter_server
-  ( initial_count : i32 )
+  ( initial_count : u64 )
   ->
     PersistentSession <
       CounterSession
     >
 {
   let counter1 :
-    Arc < Mutex < i32 > >
+    Arc < Mutex < u64 > >
     = Arc :: new (
         Mutex :: new (initial_count)
       );
@@ -29,7 +29,7 @@ pub fn make_counter_server
     send_value_async ( async move || {
       info!("[CounterServer] Getting count");
       let mut count1 = counter2.lock().unwrap();
-      let count2 : i32 = *count1;
+      let count2 : u64 = *count1;
       *count1 += 1;
 
       ( count2,

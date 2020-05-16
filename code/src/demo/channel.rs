@@ -33,7 +33,7 @@ pub type Channel < T > =
 pub fn make_receiver
   < T >
   ( source :
-      SharedSession <
+      SharedChannel <
         Channel < T >
       >
   ) ->
@@ -80,7 +80,7 @@ where
 pub fn sender_session
   < T, Func >
   ( source :
-      SharedSession <
+      SharedChannel <
         Channel < T >
       >,
     make_val : Func
@@ -113,7 +113,7 @@ fn do_create_channel
   ( mut queue :
       VecDeque < T >
   ) ->
-    SuspendedSharedSession <
+    SharedSession <
       Channel < T >
     >
 where
@@ -146,7 +146,7 @@ where
 pub fn create_channel
   < T >
   () ->
-    SharedSession <
+    SharedChannel <
       Channel < T >
     >
 where
@@ -164,7 +164,7 @@ pub fn channel_session ()
   -> Session < End >
 {
   let channel :
-    SharedSession <
+    SharedChannel <
       Channel < String >
     > =
       create_channel ();

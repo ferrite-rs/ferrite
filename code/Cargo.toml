@@ -10,6 +10,6 @@ rand = "*"
 futures = "*"
 env_logger = "*"
 simple_logger = "*"
-async-std = { version = "1.5.0", features = ["unstable", "attributes"] }
+async-std = { version = "1.6.0-beta.1", features = ["unstable", "attributes"] }
 async-macros = "2.0.0"
 futures-macro = "0.3.4"

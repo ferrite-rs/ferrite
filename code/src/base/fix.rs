@@ -1,10 +1,6 @@
 use std::marker::PhantomData;
 use crate::base::nat::*;
 
-/*
-  class TypeApp self where
-    type family Apply self a
- */
 pub trait TypeApp < A > {
   type Applied;
 }
