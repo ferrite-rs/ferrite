@@ -1,12 +1,8 @@
-use async_std::task;
-use async_macros::join;
-use async_std::sync::{ channel };
 use std::collections::{ LinkedList };
 
 use crate::protocol::{ End };
 
 use crate::base::{
-  Nat,
   Protocol,
   Session,
   Empty,
@@ -14,12 +10,10 @@ use crate::base::{
   AppendContext,
   ContextLens,
   PartialSession,
-  unsafe_create_session,
-  unsafe_run_session,
 };
 
 use crate::context::{
-  append_emtpy_slot
+  append_emtpy_slot,
 };
 
 use crate::session::end::{
@@ -28,12 +22,15 @@ use crate::session::end::{
   wait_async,
 };
 
-use crate::session::link::cut;
+use crate::session::cut::{
+  cut,
+  First
+};
 
 pub fn include_session
   < C, A, B >
-  ( session1 : Session < A >,
-    cont_builder : impl FnOnce
+  ( session : Session < A >,
+    cont : impl FnOnce
       ( C :: Length )
       ->
         PartialSession <
@@ -48,65 +45,8 @@ where
   C : Context,
   C : AppendContext < ( A, () ) >,
 {
-  let cont = cont_builder (
-    C::Length::nat ()
-  );
-
-  unsafe_create_session (
-    async move | ctx1, sender1 | {
-      let (sender2, receiver2) = channel(1);
-
-      let child1 = task::spawn(async move {
-        unsafe_run_session
-          ( session1, (), sender2
-          ).await;
-      });
-
-      let ctx2 =
-        C :: append_context ( ctx1, (receiver2, ()) );
-
-      let child2 = task::spawn(async move {
-        unsafe_run_session
-          ( cont, ctx2, sender1
-          ).await;
-      });
-
-      join!(child1, child2).await;
-    })
-}
-
-// Version of include_session that uses cut to prove that
-// it is derivable from cut. The required constraint is
-// more complicated so we don't use this in practice other
-// than proving that it also works the same way.
-pub fn
-  include_session_cut
-  < C, A, B >
-  ( session : Session < A >,
-    cont : impl FnOnce
-      ( C :: Length )
-      ->
-        PartialSession <
-          < C as
-            AppendContext <
-              ( A, () )
-            >
-          > :: Appended,
-          B
-        >
-  ) ->
-    PartialSession < C, B >
-where
-  A : Protocol,
-  B : Protocol,
-  C : Context,
-  C : AppendContext < ( A, () ) >,
-  C : AppendContext < (),
-        Appended = C
-      >
-{
-  cut :: <C, (), _, _, _, _ >
-    ( cont ( C::Length::nat () ), session )
+  cut :: < First, _, _, _, _, _, _ >
+    ( cont, session  )
 }
 
 pub fn wait_session

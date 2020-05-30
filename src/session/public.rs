@@ -16,12 +16,14 @@ pub use super::{
   forward,
 
   include_session,
-  include_session_cut,
   wait_session,
   wait_sessions,
   join_sessions,
 
   cut,
+  cut_append,
+  First,
+  Second,
 
   clone_session,
   PersistentSession,

@@ -4,7 +4,7 @@ mod run;
 mod end;
 mod wrap;
 mod fix;
-mod link;
+mod cut;
 mod step;
 mod value;
 mod choice;
@@ -46,14 +46,16 @@ pub use self::forward::{
 
 pub use self::include::{
   include_session,
-  include_session_cut,
   wait_session,
   wait_sessions,
   join_sessions,
 };
 
-pub use self::link::{
+pub use self::cut::{
   cut,
+  cut_append,
+  First,
+  Second,
 };
 
 pub use self::persistent::{
