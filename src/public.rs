@@ -53,6 +53,7 @@ pub use crate::session::public::{
 
   cut,
   cut_append,
+  Cut,
   First,
   Second,
 

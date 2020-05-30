@@ -22,7 +22,7 @@ fn cut_session ()
   = receive_channel ( | c1 | {
       receive_channel ( | c2 | {
         receive_channel ( | c3 | {
-          cut :: < (First, (Second, (First, ()))), _, _, _, _, _, _ > (
+          < ( First, ( Second, ( First, () ) ) ) > :: cut (
             | c4 | {
               receive_value_from ( c1, async move | x1 | {
                 println! ("[left] got x1: {}", x1);

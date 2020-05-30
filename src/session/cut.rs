@@ -27,12 +27,6 @@ where
   fn split_endpoints ( ctx : C::Endpoints )
     -> ( C1::Endpoints, < Self::Splitted as Context >::Endpoints )
   ;
-
-  fn merge_endpoints
-    ( ctx1 : C1::Endpoints,
-      ctx2 : < Self::Splitted as Context >::Endpoints )
-    -> C::Endpoints
-  ;
 }
 
 impl SplitContext < (), () > for ()
@@ -42,9 +36,6 @@ impl SplitContext < (), () > for ()
   fn split_endpoints ( _: () )
     -> ( (), () )
   { ( (), () ) }
-
-  fn merge_endpoints ( _: (), _: () )
-  { }
 }
 
 impl < C > SplitContext < C, C >
@@ -59,14 +50,6 @@ where
   {
     ( ctx, () )
   }
-
-
-  fn merge_endpoints
-    ( ctx : C::Endpoints, _ : () )
-    -> C :: Endpoints
-  {
-    ctx
-  }
 }
 
 impl < C > SplitContext < C, () >
@@ -80,14 +63,6 @@ where
     -> ( (), C::Endpoints )
   {
     ( (), ctx )
-  }
-
-
-  fn merge_endpoints
-    ( _ : (), ctx : C::Endpoints )
-    -> C :: Endpoints
-  {
-    ctx
   }
 }
 
@@ -113,16 +88,6 @@ where
     let ( ctx1, ctx2 ) = X :: split_endpoints ( ctx );
     ( ( a, ctx1 ), ( (), ctx2 ) )
   }
-
-  fn merge_endpoints
-    ( ( a, ctx1 ): ( A::Endpoint, C1::Endpoints ),
-      ( (), ctx2 ): ( (), C2::Endpoints )
-    ) ->
-      ( A::Endpoint, C::Endpoints )
-  {
-    let ctx = X :: merge_endpoints ( ctx1, ctx2 );
-    ( a, ctx )
-  }
 }
 
 impl < X, A, C, C1, C2 >
@@ -147,15 +112,50 @@ where
     let ( ctx1, ctx2 ) = X :: split_endpoints ( ctx );
     ( ( (), ctx1 ), ( a, ctx2 ) )
   }
+}
 
-  fn merge_endpoints
-    ( ( (), ctx1 ): ( (), C1::Endpoints ),
-      ( a, ctx2 ): ( A::Endpoint, C2::Endpoints )
+pub trait Cut < C, C1 > : SplitContext < C, C1 >
+where
+  C : Context,
+  C1 : Context
+{
+  fn cut
+    < A, B >
+    ( cont1 :
+        impl FnOnce ( C1::Length )
+        -> PartialSession < C1::Appended, B >,
+      cont2 : PartialSession < Self::Splitted, A >
     ) ->
-      ( A::Endpoint, C::Endpoints )
+      PartialSession < C, B >
+  where
+    A : Protocol,
+    B : Protocol,
+    C1 : AppendContext < ( A, () ) >,
+  ;
+}
+
+impl < X, C, C1 >
+  Cut < C, C1 >
+  for X
+where
+  C : Context,
+  C1 : Context,
+  X : SplitContext < C, C1 >
+{
+  fn cut
+    < A, B >
+    ( cont1 :
+        impl FnOnce ( C1::Length )
+        -> PartialSession < C1::Appended, B >,
+      cont2 : PartialSession < Self::Splitted, A >
+    ) ->
+      PartialSession < C, B >
+  where
+    A : Protocol,
+    B : Protocol,
+    C1 : AppendContext < ( A, () ) >,
   {
-    let ctx = X :: merge_endpoints ( ctx1, ctx2 );
-    ( a, ctx )
+    cut :: < X, _, _, _, _, _, _> ( cont1, cont2 )
   }
 }
 

@@ -54,6 +54,7 @@ pub use self::include::{
 pub use self::cut::{
   cut,
   cut_append,
+  Cut,
   First,
   Second,
 };

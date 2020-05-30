@@ -23,7 +23,7 @@ use crate::session::end::{
 };
 
 use crate::session::cut::{
-  cut,
+  Cut,
   First
 };
 
@@ -45,8 +45,7 @@ where
   C : Context,
   C : AppendContext < ( A, () ) >,
 {
-  cut :: < First, _, _, _, _, _, _ >
-    ( cont, session  )
+  First :: cut ( cont, session  )
 }
 
 pub fn wait_session
