@@ -57,6 +57,8 @@ pub use self::cut::{
   Cut,
   First,
   Second,
+  AllLeft,
+  AllRight,
 };
 
 pub use self::persistent::{

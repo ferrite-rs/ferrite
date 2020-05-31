@@ -24,7 +24,7 @@ use crate::session::end::{
 
 use crate::session::cut::{
   Cut,
-  First
+  AllLeft
 };
 
 pub fn include_session
@@ -45,7 +45,7 @@ where
   C : Context,
   C : AppendContext < ( A, () ) >,
 {
-  First :: cut ( cont, session  )
+  AllLeft :: cut ( cont, session  )
 }
 
 pub fn wait_session

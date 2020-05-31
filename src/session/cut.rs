@@ -17,33 +17,40 @@ use crate::base::{
 pub enum First {}
 pub enum Second {}
 
-pub trait SplitContext < C, C1 >
+pub enum AllLeft {}
+pub enum AllRight {}
+
+
+pub trait SplitContext < C >
 where
-  C : Context,
-  C1 : Context
+  C : Context
 {
-  type Splitted : Context;
+  type Left : Context;
+  type Right : Context;
 
   fn split_endpoints ( ctx : C::Endpoints )
-    -> ( C1::Endpoints, < Self::Splitted as Context >::Endpoints )
+    ->  ( < Self::Left as Context >::Endpoints,
+          < Self::Right as Context >::Endpoints )
   ;
 }
 
-impl SplitContext < (), () > for ()
+impl SplitContext < () > for ()
 {
-  type Splitted = ();
+  type Left = ();
+  type Right = ();
 
   fn split_endpoints ( _: () )
     -> ( (), () )
   { ( (), () ) }
 }
 
-impl < C > SplitContext < C, C >
-  for First
+impl < C > SplitContext < C >
+  for AllLeft
 where
   C : Context
 {
-  type Splitted = ();
+  type Left = C;
+  type Right = ();
 
   fn split_endpoints ( ctx : C::Endpoints )
     -> ( C::Endpoints, () )
@@ -52,12 +59,13 @@ where
   }
 }
 
-impl < C > SplitContext < C, () >
-  for Second
+impl < C > SplitContext < C >
+  for AllRight
 where
   C : Context
 {
-  type Splitted = C;
+  type Left = ();
+  type Right = C;
 
   fn split_endpoints ( ctx : C::Endpoints )
     -> ( (), C::Endpoints )
@@ -68,16 +76,17 @@ where
 
 impl < X, A, C, C1, C2 >
   SplitContext
-  < ( A, C ), ( A, C1 )>
+  < ( A, C ) >
   for ( First, X )
 where
   A : Slot,
   C : Context,
   C1 : Context,
   C2 : Context,
-  X : SplitContext < C, C1, Splitted=C2 >
+  X : SplitContext < C, Left = C1, Right = C2 >
 {
-  type Splitted = ( Empty, C2 );
+  type Left = ( A, C1 );
+  type Right = ( Empty, C2 );
 
   fn split_endpoints
     ( ( a, ctx ): ( A::Endpoint, C::Endpoints ) )
@@ -92,16 +101,17 @@ where
 
 impl < X, A, C, C1, C2 >
   SplitContext
-  < ( A, C ), ( Empty, C1 ) >
+  < ( A, C ) >
   for ( Second, X )
 where
   A : Slot,
   C : Context,
   C1 : Context,
   C2 : Context,
-  X : SplitContext < C, C1, Splitted=C2 >
+  X : SplitContext < C, Left = C1, Right = C2 >
 {
-  type Splitted = ( A, C2 );
+  type Left = ( Empty, C1 );
+  type Right = ( A, C2 );
 
   fn split_endpoints
     ( ( a, ctx ): ( A::Endpoint, C::Endpoints ) )
@@ -114,46 +124,55 @@ where
   }
 }
 
-pub trait Cut < C, C1 > : SplitContext < C, C1 >
+pub trait Cut < C >
+  : SplitContext < C >
 where
   C : Context,
-  C1 : Context
 {
   fn cut
     < A, B >
-    ( cont1 :
-        impl FnOnce ( C1::Length )
-        -> PartialSession < C1::Appended, B >,
-      cont2 : PartialSession < Self::Splitted, A >
+    ( cont1 : impl FnOnce
+        ( < Self::Left as Context > ::Length )
+        ->
+          PartialSession <
+            < Self::Left
+              as AppendContext < ( A, () ) >
+            > ::Appended, B
+          >,
+      cont2 : PartialSession < Self::Right, A >
     ) ->
       PartialSession < C, B >
   where
     A : Protocol,
     B : Protocol,
-    C1 : AppendContext < ( A, () ) >,
+    Self::Left : AppendContext < ( A, () ) >,
   ;
 }
 
-impl < X, C, C1 >
-  Cut < C, C1 >
+impl < X, C >
+  Cut < C >
   for X
 where
   C : Context,
-  C1 : Context,
-  X : SplitContext < C, C1 >
+  X : SplitContext < C >
 {
   fn cut
     < A, B >
-    ( cont1 :
-        impl FnOnce ( C1::Length )
-        -> PartialSession < C1::Appended, B >,
-      cont2 : PartialSession < Self::Splitted, A >
+    ( cont1 : impl FnOnce
+        ( < Self::Left as Context > ::Length )
+        ->
+          PartialSession <
+            < Self::Left
+              as AppendContext < ( A, () ) >
+            > ::Appended, B
+          >,
+      cont2 : PartialSession < Self::Right, A >
     ) ->
       PartialSession < C, B >
   where
     A : Protocol,
     B : Protocol,
-    C1 : AppendContext < ( A, () ) >,
+    Self::Left : AppendContext < ( A, () ) >,
   {
     cut :: < X, _, _, _, _, _, _> ( cont1, cont2 )
   }
@@ -171,7 +190,7 @@ where
   C : Context,
   C1 : Context,
   C2 : Context,
-  X : SplitContext < C, C1, Splitted=C2 >,
+  X : SplitContext < C, Left = C1, Right = C2 >,
   C1 : AppendContext < ( A, () ) >,
   F : FnOnce ( C1::Length )
       -> PartialSession < C1::Appended, B >

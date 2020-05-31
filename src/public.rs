@@ -56,6 +56,8 @@ pub use crate::session::public::{
   Cut,
   First,
   Second,
+  AllLeft,
+  AllRight,
 
   clone_session,
   PersistentSession,

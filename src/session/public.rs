@@ -25,6 +25,8 @@ pub use super::{
   Cut,
   First,
   Second,
+  AllLeft,
+  AllRight,
 
   clone_session,
   PersistentSession,
