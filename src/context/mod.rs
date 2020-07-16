@@ -9,6 +9,7 @@ pub use self::chain::{};
 
 pub use self::session::{
   session,
+  new_session,
   partial_session,
   append_emtpy_slot,
   session_1,

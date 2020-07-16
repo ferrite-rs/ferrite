@@ -1,8 +1,9 @@
 #![feature(async_closure)]
 
-pub use ferrite::*;
+use ferrite::*;
 
 use std::format;
+
 
 type HelloSession =
   ReceiveValue <
@@ -46,5 +47,5 @@ pub fn hello_session()
 
 #[async_std::main]
 pub async fn main() {
-  run_session( hello_session() ) .await;
+  run_session( hello_session() ).await
 }

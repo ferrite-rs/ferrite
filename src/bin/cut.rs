@@ -22,7 +22,16 @@ fn cut_session ()
   = receive_channel ( | c1 | {
       receive_channel ( | c2 | {
         receive_channel ( | c3 | {
-          < ( First, ( Second, ( First, () ) ) ) > :: cut (
+          < ( Right, ( Left, ( Right, () ) ) ) > :: cut (
+            receive_value_from ( c2, async move | x2 | {
+              println! ("[right] got x2: {}", x2);
+              sleep(Duration::from_secs(1)).await;
+
+              wait ( c2,
+                terminate_async ( async move || {
+                  println! ("[right] terminating");
+                }) )
+            }),
             | c4 | {
               receive_value_from ( c1, async move | x1 | {
                 println! ("[left] got x1: {}", x1);
@@ -38,16 +47,7 @@ fn cut_session ()
                         }) ) ) )
                 })
               })
-            },
-            receive_value_from ( c2, async move | x2 | {
-              println! ("[right] got x2: {}", x2);
-              sleep(Duration::from_secs(1)).await;
-
-              wait ( c2,
-                terminate_async ( async move || {
-                  println! ("[right] terminating");
-                }) )
-            })
+            }
           )
         })
       })

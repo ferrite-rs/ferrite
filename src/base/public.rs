@@ -2,8 +2,6 @@
 pub use super::protocol::public::{ Protocol };
 
 pub use super::{
-  Refl,
-
   Context,
   EmptyContext,
   AppendContext,

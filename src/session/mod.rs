@@ -55,8 +55,8 @@ pub use self::cut::{
   cut,
   cut_append,
   Cut,
-  First,
-  Second,
+  Left,
+  Right,
   AllLeft,
   AllRight,
 };

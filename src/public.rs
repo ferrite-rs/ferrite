@@ -21,6 +21,7 @@ pub use crate::protocol::public::{
 
 pub use crate::context::public::{
   session,
+  new_session,
   partial_session,
   append_emtpy_slot,
   session_1,
@@ -54,8 +55,8 @@ pub use crate::session::public::{
   cut,
   cut_append,
   Cut,
-  First,
-  Second,
+  Left,
+  Right,
   AllLeft,
   AllRight,
 

@@ -1,5 +1,3 @@
-use async_std::task;
-use async_macros::join;
 use std::future::{ Future };
 use async_std::sync::{ Sender, channel };
 
@@ -44,25 +42,16 @@ where
     | {
       let (sender2, receiver2) = channel(1);
 
-      let child1 = task::spawn ( async move {
-        sender1.send(
-          ReceiveValue ( sender2 )
+      sender1.send ( ReceiveValue ( sender2 ) ).await;
+
+      let ( val, sender3 )
+        = receiver2.recv().await.unwrap();
+
+      let cont = cont_builder(val).await;
+
+      unsafe_run_session
+        ( cont, ctx, sender3
         ).await;
-      });
-
-
-      let child2 = task::spawn ( async move {
-        let ( val, sender3 )
-          = receiver2.recv().await.unwrap();
-
-        let cont = cont_builder(val).await;
-
-        unsafe_run_session
-          ( cont, ctx, sender3
-          ).await;
-      });
-
-      join!(child1, child2).await;
     })
 }
 
@@ -113,27 +102,21 @@ where
 
       let ctx3 = N :: insert_target( receiver3, ctx2 );
 
-      let child1 = task::spawn(async move {
-        sender2.send( (
-          val,
-          sender3
-        ) ).await;
-      });
+      sender2.send( (
+        val,
+        sender3
+      ) ).await;
 
-      let child2 = task::spawn(async move {
-        unsafe_run_session
-          (cont, ctx3, sender1
-          ).await;
-      });
-
-      join!(child1, child2).await;
+      unsafe_run_session
+        (cont, ctx3, sender1
+        ).await;
     })
 }
 
 pub fn send_value_to
   < N, C, A, B, T >
-  ( lens : N,
-    value : T,
+  ( _ : N,
+    val : T,
     cont :
       PartialSession <
         N :: Target,
@@ -153,7 +136,24 @@ where
       B
     >
 {
-  send_value_to_async ( lens, async || {
-    ( value, cont )
-  })
+  unsafe_create_session (
+    async move | ctx1, sender1 | {
+      let (receiver1, ctx2) = N :: extract_source ( ctx1 );
+
+      let ReceiveValue ( sender2 )
+        = receiver1.recv().await.unwrap();
+
+      let (sender3, receiver3) = channel(1);
+
+      let ctx3 = N :: insert_target( receiver3, ctx2 );
+
+      sender2.send( (
+        val,
+        sender3
+      ) ).await;
+
+      unsafe_run_session
+        (cont, ctx3, sender1
+        ).await;
+    })
 }

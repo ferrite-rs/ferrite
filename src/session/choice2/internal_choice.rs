@@ -11,7 +11,6 @@ pub use crate::base::{
   TypeApp,
   Protocol,
   Context,
-  Refl,
   ContextLens,
   PartialSession,
   unsafe_run_session,

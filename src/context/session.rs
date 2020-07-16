@@ -2,6 +2,14 @@
 use crate::base::*;
 use crate::context::lens::*;
 
+pub fn new_session
+  < P >
+  (cont : Session < P >)
+  -> Session < P >
+where
+  P : Protocol
+{ cont }
+
 pub fn session
   < C, P >
   (cont : PartialSession < C, P >)

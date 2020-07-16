@@ -14,8 +14,8 @@ use crate::base::{
   unsafe_create_session,
 };
 
-pub enum First {}
-pub enum Second {}
+pub enum Left {}
+pub enum Right {}
 
 pub enum AllLeft {}
 pub enum AllRight {}
@@ -77,7 +77,7 @@ where
 impl < X, A, C, C1, C2 >
   SplitContext
   < ( A, C ) >
-  for ( First, X )
+  for ( Left, X )
 where
   A : Slot,
   C : Context,
@@ -102,7 +102,7 @@ where
 impl < X, A, C, C1, C2 >
   SplitContext
   < ( A, C ) >
-  for ( Second, X )
+  for ( Right, X )
 where
   A : Slot,
   C : Context,
@@ -131,21 +131,21 @@ where
 {
   fn cut
     < A, B >
-    ( cont1 : impl FnOnce
-        ( < Self::Left as Context > ::Length )
+    ( cont1 : PartialSession < Self::Left, A >,
+      cont2 : impl FnOnce
+        ( < Self::Right as Context > ::Length )
         ->
           PartialSession <
-            < Self::Left
+            < Self::Right
               as AppendContext < ( A, () ) >
             > ::Appended, B
-          >,
-      cont2 : PartialSession < Self::Right, A >
+          >
     ) ->
       PartialSession < C, B >
   where
     A : Protocol,
     B : Protocol,
-    Self::Left : AppendContext < ( A, () ) >,
+    Self::Right : AppendContext < ( A, () ) >,
   ;
 }
 
@@ -158,21 +158,22 @@ where
 {
   fn cut
     < A, B >
-    ( cont1 : impl FnOnce
-        ( < Self::Left as Context > ::Length )
+    ( cont1 : PartialSession < Self::Left, A >
+    , cont2 : impl FnOnce
+        ( < Self::Right as Context > ::Length )
         ->
           PartialSession <
-            < Self::Left
+            < Self::Right
               as AppendContext < ( A, () ) >
             > ::Appended, B
           >,
-      cont2 : PartialSession < Self::Right, A >
+
     ) ->
       PartialSession < C, B >
   where
     A : Protocol,
     B : Protocol,
-    Self::Left : AppendContext < ( A, () ) >,
+    Self::Right : AppendContext < ( A, () ) >,
   {
     cut :: < X, _, _, _, _, _, _> ( cont1, cont2 )
   }
@@ -180,8 +181,8 @@ where
 
 pub fn cut
   < X, C, C1, C2, A, B, F >
-  ( cont1 : F,
-    cont2 : PartialSession < C2, A >
+  ( cont1 : PartialSession < C1, A >,
+    cont2 : F
   ) ->
     PartialSession < C, B >
 where
@@ -191,17 +192,17 @@ where
   C1 : Context,
   C2 : Context,
   X : SplitContext < C, Left = C1, Right = C2 >,
-  C1 : AppendContext < ( A, () ) >,
-  F : FnOnce ( C1::Length )
-      -> PartialSession < C1::Appended, B >
+  C2 : AppendContext < ( A, () ) >,
+  F : FnOnce ( C2::Length )
+      -> PartialSession < C2::Appended, B >
 {
-  let cont3 = cont1 ( C1::Length::nat () );
+  let cont3 = cont2 ( C2::Length::nat () );
 
   unsafe_create_session (
     async move | ctx, sender1 | {
       let ( ctx1, ctx2 ) = X :: split_endpoints ( ctx );
       let ( sender2, receiver2 ) = channel(1);
-      let ctx3 = C1::append_context ( ctx1, ( receiver2, () ) );
+      let ctx3 = C2::append_context ( ctx2, ( receiver2, () ) );
 
       let child1 = task::spawn ( async move {
         unsafe_run_session (
@@ -211,7 +212,7 @@ where
       });
 
       let child2 = task::spawn ( async {
-        unsafe_run_session( cont2, ctx2, sender2 ).await;
+        unsafe_run_session( cont1, ctx1, sender2 ).await;
       });
 
       join!(child1, child2).await;

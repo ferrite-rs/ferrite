@@ -23,8 +23,8 @@ pub use super::{
   cut,
   cut_append,
   Cut,
-  First,
-  Second,
+  Left,
+  Right,
   AllLeft,
   AllRight,
 
