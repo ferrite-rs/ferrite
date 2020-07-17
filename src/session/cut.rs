@@ -20,7 +20,6 @@ pub enum Right {}
 pub enum AllLeft {}
 pub enum AllRight {}
 
-
 pub trait SplitContext < C >
 where
   C : Context
@@ -71,6 +70,30 @@ where
     -> ( (), C::Endpoints )
   {
     ( (), ctx )
+  }
+}
+
+impl < X, C, C1, C2 >
+  SplitContext
+  < ( Empty, C ) >
+  for ( Empty, X )
+where
+  C : Context,
+  C1 : Context,
+  C2 : Context,
+  X : SplitContext < C, Left = C1, Right = C2 >
+{
+  type Left = ( Empty, C1 );
+  type Right = ( Empty, C2 );
+
+  fn split_endpoints
+    ( ( a, ctx ): ( (), C::Endpoints ) )
+    ->  ( ( (), C1::Endpoints ),
+          ( (), C2::Endpoints )
+        )
+  {
+    let ( ctx1, ctx2 ) = X :: split_endpoints ( ctx );
+    ( ( a, ctx1 ), ( (), ctx2 ) )
   }
 }
 
