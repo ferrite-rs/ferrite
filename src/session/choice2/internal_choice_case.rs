@@ -1,4 +1,3 @@
-
 use std::pin::Pin;
 use std::marker::PhantomData;
 use std::future::Future;
@@ -20,18 +19,11 @@ pub use crate::base::{
 pub use crate::context::*;
 pub use crate::protocol::choice2::*;
 
-pub struct SessionCon < I >
-  ( PhantomData < I > );
+pub struct SessionCon < N, C, A, Row >
+  ( PhantomData <( N, C, A, Row )> );
 
-pub struct ContextCon < N, I, P, Row >
-  ( PhantomData <( N, I, P, Row )> );
-
-pub struct InternalCont < N, I, P, Row, Root >
-  ( PhantomData <( N, I, P, Row, Root )> );
-
-pub struct MakeCont
-  < N, I, P, Row >
-  (PhantomData<( N, I, P, Row )>);
+pub struct InternalCont < N, C, A, Row, Root >
+  ( PhantomData <( N, C, A, Row, Root )> );
 
 pub struct ReceiverToSelector {}
 
@@ -62,20 +54,9 @@ where
   sender : Sender < A >
 }
 
-impl < I, P >
-  TypeApp < P > for
-  SessionCon < I >
-where
-  P : Protocol,
-  I : Context,
-{
-  type Applied =
-    PartialSession < I, P >;
-}
-
 impl < N, I, P, Q, Row >
   TypeApp < P > for
-  ContextCon < N, I, Q, Row >
+  SessionCon < N, I, Q, Row >
 where
   P : Protocol,
   Q : Protocol,
@@ -222,7 +203,7 @@ impl < A, B, N, C, Row >
   ElimField <
     Merge <
       ReceiverCon,
-      ContextCon < N, C, B, Row >
+      SessionCon < N, C, B, Row >
     >,
     A,
     Pin < Box < dyn Future < Output=() > + Send > >
@@ -265,7 +246,7 @@ where
     merged :
       MergeField <
         ReceiverCon,
-        ContextCon < N, C, B, Row >,
+        SessionCon < N, C, B, Row >,
         A
       >
   ) ->
@@ -295,12 +276,9 @@ where
 impl
   < Root, N, I, P, Row >
   FieldLifterApplied < Root >
-  for MakeCont < N, I, P, Row >
+  for SessionCon < N, I, P, Row >
 {
   type Source = ();
-
-  type Target =
-    ContextCon < N, I, P, Row >;
 
   type Injected =
     InternalCont < N, I, P, Row, Root >;
@@ -309,7 +287,7 @@ impl
 impl
   < Root, N, I, P, Row, A >
   FieldLifter < Root, A >
-  for MakeCont < N, I, P, Row >
+  for SessionCon < N, I, P, Row >
 where
   A : Protocol,
   P : Protocol,
@@ -358,7 +336,7 @@ type RootCont < Row, N, C, A, Canon > =
     N, C, A, Row,
     < Canon as
       SumRow <
-        ContextCon < N, C, A, Row >
+        SessionCon < N, C, A, Row >
       >
     > :: Field
   >;
@@ -375,7 +353,7 @@ pub fn case
     ) ->
       < Canon as
         SumRow <
-          ContextCon < N, C, A, Row >
+          SessionCon < N, C, A, Row >
         >
       > :: Field
       + Send + 'static,
@@ -400,7 +378,7 @@ where
   Canon : SumRow < ReceiverCon >,
   Canon :
     SumRow <
-      ContextCon < N, C, A, Row >
+      SessionCon < N, C, A, Row >
     >,
   Canon :
     LiftSumBorrow <
@@ -411,13 +389,13 @@ where
   Canon :
     IntersectSum <
       ReceiverCon,
-      ContextCon < N, C, A, Row >
+      SessionCon < N, C, A, Row >
     >,
   Canon :
     ElimSum <
       Merge <
         ReceiverCon,
-        ContextCon < N, C, A, Row >
+        SessionCon < N, C, A, Row >
       >,
       RunCont < N, C, A, Row >,
       Pin < Box < dyn
@@ -426,8 +404,7 @@ where
     >,
   Canon :
     LiftSum3 <
-      MakeCont < N, C, A, Row >,
-      ContextCon < N, C, A, Row >,
+      SessionCon < N, C, A, Row >
     >,
 {
   unsafe_create_session (
@@ -463,7 +440,7 @@ where
       let cont4 :
         < Canon as
           SumRow <
-            ContextCon < N, C, A, Row >
+            SessionCon < N, C, A, Row >
           >
         > :: Field =
         cont1 ( cont3 );
@@ -474,7 +451,7 @@ where
             SumRow <
               Merge <
                 ReceiverCon,
-                ContextCon < N, C, A, Row >
+                SessionCon < N, C, A, Row >
               >
             >
           > :: Field

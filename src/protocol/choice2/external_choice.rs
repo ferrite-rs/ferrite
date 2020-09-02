@@ -4,24 +4,27 @@ use async_std::sync::{ Sender };
 
 pub struct ExternalChoice < Row >
 where
+  Row : Iso,
   Row : Send + 'static,
-  Row : SumRow < () >,
-  Row : SumRow < ReceiverCon >,
-  < Row as
+  Row::Canon :
+    SumRow < () >,
+  Row::Canon :
+    SumRow < ReceiverCon >,
+  < Row::Canon as
     SumRow < () >
   >  :: Field
     : Send,
-  < Row as
+  < Row::Canon as
     SumRow < ReceiverCon >
   >  :: Field
     : Send,
 { pub sender :
     Sender <
-      ( < Row as
+      ( < Row::Canon as
           SumRow < () >
         >  :: Field,
         Sender <
-          < Row as
+          < Row::Canon as
             SumRow < ReceiverCon >
           > :: Field
         >
@@ -33,14 +36,15 @@ impl < Row >
   Protocol for
   ExternalChoice < Row >
 where
+  Row : Iso,
   Row : Send + 'static,
-  Row : SumRow < () >,
-  Row : SumRow < ReceiverCon >,
-  < Row as
+  Row::Canon : SumRow < () >,
+  Row::Canon : SumRow < ReceiverCon >,
+  < Row::Canon as
     SumRow < () >
   >  :: Field
     : Send,
-  < Row as
+  < Row::Canon as
     SumRow < ReceiverCon >
   >  :: Field
     : Send,

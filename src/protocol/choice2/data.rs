@@ -139,22 +139,20 @@ pub trait LiftSumBorrow < T1, T2, F >
 pub trait FieldLifterApplied < Root >
 {
   type Source;
-  type Target;
-
   type Injected;
 }
 
 pub trait FieldLifter < Root, A >
   : FieldLifterApplied < Root >
 where
+  Self : TypeApp < A >,
   Self :: Source : TypeApp < A >,
-  Self :: Target : TypeApp < A >,
   Self :: Injected : TypeApp < A >,
 {
   fn lift_field (
     inject :
       impl Fn
-        ( < Self :: Target
+        ( < Self
             as TypeApp < A >
           >:: Applied)
         -> Root
@@ -181,7 +179,7 @@ where
  */
 pub trait LiftSum2 < F, Root >
   : SumRow < F :: Source >
-  + SumRow < F :: Target >
+  + SumRow < F >
   + SumRow < F :: Injected >
 where
   F : FieldLifterApplied < Root >
@@ -189,7 +187,7 @@ where
   fn lift_sum (
     inject: impl Fn
       ( < Self as
-          SumRow < F :: Target >
+          SumRow < F >
         >:: Field
       ) ->
         Root
@@ -204,11 +202,11 @@ where
     > :: Field;
 }
 
-pub trait LiftSum3 < F, Target >
-  : SumRow < Target >
+pub trait LiftSum3 < F >
+  : SumRow < F >
   + LiftSum2 < F,
       < Self as
-        SumRow < Target >
+        SumRow < F >
       > :: Field
     >
   + Sized
@@ -216,9 +214,8 @@ where
   F :
     FieldLifterApplied <
       < Self as
-        SumRow < Target >
+        SumRow < F >
       > :: Field,
-      Target = Target
     >
 {
   fn lift_sum3 (
@@ -232,23 +229,22 @@ where
     > :: Field;
 }
 
-impl < A, F, Target >
-  LiftSum3 < F, Target >
+impl < A, F >
+  LiftSum3 < F >
   for A
 where
   A : Sized,
-  A : SumRow < Target >,
+  A : SumRow < F >,
   A : LiftSum2 < F,
         < A as
-          SumRow < Target >
+          SumRow < F >
         > :: Field
       >,
   F :
     FieldLifterApplied <
       < Self as
-        SumRow < Target >
+        SumRow < F >
       > :: Field,
-      Target = Target
     >,
 {
   fn lift_sum3 (
@@ -311,6 +307,19 @@ pub trait ElimSum < T, F, R >
     row : Self :: Field
   ) ->
     R;
+}
+
+pub trait IntroSum < R, T >
+where
+  R : SumRow < T >,
+{
+  type Elem;
+
+  fn intro_sum (
+    elem : Self::Elem
+  ) ->
+    R :: Field
+  ;
 }
 
 impl Iso for () {
@@ -542,12 +551,12 @@ where
   F : FieldLifter < Root, A >,
   B : LiftSum2 < F, Root >,
   F :: Source : TypeApp < A >,
-  F :: Target : TypeApp < A >,
+  F : TypeApp < A >,
   F :: Injected : TypeApp < A >,
   < F :: Source
     as TypeApp < A >
   > :: Applied : Send,
-  < F :: Target
+  < F
     as TypeApp < A >
   > :: Applied : Send,
   < F :: Injected
@@ -558,11 +567,11 @@ where
     inject1 :
       impl Fn
         ( Sum <
-            < F :: Target
+            < F
               as TypeApp < A >
             > :: Applied,
             < B as
-              SumRow < F :: Target >
+              SumRow < F >
             > :: Field
           >
         ) ->
@@ -587,7 +596,7 @@ where
         let inject2 =
           move |
             b :
-              < F :: Target
+              < F
                 as TypeApp < A >
               > :: Applied
           | ->
@@ -605,7 +614,7 @@ where
           move |
             b :
               < B as
-                SumRow < F :: Target >
+                SumRow < F >
               > :: Field
           | ->
             Root
@@ -679,4 +688,43 @@ where
       A :: Applied,
       B :: Applied
     >;
+}
+
+impl < T, A, R >
+  IntroSum < (A, R), T >
+  for Z
+where
+  T : TypeApp < A >,
+  R : SumRow < T >,
+  T::Applied : Send
+{
+  type Elem = T::Applied;
+
+  fn intro_sum (
+    t: T::Applied
+  ) ->
+    Sum < T::Applied, R::Field >
+  {
+    Sum::Inl(t)
+  }
+}
+
+impl < N, T, A, R >
+  IntroSum < (A, R), T >
+  for S<N>
+where
+  N : IntroSum < R, T >,
+  R : SumRow < T >,
+  T : TypeApp < A >,
+  T::Applied : Send,
+{
+  type Elem = N::Elem;
+
+  fn intro_sum (
+    t: N::Elem
+  ) ->
+    Sum < T::Applied, R::Field >
+  {
+    Sum::Inr( N::intro_sum(t) )
+  }
 }

@@ -38,5 +38,34 @@ pub fn choice2_demo ()
     })
   });
 
+  let _provider_left :
+    Session <
+      choice::InternalChoice <
+        choice::Either <
+          SendValue < String, End >,
+          ReceiveValue < u64, End >
+        >
+      >
+    > =
+      choice::offer_case ( Z(),
+        send_value ( "provider_left".to_string(),
+          terminate() ) );
+
+  let _provider_right :
+    Session <
+      choice::InternalChoice <
+        choice::Either <
+          SendValue < String, End >,
+          ReceiveValue < u64, End >
+        >
+      >
+    > =
+      choice::offer_case ( succ(Z()),
+        receive_value ( async move | val | {
+          info! ( "received value: {}", val );
+          terminate()
+        })
+      );
+
   unimplemented!()
 }
