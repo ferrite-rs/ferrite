@@ -7,14 +7,14 @@ where
   Row :
     Send + 'static,
   Row::Canon :
-    SumRow < ReceiverCon >,
+    SumRow < ReceiverApp >,
   < Row::Canon as
-    SumRow < ReceiverCon >
+    SumRow < ReceiverApp >
   >  :: Field
     : Send
 { pub (crate) field :
     < Row::Canon as
-      SumRow < ReceiverCon >
+      SumRow < ReceiverApp >
     >  :: Field
 }
 
@@ -26,9 +26,9 @@ where
   Row :
     Send + 'static,
   Row::Canon :
-    SumRow < ReceiverCon >,
+    SumRow < ReceiverApp >,
   < Row::Canon as
-    SumRow < ReceiverCon >
+    SumRow < ReceiverApp >
   >  :: Field
     : Send,
 { }

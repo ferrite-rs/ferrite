@@ -9,23 +9,23 @@ where
   Row::Canon :
     SumRow < () >,
   Row::Canon :
-    SumRow < ReceiverCon >,
+    SumRow < ReceiverApp >,
   < Row::Canon as
     SumRow < () >
   >  :: Field
     : Send,
   < Row::Canon as
-    SumRow < ReceiverCon >
+    SumRow < ReceiverApp >
   >  :: Field
     : Send,
 { pub sender :
     Sender <
       ( < Row::Canon as
           SumRow < () >
-        >  :: Field,
+        > :: Field,
         Sender <
           < Row::Canon as
-            SumRow < ReceiverCon >
+            SumRow < ReceiverApp >
           > :: Field
         >
       )
@@ -39,13 +39,13 @@ where
   Row : Iso,
   Row : Send + 'static,
   Row::Canon : SumRow < () >,
-  Row::Canon : SumRow < ReceiverCon >,
+  Row::Canon : SumRow < ReceiverApp >,
   < Row::Canon as
     SumRow < () >
   >  :: Field
     : Send,
   < Row::Canon as
-    SumRow < ReceiverCon >
+    SumRow < ReceiverApp >
   >  :: Field
     : Send,
 { }

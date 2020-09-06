@@ -1,22 +1,51 @@
 use std::marker::PhantomData;
 
 use crate::base::*;
-use async_std::sync::{ Receiver };
+use async_std::sync::{ Sender, Receiver };
 
 pub enum Bottom {}
+
+pub struct Const < X >
+  ( PhantomData<X> );
+
+impl
+  < X, A >
+  TypeApp < A >
+  for Const < X >
+{
+  type Applied = X;
+}
 
 pub struct Merge < T1, T2 >
   ( PhantomData <( T1, T2 )> );
 
-pub struct ReceiverCon {}
+pub struct ReceiverApp {}
 
-pub struct MergeField < T1, T2, A >
+pub struct SenderApp {}
+
+impl < P >
+  TypeApp < P > for
+  ReceiverApp
 where
-  T1 : TypeApp < A >,
-  T2 : TypeApp < A >,
+  P : Protocol
 {
-  pub field1 : T1 :: Applied,
-  pub field2 : T2 :: Applied
+  type Applied = Receiver < P >;
+}
+
+impl < P >
+  TypeApp < P > for
+  SenderApp
+where
+  P : Protocol
+{
+  type Applied = Sender < P >;
+}
+
+impl < T >
+  SumRow < T > for
+  ()
+{
+  type Field = Bottom;
 }
 
 pub enum Sum < A, B >
@@ -38,6 +67,29 @@ pub trait SumRow < T >
 
 pub trait Iso {
   type Canon;
+}
+
+pub trait SplitRow < T1, T2 >
+  : SumRow < T1 >
+  + SumRow < T2 >
+  + SumRow < Merge < T1, T2 > >
+{
+  fn split_row
+    ( row:
+        < Self as
+          SumRow <
+            Merge < T1, T2 >
+          >
+        >::Field
+    ) ->
+      ( < Self
+          as SumRow < T1 >
+        > :: Field,
+        < Self
+          as SumRow < T2 >
+        > :: Field,
+      )
+  ;
 }
 
 /*
@@ -139,20 +191,24 @@ pub trait LiftSumBorrow < T1, T2, F >
 pub trait FieldLifterApplied < Root >
 {
   type Source;
+
+  type Target;
+
   type Injected;
 }
 
 pub trait FieldLifter < Root, A >
   : FieldLifterApplied < Root >
 where
-  Self : TypeApp < A >,
   Self :: Source : TypeApp < A >,
+  Self :: Target : TypeApp < A >,
   Self :: Injected : TypeApp < A >,
 {
   fn lift_field (
+    self,
     inject :
       impl Fn
-        ( < Self
+        ( < Self :: Target
             as TypeApp < A >
           >:: Applied)
         -> Root
@@ -179,16 +235,17 @@ where
  */
 pub trait LiftSum2 < F, Root >
   : SumRow < F :: Source >
-  + SumRow < F >
+  + SumRow < F :: Target >
   + SumRow < F :: Injected >
 where
   F : FieldLifterApplied < Root >
 {
   fn lift_sum (
+    ctx: F,
     inject: impl Fn
       ( < Self as
-          SumRow < F >
-        >:: Field
+          SumRow < F :: Target >
+        > :: Field
       ) ->
         Root
         + Send + 'static,
@@ -202,11 +259,11 @@ where
     > :: Field;
 }
 
-pub trait LiftSum3 < F >
-  : SumRow < F >
+pub trait LiftSum3 < F, Target >
+  : SumRow < Target >
   + LiftSum2 < F,
       < Self as
-        SumRow < F >
+        SumRow < Target >
       > :: Field
     >
   + Sized
@@ -214,11 +271,13 @@ where
   F :
     FieldLifterApplied <
       < Self as
-        SumRow < F >
+        SumRow < Target >
       > :: Field,
+      Target = Target
     >
 {
   fn lift_sum3 (
+    ctx: F,
     sum :
       < Self as
         SumRow < F :: Source >
@@ -229,25 +288,27 @@ where
     > :: Field;
 }
 
-impl < A, F >
-  LiftSum3 < F >
+impl < A, F, Target >
+  LiftSum3 < F, Target >
   for A
 where
   A : Sized,
-  A : SumRow < F >,
+  A : SumRow < Target >,
   A : LiftSum2 < F,
         < A as
-          SumRow < F >
+          SumRow < Target >
         > :: Field
       >,
   F :
     FieldLifterApplied <
       < Self as
-        SumRow < F >
+        SumRow < Target >
       > :: Field,
+      Target = Target
     >,
 {
   fn lift_sum3 (
+    ctx: F,
     sum :
       < Self as
         SumRow < F :: Source >
@@ -258,6 +319,7 @@ where
     > :: Field
   {
     A::lift_sum (
+      ctx,
       |x| { x },
       sum
     )
@@ -299,6 +361,23 @@ where
   ;
 }
 
+pub struct ElimConst {}
+
+impl < X, A >
+  ElimField <
+    Const < X >,
+    A,
+    X
+  >
+  for ElimConst
+{
+  fn elim_field (
+    self,
+    x : X
+  ) -> X
+  { x }
+}
+
 pub trait ElimSum < T, F, R >
   : SumRow < T >
 {
@@ -309,13 +388,13 @@ pub trait ElimSum < T, F, R >
     R;
 }
 
-pub trait IntroSum < R, T >
+pub trait Prism < R, T >
 where
   R : SumRow < T >,
 {
   type Elem;
 
-  fn intro_sum (
+  fn inject_elem (
     elem : Self::Elem
   ) ->
     R :: Field
@@ -385,23 +464,7 @@ where
   T1 : TypeApp < A >,
   T2 : TypeApp < A >,
 {
-  type Applied = MergeField < T1, T2, A >;
-}
-
-impl < P >
-  TypeApp < P > for
-  ReceiverCon
-where
-  P : Protocol
-{
-  type Applied = Receiver < P >;
-}
-
-impl < T >
-  SumRow < T > for
-  ()
-{
-  type Field = Bottom;
+  type Applied = ( T1::Applied, T2::Applied );
 }
 
 impl < T, A, R >
@@ -417,6 +480,56 @@ where
       T :: Applied,
       R :: Field
     >;
+}
+
+impl < T1, T2 >
+  SplitRow < T1, T2 >
+  for ()
+where
+{
+  fn split_row ( bottom: Bottom ) -> (Bottom, Bottom)
+  {
+    match bottom {}
+  }
+}
+
+impl < T1, T2, A, R >
+  SplitRow < T1, T2 >
+  for ( A, R )
+where
+  T1 : TypeApp < A >,
+  T2 : TypeApp < A >,
+  R : SumRow < Merge < T1, T2 > >,
+  R : SplitRow < T1, T2 >,
+  T1::Applied : Send,
+  T2::Applied : Send,
+{
+  fn split_row (
+    row1 :
+      < ( A, R ) as
+        SumRow <
+          Merge < T1, T2 >
+        >
+      > :: Field
+  ) ->
+    ( < ( A, R ) as
+        SumRow < T1 >
+      > :: Field,
+      < ( A, R ) as
+        SumRow < T2 >
+      > :: Field
+    )
+  {
+    match row1 {
+      Sum::Inl ( (row1a, row1b) ) => {
+        ( Sum::Inl(row1a), Sum::Inl(row1b) )
+      },
+      Sum::Inr ( row2 ) => {
+        let (row2a, row2b) = R::split_row (row2);
+        ( Sum::Inr(row2a), Sum::Inr(row2b) )
+      }
+    }
+  }
 }
 
 impl < T1, T2 >
@@ -462,11 +575,7 @@ where
     match (row1, row2) {
       ( Sum::Inl(a1), Sum::Inl(a2) ) => {
         Some ( Sum::Inl (
-          MergeField {
-            field1 : a1,
-            field2 : a2
-          }
-        ) )
+          ( a1, a2 ) ) )
       },
       ( Sum::Inr(r1), Sum::Inr(r2) ) => {
         R :: intersect ( r1, r2 )
@@ -536,6 +645,7 @@ where
   F : FieldLifterApplied < Root >
 {
   fn lift_sum (
+    _: F,
     _ : impl Fn ( Bottom ) -> Root,
     bot : Bottom
   ) -> Bottom
@@ -551,12 +661,12 @@ where
   F : FieldLifter < Root, A >,
   B : LiftSum2 < F, Root >,
   F :: Source : TypeApp < A >,
-  F : TypeApp < A >,
+  F :: Target : TypeApp < A >,
   F :: Injected : TypeApp < A >,
   < F :: Source
     as TypeApp < A >
   > :: Applied : Send,
-  < F
+  < F :: Target
     as TypeApp < A >
   > :: Applied : Send,
   < F :: Injected
@@ -564,14 +674,15 @@ where
   > :: Applied : Send,
 {
   fn lift_sum (
+    ctx: F,
     inject1 :
       impl Fn
         ( Sum <
-            < F
+            < F::Target
               as TypeApp < A >
             > :: Applied,
             < B as
-              SumRow < F >
+              SumRow < F::Target >
             > :: Field
           >
         ) ->
@@ -596,7 +707,7 @@ where
         let inject2 =
           move |
             b :
-              < F
+              < F::Target
                 as TypeApp < A >
               > :: Applied
           | ->
@@ -606,7 +717,7 @@ where
           };
 
         Sum :: Inl(
-          F :: lift_field ( inject2, a )
+          F :: lift_field ( ctx, inject2, a )
         )
       },
       Sum::Inr(b) => {
@@ -614,7 +725,7 @@ where
           move |
             b :
               < B as
-                SumRow < F >
+                SumRow < F::Target >
               > :: Field
           | ->
             Root
@@ -623,7 +734,7 @@ where
           };
 
         Sum::Inr (
-          B :: lift_sum ( inject2, b )
+          B :: lift_sum ( ctx, inject2, b )
         )
       }
     }
@@ -691,7 +802,7 @@ where
 }
 
 impl < T, A, R >
-  IntroSum < (A, R), T >
+  Prism < (A, R), T >
   for Z
 where
   T : TypeApp < A >,
@@ -700,7 +811,7 @@ where
 {
   type Elem = T::Applied;
 
-  fn intro_sum (
+  fn inject_elem (
     t: T::Applied
   ) ->
     Sum < T::Applied, R::Field >
@@ -710,21 +821,21 @@ where
 }
 
 impl < N, T, A, R >
-  IntroSum < (A, R), T >
+  Prism < (A, R), T >
   for S<N>
 where
-  N : IntroSum < R, T >,
+  N : Prism < R, T >,
   R : SumRow < T >,
   T : TypeApp < A >,
   T::Applied : Send,
 {
   type Elem = N::Elem;
 
-  fn intro_sum (
+  fn inject_elem (
     t: N::Elem
   ) ->
     Sum < T::Applied, R::Field >
   {
-    Sum::Inr( N::intro_sum(t) )
+    Sum::Inr( N::inject_elem(t) )
   }
 }

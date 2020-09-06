@@ -29,11 +29,11 @@ where
   A : Protocol,
   Row : Send + 'static,
   Row : Iso < Canon = Canon >,
-  Canon : SumRow < ReceiverCon >,
+  Canon : SumRow < ReceiverApp >,
   N :
-    IntroSum <
+    Prism <
       Canon,
-      ReceiverCon,
+      ReceiverApp,
       Elem = Receiver < A >
     >,
 {
@@ -47,7 +47,7 @@ where
 
       let child2 = task::spawn(async move {
         sender1.send( InternalChoice {
-          field : N::intro_sum ( receiver2 )
+          field : N::inject_elem ( receiver2 )
         }).await;
       });
 

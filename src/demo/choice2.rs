@@ -20,7 +20,7 @@ pub fn choice2_demo ()
     choice::case ( chan, move | choice1 | {
       match choice1 {
         choice::Either::Left ( ret ) => {
-          choice::run_cont ( ret,
+          choice::run_internal_cont ( ret,
             receive_value_from ( chan,
               async move | val | {
                 info! ("receied value: {}", val);
@@ -29,7 +29,7 @@ pub fn choice2_demo ()
               }) )
         },
         choice::Either::Right ( ret ) => {
-          choice::run_cont ( ret,
+          choice::run_internal_cont ( ret,
             send_value_to ( chan, 42,
               wait ( chan,
                 terminate () ) ) )
@@ -66,6 +66,32 @@ pub fn choice2_demo ()
           terminate()
         })
       );
+
+  let _provider :
+    Session <
+      choice::ExternalChoice <
+        choice::Either <
+          SendValue < String, End >,
+          ReceiveValue < u64, End >
+        >
+      >
+    > =
+      choice::offer_choice ( move | choice | {
+        match choice {
+          choice::Either::Left ( ret ) => {
+            choice::run_external_cont ( ret,
+              send_value ( "provider_left".to_string(),
+                terminate() ) )
+          },
+          choice::Either::Right ( ret ) => {
+            choice::run_external_cont ( ret,
+              receive_value ( async move | val | {
+                info! ( "received value: {}", val );
+                terminate()
+              }))
+          }
+        }
+      });
 
   unimplemented!()
 }
