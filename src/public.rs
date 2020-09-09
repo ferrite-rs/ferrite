@@ -4,11 +4,6 @@ pub use crate::base::public::*;
 pub use crate::protocol::public::{
   End,
 
-  Choice,
-  Either,
-  ExternalChoice,
-  InternalChoice,
-
   SendValue,
   ReceiveValue,
 
@@ -82,14 +77,6 @@ pub use crate::session::public::{
   receive_channel,
   receive_channel_slot,
 
-  choose_left,
-  choose_right,
-  offer_choice,
-
-  case,
-  offer_left,
-  offer_right,
-
   wrap_session,
   unwrap_session,
 };
@@ -108,12 +95,14 @@ pub use crate::shared::public::{
   release_shared_session,
 };
 
-pub mod nary_choice {
-  pub use crate::protocol::nary_choice::*;
-  pub use crate::session::nary_choice::*;
-}
-
 pub mod choice {
-  pub use crate::protocol::choice2::*;
-  pub use crate::session::choice2::*;
+  pub mod binary {
+    pub use crate::protocol::choice::binary::*;
+    pub use crate::session::choice::binary::*;
+  }
+
+  pub mod nary {
+    pub use crate::protocol::choice::nary::*;
+    pub use crate::session::choice::nary::*;
+  }
 }

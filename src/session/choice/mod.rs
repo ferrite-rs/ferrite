@@ -1,14 +1,4 @@
-mod external;
-mod internal;
+pub mod nary;
+pub mod binary;
 
-pub use external::{
-  choose_left,
-  choose_right,
-  offer_choice,
-};
-
-pub use internal::{
-  case,
-  offer_left,
-  offer_right,
-};
+pub use nary::*;

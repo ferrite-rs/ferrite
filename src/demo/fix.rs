@@ -3,6 +3,7 @@ use std::time::Duration;
 use async_std::task::sleep;
 
 use ferrite::*;
+use ferrite::choice::binary::*;
 
 type Stream =
   Fix <

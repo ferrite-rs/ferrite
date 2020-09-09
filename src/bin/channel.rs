@@ -7,6 +7,7 @@ use std::future::Future;
 use async_std::task::sleep;
 
 use ferrite::*;
+use ferrite::choice::binary::*;
 
 // Example implementation of Rust channels using shared channels
 

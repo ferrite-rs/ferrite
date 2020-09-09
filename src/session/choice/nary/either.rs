@@ -1,9 +1,13 @@
 pub use crate::base::{
-  TypeApp
+  Z,
+  S,
+  Nat,
+  succ,
+  TypeApp,
 };
 
 pub use crate::context::*;
-pub use crate::protocol::choice2::*;
+pub use crate::protocol::choice::nary::*;
 
 pub type EitherField < A, B, T > =
   Either <
@@ -15,6 +19,9 @@ pub enum Either < A, B > {
   Left ( A ),
   Right ( B ),
 }
+
+pub const LEFT : Z = Z::VAL;
+pub const RIGHT : S<Z> = < S<Z> >::VAL;
 
 impl < T, A, B >
   SumRow < T > for

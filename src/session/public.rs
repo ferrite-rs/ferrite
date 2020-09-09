@@ -50,14 +50,6 @@ pub use super::{
   receive_channel,
   receive_channel_slot,
 
-  choose_left,
-  choose_right,
-  offer_choice,
-
-  case,
-  offer_left,
-  offer_right,
-
   wrap_session,
   unwrap_session,
 };

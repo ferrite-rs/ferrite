@@ -1,4 +1,5 @@
-mod either;
+pub mod either;
+
 mod internal_choice_case;
 mod internal_choice_offer;
 mod external_choice_offer;
@@ -21,5 +22,3 @@ pub use external_choice_offer::{
 pub use external_choice_choose::{
   choose
 };
-
-pub use either::*;

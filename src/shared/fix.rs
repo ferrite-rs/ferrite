@@ -1,14 +1,16 @@
 use crate::base::{ Protocol, Z };
 
 use crate::protocol::{
-  ExternalChoice,
-  InternalChoice,
-
   SendValue,
   ReceiveValue,
 
   SendChannel,
   ReceiveChannel,
+};
+
+use crate::protocol::choice::binary:: {
+  ExternalChoice,
+  InternalChoice,
 };
 
 pub trait SharedTypeApp < X >

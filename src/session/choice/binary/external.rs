@@ -10,7 +10,7 @@ use crate::base::{
   unsafe_create_session,
 };
 
-use crate::protocol::{
+use crate::protocol::choice::binary:: {
   Either,
   Choice,
   ExternalChoice

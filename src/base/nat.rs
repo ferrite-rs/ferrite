@@ -3,6 +3,8 @@ use std::marker::PhantomData;
 pub trait Nat
   : Send + 'static
 {
+  const VAL : Self;
+
   fn nat() -> Self;
 }
 
@@ -10,9 +12,11 @@ pub trait Nat
 pub struct Z ();
 
 #[derive(Copy, Clone)]
-pub struct S < N > (PhantomData<N>);
+pub struct S < N > ( pub PhantomData<N> );
 
 impl Nat for Z {
+  const VAL : Z = Z();
+
   fn nat() -> Z { Z() }
 }
 
@@ -21,6 +25,8 @@ impl < N > Nat
 where
   N : Nat
 {
+  const VAL : S<N> = S( PhantomData );
+
   fn nat() ->
     S < N >
   {

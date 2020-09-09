@@ -1,6 +1,7 @@
 #![feature(async_closure)]
 
 use ferrite::*;
+use ferrite::choice::binary::*;
 
 use std::time::Duration;
 use async_std::task::sleep;

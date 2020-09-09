@@ -17,7 +17,7 @@ pub use crate::base::{
 };
 
 pub use crate::context::*;
-pub use crate::protocol::choice2::*;
+pub use crate::protocol::choice::nary::*;
 
 pub struct SessionApp < C >
   ( PhantomData < C > );

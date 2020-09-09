@@ -7,15 +7,12 @@ mod fix;
 mod cut;
 mod step;
 mod value;
-mod choice;
 mod include;
 mod channel;
 mod forward;
 mod persistent;
 
-pub mod choice2;
-
-pub mod nary_choice;
+pub mod choice;
 
 pub use self::run::{
   run_session,
@@ -87,16 +84,6 @@ pub use self::channel::{
   send_channel_to,
   receive_channel,
   receive_channel_slot,
-};
-
-pub use self::choice::{
-  choose_left,
-  choose_right,
-  offer_choice,
-
-  case,
-  offer_left,
-  offer_right,
 };
 
 pub use self::wrap::{

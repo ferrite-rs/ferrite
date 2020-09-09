@@ -2,7 +2,7 @@ use async_std::task;
 use async_macros::join;
 use async_std::sync::{ channel };
 
-use crate::protocol::{
+use crate::protocol::choice::binary::{
   Either,
   InternalChoice,
 };

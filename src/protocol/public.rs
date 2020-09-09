@@ -1,10 +1,6 @@
 
 pub use super::{
   End,
-  Choice,
-  Either,
-  ExternalChoice,
-  InternalChoice,
 
   SendValue,
   ReceiveValue,
@@ -14,4 +10,6 @@ pub use super::{
 
   Wrap,
   Wrapper,
+
+  choice
 };

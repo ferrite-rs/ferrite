@@ -1,29 +1,30 @@
 #![feature(async_closure)]
 
 use ferrite::*;
-use ferrite::choice as choice;
+use ferrite::choice::nary::*;
+use ferrite::choice::nary::either::*;
 
 pub fn external_choice_session ()
   -> Session < End >
 {
   let provider :
     Session <
-      choice::ExternalChoice <
-        choice::Either <
+      ExternalChoice <
+        Either <
           SendValue < String, End >,
           ReceiveValue < u64, End >
         >
       >
     > =
-      choice::offer_choice ( move | choice | {
+      offer_choice ( move | choice | {
         match choice {
-          choice::Either::Left ( ret ) => {
-            choice::run_external_cont ( ret,
+          Either::Left ( ret ) => {
+            run_external_cont ( ret,
               send_value ( "provider_left".to_string(),
                 terminate() ) )
           },
-          choice::Either::Right ( ret ) => {
-            choice::run_external_cont ( ret,
+          Either::Right ( ret ) => {
+            run_external_cont ( ret,
               receive_value ( async move | val | {
                 println! ( "received value: {}", val );
                 terminate()
@@ -35,8 +36,8 @@ pub fn external_choice_session ()
   let _client_left :
     Session <
       ReceiveChannel <
-        choice::ExternalChoice <
-          choice::Either <
+        ExternalChoice <
+          Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           >
@@ -45,7 +46,7 @@ pub fn external_choice_session ()
       >
     > =
       receive_channel (| chan | {
-        choice::choose ( chan, Z(),
+        choose ( chan, LEFT,
           receive_value_from ( chan,
             async move | val: String | {
               println! ( "received string: {}", val );
@@ -57,8 +58,8 @@ pub fn external_choice_session ()
   let client_right :
     Session <
       ReceiveChannel <
-        choice::ExternalChoice <
-          choice::Either <
+        ExternalChoice <
+          Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           >
@@ -67,7 +68,7 @@ pub fn external_choice_session ()
       >
     > =
       receive_channel (| chan | {
-        choice::choose ( chan, succ(Z()),
+        choose ( chan, RIGHT,
           send_value_to (chan, 42,
             wait ( chan, terminate () ) ) )
       });

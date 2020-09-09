@@ -1,16 +1,4 @@
-mod data;
-mod external_choice;
-mod internal_choice;
+pub mod nary;
+pub mod binary;
 
-pub use self::data::{
-  Choice,
-  Either
-};
-
-pub use self::external_choice::{
-  ExternalChoice
-};
-
-pub use self::internal_choice::{
-  InternalChoice
-};
+pub use nary::*;

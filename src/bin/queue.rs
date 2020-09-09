@@ -6,6 +6,7 @@ use async_std::task::sleep;
 use std::pin::Pin;
 
 use ferrite::*;
+use ferrite::choice::binary::*;
 
 type Queue < A > =
   Fix <

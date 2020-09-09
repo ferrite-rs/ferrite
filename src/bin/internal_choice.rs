@@ -1,7 +1,8 @@
 #![feature(async_closure)]
 
 use ferrite::*;
-use ferrite::choice as choice;
+use ferrite::choice::nary::*;
+use ferrite::choice::nary::either::*;
 
 pub fn internal_choice_session ()
   -> Session < End >
@@ -9,18 +10,18 @@ pub fn internal_choice_session ()
   let client :
     Session <
       ReceiveChannel <
-        choice::InternalChoice <
-          choice::Either <
+        InternalChoice <
+          Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           > >,
         End
       > > =
   receive_channel ( | chan | {
-    choice::case ( chan, move | choice1 | {
+    case ( chan, move | choice1 | {
       match choice1 {
-        choice::Either::Left ( ret ) => {
-          choice::run_internal_cont ( ret,
+        Either::Left ( ret ) => {
+          run_internal_cont ( ret,
             receive_value_from ( chan,
               async move | val: String | {
                 println! ("receied string: {}", val);
@@ -28,8 +29,8 @@ pub fn internal_choice_session ()
                   terminate () )
               }) )
         },
-        choice::Either::Right ( ret ) => {
-          choice::run_internal_cont ( ret,
+        Either::Right ( ret ) => {
+          run_internal_cont ( ret,
             send_value_to ( chan, 42,
               wait ( chan,
                 terminate () ) ) )
@@ -40,27 +41,27 @@ pub fn internal_choice_session ()
 
   let provider_left :
     Session <
-      choice::InternalChoice <
-        choice::Either <
+      InternalChoice <
+        Either <
           SendValue < String, End >,
           ReceiveValue < u64, End >
         >
       >
     > =
-      choice::offer_case ( Z(),
+      offer_case ( LEFT,
         send_value ( "provider_left".to_string(),
           terminate() ) );
 
   let _provider_right :
     Session <
-      choice::InternalChoice <
-        choice::Either <
+      InternalChoice <
+        Either <
           SendValue < String, End >,
           ReceiveValue < u64, End >
         >
       >
     > =
-      choice::offer_case ( succ(Z()),
+      offer_case ( RIGHT,
         receive_value ( async move | val: u64 | {
           println! ( "received int: {}", val );
           terminate()
