@@ -166,7 +166,7 @@ pub fn run_internal_cont
   < N, I, P, Q, Row, Root >
 (
   inject :
-  InjectSession <
+    InjectSession <
       N, I, P, Q, Row, Root
     >,
   session :

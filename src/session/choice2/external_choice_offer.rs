@@ -213,16 +213,6 @@ where
   Canon : SumRow < () >,
   Canon : SumRow < ReceiverApp >,
   Canon : SumRow < SessionApp < C > >,
-  Canon : SumRow <
-    InjectSessionApp <
-      < Canon as
-        SumRow <
-          SessionApp < C >
-        >
-      > :: Field,
-      C
-    >
-  >,
   Canon :
     LiftSum3 <
       LiftUnitToSession < C >,

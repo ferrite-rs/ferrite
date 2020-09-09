@@ -399,6 +399,12 @@ where
   ) ->
     R :: Field
   ;
+
+  fn extract_elem (
+    row : R::Field
+  ) ->
+    Option < Self::Elem >
+  ;
 }
 
 impl Iso for () {
@@ -818,6 +824,17 @@ where
   {
     Sum::Inl(t)
   }
+
+  fn extract_elem (
+    row : Sum < T::Applied, R::Field >
+  ) ->
+    Option < T::Applied >
+  {
+    match row {
+      Sum::Inl(e) => Some(e),
+      Sum::Inr(_) => None,
+    }
+  }
 }
 
 impl < N, T, A, R >
@@ -837,5 +854,16 @@ where
     Sum < T::Applied, R::Field >
   {
     Sum::Inr( N::inject_elem(t) )
+  }
+
+  fn extract_elem (
+    row : Sum < T::Applied, R::Field >
+  ) ->
+    Option < N::Elem >
+  {
+    match row {
+      Sum::Inl(_) => None,
+      Sum::Inr(rest) => N::extract_elem(rest),
+    }
   }
 }

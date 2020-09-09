@@ -1,12 +1,12 @@
-extern crate log;
+#![feature(async_closure)]
 
 use ferrite::*;
 use ferrite::choice as choice;
 
-pub fn choice2_demo ()
+pub fn internal_choice_session ()
   -> Session < End >
 {
-  let _client :
+  let client :
     Session <
       ReceiveChannel <
         choice::InternalChoice <
@@ -22,8 +22,8 @@ pub fn choice2_demo ()
         choice::Either::Left ( ret ) => {
           choice::run_internal_cont ( ret,
             receive_value_from ( chan,
-              async move | val | {
-                info! ("receied value: {}", val);
+              async move | val: String | {
+                println! ("receied string: {}", val);
                 wait ( chan,
                   terminate () )
               }) )
@@ -38,7 +38,7 @@ pub fn choice2_demo ()
     })
   });
 
-  let _provider_left :
+  let provider_left :
     Session <
       choice::InternalChoice <
         choice::Either <
@@ -61,37 +61,17 @@ pub fn choice2_demo ()
       >
     > =
       choice::offer_case ( succ(Z()),
-        receive_value ( async move | val | {
-          info! ( "received value: {}", val );
+        receive_value ( async move | val: u64 | {
+          println! ( "received int: {}", val );
           terminate()
         })
       );
 
-  let _provider :
-    Session <
-      choice::ExternalChoice <
-        choice::Either <
-          SendValue < String, End >,
-          ReceiveValue < u64, End >
-        >
-      >
-    > =
-      choice::offer_choice ( move | choice | {
-        match choice {
-          choice::Either::Left ( ret ) => {
-            choice::run_external_cont ( ret,
-              send_value ( "provider_left".to_string(),
-                terminate() ) )
-          },
-          choice::Either::Right ( ret ) => {
-            choice::run_external_cont ( ret,
-              receive_value ( async move | val | {
-                info! ( "received value: {}", val );
-                terminate()
-              }))
-          }
-        }
-      });
 
-  unimplemented!()
+  apply_channel ( client, provider_left )
+}
+
+#[async_std::main]
+pub async fn main() {
+  run_session( internal_choice_session() ).await
 }
