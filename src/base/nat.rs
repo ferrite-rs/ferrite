@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 pub trait Nat
-  : Send + 'static
+  : Send + Copy + 'static
 {
   const VAL : Self;
 

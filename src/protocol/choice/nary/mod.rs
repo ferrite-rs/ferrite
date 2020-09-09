@@ -1,3 +1,5 @@
+pub mod either;
+
 mod data;
 mod internal_choice;
 mod external_choice;

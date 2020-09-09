@@ -8,9 +8,16 @@ use crate::protocol::{
   ReceiveChannel,
 };
 
-use crate::protocol::choice::binary:: {
-  ExternalChoice,
-  InternalChoice,
+// use crate::protocol::choice::nary:: {
+//   Iso,
+//   SumRow,
+//   ReceiverApp,
+//   ExternalChoice,
+//   InternalChoice,
+// };
+
+use crate::protocol::choice::nary::either:: {
+  Either
 };
 
 pub trait SharedTypeApp < X >
@@ -55,27 +62,13 @@ where
 
 impl < P, Q, R >
   SharedTypeApp < R > for
-  InternalChoice < P, Q >
+  Either < P, Q >
 where
   P : SharedTypeApp < R >,
   Q : SharedTypeApp < R >,
 {
   type Applied =
-    InternalChoice <
-      P :: Applied,
-      Q :: Applied
-    >;
-}
-
-impl < P, Q, R >
-  SharedTypeApp < R > for
-  ExternalChoice < P, Q >
-where
-  P : SharedTypeApp < R >,
-  Q : SharedTypeApp < R >,
-{
-  type Applied =
-    ExternalChoice <
+    Either <
       P :: Applied,
       Q :: Applied
     >;
@@ -107,3 +100,75 @@ where
       B :: Applied
     >;
 }
+
+// impl < Row1, Canon1, Row2, Canon2, A >
+//   SharedTypeApp < A > for
+//   ExternalChoice < Row1 >
+// where
+//   Row1 : SharedTypeApp < A, Applied = Row2 >,
+//   Row1 : Iso < Canon = Canon1 >,
+//   Row1 :
+//     Send + 'static,
+//   Canon1 :
+//     SumRow < ReceiverApp >,
+//   Canon1 :
+//     SumRow < () >,
+//   < Canon1 as
+//     SumRow < ReceiverApp >
+//   >  :: Field
+//     : Send,
+//   < Canon1 as
+//     SumRow < () >
+//   >  :: Field
+//     : Send,
+//   Row2 : Iso < Canon = Canon2 >,
+//   Row2 :
+//     Send + 'static,
+//   Canon2 :
+//     SumRow < ReceiverApp >,
+//   Canon2 :
+//     SumRow < () >,
+//   < Canon2 as
+//     SumRow < ReceiverApp >
+//   >  :: Field
+//     : Send,
+//   < Canon2 as
+//     SumRow < () >
+//   >  :: Field
+//     : Send,
+// {
+//   type Applied =
+//     ExternalChoice <
+//       Row2
+//     >;
+// }
+
+// impl < Row1, Canon1, Row2, Canon2, A >
+//   SharedTypeApp < A > for
+//   InternalChoice < Row1 >
+// where
+//   Row1 : SharedTypeApp < A, Applied = Row2 >,
+//   Row1 : Iso < Canon = Canon1 >,
+//   Row1 :
+//     Send + 'static,
+//   Canon1 :
+//     SumRow < ReceiverApp >,
+//   < Canon1 as
+//     SumRow < ReceiverApp >
+//   >  :: Field
+//     : Send,
+//   Row2 : Iso < Canon = Canon2 >,
+//   Row2 :
+//     Send + 'static,
+//   Canon2 :
+//     SumRow < ReceiverApp >,
+//   < Canon2 as
+//     SumRow < ReceiverApp >
+//   >  :: Field
+//     : Send,
+// {
+//   type Applied =
+//     InternalChoice <
+//       Row2
+//     >;
+// }

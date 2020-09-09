@@ -11,7 +11,6 @@ mod context;
 mod session;
 mod lens;
 mod nat;
-mod prism;
 mod fix;
 
 pub mod public;
@@ -42,4 +41,3 @@ pub use self::lens::{
 
 pub use fix::*;
 pub use nat::*;
-pub use prism::*;

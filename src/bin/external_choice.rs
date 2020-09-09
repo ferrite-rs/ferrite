@@ -2,7 +2,7 @@
 
 use ferrite::*;
 use ferrite::choice::nary::*;
-use ferrite::choice::nary::either::*;
+use ferrite::choice::nary::either as either;
 
 pub fn external_choice_session ()
   -> Session < End >
@@ -10,21 +10,21 @@ pub fn external_choice_session ()
   let provider :
     Session <
       ExternalChoice <
-        Either <
+        either::Either <
           SendValue < String, End >,
           ReceiveValue < u64, End >
         >
       >
     > =
       offer_choice ( move | choice | {
-        match choice {
-          Either::Left ( ret ) => {
-            run_external_cont ( ret,
+        match either::extract(choice) {
+          either::Left ( cont ) => {
+            run_external_cont ( cont,
               send_value ( "provider_left".to_string(),
                 terminate() ) )
-          },
-          Either::Right ( ret ) => {
-            run_external_cont ( ret,
+          }
+          either::Right ( cont ) => {
+            run_external_cont ( cont,
               receive_value ( async move | val | {
                 println! ( "received value: {}", val );
                 terminate()
@@ -37,7 +37,7 @@ pub fn external_choice_session ()
     Session <
       ReceiveChannel <
         ExternalChoice <
-          Either <
+          either::Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           >
@@ -46,7 +46,7 @@ pub fn external_choice_session ()
       >
     > =
       receive_channel (| chan | {
-        choose ( chan, LEFT,
+        choose ( chan, either::LeftChoice,
           receive_value_from ( chan,
             async move | val: String | {
               println! ( "received string: {}", val );
@@ -59,7 +59,7 @@ pub fn external_choice_session ()
     Session <
       ReceiveChannel <
         ExternalChoice <
-          Either <
+          either::Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           >
@@ -68,7 +68,7 @@ pub fn external_choice_session ()
       >
     > =
       receive_channel (| chan | {
-        choose ( chan, RIGHT,
+        choose ( chan, either::RightChoice,
           send_value_to (chan, 42,
             wait ( chan, terminate () ) ) )
       });

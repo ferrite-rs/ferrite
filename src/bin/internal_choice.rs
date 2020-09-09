@@ -3,6 +3,7 @@
 use ferrite::*;
 use ferrite::choice::nary::*;
 use ferrite::choice::nary::either::*;
+use ferrite::choice::nary::either as either;
 
 pub fn internal_choice_session ()
   -> Session < End >
@@ -11,7 +12,7 @@ pub fn internal_choice_session ()
     Session <
       ReceiveChannel <
         InternalChoice <
-          Either <
+          either::Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           > >,
@@ -19,22 +20,22 @@ pub fn internal_choice_session ()
       > > =
   receive_channel ( | chan | {
     case ( chan, move | choice1 | {
-      match choice1 {
-        Either::Left ( ret ) => {
-          run_internal_cont ( ret,
+      match either::extract(choice1) {
+        either::Left ( cont ) => {
+          run_internal_cont ( cont,
             receive_value_from ( chan,
               async move | val: String | {
                 println! ("receied string: {}", val);
                 wait ( chan,
                   terminate () )
               }) )
-        },
-        Either::Right ( ret ) => {
-          run_internal_cont ( ret,
+        }
+        either::Right ( cont ) => {
+          run_internal_cont ( cont,
             send_value_to ( chan, 42,
               wait ( chan,
                 terminate () ) ) )
-        },
+        }
       }
     })
   });
@@ -48,7 +49,7 @@ pub fn internal_choice_session ()
         >
       >
     > =
-      offer_case ( LEFT,
+      offer_case ( LeftChoice,
         send_value ( "provider_left".to_string(),
           terminate() ) );
 
@@ -61,7 +62,7 @@ pub fn internal_choice_session ()
         >
       >
     > =
-      offer_case ( RIGHT,
+      offer_case ( RightChoice,
         receive_value ( async move | val: u64 | {
           println! ( "received int: {}", val );
           terminate()

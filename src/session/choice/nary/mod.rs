@@ -1,9 +1,7 @@
-pub mod either;
-
-mod internal_choice_case;
-mod internal_choice_offer;
-mod external_choice_offer;
-mod external_choice_choose;
+pub mod internal_choice_case;
+pub mod internal_choice_offer;
+pub mod external_choice_offer;
+pub mod external_choice_choose;
 
 pub use internal_choice_case::{
   case,
