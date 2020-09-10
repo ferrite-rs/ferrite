@@ -2,24 +2,18 @@ use async_std::task;
 use async_macros::join;
 use async_std::sync::{ Receiver, channel };
 
-pub use crate::base::{
-  Nat,
-  Z,
-  Empty,
-  TypeApp,
+use crate::base::{
   Protocol,
   Context,
-  ContextLens,
   PartialSession,
   unsafe_run_session,
   unsafe_create_session,
 };
 
-pub use crate::context::*;
-pub use crate::protocol::choice::nary::*;
+use crate::protocol::choice::nary::*;
 
 pub fn offer_case
-  < N, C, A, Row, Canon >
+  < N, C, A, Row >
   ( _ : N,
     cont : PartialSession < C, A >
   ) ->
@@ -28,11 +22,10 @@ where
   C : Context,
   A : Protocol,
   Row : Send + 'static,
-  Row : Iso < Canon = Canon >,
-  Canon : SumRow < ReceiverApp >,
+  Row : SumRow < ReceiverApp >,
   N :
     Prism <
-      Canon,
+      Row,
       ReceiverApp,
       Elem = Receiver < A >
     >,

@@ -8,7 +8,6 @@ use crate::protocol::choice::binary::{
 };
 
 use crate::base::{
-  Nat,
   PartialSession,
   Protocol,
   Context,
@@ -125,7 +124,6 @@ pub fn case
   ) ->
     PartialSession < C, B >
 where
-  N : Nat,
   C : Context,
   D : Context,
   A1 : Protocol,

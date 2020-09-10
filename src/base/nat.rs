@@ -3,7 +3,8 @@ use std::marker::PhantomData;
 pub trait Nat
   : Send + Copy + 'static
 {
-  const VAL : Self;
+  #[allow(non_upper_case_globals)]
+  const Value : Self;
 
   fn nat() -> Self;
 }
@@ -15,7 +16,8 @@ pub struct Z ();
 pub struct S < N > ( pub PhantomData<N> );
 
 impl Nat for Z {
-  const VAL : Z = Z();
+  #[allow(non_upper_case_globals)]
+  const Value : Z = Z();
 
   fn nat() -> Z { Z() }
 }
@@ -25,7 +27,8 @@ impl < N > Nat
 where
   N : Nat
 {
-  const VAL : S<N> = S( PhantomData );
+  #[allow(non_upper_case_globals)]
+  const Value : S<N> = S( PhantomData );
 
   fn nat() ->
     S < N >

@@ -7,6 +7,7 @@
 
 // use ferrite::*;
 // use ferrite::choice::binary::*;
+// use ferrite::choice::nary::either as either;
 
 // type Queue < A > =
 //   Fix <
@@ -100,12 +101,12 @@
 //   receive_channel ( | queue | {
 //     unfix_session_for ( queue,
 //       case ( queue, move | option | {
-//         match option {
-//           Either::Left( ret ) => {
+//         match either::extract(option) {
+//           either::Left( ret ) => {
 //             ret ( wait (
 //               queue, terminate () )
 //             ) },
-//           Either::Right( ret ) => {
+//           either::Right( ret ) => {
 //             ret (
 //               receive_value_from ( queue,
 //                 async move | val | {
@@ -153,5 +154,5 @@
 
 #[async_std::main]
 pub async fn main() {
-//   run_session ( queue_session() ).await;
+  // run_session ( queue_session() ).await;
 }

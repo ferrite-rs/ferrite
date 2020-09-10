@@ -1,6 +1,4 @@
 
-//! # Unfix
-
 //! The `base` module  defines the abstract interfaces for `session_rust`.
 //!
 //! - [`crate::base::Protocol`] - Protocol expressions in session types with

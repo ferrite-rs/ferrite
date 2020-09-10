@@ -1,10 +1,6 @@
 use async_std::sync::{ Receiver, channel };
 
-pub use crate::base::{
-  Nat,
-  Z,
-  Empty,
-  TypeApp,
+use crate::base::{
   Protocol,
   Context,
   ContextLens,
@@ -13,11 +9,10 @@ pub use crate::base::{
   unsafe_create_session,
 };
 
-pub use crate::context::*;
-pub use crate::protocol::choice::nary::*;
+use crate::protocol::choice::nary::*;
 
 pub fn choose
-  < N, M, C, A, B, Row, Canon >
+  < N, M, C, A, B, Row >
   ( _ : N,
     _ : M,
     cont : PartialSession < N::Target, A >
@@ -28,9 +23,8 @@ where
   A : Protocol,
   B : Protocol,
   Row : Send + 'static,
-  Row : Iso < Canon = Canon >,
-  Canon : SumRow < () >,
-  Canon : SumRow < ReceiverApp >,
+  Row : SumRow < () >,
+  Row : SumRow < ReceiverApp >,
   N :
     ContextLens <
       C,
@@ -39,13 +33,13 @@ where
     >,
   M :
     Prism <
-      Canon,
+      Row,
       ReceiverApp,
       Elem = Receiver < B >
     >,
   M :
     Prism <
-      Canon,
+      Row,
       (),
       Elem = ()
     >,
@@ -56,7 +50,7 @@ where
 
       let choice =
         < M as
-          Prism < Canon, () >
+          Prism < Row, () >
         > :: inject_elem ( () );
 
       let ExternalChoice { sender: sender2 } =
@@ -70,7 +64,7 @@ where
 
       let m_receiver =
         < M as
-          Prism < Canon, ReceiverApp >
+          Prism < Row, ReceiverApp >
         > :: extract_elem(receiver_sum);
 
       match m_receiver {

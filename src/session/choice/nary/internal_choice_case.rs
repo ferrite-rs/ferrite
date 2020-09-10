@@ -3,11 +3,8 @@ use std::marker::PhantomData;
 use std::future::Future;
 use async_std::sync::{ Sender, Receiver };
 
-pub use crate::base::{
-  Nat,
-  Z,
+use crate::base::{
   Empty,
-  TypeApp,
   Protocol,
   Context,
   ContextLens,
@@ -16,25 +13,22 @@ pub use crate::base::{
   unsafe_create_session,
 };
 
-pub use crate::context::*;
-pub use crate::protocol::choice::nary::*;
+use crate::protocol::choice::nary::*;
 
 pub struct SessionApp < N, C, A, Row >
   ( PhantomData <( N, C, A, Row )> );
 
 impl < N, I, P, Q, Row >
-  TypeApp < P > for
+  RowTypeApp < P > for
   SessionApp < N, I, Q, Row >
 where
   P : Protocol,
   Q : Protocol,
   I : Context,
-  Row : Iso,
+  Row : Send + 'static,
   Row :
-    Send + 'static,
-  Row::Canon :
     SumRow < ReceiverApp >,
-  < Row::Canon as
+  < Row as
     SumRow < ReceiverApp >
   >  :: Field
     : Send,
@@ -56,18 +50,16 @@ pub struct InjectSessionApp < N, C, A, Row, Root >
   ( PhantomData <( N, C, A, Row, Root )> );
 
 impl < N, I, P, Q, Row, Root >
-  TypeApp < P > for
+  RowTypeApp < P > for
   InjectSessionApp < N, I, Q, Row, Root >
 where
   P : Protocol,
   Q : Protocol,
   I : Context,
-  Row : Iso,
+  Row : Send + 'static,
   Row :
-    Send + 'static,
-  Row::Canon :
     SumRow < ReceiverApp >,
-  < Row::Canon as
+  < Row as
     SumRow < ReceiverApp >
   >  :: Field
     : Send,
@@ -105,9 +97,8 @@ pub struct RunCont
 where
   A : Protocol,
   C : Context,
-  Row : Iso,
   Row : Send + 'static,
-  Row::Canon :
+  Row :
     SumRow < ReceiverApp >,
   N :
     ContextLens <
@@ -115,7 +106,7 @@ where
       InternalChoice < Row >,
       Empty
     >,
-  < Row::Canon as
+  < Row as
     SumRow < ReceiverApp >
   > :: Field :
     Send
@@ -133,12 +124,10 @@ where
   P : Protocol,
   Q : Protocol,
   I : Context,
-  Row : Iso,
+  Row : Send + 'static,
   Row :
-    Send + 'static,
-  Row::Canon :
     SumRow < ReceiverApp >,
-  < Row::Canon as
+  < Row as
     SumRow < ReceiverApp >
   >  :: Field
     : Send,
@@ -180,12 +169,11 @@ where
   P : Protocol,
   Q : Protocol,
   I : Context,
-  Row : Iso,
   Row :
     Send + 'static,
-  Row::Canon :
+  Row :
     SumRow < ReceiverApp >,
-  < Row::Canon as
+  < Row as
     SumRow < ReceiverApp >
   >  :: Field
     : Send,
@@ -212,9 +200,8 @@ where
   A : Protocol,
   B : Protocol,
   C : Context,
-  Row : Iso,
   Row : Send + 'static,
-  Row::Canon :
+  Row :
     SumRow < ReceiverApp >,
   N :
     ContextLens <
@@ -236,7 +223,7 @@ where
       InternalChoice < Row >,
       Empty
     >,
-  < Row::Canon as
+  < Row as
     SumRow < ReceiverApp >
   > :: Field :
     Send
@@ -301,12 +288,9 @@ where
   P : Protocol,
   I : Context,
   Row : Send + 'static,
-  Row : Iso,
   Row :
-    Send + 'static,
-  Row::Canon :
     SumRow < ReceiverApp >,
-  < Row::Canon as
+  < Row as
     SumRow < ReceiverApp >
   >  :: Field
     : Send,
@@ -340,10 +324,10 @@ where
   }
 }
 
-type RootCont < Row, N, C, A, Canon > =
+type RootCont < Row, N, C, A > =
   InjectSessionApp <
     N, C, A, Row,
-    < Canon as
+    < Row as
       SumRow <
         SessionApp < N, C, A, Row >
       >
@@ -351,16 +335,16 @@ type RootCont < Row, N, C, A, Canon > =
   >;
 
 pub fn case
-  < Row, N, C, A, Canon >
+  < Row, N, C, A >
   ( _ : N,
     cont1 : impl FnOnce (
       < Row as
         SumRow <
-          RootCont < Row, N, C, A, Canon >
+          RootCont < Row, N, C, A >
         >
       > :: Field
     ) ->
-      < Canon as
+      < Row as
         SumRow <
           SessionApp < N, C, A, Row >
         >
@@ -372,35 +356,33 @@ where
   A : Protocol,
   C : Context,
   Row : Send + 'static,
-  Row : Iso < Canon = Canon >,
-  Canon : 'static,
-  Canon : SumRow < () >,
-  Row : IsoRow <
-    RootCont < Row, N, C, A, Canon >
+  Row : SumRow < () >,
+  Row : SumRow <
+    RootCont < Row, N, C, A >
   >,
   N :
     ContextLens <
       C,
       InternalChoice < Row >,
       Empty
-    > + 'static,
-  Canon : SumRow < ReceiverApp >,
-  Canon :
+    >,
+  Row : SumRow < ReceiverApp >,
+  Row :
     SumRow <
       SessionApp < N, C, A, Row >
     >,
-  Canon :
+  Row :
     LiftSumBorrow <
       ReceiverApp,
       (),
       ReceiverToSelector
     >,
-  Canon :
+  Row :
     IntersectSum <
       ReceiverApp,
       SessionApp < N, C, A, Row >
     >,
-  Canon :
+  Row :
     ElimSum <
       Merge <
         ReceiverApp,
@@ -411,7 +393,7 @@ where
         Future < Output=() > + Send
       > >
     >,
-  Canon :
+  Row :
     LiftSum3 <
       LiftUnitToSession < N, C, A, Row >,
       SessionApp < N, C, A, Row >,
@@ -432,24 +414,17 @@ where
         = sum_chan.recv().await.unwrap();
 
       let selector
-        : < Canon as SumRow < () > > :: Field
-        = Canon::lift_sum_borrow ( &receiver_sum );
+        : < Row as SumRow < () > > :: Field
+        = Row::lift_sum_borrow ( &receiver_sum );
 
-      let cont2 =
-        Canon :: lift_sum3 (
+      let cont3 =
+        Row :: lift_sum3 (
           LiftUnitToSession(PhantomData),
           selector
         );
 
-      let cont3 =
-        < Row as
-          IsoRow <
-            RootCont < Row, N, C, A, Canon >
-          >
-        > :: from_canon ( cont2 );
-
       let cont4 :
-        < Canon as
+        < Row as
           SumRow <
             SessionApp < N, C, A, Row >
           >
@@ -458,7 +433,7 @@ where
 
       let cont5 :
         Option <
-          < Canon as
+          < Row as
             SumRow <
               Merge <
                 ReceiverApp,
@@ -467,7 +442,7 @@ where
             >
           > :: Field
         > =
-        Canon :: intersect ( receiver_sum, cont4 );
+        Row :: intersect ( receiver_sum, cont4 );
 
       match cont5 {
         Some ( cont6 ) => {
@@ -478,7 +453,7 @@ where
               sender : sender
             };
 
-          Canon :: elim_sum ( runner, cont6 ).await;
+          Row :: elim_sum ( runner, cont6 ).await;
         },
         None => {
           panic!(

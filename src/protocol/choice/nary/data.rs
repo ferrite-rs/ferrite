@@ -3,6 +3,17 @@ use std::marker::PhantomData;
 use crate::base::*;
 use async_std::sync::{ Sender, Receiver };
 
+pub trait RowTypeApp < A > {
+  type Applied;
+}
+
+impl < A >
+  RowTypeApp < A > for
+  ()
+{
+  type Applied = ();
+}
+
 pub enum Bottom {}
 
 pub struct Const < X >
@@ -10,7 +21,7 @@ pub struct Const < X >
 
 impl
   < X, A >
-  TypeApp < A >
+  RowTypeApp < A >
   for Const < X >
 {
   type Applied = X;
@@ -24,7 +35,7 @@ pub struct ReceiverApp {}
 pub struct SenderApp {}
 
 impl < P >
-  TypeApp < P > for
+  RowTypeApp < P > for
   ReceiverApp
 where
   P : Protocol
@@ -33,7 +44,7 @@ where
 }
 
 impl < P >
-  TypeApp < P > for
+  RowTypeApp < P > for
   SenderApp
 where
   P : Protocol
@@ -65,8 +76,35 @@ pub trait SumRow < T >
   type Field : Send;
 }
 
-pub trait Iso {
-  type Canon;
+pub trait RowApp < T, A >
+  : SumRow < T >
+{
+  type Applied : SumRow < T >;
+}
+
+impl < T, A >
+  RowApp < T, A >
+  for ()
+{
+  type Applied = ();
+}
+
+impl < T, A, B, X >
+  RowApp < T, X >
+  for ( A, B )
+where
+  A : TypeApp < X >,
+  T : RowTypeApp < A >,
+  B : RowApp < T, X >,
+  T : RowTypeApp < A::Applied >,
+  < T as
+    RowTypeApp < A >
+  > ::Applied : Send,
+  < T as
+    RowTypeApp < A::Applied >
+  > ::Applied : Send,
+{
+  type Applied = ( A::Applied, B::Applied );
 }
 
 pub trait SplitRow < T1, T2 >
@@ -94,46 +132,7 @@ pub trait SplitRow < T1, T2 >
 
 /*
   class
-    (SumRow self)
-    => IsoRow self where
-      type family Canon self t :: Applied
-
-      toCanon
-        :: forall t
-         . ToRow self t
-        -> Canon self t
-
-      fromCanon
-        :: forall t
-         . Canon self t
-        -> ToRow self t
- */
-pub trait IsoRow < T >
-  : Iso + SumRow < T >
-where
-  Self :: Canon : SumRow < T >
-{
-  fn to_canon (
-    row : Self :: Field
-  ) ->
-    < Self :: Canon
-      as SumRow < T >
-    > :: Field
-  ;
-
-  fn from_canon (
-    row :
-      < Self :: Canon
-        as SumRow < T >
-      > :: Field
-  ) ->
-    Self :: Field
-  ;
-}
-
-/*
-  class
-    ( TypeApp t1, TypeApp t2 )
+    ( RowTypeApp t1, RowTypeApp t2 )
     => LiftField t1 t2 where
       liftField
         :: forall a
@@ -142,8 +141,8 @@ where
  */
 pub trait LiftField < T1, T2, A >
 where
-  T1 : TypeApp < A >,
-  T2 : TypeApp < A >
+  T1 : RowTypeApp < A >,
+  T2 : RowTypeApp < A >
 {
   fn lift_field (
     field : T1 :: Applied
@@ -153,8 +152,8 @@ where
 
 pub trait LiftFieldBorrow < T1, T2, A >
 where
-  T1 : TypeApp < A >,
-  T2 : TypeApp < A >
+  T1 : RowTypeApp < A >,
+  T2 : RowTypeApp < A >
 {
   fn lift_field_borrow (
     field : &T1 :: Applied
@@ -200,26 +199,26 @@ pub trait FieldLifterApplied < Root >
 pub trait FieldLifter < Root, A >
   : FieldLifterApplied < Root >
 where
-  Self :: Source : TypeApp < A >,
-  Self :: Target : TypeApp < A >,
-  Self :: Injected : TypeApp < A >,
+  Self :: Source : RowTypeApp < A >,
+  Self :: Target : RowTypeApp < A >,
+  Self :: Injected : RowTypeApp < A >,
 {
   fn lift_field (
     self,
     inject :
       impl Fn
         ( < Self :: Target
-            as TypeApp < A >
+            as RowTypeApp < A >
           >:: Applied)
         -> Root
       + Send + 'static,
     field :
       < Self :: Source
-        as TypeApp < A >
+        as RowTypeApp < A >
       > :: Applied
   ) ->
     < Self :: Injected
-      as TypeApp < A >
+      as RowTypeApp < A >
     >:: Applied;
 }
 
@@ -351,7 +350,7 @@ pub trait IntersectSum < T1, T2 >
 
 pub trait ElimField < T, A, R >
 where
-  T : TypeApp < A >
+  T : RowTypeApp < A >
 {
   fn elim_field (
     self,
@@ -407,68 +406,12 @@ where
   ;
 }
 
-impl Iso for () {
-  type Canon = ();
-}
-
-impl < A, R >
-  Iso for
-  ( A, R )
-where
-  R : Iso < Canon = R >
-{
-  type Canon = ( A, R :: Canon );
-}
-
-impl < T >
-  IsoRow < T >
-  for ()
-{
-  fn to_canon (
-    row : Bottom
-  ) -> Bottom
-  { row }
-
-  fn from_canon (
-    row : Bottom
-  ) -> Bottom
-  { row }
-}
-
-impl < T, A, R >
-  IsoRow < T >
-  for ( A, R )
-where
-  R : Iso < Canon = R >,
-  R : SumRow < T >,
-  T : TypeApp < A >,
-  T::Applied : Send,
-{
-  fn to_canon (
-    row :
-      Sum < T :: Applied, R :: Field >
-  ) ->
-      Sum < T :: Applied, R :: Field >
-  {
-    row
-  }
-
-  fn from_canon (
-    row :
-      Sum < T :: Applied, R :: Field >
-  ) ->
-    Sum < T :: Applied, R :: Field >
-  {
-    row
-  }
-}
-
 impl < T1, T2, A >
-  TypeApp < A >
+  RowTypeApp < A >
   for Merge < T1, T2 >
 where
-  T1 : TypeApp < A >,
-  T2 : TypeApp < A >,
+  T1 : RowTypeApp < A >,
+  T2 : RowTypeApp < A >,
 {
   type Applied = ( T1::Applied, T2::Applied );
 }
@@ -477,7 +420,7 @@ impl < T, A, R >
   SumRow < T > for
   ( A, R )
 where
-  T : TypeApp < A >,
+  T : RowTypeApp < A >,
   R : SumRow < T >,
   T::Applied : Send
 {
@@ -503,8 +446,8 @@ impl < T1, T2, A, R >
   SplitRow < T1, T2 >
   for ( A, R )
 where
-  T1 : TypeApp < A >,
-  T2 : TypeApp < A >,
+  T1 : RowTypeApp < A >,
+  T2 : RowTypeApp < A >,
   R : SumRow < Merge < T1, T2 > >,
   R : SplitRow < T1, T2 >,
   T1::Applied : Send,
@@ -556,8 +499,8 @@ impl < T1, T2, A, R >
   IntersectSum < T1, T2 > for
   ( A, R )
 where
-  T1 : TypeApp < A >,
-  T2 : TypeApp < A >,
+  T1 : RowTypeApp < A >,
+  T2 : RowTypeApp < A >,
   R : IntersectSum < T1, T2 >,
   T1::Applied : Send,
   T2::Applied : Send,
@@ -606,8 +549,8 @@ impl < T1, T2, F, A, B >
   LiftSumBorrow < T1, T2, F > for
   (A, B)
 where
-  T1 : TypeApp < A >,
-  T2 : TypeApp < A >,
+  T1 : RowTypeApp < A >,
+  T2 : RowTypeApp < A >,
   F : LiftFieldBorrow < T1, T2, A >,
   B : LiftSumBorrow < T1, T2, F >,
   T1::Applied : Send,
@@ -666,17 +609,17 @@ impl < F, Root, A, B >
 where
   F : FieldLifter < Root, A >,
   B : LiftSum2 < F, Root >,
-  F :: Source : TypeApp < A >,
-  F :: Target : TypeApp < A >,
-  F :: Injected : TypeApp < A >,
+  F :: Source : RowTypeApp < A >,
+  F :: Target : RowTypeApp < A >,
+  F :: Injected : RowTypeApp < A >,
   < F :: Source
-    as TypeApp < A >
+    as RowTypeApp < A >
   > :: Applied : Send,
   < F :: Target
-    as TypeApp < A >
+    as RowTypeApp < A >
   > :: Applied : Send,
   < F :: Injected
-    as TypeApp < A >
+    as RowTypeApp < A >
   > :: Applied : Send,
 {
   fn lift_sum (
@@ -685,7 +628,7 @@ where
       impl Fn
         ( Sum <
             < F::Target
-              as TypeApp < A >
+              as RowTypeApp < A >
             > :: Applied,
             < B as
               SumRow < F::Target >
@@ -697,7 +640,7 @@ where
     sum :
       Sum <
         < F :: Source
-          as TypeApp < A >
+          as RowTypeApp < A >
         > :: Applied,
         < B as
           SumRow < F :: Source >
@@ -714,7 +657,7 @@ where
           move |
             b :
               < F::Target
-                as TypeApp < A >
+                as RowTypeApp < A >
               > :: Applied
           | ->
             Root
@@ -760,7 +703,7 @@ impl < A, B, T, F, R >
   ElimSum < T, F, R > for
   (A, B)
 where
-  T : TypeApp < A >,
+  T : RowTypeApp < A >,
   B : ElimSum < T, F, R >,
   F : ElimField < T, A, R >,
   T::Applied : Send,
@@ -787,18 +730,18 @@ where
 }
 
 impl < A >
-  TypeApp < A > for
+  RowTypeApp < A > for
   Bottom
 {
   type Applied = Bottom;
 }
 
 impl < X , A, B >
-  TypeApp < X > for
+  RowTypeApp < X > for
   Sum < A, B >
 where
-  A : TypeApp < X >,
-  B : TypeApp < X >,
+  A : RowTypeApp < X >,
+  B : RowTypeApp < X >,
 {
   type Applied =
     Sum <
@@ -811,7 +754,7 @@ impl < T, A, R >
   Prism < (A, R), T >
   for Z
 where
-  T : TypeApp < A >,
+  T : RowTypeApp < A >,
   R : SumRow < T >,
   T::Applied : Send
 {
@@ -843,7 +786,7 @@ impl < N, T, A, R >
 where
   N : Prism < R, T >,
   R : SumRow < T >,
-  T : TypeApp < A >,
+  T : RowTypeApp < A >,
   T::Applied : Send,
 {
   type Elem = N::Elem;

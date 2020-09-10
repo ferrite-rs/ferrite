@@ -1,6 +1,5 @@
 
 use crate::base::*;
-use crate::context::lens::*;
 
 pub fn new_session
   < P >
@@ -77,7 +76,7 @@ where
           P
         >
 {
-  session(cont(select_0()))
+  session(cont(Z::Value))
 }
 
 pub fn session_2
@@ -86,13 +85,13 @@ pub fn session_2
     Session < P >
 where
   P : Protocol,
-  F : FnOnce (Z, Selector1) ->
+  F : FnOnce (Z, S<Z>) ->
         PartialSession <
           ( Empty, ( Empty, () )),
           P
         >
 {
-  session(cont(select_0(), select_1()))
+  session(cont(Z::Value, < S<Z> >::Value))
 }
 
 pub fn partial_session_1
@@ -111,7 +110,7 @@ where
           Q
         >
 {
-  cont (select_0())
+  cont (Z::Value)
 }
 
 pub fn partial_session_2
@@ -125,11 +124,11 @@ where
   P1 : Slot,
   P2 : Slot,
   Q : Protocol,
-  F : FnOnce (Z, Selector1) ->
+  F : FnOnce (Z, S<Z>) ->
         PartialSession <
           (P1, (P2, ())),
           Q
         >
 {
-  cont (select_0(), select_1())
+  cont (Z::Value, < S<Z> >::Value)
 }

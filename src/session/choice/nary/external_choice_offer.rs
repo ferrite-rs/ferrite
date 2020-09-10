@@ -3,21 +3,15 @@ use std::marker::PhantomData;
 use std::future::Future;
 use async_std::sync::{ Receiver, channel };
 
-pub use crate::base::{
-  Nat,
-  Z,
-  Empty,
-  TypeApp,
+use crate::base::{
   Protocol,
   Context,
-  ContextLens,
   PartialSession,
   unsafe_run_session,
   unsafe_create_session,
 };
 
-pub use crate::context::*;
-pub use crate::protocol::choice::nary::*;
+use crate::protocol::choice::nary::*;
 
 pub struct SessionApp < C >
   ( PhantomData < C > );
@@ -26,7 +20,7 @@ pub struct InjectSessionApp < Root, C >
   ( PhantomData <( Root, C )> );
 
 impl < C, A >
-  TypeApp < A > for
+  RowTypeApp < A > for
   SessionApp < C >
 where
   A : Protocol,
@@ -37,7 +31,7 @@ where
 }
 
 impl < A, C, Root >
-  TypeApp < A > for
+  RowTypeApp < A > for
   InjectSessionApp < Root, C >
 where
   A : Protocol,
@@ -78,9 +72,9 @@ where
   (inject.inject_session)(session)
 }
 
-type RootCont < C, Canon > =
+type RootCont < C, Row > =
   InjectSessionApp <
-    < Canon as
+    < Row as
       SumRow <
         SessionApp < C >
       >
@@ -186,15 +180,15 @@ where
 }
 
 pub fn offer_choice
-  < C, Row, Canon >
+  < C, Row >
   ( cont1 : impl FnOnce (
       < Row as
         SumRow <
-          RootCont < C, Canon >
+          RootCont < C, Row >
         >
       > :: Field
     ) ->
-      < Canon as
+      < Row as
         SumRow <
           SessionApp < C >
         >
@@ -204,33 +198,31 @@ pub fn offer_choice
     PartialSession < C, ExternalChoice < Row > >
 where
   C : Context,
-  Row : IsoRow <
-    RootCont < C, Canon >
+  Row : SumRow <
+    RootCont < C, Row >
   >,
   Row : Send + 'static,
-  Row : Iso < Canon = Canon >,
-  Canon : Send + 'static,
-  Canon : SumRow < () >,
-  Canon : SumRow < ReceiverApp >,
-  Canon : SumRow < SessionApp < C > >,
-  Canon :
+  Row : SumRow < () >,
+  Row : SumRow < ReceiverApp >,
+  Row : SumRow < SessionApp < C > >,
+  Row :
     LiftSum3 <
       LiftUnitToSession < C >,
       SessionApp < C >,
     >,
-  Canon :
+  Row :
     LiftSum3 <
       RunSession < C >,
       (),
     >,
-  Canon :
+  Row :
     SplitRow <
       ReceiverApp,
       Const <
         Pin < Box < dyn Future < Output=() > + Send > >
       >
     >,
-  Canon :
+  Row :
     ElimSum <
       Const <
         Pin < Box < dyn Future < Output=() > + Send > >
@@ -251,29 +243,22 @@ where
 
       let (choice, sender3) = receiver2.recv().await.unwrap();
 
-      let cont2 = Canon :: lift_sum3 ( LiftUnitToSession(PhantomData), choice);
-
-      let cont3 =
-        < Row as
-          IsoRow <
-            RootCont < C, Canon >
-          >
-        > :: from_canon ( cont2 );
+      let cont3 = Row :: lift_sum3 ( LiftUnitToSession(PhantomData), choice);
 
       let cont4 :
-        < Canon as
+        < Row as
           SumRow <
             SessionApp < C >
           >
         > :: Field
         = cont1 ( cont3 );
 
-      let cont5 = Canon :: lift_sum3 ( RunSession { ctx: ctx }, cont4 );
+      let cont5 = Row :: lift_sum3 ( RunSession { ctx: ctx }, cont4 );
 
-      let (receiver_sum, cont6) = Canon::split_row ( cont5 );
+      let (receiver_sum, cont6) = Row::split_row ( cont5 );
 
       sender3.send(receiver_sum).await;
 
-      Canon :: elim_sum ( ElimConst{}, cont6 ).await;
+      Row :: elim_sum ( ElimConst{}, cont6 ).await;
     })
 }
