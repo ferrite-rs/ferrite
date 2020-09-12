@@ -76,37 +76,6 @@ pub trait SumRow < T >
   type Field : Send;
 }
 
-pub trait RowApp < T, A >
-  : SumRow < T >
-{
-  type Applied : SumRow < T >;
-}
-
-impl < T, A >
-  RowApp < T, A >
-  for ()
-{
-  type Applied = ();
-}
-
-impl < T, A, B, X >
-  RowApp < T, X >
-  for ( A, B )
-where
-  A : TypeApp < X >,
-  T : RowTypeApp < A >,
-  B : RowApp < T, X >,
-  T : RowTypeApp < A::Applied >,
-  < T as
-    RowTypeApp < A >
-  > ::Applied : Send,
-  < T as
-    RowTypeApp < A::Applied >
-  > ::Applied : Send,
-{
-  type Applied = ( A::Applied, B::Applied );
-}
-
 pub trait SplitRow < T1, T2 >
   : SumRow < T1 >
   + SumRow < T2 >

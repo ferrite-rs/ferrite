@@ -5,9 +5,7 @@ pub struct InternalChoice < Row >
 where
   Row : SumRow < ReceiverApp >,
 { pub (crate) field :
-    < Row as
-      SumRow < ReceiverApp >
-    >  :: Field
+    Row::Field
 }
 
 impl < Row >
@@ -16,20 +14,19 @@ impl < Row >
 where
   Row : Send + 'static,
   Row : SumRow < ReceiverApp >,
-  < Row as
-    SumRow < ReceiverApp >
-  >  :: Field
-    : Send,
+  Row::Field : Send,
 { }
 
-impl < Row1, A >
+impl < Row, A >
   TypeApp < A > for
-  InternalChoice < Row1 >
+  InternalChoice < Row >
 where
-  Row1 : RowApp < ReceiverApp, A >,
+  Row : SumRow < ReceiverApp >,
+  Row : TypeApp < A >,
+  Row::Applied : SumRow < ReceiverApp >,
 {
   type Applied =
     InternalChoice <
-      Row1::Applied
+      Row::Applied
     >;
 }

@@ -1,4 +1,6 @@
+use std::mem::transmute;
 use std::marker::PhantomData;
+
 use crate::base::nat::*;
 
 pub trait TypeApp < A > {
@@ -8,15 +10,8 @@ pub trait TypeApp < A > {
 pub struct Unfix < A > ( PhantomData<A> );
 
 pub struct Fix < F >
-where
-  F :
-    TypeApp <
-      Unfix <
-        Fix < F >
-      >
-    >
 {
-  unfix : Box < F :: Applied >
+  unfix : Box < F >
 }
 
 pub fn fix < F >
@@ -30,8 +25,13 @@ where
       >
     >
 {
-  Fix {
-    unfix : Box::new ( x )
+  unsafe {
+    let wrapped : Box < F > =
+      transmute ( Box::new ( x ) );
+
+    Fix {
+      unfix : wrapped
+    }
   }
 }
 
@@ -46,7 +46,12 @@ where
       >
     >
 {
-  *x.unfix
+  unsafe {
+    let wrapped : Box < F::Applied > =
+      transmute ( x.unfix );
+
+    *wrapped
+  }
 }
 
 impl < A, F >

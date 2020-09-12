@@ -5,12 +5,6 @@ impl < F >
   Fix < F >
 where
   F : Send + 'static,
-  F :
-    TypeApp < Unfix <
-      Fix < F >
-    > >,
-  F :: Applied :
-    Send
 { }
 
 

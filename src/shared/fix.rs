@@ -8,13 +8,12 @@ use crate::protocol::{
   ReceiveChannel,
 };
 
-// use crate::protocol::choice::nary:: {
-//   Iso,
-//   SumRow,
-//   ReceiverApp,
-//   ExternalChoice,
-//   InternalChoice,
-// };
+use crate::protocol::choice::nary:: {
+  SumRow,
+  ReceiverApp,
+  ExternalChoice,
+  InternalChoice,
+};
 
 use crate::protocol::choice::nary::either:: {
   Either
@@ -101,74 +100,32 @@ where
     >;
 }
 
-// impl < Row1, Canon1, Row2, Canon2, A >
-//   SharedTypeApp < A > for
-//   ExternalChoice < Row1 >
-// where
-//   Row1 : SharedTypeApp < A, Applied = Row2 >,
-//   Row1 : Iso < Canon = Canon1 >,
-//   Row1 :
-//     Send + 'static,
-//   Canon1 :
-//     SumRow < ReceiverApp >,
-//   Canon1 :
-//     SumRow < () >,
-//   < Canon1 as
-//     SumRow < ReceiverApp >
-//   >  :: Field
-//     : Send,
-//   < Canon1 as
-//     SumRow < () >
-//   >  :: Field
-//     : Send,
-//   Row2 : Iso < Canon = Canon2 >,
-//   Row2 :
-//     Send + 'static,
-//   Canon2 :
-//     SumRow < ReceiverApp >,
-//   Canon2 :
-//     SumRow < () >,
-//   < Canon2 as
-//     SumRow < ReceiverApp >
-//   >  :: Field
-//     : Send,
-//   < Canon2 as
-//     SumRow < () >
-//   >  :: Field
-//     : Send,
-// {
-//   type Applied =
-//     ExternalChoice <
-//       Row2
-//     >;
-// }
+impl < Row, A >
+  SharedTypeApp < A > for
+  InternalChoice < Row >
+where
+  Row : SumRow < ReceiverApp >,
+  Row : SharedTypeApp < A >,
+  Row::Applied : SumRow < ReceiverApp >,
+{
+  type Applied =
+    InternalChoice <
+      Row::Applied
+    >;
+}
 
-// impl < Row1, Canon1, Row2, Canon2, A >
-//   SharedTypeApp < A > for
-//   InternalChoice < Row1 >
-// where
-//   Row1 : SharedTypeApp < A, Applied = Row2 >,
-//   Row1 : Iso < Canon = Canon1 >,
-//   Row1 :
-//     Send + 'static,
-//   Canon1 :
-//     SumRow < ReceiverApp >,
-//   < Canon1 as
-//     SumRow < ReceiverApp >
-//   >  :: Field
-//     : Send,
-//   Row2 : Iso < Canon = Canon2 >,
-//   Row2 :
-//     Send + 'static,
-//   Canon2 :
-//     SumRow < ReceiverApp >,
-//   < Canon2 as
-//     SumRow < ReceiverApp >
-//   >  :: Field
-//     : Send,
-// {
-//   type Applied =
-//     InternalChoice <
-//       Row2
-//     >;
-// }
+impl < Row, A >
+  SharedTypeApp < A > for
+  ExternalChoice < Row >
+where
+  Row : SharedTypeApp < A >,
+  Row : SumRow < () >,
+  Row : SumRow < ReceiverApp >,
+  Row::Applied : SumRow < () >,
+  Row::Applied : SumRow < ReceiverApp >,
+{
+  type Applied =
+    ExternalChoice <
+      Row::Applied
+    >;
+}
