@@ -4,6 +4,10 @@ use std::future::Future;
 use async_std::sync::{ Receiver, channel };
 
 use crate::base::{
+  TypeApp,
+  TyCon,
+  Applied,
+  Const,
   Protocol,
   Context,
   PartialSession,
@@ -19,8 +23,11 @@ pub struct SessionApp < C >
 pub struct InjectSessionApp < Root, C >
   ( PhantomData <( Root, C )> );
 
+impl < C > TyCon for SessionApp < C > {}
+impl < Root, C > TyCon for InjectSessionApp < Root, C > {}
+
 impl < C, A >
-  RowTypeApp < A > for
+  TypeApp < A > for
   SessionApp < C >
 where
   A : Protocol,
@@ -31,7 +38,7 @@ where
 }
 
 impl < A, C, Root >
-  RowTypeApp < A > for
+  TypeApp < A > for
   InjectSessionApp < Root, C >
 where
   A : Protocol,
@@ -85,37 +92,29 @@ type RootCont < C, Row > =
 pub struct LiftUnitToSession < C >
   ( PhantomData< C > );
 
-impl < Root, C >
-  FieldLifterApplied < Root >
-  for LiftUnitToSession < C >
-{
-  type Source = ();
-
-  type Target = SessionApp < C >;
-
-  type Injected =
-    InjectSessionApp < Root, C >;
-}
-
 impl
-  < Root, A, C >
-  FieldLifter < Root, A >
+  < Root, C >
+  FieldLifter < Root >
   for LiftUnitToSession < C >
-where
-  A : Protocol,
-  C : Context,
 {
-  fn lift_field (
-    self,
-    inject :
-      impl Fn (
-        PartialSession < C, A >
-      ) ->
-        Root
-      + Send + 'static,
-    _ : ()
-  ) ->
-    InjectSession < Root, C, A >
+  type SourceF = ();
+
+  type TargetF = SessionApp < C >;
+
+  type InjectF =
+    InjectSessionApp < Root, C >;
+
+  fn lift_field < A >
+    ( self,
+      inject:
+        impl Fn
+          ( Applied < Self::TargetF, A > )
+          -> Root
+        + Send + 'static,
+      row:
+        Applied < Self::SourceF, A >
+    ) ->
+      Applied < Self::InjectF, A >
   {
     InjectSession {
       inject_session : Box::new ( inject )
@@ -128,46 +127,36 @@ where
   C : Context
 { ctx: C::Endpoints }
 
-impl < Root, C >
-  FieldLifterApplied < Root >
+impl
+  < Root, C >
+  FieldLifter < Root >
   for RunSession < C >
 where
-  C : Context
+  C : Context,
 {
-  type Source = SessionApp < C >;
+  type SourceF = SessionApp < C >;
 
-  type Target = ();
+  type TargetF = ();
 
-  type Injected =
+  type InjectF =
     Merge <
       ReceiverApp,
       Const <
         Pin < Box < dyn Future < Output=() > + Send > >
       >
     >;
-}
 
-impl
-  < Root, A, C >
-  FieldLifter < Root, A >
-  for RunSession < C >
-where
-  A : Protocol,
-  C : Context,
-{
-  fn lift_field (
-    self,
-    _ :
-      impl Fn (
-        ()
-      ) ->
-        Root
-      + Send + 'static,
-    cont: PartialSession < C, A >
-  ) ->
-    ( Receiver < A >,
-      Pin < Box < dyn Future < Output=() > + Send > >
-    )
+  fn lift_field < A >
+    ( self,
+      inject:
+        impl Fn
+          ( Applied < Self::TargetF, A > )
+          -> Root
+        + Send + 'static,
+      cont:
+        Applied < Self::SourceF, A >
+    ) ->
+      Applied < Self::InjectF, A >
   {
     let (sender, receiver) = channel(1);
 
@@ -202,19 +191,8 @@ where
     RootCont < C, Row >
   >,
   Row : Send + 'static,
-  Row : SumRow < () >,
-  Row : SumRow < ReceiverApp >,
-  Row : SumRow < SessionApp < C > >,
-  Row :
-    LiftSum3 <
-      LiftUnitToSession < C >,
-      SessionApp < C >,
-    >,
-  Row :
-    LiftSum3 <
-      RunSession < C >,
-      (),
-    >,
+  Row : RowCon,
+  Row : SumFunctorInject,
   Row :
     SplitRow <
       ReceiverApp,

@@ -5,10 +5,14 @@ use async_std::sync::{ Sender, Receiver };
 
 use crate::base::{
   Empty,
+  TyCon,
+  TypeApp,
+  Applied,
   Protocol,
   Context,
   ContextLens,
   PartialSession,
+  NaturalTransformationBorrow,
   unsafe_run_session,
   unsafe_create_session,
 };
@@ -18,8 +22,17 @@ use crate::protocol::choice::nary::*;
 pub struct SessionApp < N, C, A, Row >
   ( PhantomData <( N, C, A, Row )> );
 
+pub struct InjectSessionApp < N, C, A, Row, Root >
+  ( PhantomData <( N, C, A, Row, Root )> );
+
+impl < N, I, Q, Row > TyCon
+  for SessionApp < N, I, Q, Row > {}
+
+impl < N, I, Q, Row, Root > TyCon
+  for InjectSessionApp < N, I, Q, Row, Root > {}
+
 impl < N, I, P, Q, Row >
-  RowTypeApp < P > for
+  TypeApp < P > for
   SessionApp < N, I, Q, Row >
 where
   P : Protocol,
@@ -46,11 +59,8 @@ where
     >;
 }
 
-pub struct InjectSessionApp < N, C, A, Row, Root >
-  ( PhantomData <( N, C, A, Row, Root )> );
-
 impl < N, I, P, Q, Row, Root >
-  RowTypeApp < P > for
+  TypeApp < P > for
   InjectSessionApp < N, I, Q, Row, Root >
 where
   P : Protocol,
@@ -78,17 +88,14 @@ where
 
 pub struct ReceiverToSelector {}
 
-impl < A >
-  LiftFieldBorrow
-  < ReceiverApp, (), A >
+impl
+  NaturalTransformationBorrow
+  < ReceiverApp, () >
   for ReceiverToSelector
-where
-  A : Protocol
 {
-  fn lift_field_borrow (
-    _ : &Receiver < A >
-  ) ->
-    ()
+  fn lift_borrow < A >
+    ( fa: &Applied < ReceiverApp, A > )
+    -> Applied < (), A >
   { () }
 }
 
@@ -193,7 +200,6 @@ impl < A, B, N, C, Row >
       ReceiverApp,
       SessionApp < N, C, B, Row >
     >,
-    A,
     Pin < Box < dyn Future < Output=() > + Send > >
   > for RunCont < N, C, B, Row >
 where
@@ -268,23 +274,9 @@ pub struct LiftUnitToSession < N, C, A, Row >
 
 impl
   < Root, N, I, P, Row >
-  FieldLifterApplied < Root >
-  for LiftUnitToSession < N, I, P, Row >
-{
-  type Source = ();
-
-  type Target = SessionApp < N, I, P, Row >;
-
-  type Injected =
-    InjectSessionApp < N, I, P, Row, Root >;
-}
-
-impl
-  < Root, N, I, P, Row, A >
-  FieldLifter < Root, A >
+  FieldLifter < Root >
   for LiftUnitToSession < N, I, P, Row >
 where
-  A : Protocol,
   P : Protocol,
   I : Context,
   Row : Send + 'static,
@@ -296,27 +288,25 @@ where
     : Send,
   InternalChoice < Row > :
     Protocol,
-  N :
-    ContextLens <
-      I,
-      InternalChoice < Row >,
-      A
-    >
 {
-  fn lift_field (
-    self,
-    inject :
-      impl Fn (
-        PartialSession <
-          N :: Target,
-          P
-        >
-      ) ->
-        Root
-      + Send + 'static,
-    _ : ()
-  ) ->
-    InjectSession < N, I, A, P, Row, Root >
+  type SourceF = ();
+
+  type TargetF = SessionApp < N, I, P, Row >;
+
+  type InjectF =
+    InjectSessionApp < N, I, P, Row, Root >;
+
+  fn lift_field < A >
+    ( self,
+      inject:
+        impl Fn
+          ( Applied < Self::TargetF, A > )
+          -> Root
+        + Send + 'static,
+      row:
+        Applied < Self::SourceF, A >
+    ) ->
+      Applied < Self::InjectF, A >
   {
     InjectSession {
       inject_session : Box::new ( inject )
@@ -366,38 +356,11 @@ where
       InternalChoice < Row >,
       Empty
     >,
-  Row : SumRow < ReceiverApp >,
-  Row :
-    SumRow <
-      SessionApp < N, C, A, Row >
-    >,
-  Row :
-    LiftSumBorrow <
-      ReceiverApp,
-      (),
-      ReceiverToSelector
-    >,
-  Row :
-    IntersectSum <
-      ReceiverApp,
-      SessionApp < N, C, A, Row >
-    >,
-  Row :
-    ElimSum <
-      Merge <
-        ReceiverApp,
-        SessionApp < N, C, A, Row >
-      >,
-      RunCont < N, C, A, Row >,
-      Pin < Box < dyn
-        Future < Output=() > + Send
-      > >
-    >,
-  Row :
-    LiftSum3 <
-      LiftUnitToSession < N, C, A, Row >,
-      SessionApp < N, C, A, Row >,
-    >,
+  Row : RowCon,
+  Row : SumFunctorBorrow,
+  Row : IntersectSum,
+  Row : ElimSum,
+  Row : SumFunctorInject,
 {
   unsafe_create_session (
     async move | ctx1, sender | {

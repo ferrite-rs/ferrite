@@ -1,14 +1,14 @@
 
 use crate::base as base;
 
-use base::{ TypeApp, Protocol };
+use base::{ RecApp, Protocol };
 
 pub struct End ();
 
 impl Protocol for End { }
 
 impl < A >
-  TypeApp < A >
+  RecApp < A >
   for End
 {
   type Applied = End;

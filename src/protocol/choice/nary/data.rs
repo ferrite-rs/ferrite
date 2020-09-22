@@ -1,63 +1,71 @@
+use std::mem::transmute;
 use std::marker::PhantomData;
 
 use crate::base::*;
 use async_std::sync::{ Sender, Receiver };
 
-pub trait RowTypeApp < A > {
-  type Applied;
-}
+pub trait RowCon {}
 
-impl < A >
-  RowTypeApp < A > for
-  ()
-{
-  type Applied = ();
-}
+pub trait SumRow < F: TyCon > : RowCon
+{ type Field; }
 
 pub enum Bottom {}
 
-pub struct Const < X >
-  ( PhantomData<X> );
+impl < A, R >
+  RowCon
+  for (A, R)
+where
+  R: RowCon
+{}
 
-impl
-  < X, A >
-  RowTypeApp < A >
-  for Const < X >
+impl RowCon for () {}
+impl RowCon for Bottom {}
+
+impl < F, A, R >
+  SumRow < F > for
+  ( A, R )
+where
+  F: TyCon,
 {
-  type Applied = X;
+  type Field =
+    Sum <
+      Applied < F, A >,
+      AppliedSum < R, F >,
+    >;
+}
+
+impl < F >
+  SumRow < F > for
+  ()
+where
+  F: TyCon
+{
+  type Field = Bottom;
+}
+
+impl < F >
+  SumRow < F > for
+  Bottom
+where
+  F: TyCon
+{
+  type Field = Bottom;
 }
 
 pub struct Merge < T1, T2 >
   ( PhantomData <( T1, T2 )> );
 
 pub struct ReceiverApp {}
-
 pub struct SenderApp {}
 
-impl < P >
-  RowTypeApp < P > for
-  ReceiverApp
-where
-  P : Protocol
-{
-  type Applied = Receiver < P >;
-}
+impl TyCon for ReceiverApp {}
+impl TyCon for SenderApp {}
 
-impl < P >
-  RowTypeApp < P > for
-  SenderApp
-where
-  P : Protocol
-{
-  type Applied = Sender < P >;
-}
+impl < P > TypeApp < P > for ReceiverApp
+{ type Applied = Receiver < P >; }
 
-impl < T >
-  SumRow < T > for
-  ()
-{
-  type Field = Bottom;
-}
+impl < P > TypeApp < P > for SenderApp
+{ type Applied = Sender < P >; }
 
 pub enum Sum < A, B >
 {
@@ -65,295 +73,192 @@ pub enum Sum < A, B >
   Inr ( B ),
 }
 
-/*
-  class
-    (forall t . Send (Field self t))
-    => SumRow self where
-      type family ToRow self t :: Applied
- */
-pub trait SumRow < T >
-{
-  type Field : Send;
-}
-
-pub trait SplitRow < T1, T2 >
-  : SumRow < T1 >
-  + SumRow < T2 >
-  + SumRow < Merge < T1, T2 > >
-{
-  fn split_row
-    ( row:
-        < Self as
-          SumRow <
-            Merge < T1, T2 >
-          >
-        >::Field
-    ) ->
-      ( < Self
-          as SumRow < T1 >
-        > :: Field,
-        < Self
-          as SumRow < T2 >
-        > :: Field,
-      )
-  ;
-}
-
-/*
-  class
-    ( RowTypeApp t1, RowTypeApp t2 )
-    => LiftField t1 t2 where
-      liftField
-        :: forall a
-         . Apply t1 a
-        -> Apply t2 a
- */
-pub trait LiftField < T1, T2, A >
+pub struct AppliedSum < Row, F >
 where
-  T1 : RowTypeApp < A >,
-  T2 : RowTypeApp < A >
-{
-  fn lift_field (
-    field : T1 :: Applied
-  ) ->
-    T2 :: Applied;
-}
+  Row: RowCon,
+  F: TyCon,
+{ wrapped: Box < (Row, F) > }
 
-pub trait LiftFieldBorrow < T1, T2, A >
+impl < Row, F >
+  AppliedSum < Row, F >
 where
-  T1 : RowTypeApp < A >,
-  T2 : RowTypeApp < A >
-{
-  fn lift_field_borrow (
-    field : &T1 :: Applied
-  ) ->
-    T2 :: Applied;
+  F: TyCon,
+  Row: SumRow < F >,
+{ pub fn unwrap
+    ( self )
+    -> Row::Field
+  { unsafe {
+      let unwrapped : Box < Row::Field > =
+        transmute( self.wrapped );
+      *unwrapped
+    } }
 }
 
-pub trait LiftSumBorrow < T1, T2, F >
-  : SumRow < T1 > + SumRow < T2 >
-{
-  fn lift_sum_borrow (
-    sum :
-      & < Self as
-          SumRow < T1 >
-        > :: Field
-  ) ->
-    < Self as
-      SumRow < T2 >
-    > :: Field;
-}
-
-/*
-  class FieldLifter f where
-    type family Source f root
-    type family Target f root
-    type family Root f root
-
-    liftField
-      :: forall root a
-       . (Apply (Target f root) a -> root)
-      -> Apply (Source f root) a
-      -> Apply (Root f root) a
- */
-pub trait FieldLifterApplied < Root >
-{
-  type Source;
-
-  type Target;
-
-  type Injected;
-}
-
-pub trait FieldLifter < Root, A >
-  : FieldLifterApplied < Root >
+pub fn unwrap_sum
+  < Row, F >
+  ( wrapped: AppliedSum < Row, F > )
+  -> Row::Field
 where
-  Self :: Source : RowTypeApp < A >,
-  Self :: Target : RowTypeApp < A >,
-  Self :: Injected : RowTypeApp < A >,
+  F: TyCon,
+  Row: SumRow < F >,
 {
-  fn lift_field (
-    self,
-    inject :
-      impl Fn
-        ( < Self :: Target
-            as RowTypeApp < A >
-          >:: Applied)
-        -> Root
-      + Send + 'static,
-    field :
-      < Self :: Source
-        as RowTypeApp < A >
-      > :: Applied
-  ) ->
-    < Self :: Injected
-      as RowTypeApp < A >
-    >:: Applied;
-}
-
-/*
-  class SumRow row
-    => LiftSum row where
-      liftSum
-        :: forall f root
-         . (FieldLifter f)
-        => (ToRow row (Target f root) -> root)
-        -> ToRow row (Source f root)
-        -> ToRow row (Root f root)
- */
-pub trait LiftSum2 < F, Root >
-  : SumRow < F :: Source >
-  + SumRow < F :: Target >
-  + SumRow < F :: Injected >
-where
-  F : FieldLifterApplied < Root >
-{
-  fn lift_sum (
-    ctx: F,
-    inject: impl Fn
-      ( < Self as
-          SumRow < F :: Target >
-        > :: Field
-      ) ->
-        Root
-        + Send + 'static,
-    sum :
-      < Self as
-        SumRow < F :: Source >
-      > :: Field
-  ) ->
-    < Self as
-      SumRow < F :: Injected >
-    > :: Field;
-}
-
-pub trait LiftSum3 < F, Target >
-  : SumRow < Target >
-  + LiftSum2 < F,
-      < Self as
-        SumRow < Target >
-      > :: Field
-    >
-  + Sized
-where
-  F :
-    FieldLifterApplied <
-      < Self as
-        SumRow < Target >
-      > :: Field,
-      Target = Target
-    >
-{
-  fn lift_sum3 (
-    ctx: F,
-    sum :
-      < Self as
-        SumRow < F :: Source >
-      > :: Field
-  ) ->
-    < Self as
-      SumRow < F :: Injected >
-    > :: Field;
-}
-
-impl < A, F, Target >
-  LiftSum3 < F, Target >
-  for A
-where
-  A : Sized,
-  A : SumRow < Target >,
-  A : LiftSum2 < F,
-        < A as
-          SumRow < Target >
-        > :: Field
-      >,
-  F :
-    FieldLifterApplied <
-      < Self as
-        SumRow < Target >
-      > :: Field,
-      Target = Target
-    >,
-{
-  fn lift_sum3 (
-    ctx: F,
-    sum :
-      < Self as
-        SumRow < F :: Source >
-      > :: Field
-  ) ->
-    < Self as
-      SumRow < F :: Injected >
-    > :: Field
-  {
-    A::lift_sum (
-      ctx,
-      |x| { x },
-      sum
-    )
+  unsafe {
+    let unwrapped : Box < Row::Field > =
+      transmute( wrapped.wrapped );
+    *unwrapped
   }
 }
 
-pub trait IntersectSum < T1, T2 >
-  : SumRow < T1 >
-  + SumRow < T2 >
-  + SumRow < Merge < T1, T2 > >
+pub fn wrap_sum < Row, F >
+  ( applied: Row::Field )
+  -> AppliedSum < Row, F >
+where
+  F: TyCon,
+  Row: SumRow < F >,
+{ unsafe {
+    let wrapped : Box < ( Row, F ) > =
+      transmute( Box::new( applied ) );
+    AppliedSum { wrapped: wrapped }
+  } }
+
+pub fn absurd < F, A >
+  ( row1: AppliedSum < (), F > )
+  -> A
+where
+  F: TyCon,
 {
-  fn intersect (
-    row1 :
-      < Self as
-        SumRow < T1 >
-      > :: Field,
-    row2 :
-      < Self as
-        SumRow < T2 >
-      > :: Field,
-  ) ->
-    Option <
-      < Self as
-        SumRow < Merge < T1, T2 > >
-      > :: Field
-    >
+  let row2 = row1.unwrap();
+  match row2 {}
+}
+
+pub trait SplitRow : Sized + RowCon
+{
+  fn split_row
+    < F1, F2 >
+    ( row:
+        AppliedSum <
+          Self,
+          Merge < F1, F2 >
+        >
+    ) ->
+      ( AppliedSum < Self, F1 >,
+        AppliedSum < Self, F2 >
+      )
+  where
+    F1: TyCon,
+    F2: TyCon,
   ;
 }
 
-pub trait ElimField < T, A, R >
-where
-  T : RowTypeApp < A >
+pub trait SumFunctorBorrow
+  : RowCon
 {
-  fn elim_field (
-    self,
-    a : T :: Applied
-  ) ->
-    R
+  fn lift_sum_borrow
+     < T, F1, F2 >
+    ( sum: &AppliedSum < Self, F1 > )
+    -> AppliedSum < Self, F2 >
+  where
+    T: NaturalTransformationBorrow < F1, F2 >
+  ;
+}
+
+pub trait FieldLifter < Root >
+{
+  type SourceF: TyCon;
+  type TargetF: TyCon;
+  type InjectF: TyCon;
+
+  fn lift_field < A >
+    ( self,
+      inject:
+        impl Fn
+          ( Applied < Self::TargetF, A > )
+          -> Root
+        + Send + 'static,
+      row:
+        Applied < Self::SourceF, A >
+    ) ->
+      Applied < Self::InjectF, A >
+    ;
+}
+
+pub trait SumFunctorInject
+  : RowCon
+{
+  fn lift_sum_inject
+    < L, Root >
+    ( ctx: L,
+      inject:
+        impl Fn
+          ( AppliedSum < Self, L::TargetF > )
+          -> Root
+          + Send + 'static,
+      sum: AppliedSum < Self, L::SourceF >,
+    )
+  where
+    L: FieldLifter < Root >
+  ;
+}
+
+pub trait IntersectSum : RowCon
+{
+  fn intersect_sum
+    < F1, F2 >
+    ( row1: AppliedSum < Self, F1 >,
+      row2: AppliedSum < Self, F2 >,
+    ) ->
+      Option <
+        AppliedSum <
+          Self,
+          Merge < F1, F2 >
+        >
+      >
+  where
+    F1: TyCon,
+    F2: TyCon,
+  ;
+}
+
+pub trait ElimField < F, R >
+where
+  F : TyCon
+{
+  fn elim_field < A >
+    ( self,
+      a : Applied < F, A >
+    ) ->
+      R
   ;
 }
 
 pub struct ElimConst {}
 
-impl < X, A >
+impl < X >
   ElimField <
     Const < X >,
-    A,
     X
   >
   for ElimConst
 {
-  fn elim_field (
-    self,
-    x : X
-  ) -> X
+  fn elim_field < A >
+    ( self,
+      x : X
+    ) -> X
   { x }
 }
 
-pub trait ElimSum < T, F, R >
-  : SumRow < T >
+pub trait ElimSum : RowCon
 {
-  fn elim_sum (
-    f : F,
-    row : Self :: Field
-  ) ->
-    R;
+  fn elim_sum
+    < F, E, R >
+    ( elim_field: E,
+      row: AppliedSum < Self, F >
+    ) ->
+      R
+  where
+    F: TyCon,
+    E: ElimField < F, R >,
+  ;
 }
 
 pub trait Prism < R, T >
@@ -375,129 +280,142 @@ where
   ;
 }
 
+impl < T1, T2 > TyCon for Merge < T1, T2 > {}
+
 impl < T1, T2, A >
-  RowTypeApp < A >
+  TypeApp < A >
   for Merge < T1, T2 >
 where
-  T1 : RowTypeApp < A >,
-  T2 : RowTypeApp < A >,
+  T1 : TyCon,
+  T2 : TyCon,
 {
-  type Applied = ( T1::Applied, T2::Applied );
+  type Applied =
+    ( Applied < T1, A >,
+      Applied < T2, A >,
+    );
 }
 
-impl < T, A, R >
-  SumRow < T > for
-  ( A, R )
-where
-  T : RowTypeApp < A >,
-  R : SumRow < T >,
-  T::Applied : Send
-{
-  type Field =
-    Sum <
-      T :: Applied,
-      R :: Field
-    >;
-}
-
-impl < T1, T2 >
-  SplitRow < T1, T2 >
+impl
+  SplitRow
   for ()
 where
 {
-  fn split_row ( bottom: Bottom ) -> (Bottom, Bottom)
-  {
-    match bottom {}
-  }
-}
-
-impl < T1, T2, A, R >
-  SplitRow < T1, T2 >
-  for ( A, R )
-where
-  T1 : RowTypeApp < A >,
-  T2 : RowTypeApp < A >,
-  R : SumRow < Merge < T1, T2 > >,
-  R : SplitRow < T1, T2 >,
-  T1::Applied : Send,
-  T2::Applied : Send,
-{
-  fn split_row (
-    row1 :
-      < ( A, R ) as
-        SumRow <
-          Merge < T1, T2 >
+  fn split_row
+    < F1, F2 >
+    ( row1:
+        AppliedSum <
+          Self,
+          Merge < F1, F2 >
         >
-      > :: Field
-  ) ->
-    ( < ( A, R ) as
-        SumRow < T1 >
-      > :: Field,
-      < ( A, R ) as
-        SumRow < T2 >
-      > :: Field
-    )
-  {
-    match row1 {
-      Sum::Inl ( (row1a, row1b) ) => {
-        ( Sum::Inl(row1a), Sum::Inl(row1b) )
-      },
-      Sum::Inr ( row2 ) => {
-        let (row2a, row2b) = R::split_row (row2);
-        ( Sum::Inr(row2a), Sum::Inr(row2b) )
-      }
-    }
-  }
-}
-
-impl < T1, T2 >
-  IntersectSum < T1, T2 > for
-  ()
-{
-  fn intersect (
-    row1 : Bottom,
-    _ : Bottom,
-  ) ->
-    Option < Bottom >
+    ) ->
+      ( AppliedSum < Self, F1 >,
+        AppliedSum < Self, F2 >
+      )
+  where
+    F1: TyCon,
+    F2: TyCon,
   {
     match row1 {}
   }
 }
 
-impl < T1, T2, A, R >
-  IntersectSum < T1, T2 > for
+impl < A, R >
+  SplitRow
+  for ( A, R )
+where
+  R : SplitRow,
+{
+  fn split_row
+    < F1, F2 >
+    ( row1:
+        AppliedSum <
+          Self,
+          Merge < F1, F2 >
+        >
+    ) ->
+      ( AppliedSum < Self, F1 >,
+        AppliedSum < Self, F2 >
+      )
+  where
+    F1: TyCon,
+    F2: TyCon,
+  {
+    let row2 = row1.unwrap();
+
+    match row2 {
+      Sum::Inl ( row3 ) => {
+        let ( row3a, row3b ) = row3.unwrap();
+        ( wrap_sum( Sum::Inl(row3a) ),
+          wrap_sum( Sum::Inl(row3b) )
+        )
+      },
+      Sum::Inr ( row3 ) => {
+        let (row3a, row3b) = R::split_row (row3);
+        ( wrap_sum( Sum::Inr(row3a) ),
+          wrap_sum( Sum::Inr(row3b) )
+        )
+      }
+    }
+  }
+}
+
+impl IntersectSum for ()
+{
+  fn intersect_sum
+    < F1, F2 >
+    ( row1: AppliedSum < (), F1 >,
+      row2: AppliedSum < (), F2 >,
+    ) ->
+      Option <
+        AppliedSum <
+          (),
+          Merge < F1, F2 >
+        >
+      >
+  where
+    F1: TyCon,
+    F2: TyCon,
+  {
+    absurd(row1)
+  }
+}
+
+impl < A, R >
+  IntersectSum for
   ( A, R )
 where
-  T1 : RowTypeApp < A >,
-  T2 : RowTypeApp < A >,
-  R : IntersectSum < T1, T2 >,
-  T1::Applied : Send,
-  T2::Applied : Send,
+  R: IntersectSum
 {
-  fn intersect (
-    row1 :
-      < Self as
-        SumRow < T1 >
-      > :: Field,
-    row2 :
-      < Self as
-        SumRow < T2 >
-      > :: Field,
-  ) ->
-    Option <
-      < Self as
-        SumRow < Merge < T1, T2 > >
-      > :: Field
-    >
+  fn intersect_sum
+    < F1, F2 >
+    ( row1: AppliedSum < Self, F1 >,
+      row2: AppliedSum < Self, F2 >,
+    ) ->
+      Option <
+        AppliedSum <
+          Self,
+          Merge < F1, F2 >
+        >
+      >
+  where
+    F1: TyCon,
+    F2: TyCon,
   {
-    match (row1, row2) {
+    let row1a = row1.unwrap();
+    let row2a = row2.unwrap();
+
+    match (row1a, row2a) {
       ( Sum::Inl(a1), Sum::Inl(a2) ) => {
-        Some ( Sum::Inl (
-          ( a1, a2 ) ) )
-      },
+        Some ( wrap_sum (
+          Sum::Inl (
+            wrap_applied(
+              ( a1, a2 ) ) ) ) )
+      }
       ( Sum::Inr(r1), Sum::Inr(r2) ) => {
-        R :: intersect ( r1, r2 )
-          .map(| x | { Sum::Inr(x) })
+        R :: intersect_sum ( r1, r2 )
+          .map(| x | {
+            wrap_sum ( Sum::Inr(x) )
+          })
       },
       _ => {
         None
@@ -506,224 +424,162 @@ where
   }
 }
 
-impl < T1, T2, F >
-  LiftSumBorrow < T1, T2, F > for
-  ()
+impl SumFunctorBorrow for ()
 {
-  fn lift_sum_borrow ( bot : &Bottom ) -> Bottom
-  { match *bot {} }
+  fn lift_sum_borrow
+     < T, F1, F2 >
+    ( sum: &AppliedSum < Self, F1 > )
+    -> AppliedSum < Self, F2 >
+  where
+    T: NaturalTransformationBorrow < F1, F2 >
+  { match *sum {} }
 }
 
-impl < T1, T2, F, A, B >
-  LiftSumBorrow < T1, T2, F > for
-  (A, B)
+impl < A, R >
+  SumFunctorBorrow for
+  (A, R)
 where
-  T1 : RowTypeApp < A >,
-  T2 : RowTypeApp < A >,
-  F : LiftFieldBorrow < T1, T2, A >,
-  B : LiftSumBorrow < T1, T2, F >,
-  T1::Applied : Send,
-  T2::Applied : Send,
+  R: SumFunctorBorrow
 {
-  fn lift_sum_borrow (
-    sum :
-      &Sum <
-        T1 :: Applied,
-        < B as
-          SumRow < T1 >
-        > :: Field
-      >
-  ) ->
-    Sum <
-      T2 :: Applied,
-      < B as
-        SumRow < T2 >
-      > :: Field
-    >
+  fn lift_sum_borrow
+     < T, F1, F2 >
+    ( sum: &AppliedSum < Self, F1 > )
+    -> AppliedSum < Self, F2 >
+  where
+    T: NaturalTransformationBorrow < F1, F2 >
   {
     match sum {
       Sum::Inl(a) => {
         Sum::Inl (
-          F :: lift_field_borrow ( a )
+          T :: lift_field_borrow ( a )
         )
       },
       Sum::Inr(b) => {
         Sum::Inr (
-          B :: lift_sum_borrow ( b )
+          R :: lift_sum_borrow ( b )
         )
       }
     }
   }
 }
 
-impl < F, Root >
-  LiftSum2 < F, Root > for
-  ()
-where
-  F : FieldLifterApplied < Root >
+impl SumFunctorInject for ()
 {
-  fn lift_sum (
-    _: F,
-    _ : impl Fn ( Bottom ) -> Root,
-    bot : Bottom
-  ) -> Bottom
+  fn lift_sum_inject
+    < L, Root >
+    ( ctx: L,
+      inject:
+        impl Fn
+          ( AppliedSum < Self, L::Target > )
+          -> Root
+          + Send + 'static,
+      sum: AppliedSum < Self, L::Source >,
+    )
+  where
+    L: FieldLifter < Root >
   {
-    match bot {}
+    match sum {}
   }
 }
 
-impl < F, Root, A, B >
-  LiftSum2 < F, Root > for
-  (A, B)
+impl < A, R >
+  SumFunctorInject for
+  (A, R)
 where
-  F : FieldLifter < Root, A >,
-  B : LiftSum2 < F, Root >,
-  F :: Source : RowTypeApp < A >,
-  F :: Target : RowTypeApp < A >,
-  F :: Injected : RowTypeApp < A >,
-  < F :: Source
-    as RowTypeApp < A >
-  > :: Applied : Send,
-  < F :: Target
-    as RowTypeApp < A >
-  > :: Applied : Send,
-  < F :: Injected
-    as RowTypeApp < A >
-  > :: Applied : Send,
+  R: SumFunctorInject,
 {
-  fn lift_sum (
-    ctx: F,
-    inject1 :
-      impl Fn
-        ( Sum <
-            < F::Target
-              as RowTypeApp < A >
-            > :: Applied,
-            < B as
-              SumRow < F::Target >
-            > :: Field
-          >
-        ) ->
-          Root
+  fn lift_sum_inject
+    < L, Root >
+    ( ctx: L,
+      inject:
+        impl Fn
+          ( AppliedSum < Self, L::Target > )
+          -> Root
           + Send + 'static,
-    sum :
-      Sum <
-        < F :: Source
-          as RowTypeApp < A >
-        > :: Applied,
-        < B as
-          SumRow < F :: Source >
-        > :: Field
-      >
-  ) ->
-    < Self as
-      SumRow < F :: Injected >
-    > :: Field
+      sum: AppliedSum < Self, L::Source >,
+    )
+  where
+    L: FieldLifter < Root >
   {
     match sum {
       Sum::Inl(a) => {
         let inject2 =
-          move |
-            b :
-              < F::Target
-                as RowTypeApp < A >
-              > :: Applied
-          | ->
-            Root
+          move | b: Applied < L::Target, A > |
+            -> Root
           {
-            inject1 ( Sum::Inl (b) )
+            inject ( Sum::Inl (b) )
           };
 
         Sum :: Inl(
-          F :: lift_field ( ctx, inject2, a )
+          L :: lift_field ( ctx, inject2, a )
         )
       },
       Sum::Inr(b) => {
         let inject2 =
-          move |
-            b :
-              < B as
-                SumRow < F::Target >
-              > :: Field
-          | ->
-            Root
+          move | r : AppliedSum < R, L::Target > |
+            -> Root
           {
-            inject1 ( Sum::Inr (b) )
+            inject ( Sum::Inr (b) )
           };
 
         Sum::Inr (
-          B :: lift_sum ( ctx, inject2, b )
+          R :: lift_sum ( ctx, inject2, b )
         )
       }
     }
   }
 }
 
-impl < T, F, R >
-  ElimSum < T, F, R > for
+impl
+  ElimSum for
   ()
 {
-  fn elim_sum ( _ : F, row : Bottom ) -> R {
+  fn elim_sum
+    < F, E, R >
+    ( elim_field: E,
+      row: AppliedSum < Self, F >
+    ) ->
+      R
+  where
+    F: TyCon,
+    E: ElimField < F, R >,
+  {
     match row {}
   }
 }
 
-impl < A, B, T, F, R >
-  ElimSum < T, F, R > for
-  (A, B)
+impl < A, R >
+  ElimSum for
+  (A, R)
 where
-  T : RowTypeApp < A >,
-  B : ElimSum < T, F, R >,
-  F : ElimField < T, A, R >,
-  T::Applied : Send,
+  R: ElimSum,
 {
-  fn elim_sum (
-    f : F,
-    row :
-      Sum <
-        T :: Applied,
-        B :: Field
-      >
-  ) ->
-    R
+  fn elim_sum
+    < F, E, K >
+    ( e: E,
+      row: AppliedSum < Self, F >
+    ) ->
+      K
+  where
+    F: TyCon,
+    E: ElimField < F, K >,
   {
     match row {
       Sum::Inl(a) => {
-        f.elim_field ( a )
+        e.elim_field ( a )
       },
       Sum::Inr(b) => {
-        B :: elim_sum ( f, b )
+        R :: elim_sum ( e, b )
       }
     }
   }
-}
-
-impl < A >
-  RowTypeApp < A > for
-  Bottom
-{
-  type Applied = Bottom;
-}
-
-impl < X , A, B >
-  RowTypeApp < X > for
-  Sum < A, B >
-where
-  A : RowTypeApp < X >,
-  B : RowTypeApp < X >,
-{
-  type Applied =
-    Sum <
-      A :: Applied,
-      B :: Applied
-    >;
 }
 
 impl < T, A, R >
   Prism < (A, R), T >
   for Z
 where
-  T : RowTypeApp < A >,
+  T : TypeApp < A >,
   R : SumRow < T >,
   T::Applied : Send
 {
@@ -755,7 +611,7 @@ impl < N, T, A, R >
 where
   N : Prism < R, T >,
   R : SumRow < T >,
-  T : RowTypeApp < A >,
+  T : TypeApp < A >,
   T::Applied : Send,
 {
   type Elem = N::Elem;

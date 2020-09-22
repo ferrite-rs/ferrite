@@ -17,7 +17,7 @@ where
   F : Protocol,
   A : Protocol,
   F :
-    TypeApp <
+    RecApp <
       Unfix <
         Fix < F >
       >,
@@ -57,7 +57,7 @@ where
   F : Protocol,
   A : Protocol,
   F :
-    TypeApp <
+    RecApp <
       Unfix <
         Fix < F >
       >,
@@ -123,7 +123,7 @@ where
   C : Context,
   F : Protocol,
   F :
-    TypeApp <
+    RecApp <
       Unfix <
         Fix < F >
       >,

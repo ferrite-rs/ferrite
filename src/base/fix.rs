@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use crate::base::nat::*;
 
-pub trait TypeApp < A > {
+pub trait RecApp < A > {
   type Applied;
 }
 
@@ -19,7 +19,7 @@ pub fn fix < F >
   -> Fix < F >
 where
   F :
-    TypeApp <
+    RecApp <
       Unfix <
         Fix < F >
       >
@@ -40,7 +40,7 @@ pub fn unfix < F >
   -> F :: Applied
 where
   F :
-    TypeApp <
+    RecApp <
       Unfix <
         Fix < F >
       >
@@ -55,26 +55,26 @@ where
 }
 
 impl < A, F >
-  TypeApp < A >
+  RecApp < A >
   for Fix < F >
 where
   F :
-    TypeApp <
+    RecApp <
       S < A >
     >,
   F :
-    TypeApp < Unfix <
+    RecApp < Unfix <
       Fix < F >
     > >,
   < F as
-    TypeApp <
+    RecApp <
       S < A >
     >
   > :: Applied :
-    TypeApp < Unfix <
+    RecApp < Unfix <
       Fix <
         < F as
-          TypeApp <
+          RecApp <
             S < A >
           >
         > :: Applied
@@ -84,7 +84,7 @@ where
   type Applied =
     Fix <
       < F as
-        TypeApp <
+        RecApp <
           S < A >
         >
       > :: Applied
@@ -92,62 +92,62 @@ where
 }
 
 impl < A >
-  TypeApp < Unfix < A > > for
+  RecApp < Unfix < A > > for
   Z
 {
   type Applied = A;
 }
 
 impl
-  TypeApp < Z > for
+  RecApp < Z > for
   Z
 {
   type Applied = Z;
 }
 
 impl < A >
-  TypeApp < S < A > > for
+  RecApp < S < A > > for
   Z
 {
   type Applied = Z;
 }
 
 impl < A, N >
-  TypeApp < S < A > > for
+  RecApp < S < A > > for
   S < N >
 where
-  N : TypeApp < A >
+  N : RecApp < A >
 {
   type Applied = S < N::Applied >;
 }
 
 impl < A, N >
-  TypeApp < Unfix < A > > for
+  RecApp < Unfix < A > > for
   S < N >
 {
   type Applied = N;
 }
 
 impl < N >
-  TypeApp < Z > for
+  RecApp < Z > for
   S < N >
 {
   type Applied = S < N >;
 }
 
 impl < A >
-  TypeApp < A > for
+  RecApp < A > for
   ()
 {
   type Applied = ();
 }
 
 impl < A, X, Y >
-  TypeApp < A > for
+  RecApp < A > for
   ( X, Y )
 where
-  X : TypeApp < A >,
-  Y : TypeApp < A >,
+  X : RecApp < A >,
+  Y : RecApp < A >,
 {
   type Applied =
     ( X :: Applied,

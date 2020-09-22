@@ -18,11 +18,11 @@ where
 { }
 
 impl < Row, A >
-  TypeApp < A > for
+  RecApp < A > for
   InternalChoice < Row >
 where
   Row : SumRow < ReceiverApp >,
-  Row : TypeApp < A >,
+  Row : RecApp < A >,
   Row::Applied : SumRow < ReceiverApp >,
 {
   type Applied =

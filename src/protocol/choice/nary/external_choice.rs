@@ -30,10 +30,10 @@ where
 { }
 
 impl < Row, A >
-  TypeApp < A > for
+  RecApp < A > for
   ExternalChoice < Row >
 where
-  Row : TypeApp < A >,
+  Row : RecApp < A >,
   Row : SumRow < () >,
   Row : SumRow < ReceiverApp >,
   Row::Applied : SumRow < () >,

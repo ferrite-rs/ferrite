@@ -2,7 +2,7 @@ use async_std::sync::{ Receiver };
 
 use crate::base as base;
 
-use base::{ TypeApp, Protocol };
+use base::{ RecApp, Protocol };
 
 pub struct SendChannel < A, B >
 ( pub (crate) Receiver < A >,
@@ -18,11 +18,11 @@ where
 { }
 
 impl < A, P, Q >
-  TypeApp < A > for
+  RecApp < A > for
   SendChannel < P, Q >
 where
-  P : TypeApp < A >,
-  Q : TypeApp < A >,
+  P : RecApp < A >,
+  Q : RecApp < A >,
 {
   type Applied =
   SendChannel <
