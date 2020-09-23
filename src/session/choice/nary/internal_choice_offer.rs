@@ -26,24 +26,23 @@ where
   N :
     Prism <
       Row,
-      ReceiverApp,
-      Elem = Receiver < A >
+      Elem = A
     >,
 {
   unsafe_create_session (
     async move | ctx, sender1 | {
-      let (sender2, receiver2) = channel(1);
+      // let (sender2, receiver2) = channel(1);
 
-      let child1 = task::spawn(async move {
-        unsafe_run_session(cont, ctx, sender2).await;
-      });
+      // let child1 = task::spawn(async move {
+      //   unsafe_run_session(cont, ctx, sender2).await;
+      // });
 
-      let child2 = task::spawn(async move {
-        sender1.send( InternalChoice {
-          field : N::inject_elem ( receiver2 )
-        }).await;
-      });
+      // let child2 = task::spawn(async move {
+      //   sender1.send( InternalChoice {
+      //     field : N::inject_elem ( receiver2 )
+      //   }).await;
+      // });
 
-      join!(child1, child2).await;
+      // join!(child1, child2).await;
     })
 }

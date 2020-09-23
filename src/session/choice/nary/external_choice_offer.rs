@@ -10,6 +10,7 @@ use crate::base::{
   Const,
   Protocol,
   Context,
+  wrap_applied,
   PartialSession,
   unsafe_run_session,
   unsafe_create_session,
@@ -17,32 +18,16 @@ use crate::base::{
 
 use crate::protocol::choice::nary::*;
 
-pub struct SessionApp < C >
-  ( PhantomData < C > );
-
 pub struct InjectSessionApp < Root, C >
   ( PhantomData <( Root, C )> );
 
-impl < C > TyCon for SessionApp < C > {}
 impl < Root, C > TyCon for InjectSessionApp < Root, C > {}
-
-impl < C, A >
-  TypeApp < A > for
-  SessionApp < C >
-where
-  A : Protocol,
-  C : Context,
-{
-  type Applied =
-    PartialSession < C, A >;
-}
 
 impl < A, C, Root >
   TypeApp < A > for
   InjectSessionApp < Root, C >
 where
-  A : Protocol,
-  C : Context,
+  C: Context
 {
   type Applied =
     InjectSession < Root, C, A >;
@@ -51,13 +36,12 @@ where
 pub struct InjectSession
   < Root, C, A >
 where
-  A : Protocol,
-  C : Context,
+  C: Context
 {
   inject_session :
     Box <
       dyn FnOnce (
-        PartialSession < C, A >
+        Applied < SessionApp < C >, A >
       ) ->
         Root
       + Send
@@ -76,16 +60,17 @@ where
   A : Protocol,
   C : Context,
 {
-  (inject.inject_session)(session)
+  (inject.inject_session) (
+    wrap_applied (
+        session ) )
 }
 
 type RootCont < C, Row > =
   InjectSessionApp <
-    < Row as
-      SumRow <
-        SessionApp < C >
-      >
-    > :: Field,
+    AppliedSum <
+      Row,
+      SessionApp < C >
+    >,
     C
   >;
 
@@ -96,6 +81,8 @@ impl
   < Root, C >
   FieldLifter < Root >
   for LiftUnitToSession < C >
+where
+  C: Context
 {
   type SourceF = ();
 
@@ -116,9 +103,10 @@ impl
     ) ->
       Applied < Self::InjectF, A >
   {
-    InjectSession {
-      inject_session : Box::new ( inject )
-    }
+    wrap_applied (
+      InjectSession {
+        inject_session : Box::new ( inject )
+      } )
   }
 }
 
@@ -142,100 +130,100 @@ where
     Merge <
       ReceiverApp,
       Const <
-        Pin < Box < dyn Future < Output=() > + Send > >
+        Pin < Box < dyn
+          Future < Output=() >
+          + Send + 'static
+        > >
       >
     >;
 
   fn lift_field < A >
     ( self,
       inject:
-        impl Fn
-          ( Applied < Self::TargetF, A > )
-          -> Root
+        impl Fn ( () ) -> Root
         + Send + 'static,
       cont:
-        Applied < Self::SourceF, A >
+        PartialSession < C , A >
     ) ->
-      Applied < Self::InjectF, A >
+      ( Receiver < A >,
+        Pin < Box < dyn
+          Future < Output=() >
+          + Send
+        > > )
+  where
+    A: Protocol
   {
     let (sender, receiver) = channel(1);
+    let future = Box::pin(async move {
+      unsafe_run_session(cont, self.ctx, sender).await;
+    });
 
-    let future = Box::pin(unsafe_run_session(cont, self.ctx, sender));
-
-    ( receiver,
-      future
-    )
+    ( receiver, future )
   }
 }
 
 pub fn offer_choice
   < C, Row >
   ( cont1 : impl FnOnce (
-      < Row as
-        SumRow <
-          RootCont < C, Row >
-        >
-      > :: Field
+      AppliedSum <
+        Row,
+        RootCont < C, Row >
+      >
     ) ->
-      < Row as
-        SumRow <
-          SessionApp < C >
-        >
-      > :: Field
+      AppliedSum <
+        Row,
+        SessionApp < C >
+      >
     + Send + 'static
   ) ->
     PartialSession < C, ExternalChoice < Row > >
 where
-  C : Context,
-  Row : SumRow <
-    RootCont < C, Row >
-  >,
-  Row : Send + 'static,
+  C : Context + Send,
   Row : RowCon,
-  Row : SumFunctorInject,
+  Row : Send + 'static,
+  Row : SumFunctor,
   Row :
-    SplitRow <
-      ReceiverApp,
-      Const <
-        Pin < Box < dyn Future < Output=() > + Send > >
-      >
+    SumFunctorInject <
+      LiftUnitToSession < C >,
+      AppliedSum < Row, SessionApp < C > >,
     >,
   Row :
-    ElimSum <
-      Const <
-        Pin < Box < dyn Future < Output=() > + Send > >
-      >,
-      ElimConst,
-      Pin < Box < dyn
-        Future < Output=() > + Send
-      > >
+    SumFunctorInject <
+      RunSession < C >,
+      AppliedSum < Row, () >,
     >,
+  Row : SplitRow,
+  Row : ElimSum,
 {
-  unsafe_create_session(
+  unsafe_create_session (
     async move | ctx, sender1 | {
       let (sender2, receiver2) = channel(1);
 
-      let payload = ExternalChoice { sender: sender2 };
+      let payload = ExternalChoice::< Row >
+        { sender: sender2 };
 
       sender1.send(payload).await;
 
       let (choice, sender3) = receiver2.recv().await.unwrap();
 
-      let cont3 = Row :: lift_sum3 ( LiftUnitToSession(PhantomData), choice);
+      let cont3 = Row::lift_sum_inject (
+        LiftUnitToSession::<C> (PhantomData),
+        | x | { x },
+        choice);
 
-      let cont4 :
-        < Row as
-          SumRow <
-            SessionApp < C >
-          >
-        > :: Field
-        = cont1 ( cont3 );
+      let cont4 = cont1 ( cont3 );
 
-      let cont5 = Row :: lift_sum3 ( RunSession { ctx: ctx }, cont4 );
+      let cont5 = Row::lift_sum_inject (
+        RunSession { ctx: ctx },
+        | x | { x },
+        cont4
+      );
 
       let (receiver_sum, cont6) = Row::split_row ( cont5 );
 
-      sender3.send(receiver_sum).await;
+      sender3.send(
+        receiver_sum
+      ).await;
 
       Row :: elim_sum ( ElimConst{}, cont6 ).await;
     })

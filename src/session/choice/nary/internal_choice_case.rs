@@ -12,7 +12,7 @@ use crate::base::{
   Context,
   ContextLens,
   PartialSession,
-  NaturalTransformationBorrow,
+  NaturalTransformation,
   unsafe_run_session,
   unsafe_create_session,
 };
@@ -89,14 +89,16 @@ where
 pub struct ReceiverToSelector {}
 
 impl
-  NaturalTransformationBorrow
+  NaturalTransformation
   < ReceiverApp, () >
   for ReceiverToSelector
 {
-  fn lift_borrow < A >
-    ( fa: &Applied < ReceiverApp, A > )
+  fn lift < A >
+    ( fa: Applied < ReceiverApp, A > )
     -> Applied < (), A >
-  { () }
+  { 
+    todo!() 
+  }
 }
 
 pub struct RunCont
@@ -194,80 +196,80 @@ where
   (inject.inject_session)(session)
 }
 
-impl < A, B, N, C, Row >
-  ElimField <
-    Merge <
-      ReceiverApp,
-      SessionApp < N, C, B, Row >
-    >,
-    Pin < Box < dyn Future < Output=() > + Send > >
-  > for RunCont < N, C, B, Row >
-where
-  A : Protocol,
-  B : Protocol,
-  C : Context,
-  Row : Send + 'static,
-  Row :
-    SumRow < ReceiverApp >,
-  N :
-    ContextLens <
-      C,
-      InternalChoice < Row >,
-      A,
-      Deleted =
-        < N as
-          ContextLens <
-            C,
-            InternalChoice < Row >,
-            Empty
-          >
-        > :: Deleted
-    >,
-  N :
-    ContextLens <
-      C,
-      InternalChoice < Row >,
-      Empty
-    >,
-  < Row as
-    SumRow < ReceiverApp >
-  > :: Field :
-    Send
-{
-  fn elim_field (
-    self,
-    (receiver, cont) :
-      ( Receiver < A >,
-        PartialSession <
-          < N as
-            ContextLens <
-              C,
-              InternalChoice < Row >,
-              A
-            >
-          > ::Target,
-          B
-        >
-      )
-  ) ->
-    Pin < Box < dyn Future < Output=() > + Send > >
-  {
-    let ctx1 = self.ctx;
-    let sender = self.sender;
+// impl < B, N, C, Row >
+//   ElimField <
+//     Merge <
+//       ReceiverApp,
+//       SessionApp < N, C, B, Row >
+//     >,
+//     Pin < Box < dyn Future < Output=() > + Send > >
+//   > for RunCont < N, C, B, Row >
+// where
+//   A : Protocol,
+//   B : Protocol,
+//   C : Context,
+//   Row : Send + 'static,
+//   Row :
+//     SumRow < ReceiverApp >,
+//   N :
+//     ContextLens <
+//       C,
+//       InternalChoice < Row >,
+//       A,
+//       Deleted =
+//         < N as
+//           ContextLens <
+//             C,
+//             InternalChoice < Row >,
+//             Empty
+//           >
+//         > :: Deleted
+//     >,
+//   N :
+//     ContextLens <
+//       C,
+//       InternalChoice < Row >,
+//       Empty
+//     >,
+//   < Row as
+//     SumRow < ReceiverApp >
+//   > :: Field :
+//     Send
+// {
+//   fn elim_field (
+//     self,
+//     (receiver, cont) :
+//       ( Receiver < A >,
+//         PartialSession <
+//           < N as
+//             ContextLens <
+//               C,
+//               InternalChoice < Row >,
+//               A
+//             >
+//           > ::Target,
+//           B
+//         >
+//       )
+//   ) ->
+//     Pin < Box < dyn Future < Output=() > + Send > >
+//   {
+//     let ctx1 = self.ctx;
+//     let sender = self.sender;
 
-    let ctx2 =
-      < N as
-        ContextLens <
-          C,
-          InternalChoice < Row >,
-          A
-        >
-      > :: insert_target ( receiver, ctx1 );
+//     let ctx2 =
+//       < N as
+//         ContextLens <
+//           C,
+//           InternalChoice < Row >,
+//           A
+//         >
+//       > :: insert_target ( receiver, ctx1 );
 
-    Box::pin(
-      unsafe_run_session ( cont, ctx2, sender ) )
-  }
-}
+//     Box::pin(
+//       unsafe_run_session ( cont, ctx2, sender ) )
+//   }
+// }
 
 pub struct LiftUnitToSession < N, C, A, Row >
   ( PhantomData <( N, C, A, Row )> );
@@ -308,37 +310,35 @@ where
     ) ->
       Applied < Self::InjectF, A >
   {
-    InjectSession {
-      inject_session : Box::new ( inject )
-    }
+    todo!()
+    // InjectSession {
+    //   inject_session : Box::new ( inject )
+    // }
   }
 }
 
 type RootCont < Row, N, C, A > =
   InjectSessionApp <
     N, C, A, Row,
-    < Row as
-      SumRow <
-        SessionApp < N, C, A, Row >
-      >
-    > :: Field
+    AppliedSum <
+      Row,
+      SessionApp < N, C, A, Row >
+    >
   >;
 
 pub fn case
   < Row, N, C, A >
   ( _ : N,
     cont1 : impl FnOnce (
-      < Row as
-        SumRow <
-          RootCont < Row, N, C, A >
-        >
-      > :: Field
+      AppliedSum < 
+        Row,
+        RootCont < Row, N, C, A >
+      >
     ) ->
-      < Row as
-        SumRow <
-          SessionApp < N, C, A, Row >
-        >
-      > :: Field
+      AppliedSum <
+        Row,
+        SessionApp < N, C, A, Row >
+      >
       + Send + 'static,
   ) ->
     PartialSession < C, A >
@@ -346,10 +346,6 @@ where
   A : Protocol,
   C : Context,
   Row : Send + 'static,
-  Row : SumRow < () >,
-  Row : SumRow <
-    RootCont < Row, N, C, A >
-  >,
   N :
     ContextLens <
       C,
@@ -357,71 +353,71 @@ where
       Empty
     >,
   Row : RowCon,
-  Row : SumFunctorBorrow,
+  Row : SumFunctor,
   Row : IntersectSum,
   Row : ElimSum,
-  Row : SumFunctorInject,
+  // Row : SumFunctorInject,
 {
   unsafe_create_session (
     async move | ctx1, sender | {
-      let (sum_chan, ctx2) =
-        < N as
-          ContextLens <
-            C,
-            InternalChoice < Row >,
-            Empty
-          >
-        > :: extract_source ( ctx1 );
+      // let (sum_chan, ctx2) =
+      //   < N as
+      //     ContextLens <
+      //       C,
+      //       InternalChoice < Row >,
+      //       Empty
+      //     >
+      //   > :: extract_source ( ctx1 );
 
-      let InternalChoice { field : receiver_sum }
-        = sum_chan.recv().await.unwrap();
+      // let InternalChoice { field : receiver_sum }
+      //   = sum_chan.recv().await.unwrap();
 
-      let selector
-        : < Row as SumRow < () > > :: Field
-        = Row::lift_sum_borrow ( &receiver_sum );
+      // let selector
+      //   : < Row as SumRow < () > > :: Field
+      //   = Row::lift_sum_borrow ( &receiver_sum );
 
-      let cont3 =
-        Row :: lift_sum3 (
-          LiftUnitToSession(PhantomData),
-          selector
-        );
+      // let cont3 =
+      //   Row :: lift_sum3 (
+      //     LiftUnitToSession(PhantomData),
+      //     selector
+      //   );
 
-      let cont4 :
-        < Row as
-          SumRow <
-            SessionApp < N, C, A, Row >
-          >
-        > :: Field =
-        cont1 ( cont3 );
+      // let cont4 :
+      //   < Row as
+      //     SumRow <
+      //       SessionApp < N, C, A, Row >
+      //     >
+      //   > :: Field =
+      //   cont1 ( cont3 );
 
-      let cont5 :
-        Option <
-          < Row as
-            SumRow <
-              Merge <
-                ReceiverApp,
-                SessionApp < N, C, A, Row >
-              >
-            >
-          > :: Field
-        > =
-        Row :: intersect ( receiver_sum, cont4 );
+      // let cont5 :
+      //   Option <
+      //     < Row as
+      //       SumRow <
+      //         Merge <
+      //           ReceiverApp,
+      //           SessionApp < N, C, A, Row >
+      //         >
+      //       >
+      //     > :: Field
+      //   > =
+      //   Row :: intersect ( receiver_sum, cont4 );
 
-      match cont5 {
-        Some ( cont6 ) => {
-          let runner
-            : RunCont < N, C, A, Row > =
-            RunCont {
-              ctx : ctx2,
-              sender : sender
-            };
+      // match cont5 {
+      //   Some ( cont6 ) => {
+      //     let runner
+      //       : RunCont < N, C, A, Row > =
+      //       RunCont {
+      //         ctx : ctx2,
+      //         sender : sender
+      //       };
 
-          Row :: elim_sum ( runner, cont6 ).await;
-        },
-        None => {
-          panic!(
-            "impossible happened: received mismatch choice continuation");
-        }
-      }
+      //     Row :: elim_sum ( runner, cont6 ).await;
+      //   },
+      //   None => {
+      //     panic!(
+      //       "impossible happened: received mismatch choice continuation");
+      //   }
+      // }
     })
 }

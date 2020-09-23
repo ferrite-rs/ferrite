@@ -22,23 +22,20 @@ where
 { pub fn unwrap
     ( self )
     -> F::Applied
-  { unsafe {
-      let unwrapped : Box < F::Applied > =
-        transmute( self.wrapped );
-      *unwrapped
-    } }
+  { unwrap_applied(self) }
 }
 
-pub struct Const < X > ( PhantomData<X> );
-
-impl TyCon for () {}
-impl < X > TyCon for Const < X > {}
-
-impl < A > TypeApp < A > for ()
-{ type Applied = (); }
-
-impl < X, A > TypeApp < A > for Const < X >
-{ type Applied = X; }
+pub fn unwrap_applied < F, A >
+  ( applied: Applied < F, A > )
+  -> F::Applied
+where
+  F: TypeApp < A >
+{ unsafe {
+    let unwrapped : Box < F::Applied > =
+      transmute( applied.wrapped );
+    *unwrapped
+  }
+}
 
 pub fn wrap_applied < F, A >
   ( applied: F::Applied )
@@ -49,7 +46,43 @@ where
     let wrapped : Box < ( F, A ) > =
       transmute( Box::new( applied ) );
     Applied { wrapped: wrapped }
-  } }
+  }
+}
+
+// pub fn unwrap_applied_borrow < 'a, F, A >
+//   ( applied: Applied < &'a F, A > )
+//   -> &'a F::Applied
+// where
+//   F: TypeApp < A >
+// {
+//   unwrap_applied(applied)
+// }
+
+pub struct Const < X > ( PhantomData<X> );
+
+impl TyCon for () {}
+impl < X > TyCon for Const < X > {}
+
+// impl < 'a, F > TyCon
+//   for &'a F
+// where
+//   F: TyCon
+// {}
+
+// impl < 'a, F, X >
+//   TypeApp < X >
+//   for &'a F
+// where
+//   F: TypeApp < X >
+// {
+//   type Applied = &'a F::Applied;
+// }
+
+impl < A > TypeApp < A > for ()
+{ type Applied = (); }
+
+impl < X, A > TypeApp < A > for Const < X >
+{ type Applied = X; }
 
 pub trait Functor : TyCon + Sized
 {
@@ -91,17 +124,6 @@ where
 {
   fn lift < A >
     ( fa: Applied < F1, A > )
-    -> Applied < F2, A >
-  ;
-}
-
-pub trait NaturalTransformationBorrow < F1, F2 >
-where
-  F1: TyCon,
-  F2: TyCon,
-{
-  fn lift_borrow < A >
-    ( fa: &Applied < F1, A > )
     -> Applied < F2, A >
   ;
 }

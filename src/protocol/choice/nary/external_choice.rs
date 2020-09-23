@@ -1,20 +1,16 @@
 use crate::base::*;
-use super::data::*;
+use super::row::*;
+use super::cons::*;
 use async_std::sync::{ Sender };
 
 pub struct ExternalChoice < Row >
 where
-  Row : SumRow < () >,
-  Row : SumRow < ReceiverApp >,
+  Row : RowCon,
 { pub sender :
     Sender <
-      ( < Row as
-          SumRow < () >
-        > :: Field,
+      ( AppliedSum < Row, () >,
         Sender <
-          < Row as
-            SumRow < ReceiverApp >
-          > :: Field
+          AppliedSum < Row, ReceiverApp >
         >
       )
     >
@@ -25,8 +21,7 @@ impl < Row >
   ExternalChoice < Row >
 where
   Row : Send + 'static,
-  Row : SumRow < () >,
-  Row : SumRow < ReceiverApp >,
+  Row : RowCon,
 { }
 
 impl < Row, A >
@@ -34,10 +29,8 @@ impl < Row, A >
   ExternalChoice < Row >
 where
   Row : RecApp < A >,
-  Row : SumRow < () >,
-  Row : SumRow < ReceiverApp >,
-  Row::Applied : SumRow < () >,
-  Row::Applied : SumRow < ReceiverApp >,
+  Row : RowCon,
+  Row::Applied : RowCon,
 {
   type Applied =
     ExternalChoice <

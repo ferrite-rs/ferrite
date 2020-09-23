@@ -1,11 +1,12 @@
 use crate::base::*;
-use super::data::*;
+use super::row::*;
+use super::cons::*;
 
 pub struct InternalChoice < Row >
 where
-  Row : SumRow < ReceiverApp >,
+  Row : RowCon,
 { pub (crate) field :
-    Row::Field
+    AppliedSum < Row, ReceiverApp >
 }
 
 impl < Row >
@@ -13,17 +14,16 @@ impl < Row >
   InternalChoice < Row >
 where
   Row : Send + 'static,
-  Row : SumRow < ReceiverApp >,
-  Row::Field : Send,
+  Row : RowCon,
 { }
 
 impl < Row, A >
   RecApp < A > for
   InternalChoice < Row >
 where
-  Row : SumRow < ReceiverApp >,
+  Row : RowCon,
   Row : RecApp < A >,
-  Row::Applied : SumRow < ReceiverApp >,
+  Row::Applied : RowCon,
 {
   type Applied =
     InternalChoice <
