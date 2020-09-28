@@ -1,4 +1,14 @@
-# Ferrite - Session Type EDSL for Rust
+# Ferrite - Session Types DSL for Rust
+
+## Overview
+
+Ferrite is a DSL for writing session type programs in Rust.
+This is an ongoing research work by [Soares Chen](https://maybevoid.com/)
+and [Stephanie Balzer](http://www.cs.cmu.edu/~balzers/) to implement
+session types in Rust.
+
+A draft technical report for Ferrite is currently available
+[here](https://maybevoid.com/pdf/ferrite-draft-2020-09.pdf)
 
 ## Build Instructions
 
@@ -38,3 +48,9 @@ cargo run --bin shared
   - [`src/session`](src/shared) - Shared session types
   - [`src/public.rs`](src/public.rs) - Public API exposed by Ferrite
   - [`src/bin`](src/bin) - Demo executables
+
+## Acknowledgement
+
+This material is based upon work supported by the National Science Foundation under Grant No. CCF-1718267.
+Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s)
+and do not necessarily reflect the views of the National Science Foundation.
