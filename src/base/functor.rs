@@ -1,39 +1,111 @@
-use std::mem::transmute;
+use std::any::Any;
 use std::marker::PhantomData;
 
-// Type -> Type
-pub trait TyCon {}
-
-// (Type -> Type) -> Type
-pub trait HigherTyCon {}
+pub trait TyCon : 'static
+{ }
 
 pub trait TypeApp < A > : TyCon
-{ type Applied; }
+where
+  A: 'static,
+{
+  type Applied: Send + 'static;
+}
+
+pub trait HasTypeApp < F, A >
+  : Send
+where
+  F: 'static,
+  A: 'static,
+{
+  fn get_applied
+    ( self: Box < Self > )
+    -> Box < F::Applied >
+  where
+    F: TypeApp < A >
+  ;
+}
+
+pub trait TypeAppWitnessCont < F, A, K >
+where
+  F: 'static,
+  A: 'static,
+  K: 'static,
+{
+  fn on_witness
+    ( self: Box < Self >,
+      applied: Box < F::Applied >
+    )
+    -> K
+  where
+    F: TypeApp < A >
+  ;
+}
+
+pub trait TypeAppWitness < F, A, K >
+  : HasTypeApp < F, A >
+where
+  F: 'static,
+  A: 'static,
+  K: 'static,
+{
+  fn with_applied
+    ( self: Box < Self >,
+      cont: Box < dyn TypeAppWitnessCont < F, A, K > >
+    ) -> K
+  ;
+}
+
+impl < T, F, A >
+  HasTypeApp < F, A >
+  for T
+where
+  F: 'static,
+  A: 'static,
+  T: Send + 'static,
+  F: TypeApp < A, Applied=T >
+{
+  fn get_applied (self: Box < T >) -> Box < T >
+  { self }
+}
+
+impl < T, F, A, K >
+  TypeAppWitness < F, A, K >
+  for T
+where
+  F: 'static,
+  A: 'static,
+  T: Send + 'static,
+  K: 'static,
+  F: TypeApp < A, Applied=T >,
+{
+  fn with_applied
+    ( self: Box < Self >,
+      cont: Box < dyn TypeAppWitnessCont < F, A, K > >
+    ) -> K
+  {
+    cont.on_witness(self)
+  }
+}
 
 pub struct Applied < F, A >
-where
-  F: TyCon
-{ wrapped: Box < ( F, A ) > }
+{
+  pub applied:
+    Box < dyn TypeAppWitness <
+      F, A, Box < dyn Any > > >,
+}
 
 impl < F, A >
   Applied < F, A >
 where
-  F: TypeApp < A >
-{ pub fn unwrap
-    ( self )
-    -> F::Applied
-  { unwrap_applied(self) }
-}
-
-pub fn unwrap_applied < F, A >
-  ( applied: Applied < F, A > )
-  -> F::Applied
-where
-  F: TypeApp < A >
-{ unsafe {
-    let unwrapped : Box < F::Applied > =
-      transmute( applied.wrapped );
-    *unwrapped
+  F: 'static,
+  A: 'static,
+{
+  pub fn get_applied(self)
+    -> Box < F::Applied >
+  where
+    F: TypeApp < A >
+  {
+    self.applied.get_applied()
   }
 }
 
@@ -41,48 +113,80 @@ pub fn wrap_applied < F, A >
   ( applied: F::Applied )
   -> Applied < F, A >
 where
-  F: TypeApp < A >
-{ unsafe {
-    let wrapped : Box < ( F, A ) > =
-      transmute( Box::new( applied ) );
-    Applied { wrapped: wrapped }
+  F: TypeApp < A >,
+{
+  Applied {
+    applied: Box::new( applied )
   }
 }
 
-// pub fn unwrap_applied_borrow < 'a, F, A >
-//   ( applied: Applied < &'a F, A > )
-//   -> &'a F::Applied
-// where
-//   F: TypeApp < A >
-// {
-//   unwrap_applied(applied)
-// }
+struct TypeAppWitnessContWrapper < F, A, K >
+{
+  cont: Box < dyn TypeAppWitnessCont < F, A, K > >,
+}
+
+impl < F, A, K >
+  TypeAppWitnessCont < F, A, Box < dyn Any > >
+  for TypeAppWitnessContWrapper < F, A, K >
+where
+  F: 'static,
+  A: 'static,
+  K: 'static,
+{
+  fn on_witness
+    ( self: Box < Self >,
+      applied: Box < F::Applied >,
+    ) -> Box < dyn Any >
+  where
+    F: TypeApp < A >
+  {
+    let res = self.cont.on_witness(applied);
+    Box::new(res)
+  }
+}
+
+pub fn run_with_applied < F, A, K >
+  ( applied: Applied < F, A >,
+    cont1: Box < dyn TypeAppWitnessCont < F, A, K > >
+  ) -> Box < K >
+where
+  F: 'static,
+  A: 'static,
+  K: 'static,
+{
+  let cont2 = TypeAppWitnessContWrapper {
+    cont: cont1,
+  };
+
+  let res = applied.applied.with_applied(Box::new(cont2));
+  res.downcast().unwrap()
+}
 
 pub struct Const < X > ( PhantomData<X> );
 
 impl TyCon for () {}
-impl < X > TyCon for Const < X > {}
 
-// impl < 'a, F > TyCon
-//   for &'a F
-// where
-//   F: TyCon
-// {}
+impl < X > TyCon for Const < X >
+where
+  X: 'static
+{}
 
-// impl < 'a, F, X >
-//   TypeApp < X >
-//   for &'a F
-// where
-//   F: TypeApp < X >
-// {
-//   type Applied = &'a F::Applied;
-// }
+impl < A > TypeApp < A >
+  for ()
+where
+  A: 'static
+{
+  type Applied = ();
+}
 
-impl < A > TypeApp < A > for ()
-{ type Applied = (); }
-
-impl < X, A > TypeApp < A > for Const < X >
-{ type Applied = X; }
+impl < X, A > TypeApp < A >
+  for Const < X >
+where
+  A: 'static,
+  X: Send + 'static,
+{
+  type Applied = X;
+}
 
 pub trait Functor : TyCon + Sized
 {
@@ -90,7 +194,11 @@ pub trait Functor : TyCon + Sized
     ( fa: Applied < Self, A >,
       mapper: impl Fn (A) -> B,
     ) ->
-      Applied < Self, B >;
+      Applied < Self, B >
+  where
+    A: Send + 'static,
+    B: Send + 'static,
+  ;
 }
 
 pub trait Applicative
@@ -103,6 +211,8 @@ pub trait Applicative
       Applied < Self, B >
   where
     Func : Fn (A) -> B,
+    A: Send + 'static,
+    B: Send + 'static,
   ;
 }
 
@@ -114,6 +224,9 @@ pub trait Monad
       cont : impl Fn (A) -> Applied < Self, B >
     ) ->
       Applied < Self, B >
+  where
+    A: Send + 'static,
+    B: Send + 'static,
   ;
 }
 
@@ -136,6 +249,8 @@ impl TyCon for IdentityF {}
 impl < A >
   TypeApp < A >
   for IdentityF
+where
+  A: Send + 'static,
 {
   type Applied = Identity < A >;
 }
@@ -147,8 +262,11 @@ impl Functor for IdentityF
       mapper: impl Fn (A) -> B,
     ) ->
       Applied < IdentityF, B >
+  where
+    A: Send + 'static,
+    B: Send + 'static,
   {
-    let Identity(a) = fa.unwrap();
+    let Identity(a) = *fa.get_applied();
     let b = mapper(a);
     wrap_applied(Identity(b))
   }

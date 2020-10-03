@@ -1,12 +1,119 @@
-use std::mem::transmute;
+use std::any::Any;
 use std::marker::PhantomData;
 
 use crate::base::*;
 
-pub trait RowCon : Send {}
+pub trait RowCon
+  : Sized + 'static
+{}
 
-pub trait SumRow < F: TyCon > : RowCon
-{ type Field : Send;
+pub trait SumRow < F >
+  : RowCon
+where
+  F: TyCon,
+{
+  type Field: Send + 'static;
+}
+
+pub trait HasRow < Row, F >
+  : Send
+{
+  fn get_row
+    ( self: Box < Self > )
+    -> Box < Row::Field >
+  where
+    F: TyCon,
+    Row: SumRow < F >,
+  ;
+}
+
+pub trait RowWitnessCont < Row, F, K >
+{
+  fn on_row_witness
+    ( self: Box < Self >,
+      row: Box < Row::Field >
+    ) -> K
+  where
+    F: TyCon,
+    Row: SumRow < F >,
+  ;
+}
+
+pub trait HasRowWitness < Row, F, K >
+  : HasRow < Row, F >
+{
+  fn with_witness
+    ( self: Box < Self >,
+      cont: Box < dyn RowWitnessCont < Row, F, K > >
+    ) -> K
+  ;
+}
+
+impl < S, Row, F >
+  HasRow < Row, F >
+  for S
+where
+  F: TyCon,
+  S: Send + 'static,
+  Row: SumRow < F, Field=S >,
+{
+  fn get_row
+    ( self: Box < Self > )
+    -> Box < Row::Field >
+  where
+    F: TyCon,
+    Row: SumRow < F >,
+  {
+    self
+  }
+}
+
+impl < S, Row, F, K >
+  HasRowWitness < Row, F, K >
+  for S
+where
+  F: TyCon,
+  S: Send + 'static,
+  Row: SumRow < F, Field=S >,
+{
+  fn with_witness
+    ( self: Box < Self >,
+      cont: Box < dyn RowWitnessCont < Row, F, K > >
+    ) -> K
+  {
+    cont.on_row_witness(self)
+  }
+}
+
+pub struct AppliedSum < Row, F >
+{
+  row: Box < dyn HasRowWitness <
+    Row, F, Box < dyn Any > > >
+}
+
+impl < Row, F >
+  AppliedSum < Row, F >
+where
+  F: TyCon,
+  Row: SumRow < F >,
+{
+  pub fn get_row (self)
+    -> Box < Row::Field >
+  {
+    self.row.get_row()
+  }
+}
+
+pub fn wrap_row < Row, F >
+  ( row: Row::Field )
+  -> AppliedSum < Row, F >
+where
+  F: TyCon,
+  Row: SumRow < F >,
+{
+  AppliedSum {
+    row: Box::new( row )
+  }
 }
 
 pub enum Bottom {}
@@ -15,8 +122,9 @@ impl < A, R >
   RowCon
   for (A, R)
 where
-  R: RowCon
-{}
+  A: 'static,
+  R: RowCon,
+{ }
 
 impl RowCon for () {}
 impl RowCon for Bottom {}
@@ -25,7 +133,9 @@ impl < F, A, R >
   SumRow < F > for
   ( A, R )
 where
+  A: 'static,
   F: TyCon,
+  R: RowCon,
 {
   type Field =
     Sum <
@@ -43,22 +153,6 @@ where
   type Field = Bottom;
 }
 
-// impl < 'a, Row > RowCon
-//   for &'a Row
-// where
-//   Row: RowCon
-// { }
-
-// impl < 'a, Row, F >
-//   SumRow < F >
-//   for &'a Row
-// where
-//   F: TyCon,
-//   Row: SumRow < F >,
-// {
-//   type Field = &'a Row::Field;
-// }
-
 pub struct Merge < T1, T2 >
   ( PhantomData <( T1, T2 )> );
 
@@ -69,61 +163,13 @@ pub enum Sum < A, B >
   Inr ( B ),
 }
 
-pub struct AppliedSum < Row, F >
-where
-  Row: RowCon,
-  F: TyCon,
-{ wrapped: Box < (Row, F) > }
-
-unsafe impl < Row, F >
-  Send
-  for AppliedSum < Row, F >
-{}
-
-impl < Row, F >
-  AppliedSum < Row, F >
-where
-  F: TyCon,
-  Row: SumRow < F >,
-{ pub fn unwrap ( self )
-    -> Row::Field
-  { unwrap_sum(self) }
-}
-
-pub fn unwrap_sum
-  < Row, F >
-  ( wrapped: AppliedSum < Row, F > )
-  -> Row::Field
-where
-  F: TyCon,
-  Row: SumRow < F >,
-{
-  unsafe {
-    let unwrapped : Box < Row::Field > =
-      transmute( wrapped.wrapped );
-    *unwrapped
-  }
-}
-
-pub fn wrap_sum < Row, F >
-  ( applied: Row::Field )
-  -> AppliedSum < Row, F >
-where
-  F: TyCon,
-  Row: SumRow < F >,
-{ unsafe {
-    let wrapped : Box < ( Row, F ) > =
-      transmute( Box::new( applied ) );
-    AppliedSum { wrapped: wrapped }
-  } }
-
 pub fn absurd < F, A >
   ( row1: AppliedSum < (), F > )
   -> A
 where
   F: TyCon,
 {
-  let row2 = row1.unwrap();
+  let row2 = row1.get_row();
   match row2 {}
 }
 
@@ -158,12 +204,6 @@ pub trait SumFunctor
     F2: TyCon,
     T: NaturalTransformation < F1, F2 >
   ;
-}
-
-pub trait FieldConstraint < A >
-  : TypeApp < A >
-{
-  fn witness () -> Self::Applied;
 }
 
 pub trait FieldLifter < Root >
@@ -253,6 +293,8 @@ impl < X >
     X
   >
   for ElimConst
+where
+  X: 'static,
 {
   fn elim_field < A >
     ( self,
@@ -299,12 +341,18 @@ where
   ;
 }
 
-impl < T1, T2 > TyCon for Merge < T1, T2 > {}
+impl < T1, T2 > TyCon
+  for Merge < T1, T2 >
+where
+  T1: 'static,
+  T2: 'static,
+{}
 
 impl < T1, T2, A >
   TypeApp < A >
   for Merge < T1, T2 >
 where
+  A: 'static,
   T1 : TyCon,
   T2 : TyCon,
 {
@@ -342,7 +390,8 @@ impl < A, R >
   SplitRow
   for ( A, R )
 where
-  R : SplitRow,
+  A: 'static,
+  R: SplitRow,
 {
   fn split_row
     < F1, F2 >
@@ -359,19 +408,19 @@ where
     F1: TyCon,
     F2: TyCon,
   {
-    let row2 = row1.unwrap();
+    let row2 = *row1.get_row();
 
     match row2 {
       Sum::Inl ( row3 ) => {
-        let ( row3a, row3b ) = row3.unwrap();
-        ( wrap_sum( Sum::Inl(row3a) ),
-          wrap_sum( Sum::Inl(row3b) )
+        let ( row3a, row3b ) = *row3.get_applied();
+        ( wrap_row( Sum::Inl(row3a) ),
+          wrap_row( Sum::Inl(row3b) )
         )
       },
       Sum::Inr ( row3 ) => {
         let (row3a, row3b) = R::split_row (row3);
-        ( wrap_sum( Sum::Inr(row3a) ),
-          wrap_sum( Sum::Inr(row3b) )
+        ( wrap_row( Sum::Inr(row3a) ),
+          wrap_row( Sum::Inr(row3b) )
         )
       }
     }
@@ -403,6 +452,7 @@ impl < A, R >
   IntersectSum for
   ( A, R )
 where
+  A: 'static,
   R: IntersectSum
 {
   fn intersect_sum
@@ -420,12 +470,12 @@ where
     F1: TyCon,
     F2: TyCon,
   {
-    let row1a = row1.unwrap();
-    let row2a = row2.unwrap();
+    let row1a = *row1.get_row();
+    let row2a = *row2.get_row();
 
     match (row1a, row2a) {
       ( Sum::Inl(a1), Sum::Inl(a2) ) => {
-        Some ( wrap_sum (
+        Some ( wrap_row (
           Sum::Inl (
             wrap_applied(
               ( a1, a2 ) ) ) ) )
@@ -433,7 +483,7 @@ where
       ( Sum::Inr(r1), Sum::Inr(r2) ) => {
         R :: intersect_sum ( r1, r2 )
           .map(| x | {
-            wrap_sum ( Sum::Inr(x) )
+            wrap_row ( Sum::Inr(x) )
           })
       },
       _ => {
@@ -454,7 +504,7 @@ impl SumFunctor for ()
     F2: TyCon,
     T: NaturalTransformation < F1, F2 >
   {
-    let row2: Bottom = row1.unwrap();
+    let row2 = row1.get_row();
     match row2 {}
   }
 }
@@ -463,6 +513,7 @@ impl < A, R >
   SumFunctor for
   (A, R)
 where
+  A: 'static,
   R: SumFunctor
 {
   fn lift_sum
@@ -474,14 +525,14 @@ where
     F2: TyCon,
     T: NaturalTransformation < F1, F2 >
   {
-    let row2 = row1.unwrap();
+    let row2 = *row1.get_row();
     match row2 {
       Sum::Inl(fa1) => {
         let fa2 = T::lift(fa1);
-        wrap_sum ( Sum::Inl ( fa2 ) )
+        wrap_row ( Sum::Inl ( fa2 ) )
       },
       Sum::Inr(b) => {
-        wrap_sum ( Sum::Inr (
+        wrap_row ( Sum::Inr (
           R :: lift_sum::< T, F1, F2 >( b )
         ) )
       }
@@ -514,6 +565,7 @@ impl < A, R, L, Root >
   SumFunctorInject < L, Root >
   for (A, R)
 where
+  A: 'static,
   L: FieldLifter < Root >,
   R: SumFunctorInject < L, Root >,
   L::SourceF : TypeApp < A >,
@@ -531,7 +583,7 @@ where
     ) ->
       AppliedSum < Self, L::InjectF >
   {
-    let row2 = row1.unwrap();
+    let row2 = *row1.get_row();
     match row2 {
       Sum::Inl(a) => {
         let inject2 =
@@ -543,16 +595,16 @@ where
             -> Root
           {
             inject (
-              wrap_sum (
+              wrap_row (
                 Sum::Inl (
                   wrap_applied ( b )
                 ) ) )
           };
 
-        wrap_sum (
+        wrap_row (
           Sum :: Inl(
             wrap_applied(
-              L::lift_field( ctx, inject2, a.unwrap() )
+              L::lift_field( ctx, inject2, *a.get_applied() )
             ) ) )
       },
       Sum::Inr(b) => {
@@ -560,10 +612,10 @@ where
           move | r : AppliedSum < R, L::TargetF > |
             -> Root
           {
-            inject ( wrap_sum ( Sum::Inr (r) ) )
+            inject ( wrap_row ( Sum::Inr (r) ) )
           };
 
-        wrap_sum (
+        wrap_row (
           Sum::Inr (
             R :: lift_sum_inject ( ctx, inject2, b )
           ) )
@@ -594,6 +646,7 @@ impl < A, R >
   ElimSum for
   (A, R)
 where
+  A: 'static,
   R: ElimSum,
 {
   fn elim_sum
@@ -606,7 +659,7 @@ where
     F: TyCon,
     E: ElimField < F, K >,
   {
-    let row2 = row1.unwrap();
+    let row2 = *row1.get_row();
     match row2 {
       Sum::Inl(a) => {
         e.elim_field ( a )
@@ -622,7 +675,8 @@ impl < A, R >
   Prism < (A, R) >
   for Z
 where
-  R : RowCon
+  A: 'static,
+  R: RowCon,
 {
   type Elem = A;
 
@@ -632,7 +686,7 @@ where
   where
     F: TyCon,
   {
-    wrap_sum ( Sum::Inl(t) )
+    wrap_row ( Sum::Inl(t) )
   }
 
   fn extract_elem < F >
@@ -644,7 +698,7 @@ where
   where
     F: TyCon,
   {
-    match row.unwrap() {
+    match *row.get_row() {
       Sum::Inl(e) => Some(e),
       Sum::Inr(_) => None,
     }
@@ -655,8 +709,9 @@ impl < N, A, R >
   Prism < (A, R) >
   for S < N >
 where
-  N : Prism < R >,
   R: RowCon,
+  A: 'static,
+  N : Prism < R >,
 {
   type Elem = N::Elem;
 
@@ -666,7 +721,7 @@ where
   where
     F: TyCon,
   {
-    wrap_sum (
+    wrap_row (
       Sum::Inr( N::inject_elem( elem ) ) )
   }
 
@@ -679,7 +734,7 @@ where
   where
     F: TyCon,
   {
-    match row.unwrap() {
+    match *row.get_row() {
       Sum::Inl(_) => None,
       Sum::Inr(rest) => N::extract_elem(rest),
     }

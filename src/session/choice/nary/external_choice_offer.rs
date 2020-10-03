@@ -162,6 +162,9 @@ where
   }
 }
 
+// AppliedSum < Row, F >
+// row :: (Type -> Type) -> Type
+// f :: Type -> Type
 pub fn offer_choice
   < C, Row >
   ( cont1 : impl FnOnce (
@@ -171,8 +174,8 @@ pub fn offer_choice
       >
     ) ->
       AppliedSum <
-        Row,
-        SessionApp < C >
+        Row, // :: (Type -> Type) -> Type
+        SessionApp < C > // :: Type -> Type
       >
     + Send + 'static
   ) ->
@@ -181,6 +184,8 @@ where
   C : Context + Send,
   Row : RowCon,
   Row : Send + 'static,
+  Row : ElimSum,
+  Row : SplitRow,
   Row : SumFunctor,
   Row :
     SumFunctorInject <
@@ -192,8 +197,6 @@ where
       RunSession < C >,
       AppliedSum < Row, () >,
     >,
-  Row : SplitRow,
-  Row : ElimSum,
 {
   unsafe_create_session (
     async move | ctx, sender1 | {
