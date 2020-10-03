@@ -10,6 +10,7 @@ use crate::base::{
   Applied,
   Protocol,
   Context,
+  wrap_applied,
   ContextLens,
   PartialSession,
   NaturalTransformation,
@@ -19,132 +20,33 @@ use crate::base::{
 
 use crate::protocol::choice::nary::*;
 
-pub struct SessionApp < N, C, A, Row >
-  ( PhantomData <( N, C, A, Row )> );
+use super::internal_session::*;
 
-pub struct InjectSessionApp < N, C, A, Row, Root >
-  ( PhantomData <( N, C, A, Row, Root )> );
+pub struct InjectSessionApp < N, C, B, Row, Root >
+  ( PhantomData <( N, C, B, Row, Root )> );
 
-impl < N, I, Q, Row > TyCon
-  for SessionApp < N, I, Q, Row > {}
-
-impl < N, I, Q, Row, Root > TyCon
-  for InjectSessionApp < N, I, Q, Row, Root > {}
-
-impl < N, I, P, Q, Row >
-  TypeApp < P > for
-  SessionApp < N, I, Q, Row >
+impl < N, C, B, Row, Root > TyCon
+  for InjectSessionApp < N, C, B, Row, Root >
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
-  Row : Send + 'static,
-  Row :
-    SumRow < ReceiverApp >,
-  < Row as
-    SumRow < ReceiverApp >
-  >  :: Field
-    : Send,
-  N :
-    ContextLens <
-      I,
-      InternalChoice < Row >,
-      P
-    >
-{
-  type Applied =
-    PartialSession <
-      N :: Target,
-      Q
-    >;
-}
+  N: 'static,
+  C: 'static,
+  B: 'static,
+  Row: 'static,
+  Root: 'static,
+{}
 
-impl < N, I, P, Q, Row, Root >
-  TypeApp < P > for
-  InjectSessionApp < N, I, Q, Row, Root >
-where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
-  Row : Send + 'static,
-  Row :
-    SumRow < ReceiverApp >,
-  < Row as
-    SumRow < ReceiverApp >
-  >  :: Field
-    : Send,
-  N :
-    ContextLens <
-      I,
-      InternalChoice < Row >,
-      P
-    >,
-{
-  type Applied =
-    InjectSession <
-      N, I, P, Q, Row, Root
-    >;
-}
-
-pub struct ReceiverToSelector {}
-
-impl
-  NaturalTransformation
-  < ReceiverApp, () >
-  for ReceiverToSelector
-{
-  fn lift < A >
-    ( fa: Applied < ReceiverApp, A > )
-    -> Applied < (), A >
-  { 
-    todo!() 
-  }
-}
-
-pub struct RunCont
-  < N, C, A, Row >
+pub struct InjectSession
+  < N, C, A, B, Row, Root >
 where
   A : Protocol,
+  B : Protocol,
   C : Context,
-  Row : Send + 'static,
-  Row :
-    SumRow < ReceiverApp >,
+  Row : RowCon,
   N :
     ContextLens <
       C,
       InternalChoice < Row >,
-      Empty
-    >,
-  < Row as
-    SumRow < ReceiverApp >
-  > :: Field :
-    Send
-{
-  ctx :
-    < N :: Deleted
-      as Context
-    > :: Endpoints,
-  sender : Sender < A >
-}
-
-pub struct InjectSession
-  < N, I, P, Q, Row, Root >
-where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
-  Row : Send + 'static,
-  Row :
-    SumRow < ReceiverApp >,
-  < Row as
-    SumRow < ReceiverApp >
-  >  :: Field
-    : Send,
-  N :
-    ContextLens <
-      I,
-      InternalChoice < Row >,
-      P
+      A
     >,
 {
   inject_session :
@@ -152,7 +54,7 @@ where
       dyn FnOnce (
         PartialSession <
           N :: Target,
-          Q
+          B
         >
       ) ->
         Root
@@ -160,40 +62,189 @@ where
     >
 }
 
+impl < N, C, A, B, Row, Root >
+  TypeApp < A > for
+  InjectSessionApp < N, C, B, Row, Root >
+where
+  A : Protocol,
+  B : Protocol,
+  C : Context,
+  N : 'static,
+  Root : 'static,
+  Row : RowCon,
+  N :
+    ContextLens <
+      C,
+      InternalChoice < Row >,
+      A
+    >,
+{
+  type Applied =
+    InjectSession <
+      N, C, A, B, Row, Root
+    >;
+}
+
+pub struct ReceiverToSelector {}
+
+impl
+  NaturalTransformation
+  < ReceiverApp,
+    Merge <
+      ReceiverApp,
+      ()
+    >
+  >
+  for ReceiverToSelector
+{
+  fn lift < A >
+    ( receiver: Applied < ReceiverApp, A > )
+    ->
+      Applied <
+        Merge <
+          ReceiverApp,
+          ()
+        >,
+        A
+      >
+  where
+    A: Send + 'static,
+  {
+    wrap_applied ( (
+      receiver,
+      wrap_applied( () )
+    ) )
+  }
+}
+
 pub fn run_internal_cont
-  < N, I, P, Q, Row, Root >
+  < N, C, A, B, Row, Root >
 (
   inject :
     InjectSession <
-      N, I, P, Q, Row, Root
+      N, C, A, B, Row, Root
     >,
   session :
     PartialSession <
       N :: Target,
-      Q
+      B
     >
 ) ->
   Root
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
-  Row :
-    Send + 'static,
-  Row :
-    SumRow < ReceiverApp >,
-  < Row as
-    SumRow < ReceiverApp >
-  >  :: Field
-    : Send,
+  A : Protocol,
+  B : Protocol,
+  C : Context,
+  Row : RowCon,
   N :
     ContextLens <
-      I,
+      C,
       InternalChoice < Row >,
-      P
+      A
     >,
 {
   (inject.inject_session)(session)
+}
+
+pub struct RunCont
+  < N, C, B, Row >
+where
+  B : Protocol,
+  C : Context,
+  Row : RowCon,
+  N :
+    ContextLens <
+      C,
+      InternalChoice < Row >,
+      Empty
+    >,
+{
+  ctx :
+    < N :: Target
+      as Context
+    > :: Endpoints,
+  sender : Sender < B >
+}
+
+pub struct ContRunner
+  < N, C, A, B, Row, Del >
+where
+  B : Protocol,
+  C : Context,
+  Del : Context,
+  Row : RowCon,
+  N :
+    ContextLens <
+      C,
+      InternalChoice < Row >,
+      Empty,
+      Deleted = Del,
+    >,
+{
+  ctx : Del::Endpoints,
+
+  sender : Sender < B >,
+
+  receiver : Receiver < A >,
+
+  phantom: PhantomData <( N, C, Row )>,
+}
+
+impl < N, C, A, B, Row, Del >
+  NeedInternalSession <
+    N, C, A, B, Row, Del,
+    Pin < Box < dyn Future < Output=() > + Send > >
+  >
+  for ContRunner < N, C, A, B, Row, Del >
+where
+  B : Protocol,
+  C : Context,
+  Del : Context,
+  Row : RowCon,
+  N :
+    ContextLens <
+      C,
+      InternalChoice < Row >,
+      Empty,
+      Deleted = Del,
+    >,
+{
+  fn on_internal_session
+    ( self: Box < Self >,
+      cont: InternalSession < N, C, A, B, Row, Del >
+    ) ->
+      Pin < Box < dyn Future < Output=() > + Send > >
+  where
+    A : Protocol,
+    B : Protocol,
+    C : Context,
+    Row : RowCon,
+    N :
+      ContextLens <
+        C,
+        InternalChoice < Row >,
+        A,
+        Deleted = Del,
+      >
+  {
+    let ctx1 = self.ctx;
+    let sender = self.sender;
+    let receiver = self.receiver;
+
+    let ctx2 =
+      < N as
+        ContextLens <
+          C,
+          InternalChoice < Row >,
+          A
+        >
+      > :: insert_target ( receiver, ctx1 );
+
+    Box::pin(
+      unsafe_run_session (
+        cont.session, ctx2, sender
+      ) )
+  }
 }
 
 // impl < B, N, C, Row >
@@ -205,98 +256,100 @@ where
 //     Pin < Box < dyn Future < Output=() > + Send > >
 //   > for RunCont < N, C, B, Row >
 // where
-//   A : Protocol,
+//   // A : Protocol,
 //   B : Protocol,
 //   C : Context,
+//   N : 'static,
 //   Row : Send + 'static,
 //   Row :
 //     SumRow < ReceiverApp >,
-//   N :
-//     ContextLens <
-//       C,
-//       InternalChoice < Row >,
-//       A,
-//       Deleted =
-//         < N as
-//           ContextLens <
-//             C,
-//             InternalChoice < Row >,
-//             Empty
-//           >
-//         > :: Deleted
-//     >,
-//   N :
-//     ContextLens <
-//       C,
-//       InternalChoice < Row >,
-//       Empty
-//     >,
-//   < Row as
-//     SumRow < ReceiverApp >
-//   > :: Field :
-//     Send
+  // N :
+  //   ContextLens <
+  //     C,
+  //     InternalChoice < Row >,
+  //     A,
+  //     Deleted = Del,
+  //   >,
+  // N :
+  //   ContextLens <
+  //     C,
+  //     InternalChoice < Row >,
+  //     Empty,
+  //     Deleted = Del,
+  //   >,
+  // < Row as
+  //   SumRow < ReceiverApp >
+  // > :: Field :
+  //   Send
 // {
-//   fn elim_field (
-//     self,
-//     (receiver, cont) :
-//       ( Receiver < A >,
-//         PartialSession <
-//           < N as
-//             ContextLens <
-//               C,
-//               InternalChoice < Row >,
-//               A
-//             >
-//           > ::Target,
-//           B
-//         >
-//       )
-//   ) ->
-//     Pin < Box < dyn Future < Output=() > + Send > >
+//   fn elim_field < A >
+//     ( self,
+//       a : Applied < F, A >
+//     ) ->
+//       R
+//   where
+//     A: 'static,
 //   {
-//     let ctx1 = self.ctx;
-//     let sender = self.sender;
-
-//     let ctx2 =
-//       < N as
-//         ContextLens <
-//           C,
-//           InternalChoice < Row >,
-//           A
-//         >
-//       > :: insert_target ( receiver, ctx1 );
-
-//     Box::pin(
-//       unsafe_run_session ( cont, ctx2, sender ) )
+//     todo!()
 //   }
+  // fn elim_field (
+  //   self,
+  //   (receiver, cont) :
+  //     ( Receiver < A >,
+  //       PartialSession <
+  //         < N as
+  //           ContextLens <
+  //             C,
+  //             InternalChoice < Row >,
+  //             A
+  //           >
+  //         > ::Target,
+  //         B
+  //       >
+  //     )
+  // ) ->
+  //   Pin < Box < dyn Future < Output=() > + Send > >
+  // {
+  //   let ctx1 = self.ctx;
+  //   let sender = self.sender;
+
+  //   let ctx2 =
+  //     < N as
+  //       ContextLens <
+  //         C,
+  //         InternalChoice < Row >,
+  //         A
+  //       >
+  //     > :: insert_target ( receiver, ctx1 );
+
+  //   Box::pin(
+  //     unsafe_run_session ( cont, ctx2, sender ) )
+  // }
 // }
 
-pub struct LiftUnitToSession < N, C, A, Row >
-  ( PhantomData <( N, C, A, Row )> );
+pub struct LiftUnitToSession < N, C, A, Row, Del >
+  ( PhantomData <( N, C, A, Row, Del )> );
 
 impl
-  < Root, N, I, P, Row >
+  < Root, N, C, B, Row, Del >
   FieldLifter < Root >
-  for LiftUnitToSession < N, I, P, Row >
+  for LiftUnitToSession < N, C, B, Row, Del >
 where
-  P : Protocol,
-  I : Context,
-  Row : Send + 'static,
-  Row :
-    SumRow < ReceiverApp >,
-  < Row as
-    SumRow < ReceiverApp >
-  >  :: Field
-    : Send,
+  B : Protocol,
+  C : Context,
+  Del : Context,
+  N : 'static,
+  Root : 'static,
+  Row : RowCon,
   InternalChoice < Row > :
     Protocol,
 {
   type SourceF = ();
 
-  type TargetF = SessionApp < N, I, P, Row >;
+  type TargetF = InternalSessionF < N, C, B, Row, Del >;
 
   type InjectF =
-    InjectSessionApp < N, I, P, Row, Root >;
+    InjectSessionApp < N, C, B, Row, Root >;
 
   fn lift_field < A >
     ( self,
@@ -317,46 +370,47 @@ where
   }
 }
 
-type RootCont < Row, N, C, A > =
+type RootCont < Row, N, C, B, Del > =
   InjectSessionApp <
-    N, C, A, Row,
+    N, C, B, Row,
     AppliedSum <
       Row,
-      SessionApp < N, C, A, Row >
+      InternalSessionF < N, C, B, Row, Del >
     >
   >;
 
 pub fn case
-  < Row, N, C, A >
+  < N, C, B, Row, Del >
   ( _ : N,
     cont1 : impl FnOnce (
-      AppliedSum < 
+      AppliedSum <
         Row,
-        RootCont < Row, N, C, A >
+        RootCont < Row, N, C, B, Del >
       >
     ) ->
       AppliedSum <
         Row,
-        SessionApp < N, C, A, Row >
+        InternalSessionF < N, C, B, Row, Del >
       >
       + Send + 'static,
   ) ->
-    PartialSession < C, A >
+    PartialSession < C, B >
 where
-  A : Protocol,
+  B : Protocol,
   C : Context,
-  Row : Send + 'static,
+  Del : Context,
   N :
     ContextLens <
       C,
       InternalChoice < Row >,
-      Empty
+      Empty,
+      Deleted = Del,
     >,
   Row : RowCon,
   Row : SumFunctor,
   Row : IntersectSum,
   Row : ElimSum,
-  // Row : SumFunctorInject,
+  Row : SumFunctorInject,
 {
   unsafe_create_session (
     async move | ctx1, sender | {

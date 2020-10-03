@@ -108,6 +108,16 @@ where
     self.applied.get_applied()
   }
 }
+pub fn get_applied < F, A >
+  ( applied: Applied < F, A > )
+  -> Box < F::Applied >
+where
+  F: 'static,
+  A: 'static,
+  F: TypeApp < A >,
+{
+  applied.applied.get_applied()
+}
 
 pub fn wrap_applied < F, A >
   ( applied: F::Applied )
@@ -238,6 +248,8 @@ where
   fn lift < A >
     ( fa: Applied < F1, A > )
     -> Applied < F2, A >
+  where
+    A: Send + 'static,
   ;
 }
 

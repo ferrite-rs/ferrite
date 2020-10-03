@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use crate::base::*;
 
 pub trait RowCon
-  : Sized + 'static
+  : Sized + Send + 'static
 {}
 
 pub trait SumRow < F >
@@ -122,7 +122,7 @@ impl < A, R >
   RowCon
   for (A, R)
 where
-  A: 'static,
+  A: Send + 'static,
   R: RowCon,
 { }
 
@@ -133,7 +133,7 @@ impl < F, A, R >
   SumRow < F > for
   ( A, R )
 where
-  A: 'static,
+  A: Send + 'static,
   F: TyCon,
   R: RowCon,
 {
@@ -216,33 +216,22 @@ pub trait FieldLifter < Root >
     ( self,
       inject:
         impl Fn
-          ( < Self::TargetF
-              as TypeApp < A >
-            > :: Applied )
+          ( Applied < Self::TargetF, A > )
           -> Root
         + Send + 'static,
       row:
-        < Self::SourceF
-          as TypeApp < A >
-        > :: Applied
+        Applied < Self::SourceF, A >
     ) ->
-      < Self::InjectF
-        as TypeApp < A >
-      > :: Applied
+      Applied < Self::InjectF, A >
   where
-    A: 'static,
-    Self::SourceF : TypeApp < A >,
-    Self::TargetF : TypeApp < A >,
-    Self::InjectF : TypeApp < A >,
+    A: Send + 'static,
   ;
 }
 
-pub trait SumFunctorInject < L, Root >
+pub trait SumFunctorInject
   : RowCon
-where
-  L: FieldLifter < Root >
 {
-  fn lift_sum_inject
+  fn lift_sum_inject < L, Root >
     ( ctx: L,
       inject:
         impl Fn
@@ -252,6 +241,8 @@ where
       sum: AppliedSum < Self, L::SourceF >,
     ) ->
       AppliedSum < Self, L::InjectF >
+  where
+    L: FieldLifter < Root >
   ;
 }
 
@@ -283,6 +274,8 @@ where
       a : Applied < F, A >
     ) ->
       R
+  where
+    A: 'static,
   ;
 }
 
@@ -295,13 +288,17 @@ impl < X >
   >
   for ElimConst
 where
-  X: 'static,
+  X: Send + 'static,
 {
   fn elim_field < A >
     ( self,
-      x : X
+      x : Applied < Const < X >, A >
     ) -> X
-  { x }
+  where
+    A: 'static
+  {
+    *get_applied(x)
+  }
 }
 
 pub trait ElimSum : RowCon
@@ -391,7 +388,7 @@ impl < A, R >
   SplitRow
   for ( A, R )
 where
-  A: 'static,
+  A: Send + 'static,
   R: SplitRow,
 {
   fn split_row
@@ -453,7 +450,7 @@ impl < A, R >
   IntersectSum for
   ( A, R )
 where
-  A: 'static,
+  A: Send + 'static,
   R: IntersectSum
 {
   fn intersect_sum
@@ -514,7 +511,7 @@ impl < A, R >
   SumFunctor for
   (A, R)
 where
-  A: 'static,
+  A: Send + 'static,
   R: SumFunctor
 {
   fn lift_sum
@@ -541,14 +538,11 @@ where
   }
 }
 
-impl < L, Root >
-  SumFunctorInject < L, Root >
+impl
+  SumFunctorInject
   for ()
-where
-  L: FieldLifter < Root >
 {
-  fn lift_sum_inject
-
+  fn lift_sum_inject < L, Root >
     ( ctx: L,
       inject:
         impl Fn
@@ -556,24 +550,23 @@ where
           -> Root
           + Send + 'static,
       sum: AppliedSum < Self, L::SourceF >,
-    )
+    ) ->
+      AppliedSum < Self, L::InjectF >
+  where
+    L: FieldLifter < Root >
   {
     match sum {}
   }
 }
 
-impl < A, R, L, Root >
-  SumFunctorInject < L, Root >
+impl < A, R >
+  SumFunctorInject
   for (A, R)
 where
-  A: 'static,
-  L: FieldLifter < Root >,
-  R: SumFunctorInject < L, Root >,
-  L::SourceF : TypeApp < A >,
-  L::TargetF : TypeApp < A >,
-  L::InjectF : TypeApp < A >,
+  A: Send + 'static,
+  R: SumFunctorInject,
 {
-  fn lift_sum_inject
+  fn lift_sum_inject < L, Root >
     ( ctx: L,
       inject:
         impl Fn
@@ -583,30 +576,28 @@ where
       row1: AppliedSum < Self, L::SourceF >,
     ) ->
       AppliedSum < Self, L::InjectF >
+  where
+    L: FieldLifter < Root >,
   {
     let row2 = *row1.get_row();
     match row2 {
       Sum::Inl(a) => {
         let inject2 =
           move |
-            b:  < L::TargetF
-                  as TypeApp < A >
-                > :: Applied
-          |
-            -> Root
+            b: Applied < L::TargetF, A >
+          | -> Root
           {
             inject (
               wrap_row (
                 Sum::Inl (
-                  wrap_applied ( b )
+                  b
                 ) ) )
           };
 
         wrap_row (
           Sum :: Inl(
-            wrap_applied(
-              L::lift_field( ctx, inject2, *a.get_applied() )
-            ) ) )
+            L::lift_field( ctx, inject2, a )
+          ) )
       },
       Sum::Inr(b) => {
         let inject2 =
@@ -647,7 +638,7 @@ impl < A, R >
   ElimSum for
   (A, R)
 where
-  A: 'static,
+  A: Send + 'static,
   R: ElimSum,
 {
   fn elim_sum
@@ -676,7 +667,7 @@ impl < A, R >
   Prism < (A, R) >
   for Z
 where
-  A: 'static,
+  A: Send + 'static,
   R: RowCon,
 {
   type Elem = A;
@@ -711,7 +702,7 @@ impl < N, A, R >
   for S < N >
 where
   R: RowCon,
-  A: 'static,
+  A: Send + 'static,
   N : Prism < R >,
 {
   type Elem = N::Elem;

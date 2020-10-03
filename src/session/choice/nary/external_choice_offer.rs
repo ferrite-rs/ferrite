@@ -8,6 +8,7 @@ use crate::base::{
   TyCon,
   Applied,
   Const,
+  get_applied,
   Protocol,
   Context,
   wrap_applied,
@@ -124,7 +125,58 @@ where
 pub struct RunSession < C >
 where
   C : Context
-{ ctx: C::Endpoints }
+{
+  ctx: C::Endpoints,
+}
+
+struct SessionRunner < C, A >
+where
+  C : Context
+{
+  ctx: C::Endpoints,
+  phantom: PhantomData < A >
+}
+
+impl < C, A >
+  NeedPartialSession <
+    C, A,
+    ( Receiver < A >,
+      Pin < Box < dyn
+        Future < Output=() >
+        + Send + 'static
+      > >
+    )
+  >
+  for SessionRunner < C, A >
+where
+  C : Context
+{
+  fn on_partial_session
+    ( self: Box < Self >,
+      cont: PartialSession < C, A >
+    ) ->
+      ( Receiver < A >,
+        Pin < Box < dyn
+          Future < Output=() >
+          + Send + 'static
+        > >
+      )
+  where
+    C: Context,
+    A: Protocol,
+  {
+    let (sender, receiver) = channel(1);
+    let future = Box::pin(async move {
+      unsafe_run_session(
+        cont,
+        self.ctx,
+        sender
+      ).await;
+    });
+
+    ( receiver, future )
+  }
+}
 
 impl
   < Root, C >
@@ -144,32 +196,41 @@ where
         Pin < Box < dyn
           Future < Output=() >
           + Send + 'static
-        > >
-      >
-    >;
+        > > > >
+  ;
 
   fn lift_field < A >
-    ( self,
-      inject:
-        impl Fn ( () ) -> Root
-        + Send + 'static,
-      cont:
-        PartialSession < C , A >
-    ) ->
-      ( Receiver < A >,
-        Pin < Box < dyn
-          Future < Output=() >
-          + Send
-        > > )
+  ( self,
+    _inject:
+      impl Fn
+        ( Applied < Self::TargetF, A > )
+        -> Root
+      + Send + 'static,
+    cont1:
+      Applied < Self::SourceF, A >
+  ) ->
+    Applied < Self::InjectF, A >
   where
-    A: Protocol
+    A: Send + 'static,
   {
-    let (sender, receiver) = channel(1);
-    let future = Box::pin(async move {
-      unsafe_run_session(cont, self.ctx, sender).await;
-    });
+    let cont2 : WrapPartialSession < C, A >
+      = *get_applied( cont1 );
 
-    ( receiver, future )
+    let runner: SessionRunner < C, A >
+      = SessionRunner {
+        ctx: self.ctx,
+        phantom: PhantomData,
+      };
+
+    let (receiver, future) = *with_session (
+      cont2,
+      Box::new( runner )
+    );
+
+    wrap_applied( (
+      wrap_applied(receiver),
+      wrap_applied(future),
+    ) )
   }
 }
 
@@ -190,21 +251,12 @@ pub fn offer_choice
     PartialSession < C, ExternalChoice < Row > >
 where
   C : Context + Send,
-  Row : RowCon,
   Row : Send + 'static,
+  Row : RowCon,
   Row : ElimSum,
   Row : SplitRow,
   Row : SumFunctor,
-  Row :
-    SumFunctorInject <
-      LiftUnitToSession < C >,
-      AppliedSum < Row, SessionApp < C > >,
-    >,
-  Row :
-    SumFunctorInject <
-      RunSession < C >,
-      AppliedSum < Row, () >,
-    >,
+  Row : SumFunctorInject,
 {
   unsafe_create_session (
     async move | ctx, sender1 | {
@@ -217,10 +269,11 @@ where
 
       let (choice, sender3) = receiver2.recv().await.unwrap();
 
-      let cont3 = Row::lift_sum_inject (
-        LiftUnitToSession::<C> (PhantomData),
-        | x | { x },
-        choice);
+      let cont3 = Row::lift_sum_inject
+        ( LiftUnitToSession::<C> (PhantomData),
+          | x | { x },
+          choice
+        );
 
       let cont4 = cont1 ( cont3 );
 
