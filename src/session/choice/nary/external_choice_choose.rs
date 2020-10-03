@@ -58,7 +58,10 @@ where
 
       match m_receiver {
         Some(receiver4) => {
-          let ctx3 = N::insert_target(receiver4.unwrap(), ctx2);
+          let ctx3 = N::insert_target(
+            *receiver4.get_applied(),
+            ctx2
+          );
           unsafe_run_session ( cont, ctx3, sender1 ).await;
         },
         None => {

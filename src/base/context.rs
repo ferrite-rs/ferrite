@@ -2,7 +2,7 @@ use crate::base::nat::{ Nat };
 
 /// A list of context for input. It has multiple implementations including
 /// [crate::base::Context].
-pub trait Context : 'static {
+pub trait Context : Send + 'static {
   type Endpoints : Sized + Send;
 
   type Length : Nat;

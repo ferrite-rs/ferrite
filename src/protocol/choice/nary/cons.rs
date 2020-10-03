@@ -21,8 +21,20 @@ pub trait NeedPartialSession < C, A, K >
   ;
 }
 
-pub trait HasPartialSession < C, A, K >
+pub trait HasPartialSession < C, A >
   : Send
+{
+  fn get_partial_session
+    ( self: Box < Self > )
+    -> PartialSession < C, A >
+  where
+    C: Context,
+    A: Protocol,
+  ;
+}
+
+pub trait PartialSessionWitness < C, A, K >
+  : HasPartialSession < C, A >
 {
   fn with_partial_session
     ( self: Box < Self >,
@@ -31,10 +43,66 @@ pub trait HasPartialSession < C, A, K >
   ;
 }
 
+impl < C, A >
+  HasPartialSession < C, A >
+  for PartialSession < C, A >
+where
+  C: Context,
+  A: Protocol,
+{
+  fn get_partial_session
+    ( self: Box < Self > )
+    -> PartialSession < C, A >
+  {
+    *self
+  }
+}
+
+impl < C, A, K >
+  PartialSessionWitness < C, A, K >
+  for PartialSession < C, A >
+where
+  C: Context,
+  A: Protocol,
+{
+  fn with_partial_session
+    ( self: Box < Self >,
+      cont: Box < dyn NeedPartialSession < C, A, K > >
+    ) -> K
+  {
+    cont.on_partial_session(*self)
+  }
+}
+
 pub struct WrapPartialSession < C, A > {
   session:
-    Box < dyn HasPartialSession <
+    Box < dyn PartialSessionWitness <
       C, A, Box < dyn Any > > >
+}
+
+pub fn wrap_session < C, A >
+  ( session: PartialSession < C, A > )
+  -> WrapPartialSession < C, A >
+where
+  C: Context,
+  A: Protocol,
+{
+  WrapPartialSession {
+    session: Box::new( session )
+  }
+}
+
+impl < C, A >
+  WrapPartialSession < C, A >
+where
+  C: Context,
+  A: Protocol,
+{
+  fn get_session( self )
+    -> PartialSession < C, A >
+  {
+    self.session.get_partial_session()
+  }
 }
 
 impl TyCon for ReceiverApp {}

@@ -21,13 +21,20 @@ use crate::protocol::choice::nary::*;
 pub struct InjectSessionApp < Root, C >
   ( PhantomData <( Root, C )> );
 
-impl < Root, C > TyCon for InjectSessionApp < Root, C > {}
+impl < Root, C > TyCon
+  for InjectSessionApp < Root, C >
+where
+  C: 'static,
+  Root: 'static,
+{}
 
 impl < A, C, Root >
   TypeApp < A > for
   InjectSessionApp < Root, C >
 where
-  C: Context
+  C: Context,
+  A: 'static,
+  Root: 'static,
 {
   type Applied =
     InjectSession < Root, C, A >;
@@ -62,7 +69,8 @@ where
 {
   (inject.inject_session) (
     wrap_applied (
-        session ) )
+      wrap_session (
+        session ) ) )
 }
 
 type RootCont < C, Row > =
@@ -82,7 +90,8 @@ impl
   FieldLifter < Root >
   for LiftUnitToSession < C >
 where
-  C: Context
+  C: Context,
+  Root: 'static,
 {
   type SourceF = ();
 
@@ -102,6 +111,8 @@ where
         Applied < Self::SourceF, A >
     ) ->
       Applied < Self::InjectF, A >
+  where
+    A: 'static,
   {
     wrap_applied (
       InjectSession {
@@ -162,9 +173,6 @@ where
   }
 }
 
-// AppliedSum < Row, F >
-// row :: (Type -> Type) -> Type
-// f :: Type -> Type
 pub fn offer_choice
   < C, Row >
   ( cont1 : impl FnOnce (
@@ -174,8 +182,8 @@ pub fn offer_choice
       >
     ) ->
       AppliedSum <
-        Row, // :: (Type -> Type) -> Type
-        SessionApp < C > // :: Type -> Type
+        Row,
+        SessionApp < C >
       >
     + Send + 'static
   ) ->

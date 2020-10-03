@@ -4,7 +4,7 @@ use crate::base::nat::{ S, Z };
 use crate::base::protocol::{ Protocol };
 use crate::base::context::{ Context };
 
-pub trait Slot : 'static {
+pub trait Slot : Send + 'static {
   type Endpoint : Send;
 }
 

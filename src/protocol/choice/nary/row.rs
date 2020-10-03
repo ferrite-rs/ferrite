@@ -230,6 +230,7 @@ pub trait FieldLifter < Root >
         as TypeApp < A >
       > :: Applied
   where
+    A: 'static,
     Self::SourceF : TypeApp < A >,
     Self::TargetF : TypeApp < A >,
     Self::InjectF : TypeApp < A >,
