@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use async_std::sync::Receiver;
 
 use crate::base::nat::{ S, Z };
@@ -22,6 +23,7 @@ impl Slot for Empty {
 }
 
 pub trait ContextLens < C, A1, A2 >
+  : Send + 'static
 where
   C : Context,
   A1 : Slot,
@@ -51,6 +53,34 @@ where
     > :: Endpoints;
 }
 
+pub trait GenericLensCont < N, C, D, A, B, K >
+{
+  fn on_lens( self )
+    -> K
+  where
+    C: Context,
+    D: Context,
+    A: Slot,
+    B: Slot,
+    N:
+      ContextLens <
+        C, A, B,
+        Deleted = D
+      >
+  ;
+}
+
+pub trait GenericLens < C, D, A >
+  : Sized + Send + 'static
+{
+  fn with_lens < B, K >
+    ( cont: impl
+        GenericLensCont < Self, C, D, A, B, K > )
+    -> K
+  where
+    B: Slot,
+  ;
+}
 
 impl
   < C, A1, A2 >
@@ -83,6 +113,31 @@ where
       ( A2::Endpoint, C::Endpoints )
   {
     (p, r)
+  }
+}
+
+impl < C, A >
+  GenericLens <
+    ( A, C ),
+    C,
+    A
+  >
+  for Z
+where
+  A: Slot,
+  C: Context,
+{
+  fn with_lens < B, K >
+    ( cont: impl
+        GenericLensCont <
+          Z,
+          (A, C),
+          C, A, B, K >
+    ) -> K
+  where
+    B: Slot
+  {
+    cont.on_lens()
   }
 }
 
@@ -130,5 +185,93 @@ where
   {
     let r2 = N :: insert_target ( q, r1 );
     ( p, r2 )
+  }
+}
+
+struct SuccLensCont
+  < Cont, N, C, D, A, B1, B2, K >
+where
+  A: Slot,
+  Cont:
+    GenericLensCont <
+      S < N >,
+      (A, C),
+      (A, D),
+      B1, B2, K
+    >
+{
+  cont: Cont,
+  phantom: PhantomData <( N, C, D, A, B1, B2, K )>
+}
+
+impl
+  < Cont, N, C, D, A, B1, B2, K >
+  GenericLensCont <
+    N, C, D, B1, B2, K
+  >
+  for SuccLensCont <
+    Cont, N, C, D, A, B1, B2, K
+  >
+where
+  A: Slot,
+  Cont:
+    GenericLensCont <
+      S < N >,
+      (A, C),
+      (A, D),
+      B1, B2, K
+    >
+{
+  fn on_lens( self )
+    -> K
+  where
+    C: Context,
+    D: Context,
+    B1: Slot,
+    B2: Slot,
+    N:
+      ContextLens <
+        C, B1, B2,
+        Deleted = D
+      >
+  {
+    self.cont.on_lens()
+  }
+}
+
+impl < N, C, D, A, B1 >
+  GenericLens <
+    ( A, C ),
+    ( A, D ),
+    B1
+  >
+  for S < N >
+where
+  C: Context,
+  D: Context,
+  A: Slot,
+  B1: Slot,
+  N: GenericLens < C, D, B1 >
+{
+  fn with_lens < B2, K >
+    ( cont1: impl
+        GenericLensCont <
+          S < N >,
+          (A, C),
+          (A, D),
+          B1, B2, K
+        >
+    ) -> K
+  where
+    B2: Slot,
+  {
+    let cont2 = SuccLensCont ::
+      < _, N, C, D, A, B1, B2, K >
+      {
+        cont: cont1,
+        phantom: PhantomData,
+      };
+
+    N::with_lens( cont2 )
   }
 }

@@ -104,6 +104,16 @@ where
   }
 }
 
+pub fn get_row < Row, F >
+  (row: AppliedSum < Row, F > )
+  -> Box < Row::Field >
+where
+  F: TyCon,
+  Row: SumRow < F >,
+{
+  row.row.get_row()
+}
+
 pub fn wrap_row < Row, F >
   ( row: Row::Field )
   -> AppliedSum < Row, F >
@@ -275,7 +285,7 @@ where
     ) ->
       R
   where
-    A: 'static,
+    A: Send + 'static,
   ;
 }
 

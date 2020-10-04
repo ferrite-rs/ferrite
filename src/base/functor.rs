@@ -1,7 +1,7 @@
 use std::any::Any;
 use std::marker::PhantomData;
 
-pub trait TyCon : 'static
+pub trait TyCon : Sized + 'static
 { }
 
 pub trait TypeApp < A > : TyCon
@@ -198,7 +198,27 @@ where
   type Applied = X;
 }
 
-pub trait Functor : TyCon + Sized
+pub trait TypeAppCont < F, A, K >
+{
+  fn on_type_app (self)
+    -> K
+  where
+    A: 'static,
+    F: TypeApp < A >
+  ;
+}
+
+pub trait TypeAppGeneric : TyCon
+{
+  fn with_type_app < A, K >
+    ( cont: impl TypeAppCont < Self, A, K > )
+    -> K
+  where
+    A: Send + 'static
+  ;
+}
+
+pub trait Functor : TypeAppGeneric
 {
   fn fmap < A, B >
     ( fa: Applied < Self, A >,
@@ -265,6 +285,20 @@ where
   A: Send + 'static,
 {
   type Applied = Identity < A >;
+}
+
+impl
+  TypeAppGeneric
+  for IdentityF
+{
+  fn with_type_app < A, K >
+    ( cont: impl TypeAppCont < IdentityF, A, K > )
+    -> K
+  where
+    A: Send + 'static
+  {
+    cont.on_type_app()
+  }
 }
 
 impl Functor for IdentityF
