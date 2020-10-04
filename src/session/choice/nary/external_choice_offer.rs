@@ -108,7 +108,7 @@ where
           ( Applied < Self::TargetF, A > )
           -> Root
         + Send + 'static,
-      row:
+      _row:
         Applied < Self::SourceF, A >
     ) ->
       Applied < Self::InjectF, A >

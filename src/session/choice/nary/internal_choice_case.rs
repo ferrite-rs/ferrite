@@ -23,7 +23,7 @@ use crate::protocol::choice::nary::*;
 use super::internal_session::*;
 
 pub struct InjectSessionApp < N, C, B, Row, Del, Root >
-  ( PhantomData <( N, C, B, Row, Root )> );
+  ( PhantomData <( N, C, B, Row, Del, Root )> );
 
 impl < N, C, B, Row, Del, Root > TyCon
   for InjectSessionApp < N, C, B, Row, Del, Root >
@@ -398,7 +398,7 @@ where
           ( Applied < Self::TargetF, A > )
           -> Root
         + Send + 'static,
-      row:
+      _row:
         Applied < Self::SourceF, A >
     ) ->
       Applied < Self::InjectF, A >

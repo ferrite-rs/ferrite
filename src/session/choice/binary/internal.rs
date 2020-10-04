@@ -98,16 +98,18 @@ pub type ContSum < N, C, A1, A2, B > =
     >
   >;
 
-pub type InjectCont < N, C, A1, A2, B > =
+pub type InjectCont < N, C, A1, A2, B, Del > =
   EitherRow <
     choice::InjectSession <
       N, C, A1, B,
       Either < A1, A2 >,
+      Del,
       ContSum < N, C, A1, A2, B >
     >,
     choice::InjectSession <
       N, C, A2, B,
       Either < A1, A2 >,
+      Del,
       ContSum < N, C, A1, A2, B >
     >,
   >;
@@ -117,7 +119,7 @@ pub fn case
   ( n : N,
     cont : impl
       FnOnce (
-        InjectCont < N, C, A1, A2, B >
+        InjectCont < N, C, A1, A2, B, D >
       ) ->
         ContSum < N, C, A1, A2, B >
       + Send + 'static
@@ -151,5 +153,6 @@ where
       Deleted = D
     >
 {
-  nary::case ( n, cont )
+  todo!()
+  // nary::case ( n, cont )
 }

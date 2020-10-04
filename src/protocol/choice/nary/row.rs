@@ -15,6 +15,24 @@ where
   type Field: Send + 'static;
 }
 
+pub trait WrapRow < F >
+  : SumRow < F >
+where
+  F: TyCon,
+{
+  type Unwrapped: Send + 'static;
+
+  fn wrap_row
+    ( row: Self::Unwrapped )
+    -> Self::Field
+  ;
+
+  fn unwrap_row
+    ( row: Self::Field )
+    -> Self::Unwrapped
+  ;
+}
+
 pub trait HasRow < Row, F >
   : Send
 {
@@ -151,7 +169,8 @@ where
     Sum <
       Applied < F, A >,
       AppliedSum < R, F >,
-    >;
+    >
+  ;
 }
 
 impl < F >
@@ -161,6 +180,77 @@ where
   F: TyCon
 {
   type Field = Bottom;
+}
+
+impl < F, A, R >
+  WrapRow < F > for
+  ( A, R )
+where
+  A: Send + 'static,
+  R: WrapRow < F >,
+  F: TypeApp < A >,
+{
+  type Unwrapped =
+    Sum <
+      F::Applied,
+      R::Unwrapped
+    >
+  ;
+
+  fn wrap_row
+    ( row1: Self::Unwrapped )
+    -> Self::Field
+  {
+    match row1 {
+      Sum::Inl(field) => {
+        Sum::Inl( wrap_applied( field ) )
+      }
+      Sum::Inr(row2) => {
+        let row3 = R::wrap_row( row2 );
+        Sum::Inr( wrap_row( row3 ) )
+      }
+    }
+  }
+
+  fn unwrap_row
+    ( row1: Self::Field )
+    -> Self::Unwrapped
+  {
+    match row1 {
+      Sum::Inl(field1) => {
+        let field2 = *field1.get_applied();
+        Sum::Inl( field2 )
+      }
+      Sum::Inr(row2) => {
+        let row3 = *row2.get_row();
+        let row4 = R::unwrap_row( row3 );
+        Sum::Inr( row4 )
+      }
+    }
+  }
+}
+
+impl < F >
+  WrapRow < F >
+  for ()
+where
+  F: TyCon
+{
+  type Unwrapped = Bottom;
+
+  fn wrap_row
+    ( row: Self::Unwrapped )
+    -> Self::Field
+  {
+    row
+  }
+
+  fn unwrap_row
+    ( row: Self::Field )
+    -> Self::Unwrapped
+  {
+    row
+  }
 }
 
 pub struct Merge < T1, T2 >
@@ -179,7 +269,7 @@ pub fn absurd < F, A >
 where
   F: TyCon,
 {
-  let row2 = row1.get_row();
+  let row2 = *row1.get_row();
   match row2 {}
 }
 
@@ -390,7 +480,7 @@ where
     F1: TyCon,
     F2: TyCon,
   {
-    match row1 {}
+    absurd(row1)
   }
 }
 
@@ -440,7 +530,7 @@ impl IntersectSum for ()
   fn intersect_sum
     < F1, F2 >
     ( row1: AppliedSum < (), F1 >,
-      row2: AppliedSum < (), F2 >,
+      _row2: AppliedSum < (), F2 >,
     ) ->
       Option <
         AppliedSum <
@@ -512,8 +602,7 @@ impl SumFunctor for ()
     F2: TyCon,
     T: NaturalTransformation < F1, F2 >
   {
-    let row2 = row1.get_row();
-    match row2 {}
+    absurd(row1)
   }
 }
 
@@ -553,8 +642,8 @@ impl
   for ()
 {
   fn lift_sum_inject < L, Root >
-    ( ctx: L,
-      inject:
+    ( _ctx: L,
+      _inject:
         impl Fn
           ( AppliedSum < Self, L::TargetF > )
           -> Root
@@ -565,7 +654,7 @@ impl
   where
     L: FieldLifter < Root >
   {
-    match sum {}
+    absurd(sum)
   }
 }
 
@@ -632,7 +721,7 @@ impl
 {
   fn elim_sum
     < F, E, R >
-    ( elim_field: E,
+    ( _elim_field: E,
       row: AppliedSum < Self, F >
     ) ->
       R
@@ -640,7 +729,7 @@ impl
     F: TyCon,
     E: ElimField < F, R >,
   {
-    match row {}
+    absurd(row)
   }
 }
 
