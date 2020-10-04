@@ -155,7 +155,7 @@ where
   }
 }
 
-pub fn run_with_applied < F, A, K >
+pub fn with_applied < F, A, K >
   ( applied: Applied < F, A >,
     cont1: Box < dyn TypeAppWitnessCont < F, A, K > >
   ) -> Box < K >

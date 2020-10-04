@@ -28,7 +28,7 @@ where
   ;
 
   fn unwrap_row
-    ( row: Self::Field )
+    ( row: AppliedSum < Self, F > )
     -> Self::Unwrapped
   ;
 }
@@ -213,18 +213,17 @@ where
   }
 
   fn unwrap_row
-    ( row1: Self::Field )
+    ( row1: AppliedSum < Self, F > )
     -> Self::Unwrapped
   {
-    match row1 {
+    match *row1.get_row() {
       Sum::Inl(field1) => {
         let field2 = *field1.get_applied();
         Sum::Inl( field2 )
       }
       Sum::Inr(row2) => {
-        let row3 = *row2.get_row();
-        let row4 = R::unwrap_row( row3 );
-        Sum::Inr( row4 )
+        let row3 = R::unwrap_row( row2 );
+        Sum::Inr( row3 )
       }
     }
   }
@@ -246,10 +245,10 @@ where
   }
 
   fn unwrap_row
-    ( row: Self::Field )
+    ( row: AppliedSum < Self, F > )
     -> Self::Unwrapped
   {
-    row
+    *row.get_row()
   }
 }
 

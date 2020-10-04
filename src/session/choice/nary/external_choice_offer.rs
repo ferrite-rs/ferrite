@@ -74,7 +74,7 @@ where
         session ) ) )
 }
 
-type RootCont < C, Row > =
+pub type RootCont < C, Row > =
   InjectSessionApp <
     AppliedSum <
       Row,
@@ -236,16 +236,13 @@ where
 
 pub fn offer_choice
   < C, Row >
-  ( cont1 : impl FnOnce (
-      AppliedSum <
-        Row,
-        RootCont < C, Row >
-      >
-    ) ->
-      AppliedSum <
-        Row,
-        SessionApp < C >
-      >
+  ( cont1 : impl FnOnce
+      ( Row::Unwrapped )
+      ->
+        AppliedSum <
+          Row,
+          SessionApp < C >
+        >
     + Send + 'static
   ) ->
     PartialSession < C, ExternalChoice < Row > >
@@ -257,6 +254,7 @@ where
   Row : SplitRow,
   Row : SumFunctor,
   Row : SumFunctorInject,
+  Row : WrapRow < RootCont < C, Row > >,
 {
   unsafe_create_session (
     async move | ctx, sender1 | {
@@ -275,7 +273,9 @@ where
           choice
         );
 
-      let cont4 = cont1 ( cont3 );
+      let cont3a = Row::unwrap_row( cont3 );
+
+      let cont4 = cont1 ( cont3a );
 
       let cont5 = Row::lift_sum_inject (
         RunSession { ctx: ctx },

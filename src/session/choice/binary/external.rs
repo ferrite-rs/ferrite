@@ -4,7 +4,6 @@ use crate::session::choice::nary;
 use crate::session::choice::nary::external_choice_offer as choice;
 
 use crate::base::{
-  Applied,
   Protocol,
   Context,
   ContextLens,
@@ -16,67 +15,27 @@ use crate::protocol::choice::binary:: {
 };
 
 pub type ContSum < C, A, B > =
-  Sum <
-    PartialSession < C, A >,
-    Sum <
-      PartialSession < C, B >,
-      Bottom
-    >
-  >;
-
-pub type InjectCont < C, A, B > =
-  EitherRow <
-    choice::InjectSession <
-      ContSum < C, A, B >,
-      C,
-      A
-    >,
-    choice::InjectSession <
-      ContSum < C, A, B >,
-      C,
-      B
-    >,
-  >;
-
-type ContSumWrapped < C, A, B > =
-  Sum <
-    Applied < SessionApp < C >, A >,
-    Sum <
-    Applied < SessionApp < C >, B >,
-      Bottom
-    >
+  AppliedSum <
+    Either < A, B >,
+    SessionApp < C >
   >
 ;
 
-// fn wrap_cont_sum < C, A, B >
-//   ( row1: ContSum < C, A, B > )
-//   -> ContSumWrapped < C, A, B >
-// where
-//   A: Protocol,
-//   B: Protocol,
-//   C: Context,
-// {
-//   match row1 {
-//     Sum::Inl( row2 ) => {
-//       todo!()
-//     }
-//     Sum::Inr( row2 ) => {
-//       match row2 {
-//         Sum::Inl( row3 ) => {
-//           todo!()
-//         }
-//         Sum::Inr( row3 ) => {
-//           todo!()
-//         }
-//       }
-//     }
-//   }
-// }
+pub type InjectCont < C, A, B > =
+  < Either < A, B >
+    as WrapRow <
+      choice::RootCont <
+        C,
+        Either < A, B >
+      >
+    >
+  > :: Unwrapped
+;
 
 pub fn offer_choice < C, A, B >
   ( cont : impl FnOnce
       ( InjectCont < C, A, B > )
-      -> ContSumWrapped < C, A, B >
+      -> ContSum < C, A, B >
       + Send + 'static
   ) ->
     PartialSession <
@@ -88,8 +47,7 @@ where
   B : Protocol,
   C : Context
 {
-  // nary::offer_choice ( cont )
-  todo!()
+  nary::offer_choice ( cont )
 }
 
 pub fn choose_left

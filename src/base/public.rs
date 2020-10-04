@@ -17,3 +17,4 @@ pub use super::{
 
 pub use super::nat::*;
 pub use super::fix::*;
+pub use super::functor::*;

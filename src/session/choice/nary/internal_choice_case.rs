@@ -417,7 +417,7 @@ where
   }
 }
 
-type RootCont < Row, N, C, B, Del > =
+pub type RootCont < Row, N, C, B, Del > =
   InjectSessionApp <
     N, C, B, Row, Del,
     AppliedSum <
@@ -430,10 +430,7 @@ pub fn case
   < N, C, B, Row, Del >
   ( _ : N,
     cont1 : impl FnOnce (
-      AppliedSum <
-        Row,
-        RootCont < Row, N, C, B, Del >
-      >
+      Row::Unwrapped
     ) ->
       AppliedSum <
         Row,
@@ -459,6 +456,7 @@ where
   Row : ElimSum,
   Row : SplitRow,
   Row : SumFunctorInject,
+  Row : WrapRow < RootCont < Row, N, C, B, Del > >,
 {
   unsafe_create_session (
     async move | ctx1, sender | {
@@ -483,7 +481,9 @@ where
           selector_sum
         );
 
-      let cont4 = cont1 ( cont3 );
+      let cont3a = Row::unwrap_row( cont3 );
+
+      let cont4 = cont1 ( cont3a );
 
       let cont5 =
         Row::intersect_sum ( receiver_sum2, cont4 );

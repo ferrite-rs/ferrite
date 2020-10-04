@@ -1,6 +1,7 @@
 use crate::protocol::choice::nary::*;
 use crate::protocol::choice::nary::either::*;
 use crate::session::choice::nary;
+use crate::session::choice::nary::internal_session::*;
 use crate::session::choice::nary::internal_choice_case as choice;
 
 use crate::protocol::choice::binary::{
@@ -71,48 +72,65 @@ where
     case(cont_builder) :: Δ, P ⊕ Q, Δ' ⊢ S
  */
 
-pub type ContSum < N, C, A1, A2, B > =
-  Sum <
-    PartialSession <
-      < N as
-        ContextLens <
-          C,
-          InternalChoice < A1, A2 >,
-          A1
-        >
-      > :: Target,
-      B
-    >,
-    Sum <
-      PartialSession <
-        < N as
-          ContextLens <
-            C,
-            InternalChoice < A1, A2 >,
-            A2
-          >
-        > :: Target,
-        B
-      >,
-      Bottom
+pub type ContSum < N, C, A1, A2, B, Del > =
+  AppliedSum <
+    Either < A1, A2 >,
+    InternalSessionF <
+      N, C, B,
+      Either < A1, A2 >,
+      Del
     >
-  >;
+  >
+  // Sum <
+  //   PartialSession <
+  //     < N as
+  //       ContextLens <
+  //         C,
+  //         InternalChoice < A1, A2 >,
+  //         A1
+  //       >
+  //     > :: Target,
+  //     B
+  //   >,
+  //   Sum <
+  //     PartialSession <
+  //       < N as
+  //         ContextLens <
+  //           C,
+  //           InternalChoice < A1, A2 >,
+  //           A2
+  //         >
+  //       > :: Target,
+  //       B
+  //     >,
+  //     Bottom
+  //   >
+  // >
+;
 
 pub type InjectCont < N, C, A1, A2, B, Del > =
-  EitherRow <
-    choice::InjectSession <
-      N, C, A1, B,
-      Either < A1, A2 >,
-      Del,
-      ContSum < N, C, A1, A2, B >
-    >,
-    choice::InjectSession <
-      N, C, A2, B,
-      Either < A1, A2 >,
-      Del,
-      ContSum < N, C, A1, A2, B >
-    >,
-  >;
+  < Either < A1, A2 >
+    as WrapRow <
+      choice::RootCont <
+        Either < A1, A2 >,
+        N, C, B, Del >
+    >
+  > :: Unwrapped
+  // EitherRow <
+  //   choice::InjectSession <
+  //     N, C, A1, B,
+  //     Either < A1, A2 >,
+  //     Del,
+  //     ContSum < N, C, A1, A2, B >
+  //   >,
+  //   choice::InjectSession <
+  //     N, C, A2, B,
+  //     Either < A1, A2 >,
+  //     Del,
+  //     ContSum < N, C, A1, A2, B >
+  //   >,
+  // >
+;
 
 pub fn case
   < N, C, D, A1, A2, B >
@@ -121,7 +139,7 @@ pub fn case
       FnOnce (
         InjectCont < N, C, A1, A2, B, D >
       ) ->
-        ContSum < N, C, A1, A2, B >
+        ContSum < N, C, A1, A2, B, D >
       + Send + 'static
   ) ->
     PartialSession < C, B >
@@ -153,6 +171,5 @@ where
       Deleted = D
     >
 {
-  todo!()
-  // nary::case ( n, cont )
+  nary::case ( n, cont )
 }

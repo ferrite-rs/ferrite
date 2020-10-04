@@ -98,7 +98,7 @@ where
   C: Context,
   A: Protocol,
 {
-  fn get_session( self )
+  pub fn get_session( self )
     -> PartialSession < C, A >
   {
     self.session.get_partial_session()
