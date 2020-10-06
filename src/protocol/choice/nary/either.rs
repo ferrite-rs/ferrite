@@ -9,12 +9,8 @@ use crate::protocol::choice::nary::*;
 pub type Either < A, B > = ( A, ( B, () ) );
 
 pub type EitherRow < A, B > =
-  Sum <
-    A,
-    Sum <
-      B,
-      Bottom
-    >
+  Sum < A,
+    Sum < B, Bottom >
   >;
 
 #[allow(non_upper_case_globals)]
@@ -34,8 +30,11 @@ pub use EitherField::Left as Left;
 pub use EitherField::Right as Right;
 
 pub fn extract < A, B >
-  ( row : EitherRow < A, B > )
-  -> EitherField < A, B >
+  ( row :
+      Sum < A,
+        Sum < B, Bottom >
+      >
+  ) -> EitherField < A, B >
 {
   match row {
     Sum::Inl ( a ) => { Left ( a ) }

@@ -1,6 +1,6 @@
 #![feature(async_closure)]
-#[macro_use]
 
+#[macro_use]
 extern crate log;
 
 pub mod macros;

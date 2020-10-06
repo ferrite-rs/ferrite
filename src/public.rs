@@ -106,3 +106,7 @@ pub mod choice {
     pub use crate::session::choice::nary::*;
   }
 }
+
+pub use choice::nary::{
+  Sum
+};

@@ -1,6 +1,6 @@
 pub mod either;
 
-mod row;
+pub mod row;
 mod cons;
 mod internal_choice;
 mod external_choice;
