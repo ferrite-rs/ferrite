@@ -330,18 +330,18 @@ pub trait FieldLifter < Root >
 pub trait SumFunctorInject
   : RowCon
 {
-  fn lift_sum_inject < L, Root >
+  fn lift_sum_inject < L, Root, Inject >
     ( ctx: L,
-      inject:
-        impl Fn
-          ( AppliedSum < Self, L::TargetF > )
-          -> Root
-          + Send + 'static,
+      inject: Inject,
       sum: AppliedSum < Self, L::SourceF >,
     ) ->
       AppliedSum < Self, L::InjectF >
   where
-    L: FieldLifter < Root >
+    L: FieldLifter < Root >,
+    Inject:
+      Fn ( AppliedSum < Self, L::TargetF > )
+        -> Root
+        + Send + 'static,
   ;
 }
 
@@ -640,18 +640,18 @@ impl
   SumFunctorInject
   for ()
 {
-  fn lift_sum_inject < L, Root >
+  fn lift_sum_inject < L, Root, Inject >
     ( _ctx: L,
-      _inject:
-        impl Fn
-          ( AppliedSum < Self, L::TargetF > )
-          -> Root
-          + Send + 'static,
+      _inject: Inject,
       sum: AppliedSum < Self, L::SourceF >,
     ) ->
       AppliedSum < Self, L::InjectF >
   where
-    L: FieldLifter < Root >
+    L: FieldLifter < Root >,
+    Inject:
+      Fn ( AppliedSum < Self, L::TargetF > )
+        -> Root
+        + Send + 'static,
   {
     absurd(sum)
   }
@@ -664,18 +664,18 @@ where
   A: Send + 'static,
   R: SumFunctorInject,
 {
-  fn lift_sum_inject < L, Root >
+  fn lift_sum_inject < L, Root, Inject >
     ( ctx: L,
-      inject:
-        impl Fn
-          ( AppliedSum < Self, L::TargetF > )
-          -> Root
-          + Send + 'static,
+      inject: Inject,
       row1: AppliedSum < Self, L::SourceF >,
     ) ->
       AppliedSum < Self, L::InjectF >
   where
     L: FieldLifter < Root >,
+    Inject:
+      Fn ( AppliedSum < Self, L::TargetF > )
+        -> Root
+        + Send + 'static,
   {
     let row2 = *row1.get_row();
     match row2 {

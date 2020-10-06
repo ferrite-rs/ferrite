@@ -81,55 +81,16 @@ pub type ContSum < N, C, A1, A2, B, Del > =
       Del
     >
   >
-  // Sum <
-  //   PartialSession <
-  //     < N as
-  //       ContextLens <
-  //         C,
-  //         InternalChoice < A1, A2 >,
-  //         A1
-  //       >
-  //     > :: Target,
-  //     B
-  //   >,
-  //   Sum <
-  //     PartialSession <
-  //       < N as
-  //         ContextLens <
-  //           C,
-  //           InternalChoice < A1, A2 >,
-  //           A2
-  //         >
-  //       > :: Target,
-  //       B
-  //     >,
-  //     Bottom
-  //   >
-  // >
 ;
 
 pub type InjectCont < N, C, A1, A2, B, Del > =
   < Either < A1, A2 >
     as WrapRow <
-      choice::RootCont <
-        Either < A1, A2 >,
-        N, C, B, Del >
+      choice::InjectSessionApp <
+        N, C, B, Either < A1, A2 >, Del
+      >
     >
   > :: Unwrapped
-  // EitherRow <
-  //   choice::InjectSession <
-  //     N, C, A1, B,
-  //     Either < A1, A2 >,
-  //     Del,
-  //     ContSum < N, C, A1, A2, B >
-  //   >,
-  //   choice::InjectSession <
-  //     N, C, A2, B,
-  //     Either < A1, A2 >,
-  //     Del,
-  //     ContSum < N, C, A1, A2, B >
-  //   >,
-  // >
 ;
 
 pub fn case

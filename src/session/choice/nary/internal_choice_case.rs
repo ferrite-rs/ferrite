@@ -22,22 +22,21 @@ use crate::protocol::choice::nary::*;
 
 use super::internal_session::*;
 
-pub struct InjectSessionApp < N, C, B, Row, Del, Root >
-  ( PhantomData <( N, C, B, Row, Del, Root )> );
+pub struct InjectSessionApp < N, C, B, Row, Del >
+  ( PhantomData <( N, C, B, Row, Del )> );
 
-impl < N, C, B, Row, Del, Root > TyCon
-  for InjectSessionApp < N, C, B, Row, Del, Root >
+impl < N, C, B, Row, Del > TyCon
+  for InjectSessionApp < N, C, B, Row, Del >
 where
   N: 'static,
   C: 'static,
   B: 'static,
   Row: 'static,
   Del: 'static,
-  Root: 'static,
 {}
 
 pub trait SessionInjector
-  < N, C, A, B, Row, Del, Root >
+  < N, C, A, B, Row, Del >
   : Send
 {
   fn inject_session
@@ -47,7 +46,11 @@ pub trait SessionInjector
           N :: Target,
           B
         >
-    ) -> Root
+    ) ->
+      AppliedSum <
+        Row,
+        InternalSessionF < N, C, B, Row, Del >
+      >
   where
     A : Protocol,
     B : Protocol,
@@ -65,17 +68,49 @@ pub trait SessionInjector
 }
 
 pub struct InjectSession
-  < N, C, A, B, Row, Del, Root >
+  < N, C, A, B, Row, Del >
 {
   injector: Box < dyn
     SessionInjector
-    < N, C, A, B, Row, Del, Root >
+    < N, C, A, B, Row, Del >
   >
 }
 
-impl < N, C, A, B, Row, Del, Root >
+impl
+  < N, C, A, B, Row, Del >
+  InjectSession
+  < N, C, A, B, Row, Del >
+{
+  pub fn run_cont
+    ( self,
+      session:
+        PartialSession < N :: Target, B >
+    ) ->
+      AppliedSum <
+        Row,
+        InternalSessionF < N, C, B, Row, Del >
+      >
+  where
+    A : Protocol,
+    B : Protocol,
+    C : Context,
+    Del: Context,
+    Row : RowCon,
+    N :
+      ContextLens <
+        C,
+        InternalChoice < Row >,
+        A,
+        Deleted = Del
+      >
+  {
+    self.injector.inject_session(session)
+  }
+}
+
+impl < N, C, A, B, Row, Del >
   TypeApp < A > for
-  InjectSessionApp < N, C, B, Row, Del, Root >
+  InjectSessionApp < N, C, B, Row, Del >
 where
   N: Send + 'static,
   C: Send + 'static,
@@ -83,11 +118,10 @@ where
   B: Send + 'static,
   Row: Send + 'static,
   Del: Send + 'static,
-  Root: Send + 'static,
 {
   type Applied =
     InjectSession <
-      N, C, A, B, Row, Del, Root
+      N, C, A, B, Row, Del
     >;
 }
 
@@ -107,10 +141,7 @@ impl
     ( receiver: Applied < ReceiverApp, A > )
     ->
       Applied <
-        Merge <
-          ReceiverApp,
-          ()
-        >,
+        Merge < ReceiverApp, () >,
         A
       >
   where
@@ -124,11 +155,11 @@ impl
 }
 
 pub fn run_internal_cont
-  < N, C, A, B, Row, Del, Root >
+  < N, C, A, B, Row, Del >
 (
   inject :
     InjectSession <
-      N, C, A, B, Row, Del, Root
+      N, C, A, B, Row, Del
     >,
   session :
     PartialSession <
@@ -136,7 +167,10 @@ pub fn run_internal_cont
       B
     >
 ) ->
-  Root
+  AppliedSum <
+    Row,
+    InternalSessionF < N, C, B, Row, Del >
+  >
 where
   A : Protocol,
   B : Protocol,
@@ -321,23 +355,27 @@ pub struct LiftUnitToSession < N, C, A, Row, Del >
   ( PhantomData <( N, C, A, Row, Del )> );
 
 struct SessionInjectorImpl
-  < N, C, A, B, Row, Del, Root >
+  < N, C, A, B, Row, Del >
 {
-  injector: Box < dyn Fn
+  injector: Box < dyn FnOnce
     ( Applied <
         InternalSessionF < N, C, B, Row, Del >,
         A
       >
-    ) -> Root
+    ) ->
+      AppliedSum <
+        Row,
+        InternalSessionF < N, C, B, Row, Del >
+      >
     + Send + 'static
   >
 }
 
-impl < N, C, A, B, Row, Del, Root >
+impl < N, C, A, B, Row, Del >
   SessionInjector
-  < N, C, A, B, Row, Del, Root >
+  < N, C, A, B, Row, Del >
   for SessionInjectorImpl
-  < N, C, A, B, Row, Del, Root >
+  < N, C, A, B, Row, Del >
 {
   fn inject_session
     ( self: Box < Self >,
@@ -346,7 +384,11 @@ impl < N, C, A, B, Row, Del, Root >
           N :: Target,
           B
         >
-    ) -> Root
+    ) ->
+      AppliedSum <
+        Row,
+        InternalSessionF < N, C, B, Row, Del >
+      >
   where
     A : Protocol,
     B : Protocol,
@@ -370,14 +412,18 @@ impl < N, C, A, B, Row, Del, Root >
 }
 
 impl
-  < Root, N, C, B, Row, Del >
-  FieldLifter < Root >
+  < N, C, B, Row, Del >
+  FieldLifter <
+    AppliedSum <
+      Row,
+      InternalSessionF < N, C, B, Row, Del >
+    >
+  >
   for LiftUnitToSession < N, C, B, Row, Del >
 where
   B : Protocol,
   C : Context,
   Del : Context,
-  Root : Send + 'static,
   N : Send + 'static,
   Row : RowCon,
   InternalChoice < Row > :
@@ -389,14 +435,18 @@ where
     InternalSessionF < N, C, B, Row, Del >;
 
   type InjectF =
-    InjectSessionApp < N, C, B, Row, Del, Root >;
+    InjectSessionApp < N, C, B, Row, Del >;
 
   fn lift_field < A >
     ( self,
       inject1:
         impl Fn
           ( Applied < Self::TargetF, A > )
-          -> Root
+          ->
+            AppliedSum <
+              Row,
+              InternalSessionF < N, C, B, Row, Del >
+            >
         + Send + 'static,
       _row:
         Applied < Self::SourceF, A >
@@ -416,15 +466,6 @@ where
     wrap_applied( inject3 )
   }
 }
-
-pub type RootCont < Row, N, C, B, Del > =
-  InjectSessionApp <
-    N, C, B, Row, Del,
-    AppliedSum <
-      Row,
-      InternalSessionF < N, C, B, Row, Del >
-    >
-  >;
 
 pub fn case
   < N, C, B, Row, Del >
@@ -456,7 +497,10 @@ where
   Row : ElimSum,
   Row : SplitRow,
   Row : SumFunctorInject,
-  Row : WrapRow < RootCont < Row, N, C, B, Del > >,
+  Row :
+    WrapRow <
+      InjectSessionApp < N, C, B, Row, Del >
+    >,
 {
   unsafe_create_session (
     async move | ctx1, sender | {
@@ -473,13 +517,18 @@ where
       let (receiver_sum2, selector_sum) =
         Row::split_row(sum1);
 
-      let cont3 = Row::lift_sum_inject
-        ( LiftUnitToSession::
-            < N, C, B, Row, Del >
-            (PhantomData),
-          | x | { x },
-          selector_sum
-        );
+      let cont3 :
+        AppliedSum <
+          Row,
+          InjectSessionApp < N, C, B, Row, Del >
+        > =
+        Row::lift_sum_inject
+          ( LiftUnitToSession::
+              < N, C, B, Row, Del >
+              (PhantomData),
+            | x | { x },
+            selector_sum
+          );
 
       let cont3a = Row::unwrap_row( cont3 );
 

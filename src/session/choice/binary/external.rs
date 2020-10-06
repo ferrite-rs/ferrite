@@ -24,9 +24,9 @@ pub type ContSum < C, A, B > =
 pub type InjectCont < C, A, B > =
   < Either < A, B >
     as WrapRow <
-      choice::RootCont <
-        C,
-        Either < A, B >
+      choice::InjectSessionApp <
+        Either < A, B >,
+        C
       >
     >
   > :: Unwrapped

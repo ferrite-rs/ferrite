@@ -19,94 +19,163 @@ use crate::base::{
 
 use crate::protocol::choice::nary::*;
 
-pub struct InjectSessionApp < Root, C >
-  ( PhantomData <( Root, C )> );
+pub struct InjectSessionApp < Row, C >
+  ( PhantomData <( Row, C )> );
 
-impl < Root, C > TyCon
-  for InjectSessionApp < Root, C >
+impl < Row, C > TyCon
+  for InjectSessionApp < Row, C >
 where
   C: 'static,
-  Root: 'static,
+  Row: 'static,
 {}
 
-impl < A, C, Root >
+impl < A, C, Row >
   TypeApp < A > for
-  InjectSessionApp < Root, C >
+  InjectSessionApp < Row, C >
 where
   C: Context,
   A: 'static,
-  Root: 'static,
+  Row: 'static,
 {
   type Applied =
-    InjectSession < Root, C, A >;
+    InjectSession < Row, C, A >;
+}
+
+pub trait SessionInjector
+  < Row, C, A >
+  : Send
+{
+  fn inject_session
+    ( self: Box < Self >,
+      session: PartialSession < C, A >
+    ) ->
+      AppliedSum <
+        Row,
+        SessionApp < C >
+      >
+  where
+    C: Context,
+    A: Protocol,
+  ;
 }
 
 pub struct InjectSession
-  < Root, C, A >
-where
-  C: Context
+  < Row, C, A >
 {
-  inject_session :
-    Box <
-      dyn FnOnce (
-        Applied < SessionApp < C >, A >
-      ) ->
-        Root
-      + Send
+  injector:
+    Box < dyn
+      SessionInjector < Row, C, A >
     >
 }
 
+impl < Row, C, A >
+  InjectSession < Row, C, A >
+{
+  pub fn run_cont
+    ( self,
+      session: PartialSession < C, A >
+    ) ->
+      AppliedSum <
+        Row,
+        SessionApp < C >
+      >
+  where
+    C: Context,
+    A: Protocol,
+  {
+    self.injector.inject_session( session )
+  }
+}
+
 pub fn run_external_cont
-  < C, A, Root >
+  < Row, C, A >
   ( inject :
-      InjectSession < Root, C, A >,
+      InjectSession < Row, C, A >,
     session :
       PartialSession < C, A >
   ) ->
-    Root
+    AppliedSum <
+      Row,
+      SessionApp < C >
+    >
 where
   A : Protocol,
   C : Context,
 {
-  (inject.inject_session) (
-    wrap_applied (
-      wrap_session (
-        session ) ) )
+  inject.injector.inject_session(session)
 }
 
-pub type RootCont < C, Row > =
-  InjectSessionApp <
+pub struct LiftUnitToSession < Row, C >
+  ( PhantomData <( Row, C )> );
+
+struct SessionInjectorImpl
+  < Row, C, A >
+{
+  injector: Box < dyn FnOnce
+    ( Applied < SessionApp < C >, A > )
+    ->
+      AppliedSum <
+        Row,
+        SessionApp < C >
+      >
+    + Send + 'static
+  >
+}
+
+impl < Row, C, A >
+  SessionInjector < Row, C, A >
+  for SessionInjectorImpl < Row, C, A >
+{
+  fn inject_session
+    ( self: Box < Self >,
+      session: PartialSession < C, A >
+    ) ->
+      AppliedSum <
+        Row,
+        SessionApp < C >
+      >
+  where
+    C: Context,
+    A: Protocol,
+  {
+    (self.injector)(
+      wrap_applied(
+        wrap_session(
+          session
+        ) ) )
+  }
+}
+
+impl
+  < Row, C >
+  FieldLifter <
     AppliedSum <
       Row,
       SessionApp < C >
-    >,
-    C
-  >;
-
-pub struct LiftUnitToSession < C >
-  ( PhantomData< C > );
-
-impl
-  < Root, C >
-  FieldLifter < Root >
-  for LiftUnitToSession < C >
+    >
+  >
+  for LiftUnitToSession < Row, C >
 where
   C: Context,
-  Root: 'static,
+  Row: 'static,
 {
   type SourceF = ();
 
   type TargetF = SessionApp < C >;
 
   type InjectF =
-    InjectSessionApp < Root, C >;
+    InjectSessionApp < Row, C >;
 
   fn lift_field < A >
     ( self,
-      inject:
+      inject1:
         impl Fn
           ( Applied < Self::TargetF, A > )
-          -> Root
+          ->
+            AppliedSum <
+              Row,
+              SessionApp < C >
+            >
         + Send + 'static,
       _row:
         Applied < Self::SourceF, A >
@@ -115,10 +184,15 @@ where
   where
     A: 'static,
   {
-    wrap_applied (
-      InjectSession {
-        inject_session : Box::new ( inject )
-      } )
+    let inject2 = SessionInjectorImpl {
+      injector: Box::new(inject1)
+    };
+
+    let inject3 = InjectSession {
+      injector : Box::new( inject2 )
+    };
+
+    wrap_applied(inject3)
   }
 }
 
@@ -254,7 +328,7 @@ where
   Row : SplitRow,
   Row : SumFunctor,
   Row : SumFunctorInject,
-  Row : WrapRow < RootCont < C, Row > >,
+  Row : WrapRow < InjectSessionApp < Row, C > >,
 {
   unsafe_create_session (
     async move | ctx, sender1 | {
@@ -267,21 +341,37 @@ where
 
       let (choice, sender3) = receiver2.recv().await.unwrap();
 
-      let cont3 = Row::lift_sum_inject
-        ( LiftUnitToSession::<C> (PhantomData),
-          | x | { x },
-          choice
-        );
+      let cont3 :
+        AppliedSum <
+          Row,
+          InjectSessionApp < Row, C >
+        > =
+        Row::lift_sum_inject
+          ( LiftUnitToSession::< Row, C >(PhantomData),
+            | x | { x },
+            choice
+          );
 
       let cont3a = Row::unwrap_row( cont3 );
 
       let cont4 = cont1 ( cont3a );
 
-      let cont5 = Row::lift_sum_inject (
-        RunSession { ctx: ctx },
-        | x | { x },
-        cont4
-      );
+      let cont5 :
+        AppliedSum <
+          Row,
+          Merge <
+          ReceiverApp,
+          Const <
+            Pin < Box < dyn
+              Future < Output=() >
+              + Send + 'static
+            > > > >
+        > =
+        Row::lift_sum_inject (
+          RunSession { ctx: ctx },
+          | x | { x },
+          cont4
+        );
 
       let (receiver_sum, cont6) = Row::split_row ( cont5 );
 

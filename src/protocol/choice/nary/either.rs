@@ -6,9 +6,7 @@ use crate::base::{
 
 use crate::protocol::choice::nary::*;
 
-pub type Either < A, B > = ( A, (B, ()) );
-// pub type Choice3 < A, B, C > = '[A, B, C];
-// pub type Choice3 < A, B, C > = ( A, (B, (C, ()) ));
+pub type Either < A, B > = ( A, ( B, () ) );
 
 pub type EitherRow < A, B > =
   Sum <
@@ -20,10 +18,12 @@ pub type EitherRow < A, B > =
   >;
 
 #[allow(non_upper_case_globals)]
-pub const LeftChoice : Z = Z::Value;
+pub const LeftChoice : Z =
+  Z::Value;
 
 #[allow(non_upper_case_globals)]
-pub const RightChoice : S<Z> = < S<Z> >::Value;
+pub const RightChoice : S<Z> =
+  < S<Z> >::Value;
 
 pub enum EitherField < A, B > {
   Left ( A ),
