@@ -45,6 +45,22 @@ pub trait HasRow < Row, F >
   ;
 }
 
+pub trait ExtractRow < T >
+{
+  fn extract (self)
+    -> T
+  ;
+}
+
+pub fn extract < R, T >
+  ( row: R )
+  -> T
+where
+  R: ExtractRow < T >
+{
+  row.extract()
+}
+
 pub trait RowWitnessCont < Row, F, K >
 {
   fn on_row_witness

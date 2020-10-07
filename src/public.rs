@@ -108,5 +108,8 @@ pub mod choice {
 }
 
 pub use choice::nary::{
-  Sum
+  Sum,
+  ExtractRow,
+  extract,
+  run_cont,
 };

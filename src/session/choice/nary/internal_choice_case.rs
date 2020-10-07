@@ -76,12 +76,30 @@ pub struct InjectSession
   >
 }
 
-impl
+impl < N, C, A, B, Row, Del >
+  RunCont < N::Target, B >
+  for InjectSession
   < N, C, A, B, Row, Del >
-  InjectSession
-  < N, C, A, B, Row, Del >
+where
+  A : Protocol,
+  B : Protocol,
+  C : Context,
+  Del: Context,
+  Row : RowCon,
+  N :
+    ContextLens <
+      C,
+      InternalChoice < Row >,
+      A,
+      Deleted = Del
+    >
 {
-  pub fn run_cont
+  type Ret = AppliedSum <
+    Row,
+    InternalSessionF < N, C, B, Row, Del >
+  >;
+
+  fn run_cont
     ( self,
       session:
         PartialSession < N :: Target, B >
@@ -89,19 +107,6 @@ impl
       AppliedSum <
         Row,
         InternalSessionF < N, C, B, Row, Del >
-      >
-  where
-    A : Protocol,
-    B : Protocol,
-    C : Context,
-    Del: Context,
-    Row : RowCon,
-    N :
-      ContextLens <
-        C,
-        InternalChoice < Row >,
-        A,
-        Deleted = Del
       >
   {
     self.injector.inject_session(session)
@@ -154,41 +159,7 @@ impl
   }
 }
 
-pub fn run_internal_cont
-  < N, C, A, B, Row, Del >
-(
-  inject :
-    InjectSession <
-      N, C, A, B, Row, Del
-    >,
-  session :
-    PartialSession <
-      N :: Target,
-      B
-    >
-) ->
-  AppliedSum <
-    Row,
-    InternalSessionF < N, C, B, Row, Del >
-  >
-where
-  A : Protocol,
-  B : Protocol,
-  C : Context,
-  Del: Context,
-  Row : RowCon,
-  N :
-    ContextLens <
-      C,
-      InternalChoice < Row >,
-      A,
-      Deleted = Del,
-    >,
-{
-  inject.injector.inject_session(session)
-}
-
-pub struct RunCont
+pub struct ContRunner1
   < N, C, B, Row, Del >
 where
   B : Protocol,
@@ -208,7 +179,7 @@ where
   phantom: PhantomData <( N, C, Row )>
 }
 
-pub struct ContRunner
+pub struct ContRunner2
   < N, C, A, B, Row, Del >
 where
   B : Protocol,
@@ -237,7 +208,7 @@ impl < N, C, A, B, Row, Del >
     N, C, A, B, Row, Del,
     Pin < Box < dyn Future < Output=() > + Send > >
   >
-  for ContRunner < N, C, A, B, Row, Del >
+  for ContRunner2 < N, C, A, B, Row, Del >
 where
   B : Protocol,
   C : Context,
@@ -298,7 +269,7 @@ impl < B, N, C, Row, Del >
       InternalSessionF < N, C, B, Row, Del >
     >,
     Pin < Box < dyn Future < Output=() > + Send > >
-  > for RunCont < N, C, B, Row, Del >
+  > for ContRunner1 < N, C, B, Row, Del >
 where
   B : Protocol,
   C : Context,
@@ -333,9 +304,9 @@ where
     let receiver2 = *receiver1.get_applied();
     let session2 = *session1.get_applied();
 
-    let RunCont { ctx, sender, .. } = self;
+    let ContRunner1 { ctx, sender, .. } = self;
 
-    let cont = ContRunner
+    let cont = ContRunner2
       :: < N, C, A, B, Row, Del >
       {
         ctx: ctx,
@@ -468,38 +439,35 @@ where
 }
 
 pub fn case
-  < N, C, B, Row, Del >
+  < N, C, D, B, Row >
   ( _ : N,
-    cont1 : impl FnOnce (
-      Row::Unwrapped
-    ) ->
-      AppliedSum <
-        Row,
-        InternalSessionF < N, C, B, Row, Del >
-      >
+    cont1 : impl FnOnce
+      ( Row::Unwrapped )
+      ->
+        AppliedSum <
+          Row,
+          InternalSessionF < N, C, B, Row, D >
+        >
       + Send + 'static,
   ) ->
     PartialSession < C, B >
 where
   B : Protocol,
   C : Context,
-  Del : Context,
+  D : Context,
+  Row : RowCon,
+  Row : ElimSum,
+  Row : SplitRow,
+  Row : SumFunctor,
+  Row : IntersectSum,
+  Row : SumFunctorInject,
+  Row : WrapRow < InjectSessionApp < N, C, B, Row, D > >,
   N :
     ContextLens <
       C,
       InternalChoice < Row >,
       Empty,
-      Deleted = Del,
-    >,
-  Row : RowCon,
-  Row : SumFunctor,
-  Row : IntersectSum,
-  Row : ElimSum,
-  Row : SplitRow,
-  Row : SumFunctorInject,
-  Row :
-    WrapRow <
-      InjectSessionApp < N, C, B, Row, Del >
+      Deleted = D,
     >,
 {
   unsafe_create_session (
@@ -520,11 +488,11 @@ where
       let cont3 :
         AppliedSum <
           Row,
-          InjectSessionApp < N, C, B, Row, Del >
+          InjectSessionApp < N, C, B, Row, D >
         > =
         Row::lift_sum_inject
           ( LiftUnitToSession::
-              < N, C, B, Row, Del >
+              < N, C, B, Row, D >
               (PhantomData),
             | x | { x },
             selector_sum
@@ -539,8 +507,8 @@ where
 
       match cont5 {
         Some ( cont6 ) => {
-          let cont7 = RunCont::
-            < N, C, B, Row, Del >
+          let cont7 = ContRunner1::
+            < N, C, B, Row, D >
             {
               ctx: ctx2,
               sender: sender,

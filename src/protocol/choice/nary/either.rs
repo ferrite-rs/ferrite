@@ -29,7 +29,20 @@ pub enum EitherField < A, B > {
 pub use EitherField::Left as Left;
 pub use EitherField::Right as Right;
 
-pub fn extract < A, B >
+impl < A, B >
+  ExtractRow < EitherField < A, B > >
+  for Sum < A,
+    Sum < B, Bottom >
+  >
+{
+  fn extract (self)
+    -> EitherField < A, B >
+  {
+    extract_either(self)
+  }
+}
+
+pub fn extract_either < A, B >
   ( row :
       Sum < A,
         Sum < B, Bottom >

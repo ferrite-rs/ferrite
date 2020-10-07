@@ -69,9 +69,20 @@ pub struct InjectSession
 }
 
 impl < Row, C, A >
-  InjectSession < Row, C, A >
+  RunCont < C, A >
+  for InjectSession < Row, C, A >
+where
+  C: Context,
+  A: Protocol
 {
-  pub fn run_cont
+  type Ret =
+    AppliedSum <
+      Row,
+      SessionApp < C >
+    >
+  ;
+
+  fn run_cont
     ( self,
       session: PartialSession < C, A >
     ) ->
@@ -79,30 +90,9 @@ impl < Row, C, A >
         Row,
         SessionApp < C >
       >
-  where
-    C: Context,
-    A: Protocol,
   {
     self.injector.inject_session( session )
   }
-}
-
-pub fn run_external_cont
-  < Row, C, A >
-  ( inject :
-      InjectSession < Row, C, A >,
-    session :
-      PartialSession < C, A >
-  ) ->
-    AppliedSum <
-      Row,
-      SessionApp < C >
-    >
-where
-  A : Protocol,
-  C : Context,
-{
-  inject.injector.inject_session(session)
 }
 
 pub struct LiftUnitToSession < Row, C >
@@ -321,8 +311,7 @@ pub fn offer_choice
   ) ->
     PartialSession < C, ExternalChoice < Row > >
 where
-  C : Context + Send,
-  Row : Send + 'static,
+  C : Context,
   Row : RowCon,
   Row : ElimSum,
   Row : SplitRow,

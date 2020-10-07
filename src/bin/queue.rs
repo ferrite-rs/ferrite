@@ -7,9 +7,6 @@ use std::pin::Pin;
 
 use ferrite::*;
 use ferrite::choice::binary::*;
-use ferrite::choice::nary::{
-  run_internal_cont
-};
 use ferrite::choice::nary::either as either;
 
 type Queue < A > =
@@ -104,28 +101,30 @@ fn read_queue () ->
   receive_channel ( | queue | {
     unfix_session_for ( queue,
       case ( queue, move | option | {
-        match either::extract(option) {
-          either::Left( cont ) => {
-            run_internal_cont ( cont,
-              wait (
-                queue, terminate () )
-              )
-          },
-          either::Right( cont ) => {
-            run_internal_cont ( cont,
-              receive_value_from ( queue,
-                async move | val | {
-                  println!("Receive value: {}", val);
+        match_choice! { option;
+          either::Left => {
+            wait ( queue, terminate () )
+          }
+          either::Right => {
+            receive_value_from ( queue,
+              async move | val | {
+                println!("Receive value: {}", val);
 
-                  include_session (
-                    read_queue (),
-                    | next | {
-                      send_channel_to (
-                        next,
-                        queue,
-                        forward ( next )
-                      ) })
-                } ) ) } } }) ) }) }
+                include_session (
+                  read_queue (),
+                  | next | {
+                    send_channel_to (
+                      next,
+                      queue,
+                      forward ( next )
+                    ) })
+              } )
+          }
+        }
+      })
+    )
+  })
+}
 
 pub fn queue_session () ->
   Session < End >

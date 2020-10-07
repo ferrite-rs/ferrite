@@ -1,6 +1,5 @@
 
 #[macro_export]
-#[allow(unused_macros)]
 macro_rules! Sum {
   ( $(,)? ) => {
     $crate::choice::nary::Bottom
@@ -12,12 +11,11 @@ macro_rules! Sum {
     >
   };
   ( $e:ty, $($tail:tt)* ) => {
-    $crate::choice::nary::Sum < $e, Sum!( $($tail)* ) >
+    $crate::choice::nary::Sum < $e, Sum!( $( $tail )* ) >
   };
 }
 
 #[macro_export]
-#[allow(unused_macros)]
 macro_rules! HList {
   ( $(,)? ) => {
     ()
@@ -31,113 +29,151 @@ macro_rules! HList {
 }
 
 #[macro_export]
+macro_rules! match_choice {
+  ( $choice:expr; $( $label:path => $e:expr $(,)? )+ ) => {
+    match $crate::extract( $choice ) {
+      $(
+        $label ( cont ) => {
+          $crate::run_cont ( cont, $e )
+        }
+      )*
+    }
+  }
+}
+
+#[macro_export]
+macro_rules! define_choice_protocol {
+  ( $name:ident; $( $protocols:ty ),+ $(,)? ) => {
+    pub type $name =
+        HList![ $( $protocols ),* ];
+  }
+}
+
+#[macro_export]
+macro_rules! define_choice_labels {
+  ( $( $labels:ident ),+ $(,)? ) => {
+    define_choice_labels![ $crate::Z; $( $labels ),* ];
+  };
+  ( $acc:ty; $label:ident ) => {
+    paste::paste! {
+      pub const [< $label Label >] : $acc =
+        < $acc >::Value;
+    }
+  };
+  ( $acc:ty; $label:ident, $( $labels:ident ),+ ) => {
+    paste::paste! {
+      pub const [< $label Label >] : $acc = < $acc >::Value;
+
+      define_choice_labels![ $crate::S < $acc >; $( $labels ),* ];
+    }
+  };
+}
+
+#[macro_export]
+macro_rules! define_choice_enum {
+  ( $name:ident; $( $labels:ident ),+ $(,)? ) => {
+    paste::paste! {
+      pub enum [< $name Choice >]
+        < $( [< $labels T >] ),* >
+      {
+        $( $labels ( [< $labels T >] ) ),*
+      }
+
+      pub use [< $name Choice >] :: {
+        $( $labels ),*
+      };
+    }
+  }
+}
+
+#[macro_export]
 #[allow(unused_macros)]
+macro_rules! match_extract {
+  ( $x:ident ;
+  ) => {
+    match $x {}
+  };
+  ( $x:ident ;
+    $label:ident
+  ) => {
+    paste::paste! {
+      match $x {
+        $crate::Sum::Inl ( [< $label:snake >] ) => {
+          $label ( [< $label:snake >] )
+        }
+        $crate::Sum::Inr ( bot ) => {
+          match bot { }
+        }
+      }
+    }
+  };
+  ( $x:ident ;
+    $label:ident, $( $labels:ident ),* $(,)?
+  ) => {
+    paste::paste! {
+      match $x {
+        $crate::Sum::Inl ( [< $label:snake >] ) => {
+          $label ( [< $label:snake >] )
+        }
+        $crate::Sum::Inr ( [< $label:snake _rest >] ) => {
+          match_extract! {
+            [< $label:snake _rest >] ;
+            $( $labels ),*
+          }
+        }
+      }
+    }
+  };
+}
+
+#[macro_export]
+#[allow(unused_macros)]
+macro_rules! define_extract_choice {
+  ( $name:ident ;
+    $( $labels:ident ),* $(,)?
+  ) => {
+    paste::paste! {
+      impl < $( [< $labels T >] ),* >
+        $crate::ExtractRow <
+          [< $name Choice >]
+          < $( [< $labels T >] ),* >
+        >
+        for Sum![ $( [< $labels T >] ),* ]
+      {
+        fn extract (self) ->
+          [< $name Choice >]
+          < $( [< $labels T >] ),* >
+        {
+          match_extract! {
+            self ;
+            $( $labels ),*
+          }
+        }
+      }
+    }
+  }
+}
+
+#[macro_export]
 macro_rules! define_choice {
-  ( $label1:ident: $protocol1:ty,
-    $label2:ident: $protocol2:ty
+  ( $name:ident ;
+    $( $labels:ident : $protocols:ty ),+
     $(,)?
   ) => {
-    paste::paste! {
-      pub type Protocol = HList![ $protocol1, $protocol2 ];
+    define_choice_protocol![ $name ;
+      $( $protocols ),*
+    ];
 
-      pub type AsSum < A, B > = Sum![ A, B ];
+    define_choice_labels![
+      $( $labels ),*
+    ];
 
-      pub const [< $label1 Label >] : $crate::Z =
-      $crate::Z::Value;
+    define_choice_enum![ $name ;
+      $( $labels ),*
+    ];
 
-      pub const [< $label2 Label >] : $crate::S < $crate::Z > =
-        < $crate::S < $crate::Z > >::Value;
-
-      pub enum Branch < A, B > {
-        $label1 ( A ),
-        $label2 ( B ),
-      }
-
-      pub use Branch::$label1 as $label1;
-      pub use Branch::$label2 as $label2;
-
-      pub fn extract < A, B >
-        ( row: Sum!( A, B ) )
-        -> Branch < A, B >
-      {
-        match row {
-          $crate::Sum::Inl ( a ) => {
-            Branch::$label1 ( a )
-          }
-          $crate::Sum::Inr (
-            $crate::Sum::Inl ( b )
-          ) => {
-            Branch::$label2 ( b )
-          }
-          $crate::Sum::Inr (
-            $crate::Sum::Inr ( bot )
-          ) => { match bot {} }
-        }
-      }
-    }
-  };
-
-  ( $label1:ident: $protocol1:ty,
-    $label2:ident: $protocol2:ty,
-    $label3:ident: $protocol3:ty
-    $(,)?
-  ) => {
-    paste::paste! {
-      pub type Protocol =
-        HList![ $protocol1, $protocol2, $protocol3 ];
-
-      pub type AsSum < A, B, C > = Sum![ A, B, C ];
-
-      pub const [< $label1 Label >] : $crate::Z =
-      $crate::Z::Value;
-
-      pub const [< $label2 Label >] :
-        $crate::S < $crate::Z > =
-        < $crate::S < $crate::Z > >::Value;
-
-      pub const [< $label3 Label >] :
-        $crate::S < $crate::S < $crate::Z > > =
-        < $crate::S < $crate::S < $crate::Z > > >::Value;
-
-      pub enum Branch < A, B,C > {
-        $label1 ( A ),
-        $label2 ( B ),
-        $label3 ( C ),
-      }
-
-      pub use Branch::$label1 as $label1;
-      pub use Branch::$label2 as $label2;
-      pub use Branch::$label3 as $label3;
-
-      pub fn extract < A, B, C >
-        ( row: Sum!( A, B, C ) )
-        -> Branch < A, B, C >
-      {
-        match row {
-          $crate::Sum::Inl ( a ) => {
-            Branch::$label1 ( a )
-          }
-          $crate::Sum::Inr (
-            $crate::Sum::Inl ( b )
-          ) => {
-            Branch::$label2 ( b )
-          }
-          $crate::Sum::Inr (
-            $crate::Sum::Inr (
-              $crate::Sum::Inl ( c )
-            )
-          ) => {
-            Branch::$label3 ( c )
-          }
-          $crate::Sum::Inr (
-            $crate::Sum::Inr (
-              $crate::Sum::Inr (
-                bot
-              )
-            )
-          ) => { match bot {} }
-        }
-      }
-    }
-  };
+    define_extract_choice![ $name ;
+      $( $labels ),*
+    ];
+  }
 }

@@ -13,25 +13,21 @@ pub fn external_choice_session ()
         either::Either <
           SendValue < String, End >,
           ReceiveValue < u64, End >
-        >
-      >
-    > =
-      offer_choice ( move | choice | {
-        match either::extract(choice) {
-          either::Left ( cont ) => {
-            run_external_cont ( cont,
-              send_value ( "provider_left".to_string(),
-                terminate() ) )
-          }
-          either::Right ( cont ) => {
-            run_external_cont ( cont,
-              receive_value ( async move | val | {
-                println! ( "received value: {}", val );
-                terminate()
-              }))
-          }
+        > > > =
+    offer_choice ( move | choice | {
+      match_choice!{ choice;
+        either::Left => {
+          send_value ( "provider_left".to_string(),
+            terminate() )
         }
-      });
+        either::Right => {
+          receive_value ( async move | val | {
+            println! ( "received value: {}", val );
+            terminate()
+          })
+        }
+      }
+    });
 
   let _client_left :
     Session <
@@ -43,17 +39,16 @@ pub fn external_choice_session ()
           >
         >,
         End
-      >
-    > =
-      receive_channel (| chan | {
-        choose ( chan, either::LeftChoice,
-          receive_value_from ( chan,
-            async move | val: String | {
-              println! ( "received string: {}", val );
+      > > =
+    receive_channel (| chan | {
+      choose ( chan, either::LeftChoice,
+        receive_value_from ( chan,
+          async move | val: String | {
+            println! ( "received string: {}", val );
 
-              wait ( chan, terminate() )
-            }) )
-      });
+            wait ( chan, terminate() )
+          }) )
+    });
 
   let client_right :
     Session <
@@ -65,13 +60,12 @@ pub fn external_choice_session ()
           >
         >,
         End
-      >
-    > =
-      receive_channel (| chan | {
-        choose ( chan, either::RightChoice,
-          send_value_to (chan, 42,
-            wait ( chan, terminate () ) ) )
-      });
+      > > =
+    receive_channel (| chan | {
+      choose ( chan, either::RightChoice,
+        send_value_to (chan, 42,
+          wait ( chan, terminate () ) ) )
+    });
 
   apply_channel ( client_right, provider )
 }

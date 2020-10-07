@@ -2,8 +2,11 @@
 
 use ferrite::*;
 use ferrite::choice::nary::*;
-use ferrite::choice::nary::either::*;
-use ferrite::choice::nary::either as either;
+use ferrite::choice::nary::either::{
+  Either,
+  LeftChoice,
+  RightChoice,
+};
 
 pub fn internal_choice_session ()
   -> Session < End >
@@ -12,29 +15,27 @@ pub fn internal_choice_session ()
     Session <
       ReceiveChannel <
         InternalChoice <
-          either::Either <
+          Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           > >,
         End
       > > =
   receive_channel ( | chan | {
-    case ( chan, move | choice1 | {
-      match either::extract(choice1) {
-        either::Left ( cont ) => {
-          run_internal_cont ( cont,
-            receive_value_from ( chan,
-              async move | val: String | {
-                println! ("receied string: {}", val);
-                wait ( chan,
-                  terminate () )
-              }) )
-        }
-        either::Right ( cont ) => {
-          run_internal_cont ( cont,
-            send_value_to ( chan, 42,
+    case ( chan, move | choice | {
+      match_choice! { choice;
+        either::Left => {
+          receive_value_from ( chan,
+            async move | val: String | {
+              println! ("receied string: {}", val);
               wait ( chan,
-                terminate () ) ) )
+                terminate () )
+            })
+        }
+        either::Right => {
+          send_value_to ( chan, 42,
+            wait ( chan,
+              terminate () ) )
         }
       }
     })
@@ -46,12 +47,10 @@ pub fn internal_choice_session ()
         Either <
           SendValue < String, End >,
           ReceiveValue < u64, End >
-        >
-      >
-    > =
-      offer_case ( LeftChoice,
-        send_value ( "provider_left".to_string(),
-          terminate() ) );
+        > > > =
+    offer_case ( LeftChoice,
+      send_value ( "provider_left".to_string(),
+        terminate() ) );
 
   let _provider_right :
     Session <
@@ -59,15 +58,13 @@ pub fn internal_choice_session ()
         Either <
           SendValue < String, End >,
           ReceiveValue < u64, End >
-        >
-      >
-    > =
-      offer_case ( RightChoice,
-        receive_value ( async move | val: u64 | {
-          println! ( "received int: {}", val );
-          terminate()
-        })
-      );
+        > > > =
+    offer_case ( RightChoice,
+      receive_value ( async move | val: u64 | {
+        println! ( "received int: {}", val );
+        terminate()
+      })
+    );
 
 
   apply_channel ( client, provider_left )

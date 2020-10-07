@@ -23,7 +23,6 @@ where
   C : Context,
   A : Protocol,
   B : Protocol,
-  Row : Send + 'static,
   Row : RowCon,
   N :
     ContextLens <

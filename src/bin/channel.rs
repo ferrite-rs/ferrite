@@ -9,9 +9,6 @@ use async_std::task::sleep;
 use ferrite::*;
 use ferrite::choice::binary::*;
 use ferrite::choice::nary::either::*;
-use ferrite::choice::nary::{
-  run_external_cont
-};
 
 // Example implementation of Rust channels using shared channels
 
@@ -57,20 +54,19 @@ where
           Some ( val ) => {
             fix_session (
               offer_choice ( move | option | {
-                match extract(option) {
-                  Left ( cont ) => {
-                    run_external_cont ( cont,
-                      send_value ( val,
-                        release_shared_session ( chan,
-                            partial_session (
-                              make_receiver ( source ) ) )
-                          ) )
-                  },
-                  Right ( cont ) => {
-                    run_external_cont ( cont,
+                match_choice! { option;
+                  Left => {
+                    send_value ( val,
                       release_shared_session ( chan,
-                        terminate () ) )
-                  } }
+                          partial_session (
+                            make_receiver ( source ) ) )
+                        )
+                  }
+                  Right => {
+                    release_shared_session ( chan,
+                      terminate () )
+                  }
+                }
               }) )
           },
           None => {
@@ -129,23 +125,20 @@ where
 {
   accept_shared_session(
     offer_choice ( | option | {
-      match extract(option) {
-        Left ( cont ) => {
-          run_external_cont ( cont,
-            receive_value ( async move | val | {
-              queue.push_back ( val );
-              detach_shared_session (
-                do_create_channel ( queue ) )
-            }) )
-        },
-        Right ( cont ) => {
-          run_external_cont ( cont, {
-            let m_val = queue.pop_front();
-
-            send_value ( m_val,
-              detach_shared_session (
-                do_create_channel ( queue ) ) )
+      match_choice! { option;
+        Left => {
+          receive_value ( async move | val | {
+            queue.push_back ( val );
+            detach_shared_session (
+              do_create_channel ( queue ) )
           })
+        }
+        Right => {
+          let m_val = queue.pop_front();
+
+          send_value ( m_val,
+            detach_shared_session (
+              do_create_channel ( queue ) ) )
         }
       }
     })

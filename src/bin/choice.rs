@@ -2,10 +2,6 @@
 
 use ferrite::*;
 use ferrite::choice::binary::*;
-use ferrite::choice::nary::{
-  run_external_cont,
-  run_internal_cont,
-};
 use ferrite::choice::nary::either as either;
 
 use std::time::Duration;
@@ -74,38 +70,36 @@ pub fn restaurant_session()
         >
       >
   = offer_choice(| option | {
-      match either::extract(option) {
-        either::Left ( cont ) => {
+      match_choice! { option;
+        either::Left => {
           println!("[MainCourse] Customer chose to eat beef steak");
 
-          run_external_cont ( cont,
-            send_value_async( async || {
-              println!("[MainCourse] Spending 7 seconds to prepare beef steak");
-              sleep(Duration::from_secs(7)).await;
+          send_value_async( async || {
+            println!("[MainCourse] Spending 7 seconds to prepare beef steak");
+            sleep(Duration::from_secs(7)).await;
 
-              ( BeefSteak{}
+            ( BeefSteak{}
 
-              , terminate_async ( async || {
-                  println!("[MainCourse] Served beef steak. Terminating main course protocol");
-                })
-              )
-            }))
+            , terminate_async ( async || {
+                println!("[MainCourse] Served beef steak. Terminating main course protocol");
+              })
+            )
+          })
         }
-        either::Right (cont) => {
+        either::Right => {
           println!("[MainCourse] Customer chose to eat pork chop");
 
-          run_external_cont ( cont,
-            send_value_async ( async || {
-              println!("[MainCourse] Spending 5 seconds to prepare pork chop");
-              sleep(Duration::from_secs(5)).await;
+          send_value_async ( async || {
+            println!("[MainCourse] Spending 5 seconds to prepare pork chop");
+            sleep(Duration::from_secs(5)).await;
 
-              ( PorkChop{}
+            ( PorkChop{}
 
-              , terminate_async ( async || {
-                  println!("[MainCourse] Served pork chop. Terminating main course protocol");
-                })
-              )
-            }))
+            , terminate_async ( async || {
+                println!("[MainCourse] Served pork chop. Terminating main course protocol");
+              })
+            )
+          })
         }
       }
     });
@@ -196,70 +190,70 @@ pub fn restaurant_session()
   = receive_channel ( move | menu_chan | {
       receive_channel_from ( menu_chan, move | soup_chan | {
         case( soup_chan, move | option | {
-          match either::extract (option) {
-            either::Left ( cont ) => {
+          match_choice! { option;
+            either::Left => {
               println!("[Diner] Restaurant offers mushroom soup today");
-              run_internal_cont ( cont,
-                receive_value_from( soup_chan, async move | _mushroom_soup | {
-                  println!("[Diner] Received mushroom soup. Spending 2 seconds drinking it");
-                  sleep(Duration::from_secs(2)).await;
-                  println!("[Diner] Finished drinking mushroom soup");
 
-                  println!("[Diner] Choosing pork chop for main");
-                  wait_async ( soup_chan, async move || {
-                    println!("[Diner] Soup protocol terminated");
+              receive_value_from( soup_chan, async move | _mushroom_soup | {
+                println!("[Diner] Received mushroom soup. Spending 2 seconds drinking it");
+                sleep(Duration::from_secs(2)).await;
+                println!("[Diner] Finished drinking mushroom soup");
 
-                    choose_right( menu_chan,
-                      receive_value_from( menu_chan, async move | _pork_chop | {
-                        println!("[Diner] Received pork chop. Spending 5 seconds eating it");
-                        sleep(Duration::from_secs(5)).await;
-                        println!("[Diner] Finished eating pork chop");
+                println!("[Diner] Choosing pork chop for main");
+                wait_async ( soup_chan, async move || {
+                  println!("[Diner] Soup protocol terminated");
 
-                        wait_async ( menu_chan, async || {
-                          println!("[Diner] Main course protocol terminated");
+                  choose_right( menu_chan,
+                    receive_value_from( menu_chan, async move | _pork_chop | {
+                      println!("[Diner] Received pork chop. Spending 5 seconds eating it");
+                      sleep(Duration::from_secs(5)).await;
+                      println!("[Diner] Finished eating pork chop");
 
-                          terminate_async ( async || {
-                            println!("[Diner] Spending 4 seconds in washroom");
-                            sleep(Duration::from_secs(4)).await;
-                            println!("[Diner] Leaving restaurant");
-                          })
+                      wait_async ( menu_chan, async || {
+                        println!("[Diner] Main course protocol terminated");
+
+                        terminate_async ( async || {
+                          println!("[Diner] Spending 4 seconds in washroom");
+                          sleep(Duration::from_secs(4)).await;
+                          println!("[Diner] Leaving restaurant");
                         })
-                      }))
-                  })
-                }))
+                      })
+                    }))
+                })
+              })
             }
-            either::Right (cont) => {
+            either::Right => {
               println!("[Diner] Restaurant offers tomato soup today");
-              run_internal_cont ( cont,
-                receive_value_from( soup_chan, async move | _tomato_soup | {
-                  println!("[Diner] Received tomato soup. Spending 1 second drinking it");
 
-                  sleep(Duration::from_secs(1)).await;
+              receive_value_from( soup_chan, async move | _tomato_soup | {
+                println!("[Diner] Received tomato soup. Spending 1 second drinking it");
 
-                  println!("[Diner] finished drinking tomato soup");
-                  println!("[Diner] Choosing beef steak for main");
+                sleep(Duration::from_secs(1)).await;
 
-                  wait_async ( soup_chan, async move || {
-                    println!("[Diner] Soup protocol terminated");
+                println!("[Diner] finished drinking tomato soup");
+                println!("[Diner] Choosing beef steak for main");
 
-                    choose_left( menu_chan,
-                      receive_value_from( menu_chan, async move | _beef_steak | {
-                        println!("[Diner] Received beef steak. Spending 6 seconds eating it");
-                        sleep(Duration::from_secs(6)).await;
-                        println!("[Diner] Finished eating beef steak.");
+                wait_async ( soup_chan, async move || {
+                  println!("[Diner] Soup protocol terminated");
 
-                        wait_async ( menu_chan, async || {
-                          println!("[Diner] Main course protocol terminated");
+                  choose_left( menu_chan,
+                    receive_value_from( menu_chan, async move | _beef_steak | {
+                      println!("[Diner] Received beef steak. Spending 6 seconds eating it");
+                      sleep(Duration::from_secs(6)).await;
+                      println!("[Diner] Finished eating beef steak.");
 
-                          terminate_async ( async || {
-                            println!("[Diner] Spending 3 seconds in washroom");
-                            sleep(Duration::from_secs(3)).await;
-                            println!("[Diner] Leaving restaurant");
-                          })
+                      wait_async ( menu_chan, async || {
+                        println!("[Diner] Main course protocol terminated");
+
+                        terminate_async ( async || {
+                          println!("[Diner] Spending 3 seconds in washroom");
+                          sleep(Duration::from_secs(3)).await;
+                          println!("[Diner] Leaving restaurant");
                         })
-                      }))
-                  })
-                }))
+                      })
+                    }))
+                })
+              })
             }
           }
         })
