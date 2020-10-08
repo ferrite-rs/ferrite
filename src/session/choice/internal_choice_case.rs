@@ -250,7 +250,7 @@ where
 }
 
 impl < B, N, C, Row, Del >
-  ElimField <
+  ElimApplied <
     Merge <
       ReceiverApp,
       InternalSessionF < N, C, B, Row, Del >
@@ -371,7 +371,7 @@ impl < N, C, A, B, Row, Del >
 
 impl
   < N, C, B, Row, Del >
-  FieldLifter <
+  AppliedLifter <
     AppliedSum <
       Row,
       InternalSessionF < N, C, B, Row, Del >

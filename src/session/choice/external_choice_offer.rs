@@ -126,7 +126,7 @@ impl < Row, C, A >
 
 impl
   < Row, C >
-  FieldLifter <
+  AppliedLifter <
     AppliedSum <
       Row,
       SessionApp < C >
@@ -232,7 +232,7 @@ where
 
 impl
   < Root, C >
-  FieldLifter < Root >
+  AppliedLifter < Root >
   for RunSession < C >
 where
   C : Context,

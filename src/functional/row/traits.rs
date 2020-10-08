@@ -8,16 +8,16 @@ pub trait RowCon
   : Sized + Send + 'static
 {}
 
-pub trait SumRow < F >
+pub trait RowApp < F >
   : RowCon
 where
   F: TyCon,
 {
-  type Field: Send + 'static;
+  type Applied: Send + 'static;
 }
 
 pub trait WrapRow < F >
-  : SumRow < F >
+  : RowApp < F >
 where
   F: TyCon,
 {
@@ -25,7 +25,7 @@ where
 
   fn wrap_row
     ( row: Self::Unwrapped )
-    -> Self::Field
+    -> Self::Applied
   ;
 
   fn unwrap_row
@@ -39,10 +39,10 @@ pub trait HasRow < Row, F >
 {
   fn get_row
     ( self: Box < Self > )
-    -> Box < Row::Field >
+    -> Box < Row::Applied >
   where
     F: TyCon,
-    Row: SumRow < F >,
+    Row: RowApp < F >,
   ;
 }
 
@@ -57,11 +57,11 @@ pub trait RowWitnessCont < Row, F, K >
 {
   fn on_row_witness
     ( self: Box < Self >,
-      row: Box < Row::Field >
+      row: Box < Row::Applied >
     ) -> K
   where
     F: TyCon,
-    Row: SumRow < F >,
+    Row: RowApp < F >,
   ;
 }
 
@@ -108,7 +108,7 @@ pub trait SumFunctor
   ;
 }
 
-pub trait FieldLifter < Root >
+pub trait AppliedLifter < Root >
 {
   type SourceF: TyCon;
   type TargetF: TyCon;
@@ -140,7 +140,7 @@ pub trait SumFunctorInject
     ) ->
       AppliedSum < Self, L::InjectF >
   where
-    L: FieldLifter < Root >,
+    L: AppliedLifter < Root >,
     Inject:
       Fn ( AppliedSum < Self, L::TargetF > )
         -> Root
@@ -167,7 +167,7 @@ pub trait IntersectSum : RowCon
   ;
 }
 
-pub trait ElimField < F, R >
+pub trait ElimApplied < F, R >
 where
   F : TyCon
 {
@@ -191,7 +191,7 @@ pub trait ElimSum : RowCon
       R
   where
     F: TyCon,
-    E: ElimField < F, R >,
+    E: ElimApplied < F, R >,
   ;
 }
 

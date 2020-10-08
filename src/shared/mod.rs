@@ -22,7 +22,7 @@ pub use shared_to_linear :: {
 };
 
 pub use fix::{
-  SharedTypeApp,
+  SharedRecApp,
 };
 
 pub use shared_session::{

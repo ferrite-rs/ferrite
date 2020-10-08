@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 use async_std::sync::{ Sender, Receiver, channel };
 
 use super::lock::Lock;
-use super::fix::SharedTypeApp;
+use super::fix::SharedRecApp;
 use super::protocol::SharedProtocol;
 use super::linear_to_shared::LinearToShared;
 use super::shared_to_linear::SharedToLinear;
@@ -85,7 +85,7 @@ pub fn accept_shared_session
     >
 where
   F : Protocol,
-  F : SharedTypeApp < SharedToLinear < F > >,
+  F : SharedRecApp < SharedToLinear < F > >,
   F::Applied : Protocol
 {
   unsafe_create_shared_session (
@@ -163,7 +163,7 @@ pub fn detach_shared_session
     >
 where
   F : Protocol,
-  F : SharedTypeApp < SharedToLinear < F > >,
+  F : SharedRecApp < SharedToLinear < F > >,
   F::Applied : Protocol,
   C : EmptyContext
 {
@@ -215,7 +215,7 @@ where
   C : Context,
   A : Protocol,
   F : Protocol,
-  F : SharedTypeApp < SharedToLinear < F > >,
+  F : SharedRecApp < SharedToLinear < F > >,
   C :
     AppendContext <
       ( F::Applied , () )
@@ -276,7 +276,7 @@ where
   A : Protocol,
   C : Context,
   F : Protocol,
-  F : SharedTypeApp < SharedToLinear < F > >,
+  F : SharedRecApp < SharedToLinear < F > >,
   N :
     ContextLens <
       C,
@@ -306,7 +306,7 @@ impl < F >
   >
 where
   F : Protocol,
-  F : SharedTypeApp < SharedToLinear < F > >,
+  F : SharedRecApp < SharedToLinear < F > >,
   F::Applied : Protocol,
 {
   pub fn acquire < C, A, Fut >

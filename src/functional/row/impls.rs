@@ -12,14 +12,14 @@ impl < S, Row, F >
 where
   F: TyCon,
   S: Send + 'static,
-  Row: SumRow < F, Field=S >,
+  Row: RowApp < F, Applied=S >,
 {
   fn get_row
     ( self: Box < Self > )
-    -> Box < Row::Field >
+    -> Box < Row::Applied >
   where
     F: TyCon,
-    Row: SumRow < F >,
+    Row: RowApp < F >,
   {
     self
   }
@@ -31,7 +31,7 @@ impl < S, Row, F, K >
 where
   F: TyCon,
   S: Send + 'static,
-  Row: SumRow < F, Field=S >,
+  Row: RowApp < F, Applied=S >,
 {
   fn with_witness
     ( self: Box < Self >,
@@ -54,14 +54,14 @@ impl RowCon for () {}
 impl RowCon for Bottom {}
 
 impl < F, A, R >
-  SumRow < F > for
+  RowApp < F > for
   ( A, R )
 where
   A: Send + 'static,
   F: TyCon,
   R: RowCon,
 {
-  type Field =
+  type Applied =
     Sum <
       Applied < F, A >,
       AppliedSum < R, F >,
@@ -70,12 +70,12 @@ where
 }
 
 impl < F >
-  SumRow < F > for
+  RowApp < F > for
   ()
 where
   F: TyCon
 {
-  type Field = Bottom;
+  type Applied = Bottom;
 }
 
 impl < F, A, R >
@@ -95,7 +95,7 @@ where
 
   fn wrap_row
     ( row1: Self::Unwrapped )
-    -> Self::Field
+    -> Self::Applied
   {
     match row1 {
       Sum::Inl(field) => {
@@ -135,7 +135,7 @@ where
 
   fn wrap_row
     ( row: Self::Unwrapped )
-    -> Self::Field
+    -> Self::Applied
   {
     row
   }
@@ -149,7 +149,7 @@ where
 }
 
 impl < X >
-  ElimField <
+  ElimApplied <
     Const < X >,
     X
   >
@@ -377,7 +377,7 @@ impl
     ) ->
       AppliedSum < Self, L::InjectF >
   where
-    L: FieldLifter < Root >,
+    L: AppliedLifter < Root >,
     Inject:
       Fn ( AppliedSum < Self, L::TargetF > )
         -> Root
@@ -401,7 +401,7 @@ where
     ) ->
       AppliedSum < Self, L::InjectF >
   where
-    L: FieldLifter < Root >,
+    L: AppliedLifter < Root >,
     Inject:
       Fn ( AppliedSum < Self, L::TargetF > )
         -> Root
@@ -456,7 +456,7 @@ impl
       R
   where
     F: TyCon,
-    E: ElimField < F, R >,
+    E: ElimApplied < F, R >,
   {
     absurd(row)
   }
@@ -477,7 +477,7 @@ where
       K
   where
     F: TyCon,
-    E: ElimField < F, K >,
+    E: ElimApplied < F, K >,
   {
     let row2 = *row1.get_row();
     match row2 {

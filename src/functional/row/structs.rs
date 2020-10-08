@@ -32,10 +32,10 @@ impl < Row, F >
   AppliedSum < Row, F >
 where
   F: TyCon,
-  Row: SumRow < F >,
+  Row: RowApp < F >,
 {
   pub fn get_row (self)
-    -> Box < Row::Field >
+    -> Box < Row::Applied >
   {
     self.row.get_row()
   }
@@ -54,11 +54,11 @@ impl < N >
 }
 
 pub fn wrap_row < Row, F >
-  ( row: Row::Field )
+  ( row: Row::Applied )
   -> AppliedSum < Row, F >
 where
   F: TyCon,
-  Row: SumRow < F >,
+  Row: RowApp < F >,
 {
   AppliedSum {
     row: Box::new( row )

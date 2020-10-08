@@ -13,10 +13,10 @@ where
 
 pub fn get_row < Row, F >
   (row: AppliedSum < Row, F > )
-  -> Box < Row::Field >
+  -> Box < Row::Applied >
 where
   F: TyCon,
-  Row: SumRow < F >,
+  Row: RowApp < F >,
 {
   row.get_row()
 }

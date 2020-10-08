@@ -15,7 +15,7 @@ pub fn offer_case
 where
   C : Context,
   A : Protocol,
-  Row : SumRow < ReceiverApp >,
+  Row : RowApp < ReceiverApp >,
   N :
     Prism <
       Row,

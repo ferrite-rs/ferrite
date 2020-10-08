@@ -13,24 +13,24 @@ use crate::protocol::{
 
 use crate::protocol::*;
 
-pub trait SharedTypeApp < X >
+pub trait SharedRecApp < X >
 {
   type Applied;
 }
 
 impl < X >
-  SharedTypeApp < X > for
+  SharedRecApp < X > for
   Z
 {
   type Applied = X;
 }
 
 impl < T, A, X >
-  SharedTypeApp < X > for
+  SharedRecApp < X > for
   SendValue < T, A >
 where
   T : Send + 'static,
-  A : SharedTypeApp < X >
+  A : SharedRecApp < X >
 {
   type Applied =
     SendValue <
@@ -40,11 +40,11 @@ where
 }
 
 impl < T, A, X >
-  SharedTypeApp < X > for
+  SharedRecApp < X > for
   ReceiveValue < T, A >
 where
   T : Send + 'static,
-  A : SharedTypeApp < X >
+  A : SharedRecApp < X >
 {
   type Applied =
     ReceiveValue <
@@ -53,26 +53,32 @@ where
     >;
 }
 
-impl < P, Q, R >
-  SharedTypeApp < R > for
-  Either < P, Q >
-where
-  P : SharedTypeApp < R >,
-  Q : SharedTypeApp < R >,
+impl < R >
+  SharedRecApp < R >
+  for ()
 {
-  type Applied =
-    Either <
-      P :: Applied,
-      Q :: Applied
-    >;
+  type Applied = ();
 }
 
 impl < P, Q, R >
-  SharedTypeApp < R > for
+  SharedRecApp < R > for
+  ( P, Q )
+where
+  P : SharedRecApp < R >,
+  Q : SharedRecApp < R >,
+{
+  type Applied =
+    ( P :: Applied,
+      Q :: Applied
+    );
+}
+
+impl < P, Q, R >
+  SharedRecApp < R > for
   SendChannel < P, Q >
 where
   P : Protocol,
-  Q : SharedTypeApp < R >,
+  Q : SharedRecApp < R >,
 {
   type Applied =
     SendChannel <
@@ -82,10 +88,10 @@ where
 }
 
 impl < A, B, X >
-  SharedTypeApp < X > for
+  SharedRecApp < X > for
   ReceiveChannel < A, B >
 where
-  B : SharedTypeApp < X >,
+  B : SharedRecApp < X >,
 {
   type Applied =
     ReceiveChannel <
@@ -95,31 +101,43 @@ where
 }
 
 impl < Row, A >
-  SharedTypeApp < A > for
+  SharedRecApp < A > for
   InternalChoice < Row >
 where
-  Row : SumRow < ReceiverApp >,
-  Row : SharedTypeApp < A >,
-  Row::Applied : SumRow < ReceiverApp >,
+  Row : RowApp < ReceiverApp >,
+  Row : SharedRecApp < A >,
+  < Row
+    as SharedRecApp < A >
+  >::Applied : RowApp < ReceiverApp >,
 {
   type Applied =
     InternalChoice <
-      Row::Applied
+      < Row
+        as SharedRecApp < A >
+      >::Applied
     >;
 }
 
 impl < Row, A >
-  SharedTypeApp < A > for
+  SharedRecApp < A > for
   ExternalChoice < Row >
 where
-  Row : SharedTypeApp < A >,
-  Row : SumRow < () >,
-  Row : SumRow < ReceiverApp >,
-  Row::Applied : SumRow < () >,
-  Row::Applied : SumRow < ReceiverApp >,
+  Row : SharedRecApp < A >,
+  Row : RowApp < () >,
+  Row : RowApp < ReceiverApp >,
+  < Row
+    as SharedRecApp < A >
+  >::Applied :
+    RowApp < () >,
+  < Row
+    as SharedRecApp < A >
+  >::Applied :
+    RowApp < ReceiverApp >,
 {
   type Applied =
     ExternalChoice <
-      Row::Applied
+      < Row
+        as SharedRecApp < A >
+      >::Applied
     >;
 }
