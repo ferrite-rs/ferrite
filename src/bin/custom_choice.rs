@@ -1,7 +1,6 @@
 #![feature(async_closure)]
 
 use ferrite::*;
-use ferrite::choice::nary::*;
 
 define_choice! { FooBarBaz;
   Foo : SendValue < String, End >,
@@ -17,23 +16,21 @@ pub fn external_choice_session ()
       ExternalChoice <
         FooBarBaz
       > > =
-    offer_choice ( move | choice | {
-      match_choice! { choice;
-        Foo => {
-          send_value ( "provider_foo".to_string(),
-            terminate() )
-        }
-        Bar => {
-          receive_value ( async move | val | {
-            println! ( "received bar value: {}", val );
-            terminate()
-          })
-        }
-        Baz => {
-          terminate()
-        }
+    offer_choice! {
+      Foo => {
+        send_value ( "provider_foo".to_string(),
+          terminate() )
       }
-    });
+      Bar => {
+        receive_value ( async move | val | {
+          println! ( "received bar value: {}", val );
+          terminate()
+        })
+      }
+      Baz => {
+        terminate()
+      }
+    };
 
   let client_bar :
     Session <

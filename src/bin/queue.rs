@@ -6,14 +6,15 @@ use async_std::task::sleep;
 use std::pin::Pin;
 
 use ferrite::*;
-use ferrite::choice::binary::*;
-use ferrite::choice::nary::either as either;
+use ferrite::choice::nary::either::*;
 
 type Queue < A > =
   Fix <
     InternalChoice <
-      End,
-      SendValue < A, Z >,
+      Either <
+        End,
+        SendValue < A, Z >,
+      >
     >
   >;
 
@@ -25,7 +26,7 @@ where
   A : Send + 'static
 {
   fix_session (
-    offer_left (
+    offer_case ( LeftLabel,
       terminate ()
     ) )
 }
@@ -48,7 +49,7 @@ where
     + Send + 'static,
 {
   fix_session (
-    offer_right (
+    offer_case ( RightLabel,
       send_value_async ( async move || {
         ( builder ().await
         , rest
@@ -100,28 +101,26 @@ fn read_queue () ->
 {
   receive_channel ( | queue | {
     unfix_session_for ( queue,
-      case ( queue, move | option | {
-        match_choice! { option;
-          either::Left => {
-            wait ( queue, terminate () )
-          }
-          either::Right => {
-            receive_value_from ( queue,
-              async move | val | {
-                println!("Receive value: {}", val);
-
-                include_session (
-                  read_queue (),
-                  | next | {
-                    send_channel_to (
-                      next,
-                      queue,
-                      forward ( next )
-                    ) })
-              } )
-          }
+      case! { queue ;
+        Left => {
+          wait ( queue, terminate () )
         }
-      })
+        Right => {
+          receive_value_from ( queue,
+            async move | val | {
+              println!("Receive value: {}", val);
+
+              include_session (
+                read_queue (),
+                | next | {
+                  send_channel_to (
+                    next,
+                    queue,
+                    forward ( next )
+                  ) })
+            } )
+        }
+      }
     )
   })
 }

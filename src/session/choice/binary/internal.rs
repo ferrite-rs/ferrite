@@ -46,7 +46,7 @@ where
   B : Protocol,
   C : Context
 {
-  nary::offer_case ( LeftChoice, cont )
+  nary::offer_case ( LeftLabel, cont )
 }
 
 pub fn offer_right
@@ -58,7 +58,7 @@ where
   B : Protocol,
   C : Context,
 {
-  nary::offer_case ( RightChoice, cont )
+  nary::offer_case ( RightLabel, cont )
 }
 
 /*

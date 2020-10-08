@@ -1,7 +1,6 @@
 use crate::base::{
   Z,
   S,
-  Nat,
 };
 
 use crate::protocol::choice::nary::*;
@@ -14,12 +13,12 @@ pub type EitherRow < A, B > =
   >;
 
 #[allow(non_upper_case_globals)]
-pub const LeftChoice : Z =
-  Z::Value;
+pub const LeftLabel : ChoiceSelector < Z > =
+  < ChoiceSelector < Z > >::new();
 
 #[allow(non_upper_case_globals)]
-pub const RightChoice : S<Z> =
-  < S<Z> >::Value;
+pub const RightLabel : ChoiceSelector < S<Z> > =
+  < ChoiceSelector < S < Z > > >::new();
 
 pub enum EitherField < A, B > {
   Left ( A ),

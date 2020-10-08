@@ -1,8 +1,8 @@
 use async_std::sync::{ channel };
 
 use crate::base::{
-  Protocol,
   Context,
+  Protocol,
   ContextLens,
   wrap_applied,
   PartialSession,

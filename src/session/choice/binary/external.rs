@@ -74,7 +74,7 @@ where
       A1
     >
 {
-  nary::choose ( n, LeftChoice, cont )
+  nary::choose ( n, LeftLabel, cont )
 }
 
 /*
@@ -104,5 +104,5 @@ where
       A2
     >
 {
-  nary::choose ( n, RightChoice, cont )
+  nary::choose ( n, RightLabel, cont )
 }

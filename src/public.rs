@@ -110,6 +110,13 @@ pub mod choice {
 pub use choice::nary::{
   Sum,
   ExtractRow,
+  InternalChoice,
+  ExternalChoice,
+  ChoiceSelector,
   extract,
   run_cont,
+  case,
+  choose,
+  offer_case,
+  offer_choice,
 };

@@ -29,7 +29,7 @@ macro_rules! HList {
 }
 
 #[macro_export]
-macro_rules! match_choice {
+macro_rules! match_choice_value {
   ( $choice:expr; $( $label:path => $e:expr $(,)? )+ ) => {
     match $crate::extract( $choice ) {
       $(
@@ -42,11 +42,53 @@ macro_rules! match_choice {
 }
 
 #[macro_export]
+macro_rules! match_choice {
+  ( $( $label:path => $e:expr $(,)? )+ ) => {
+    move | ferrite_choice_internal__ | {
+      match_choice_value! { ferrite_choice_internal__;
+        $( $label => $e ),*
+      }
+    }
+  };
+}
+
+#[macro_export]
+macro_rules! offer_choice {
+  ( $( $label:path => $e:expr $(,)? )+ ) => {
+    $crate::offer_choice (
+      match_choice! {
+        $( $label => $e ),*
+      }
+    )
+  }
+}
+
+#[macro_export]
+macro_rules! case {
+  ( $chan:expr ; $( $label:path => $e:expr $(,)? )+ ) => {
+    $crate::case ( $chan,
+      match_choice! {
+        $( $label => $e ),*
+      }
+    )
+  }
+}
+
+#[macro_export]
 macro_rules! define_choice_protocol {
-  ( $name:ident; $( $protocols:ty ),+ $(,)? ) => {
+  ( $name:ident ;
+    $( $protocols:ty ),+ $(,)?
+  ) => {
     pub type $name =
         HList![ $( $protocols ),* ];
-  }
+  };
+
+  ( $name:ident < $( $types:ident ),+ $(,)? > ;
+    $( $protocols:ty ),+ $(,)?
+  ) => {
+    pub type $name < $( $types ),* > =
+        HList![ $( $protocols ),* ];
+  };
 }
 
 #[macro_export]
@@ -56,13 +98,16 @@ macro_rules! define_choice_labels {
   };
   ( $acc:ty; $label:ident ) => {
     paste::paste! {
-      pub const [< $label Label >] : $acc =
-        < $acc >::Value;
+      pub const [< $label Label >]
+        : $crate::ChoiceSelector < $acc > =
+        < $crate::ChoiceSelector < $acc > >::new();
     }
   };
   ( $acc:ty; $label:ident, $( $labels:ident ),+ ) => {
     paste::paste! {
-      pub const [< $label Label >] : $acc = < $acc >::Value;
+      pub const [< $label Label >]
+        : $crate::ChoiceSelector < $acc > =
+        < $crate::ChoiceSelector < $acc > >::new();
 
       define_choice_labels![ $crate::S < $acc >; $( $labels ),* ];
     }
@@ -175,5 +220,27 @@ macro_rules! define_choice {
     define_extract_choice![ $name ;
       $( $labels ),*
     ];
-  }
+  };
+
+  ( $name:ident < $( $types:ident ),+ $(,)? > ;
+    $( $labels:ident : $protocols:ty ),+
+    $(,)?
+  ) => {
+    define_choice_protocol![
+      $name < $( $types ),* > ;
+      $( $protocols ),*
+    ];
+
+    define_choice_labels![
+      $( $labels ),*
+    ];
+
+    define_choice_enum![ $name ;
+      $( $labels ),*
+    ];
+
+    define_extract_choice![ $name ;
+      $( $labels ),*
+    ];
+  };
 }

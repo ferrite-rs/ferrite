@@ -3,6 +3,10 @@ use std::marker::PhantomData;
 
 use crate::base::*;
 
+pub struct ChoiceSelector < N > {
+  phantom: PhantomData < N >
+}
+
 pub trait RowCon
   : Sized + Send + 'static
 {}
@@ -777,9 +781,21 @@ where
   }
 }
 
+impl < N >
+  ChoiceSelector < N >
+{
+  pub const fn new () ->
+    ChoiceSelector < N >
+  {
+    ChoiceSelector {
+      phantom: PhantomData
+    }
+  }
+}
+
 impl < A, R >
   Prism < (A, R) >
-  for Z
+  for ChoiceSelector < Z >
 where
   A: Send + 'static,
   R: RowCon,
@@ -813,13 +829,16 @@ where
 
 impl < N, A, R >
   Prism < (A, R) >
-  for S < N >
+  for ChoiceSelector < S < N > >
 where
   R: RowCon,
   A: Send + 'static,
-  N : Prism < R >,
+  ChoiceSelector < N > : Prism < R >,
 {
-  type Elem = N::Elem;
+  type Elem =
+    < ChoiceSelector < N >
+      as Prism < R >
+    >::Elem;
 
   fn inject_elem < F >
     ( elem : Applied < F, Self::Elem > )
@@ -828,7 +847,10 @@ where
     F: TyCon,
   {
     wrap_row (
-      Sum::Inr( N::inject_elem( elem ) ) )
+      Sum::Inr(
+        < ChoiceSelector < N >
+          as Prism < R >
+        >::inject_elem( elem ) ) )
   }
 
   fn extract_elem < F >
@@ -842,7 +864,10 @@ where
   {
     match *row.get_row() {
       Sum::Inl(_) => None,
-      Sum::Inr(rest) => N::extract_elem(rest),
+      Sum::Inr(rest) =>
+        < ChoiceSelector < N >
+          as Prism < R >
+        >::extract_elem(rest),
     }
   }
 }
