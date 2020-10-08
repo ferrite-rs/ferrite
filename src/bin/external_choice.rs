@@ -1,7 +1,6 @@
 #![feature(async_closure)]
 
 use ferrite::*;
-use ferrite::choice::nary::either as either;
 
 pub fn external_choice_session ()
   -> Session < End >
@@ -9,16 +8,16 @@ pub fn external_choice_session ()
   let provider :
     Session <
       ExternalChoice <
-        either::Either <
+        Either <
           SendValue < String, End >,
           ReceiveValue < u64, End >
         > > > =
     offer_choice! {
-      either::Left => {
+      Left => {
         send_value ( "provider_left".to_string(),
           terminate() )
       }
-      either::Right => {
+      Right => {
         receive_value ( async move | val | {
           println! ( "received value: {}", val );
           terminate()
@@ -30,7 +29,7 @@ pub fn external_choice_session ()
     Session <
       ReceiveChannel <
         ExternalChoice <
-          either::Either <
+          Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           >
@@ -38,7 +37,7 @@ pub fn external_choice_session ()
         End
       > > =
     receive_channel (| chan | {
-      choose ( chan, either::LeftLabel,
+      choose ( chan, LeftLabel,
         receive_value_from ( chan,
           async move | val: String | {
             println! ( "received string: {}", val );
@@ -51,7 +50,7 @@ pub fn external_choice_session ()
     Session <
       ReceiveChannel <
         ExternalChoice <
-          either::Either <
+          Either <
             SendValue < String, End >,
             ReceiveValue < u64, End >
           >
@@ -59,7 +58,7 @@ pub fn external_choice_session ()
         End
       > > =
     receive_channel (| chan | {
-      choose ( chan, either::RightLabel,
+      choose ( chan, RightLabel,
         send_value_to (chan, 42,
           wait ( chan, terminate () ) ) )
     });

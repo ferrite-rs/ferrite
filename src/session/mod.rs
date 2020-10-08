@@ -11,8 +11,9 @@ mod include;
 mod channel;
 mod forward;
 mod persistent;
+mod choice;
 
-pub mod choice;
+pub use choice::*;
 
 pub use self::run::{
   run_session,
@@ -52,8 +53,8 @@ pub use self::cut::{
   cut,
   cut_append,
   Cut,
-  Left,
-  Right,
+  L,
+  R,
   AllLeft,
   AllRight,
 };
@@ -87,6 +88,6 @@ pub use self::channel::{
 };
 
 pub use self::wrap::{
-  wrap_session,
-  unwrap_session,
+  rec_wrap_session,
+  rec_unwrap_session,
 };

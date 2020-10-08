@@ -3,21 +3,9 @@ use std::marker::PhantomData;
 use std::future::Future;
 use async_std::sync::{ Receiver, channel };
 
-use crate::base::{
-  TypeApp,
-  TyCon,
-  Applied,
-  Const,
-  get_applied,
-  Protocol,
-  Context,
-  wrap_applied,
-  PartialSession,
-  unsafe_run_session,
-  unsafe_create_session,
-};
-
-use crate::protocol::choice::nary::*;
+use crate::base::*;
+use crate::protocol::*;
+use crate::functional::*;
 
 pub struct InjectSessionApp < Row, C >
   ( PhantomData <( Row, C )> );

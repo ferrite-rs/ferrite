@@ -8,9 +8,7 @@ mod protocol;
 mod context;
 mod session;
 mod lens;
-mod nat;
 mod fix;
-mod functor;
 
 pub mod public;
 
@@ -39,5 +37,3 @@ pub use self::lens::{
 };
 
 pub use fix::*;
-pub use nat::*;
-pub use functor::*;

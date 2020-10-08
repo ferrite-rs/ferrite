@@ -2,17 +2,9 @@ use async_std::task;
 use async_macros::join;
 use async_std::sync::{ channel };
 
-
-use crate::base::{
-  Protocol,
-  Context,
-  wrap_applied,
-  PartialSession,
-  unsafe_run_session,
-  unsafe_create_session,
-};
-
-use crate::protocol::choice::nary::*;
+use crate::base::*;
+use crate::protocol::*;
+use crate::functional::*;
 
 pub fn offer_case
   < N, C, A, Row >

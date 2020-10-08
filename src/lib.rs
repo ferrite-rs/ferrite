@@ -7,6 +7,8 @@ pub mod macros;
 
 mod public;
 
+mod functional;
+
 mod base;
 mod session;
 mod protocol;

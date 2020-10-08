@@ -10,6 +10,6 @@ pub use super::{
 
   Wrap,
   Wrapper,
-
-  choice
 };
+
+pub use super::choice::*;

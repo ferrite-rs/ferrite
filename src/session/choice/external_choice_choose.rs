@@ -1,16 +1,8 @@
 use async_std::sync::{ channel };
 
-use crate::base::{
-  Context,
-  Protocol,
-  ContextLens,
-  wrap_applied,
-  PartialSession,
-  unsafe_run_session,
-  unsafe_create_session,
-};
-
-use crate::protocol::choice::nary::*;
+use crate::base::*;
+use crate::protocol::*;
+use crate::functional::*;
 
 pub fn choose
   < N, M, C, A, B, Row >

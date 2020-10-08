@@ -15,7 +15,6 @@ use super::shared_session::*;
 
 use crate::base::{
   Protocol,
-  Nat,
   Empty,
   Context,
   EmptyContext,
@@ -25,6 +24,8 @@ use crate::base::{
   unsafe_run_session,
   unsafe_create_session,
 };
+
+use crate::functional::nat::*;
 
 pub fn run_shared_session < A >
   ( session : SharedSession < A > )

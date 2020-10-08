@@ -23,8 +23,8 @@ pub use super::{
   cut,
   cut_append,
   Cut,
-  Left,
-  Right,
+  L,
+  R,
   AllLeft,
   AllRight,
 
@@ -50,6 +50,8 @@ pub use super::{
   receive_channel,
   receive_channel_slot,
 
-  wrap_session,
-  unwrap_session,
+  rec_wrap_session,
+  rec_unwrap_session,
 };
+
+pub use super::choice::*;

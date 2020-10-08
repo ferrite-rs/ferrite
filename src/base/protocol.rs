@@ -1,4 +1,4 @@
-use crate::base::nat::*;
+use crate::functional::nat::*;
 
 pub trait Protocol : Send + 'static
 { }

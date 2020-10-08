@@ -1,8 +1,9 @@
 use async_macros::join;
-
-use crate::base::*;
 use async_std::task;
 use async_std::sync::{ Sender, channel };
+
+use crate::base::*;
+use crate::functional::nat::*;
 
 pub fn fix_session
   < F, A, C >

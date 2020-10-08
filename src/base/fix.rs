@@ -1,23 +1,57 @@
-use std::mem::transmute;
 use std::marker::PhantomData;
 
-use crate::base::nat::*;
+use crate::functional::nat::*;
 
-pub trait RecApp < A > {
-  type Applied;
+pub trait RecApp < A >
+  : Sized + 'static
+{
+  type Applied : Send + 'static;
+}
+
+pub trait HasRecApp < F, A >
+  : Send + 'static
+{
+  fn get_applied
+    ( self: Box < Self > )
+    -> Box < F::Applied >
+  where
+    F: RecApp < A >
+  ;
+}
+
+impl < T, F, A >
+  HasRecApp < F, A >
+  for T
+where
+  F: 'static,
+  A: 'static,
+  T: Send + 'static,
+  F: RecApp < A, Applied=T >
+{
+  fn get_applied (self: Box < T >) -> Box < T >
+  { self }
 }
 
 pub struct Unfix < A > ( PhantomData<A> );
 
 pub struct Fix < F >
 {
-  unfix : Box < F >
+  unfix :
+    Box < dyn
+      HasRecApp <
+        F,
+        Unfix <
+          Fix < F >
+        >
+      >
+    >
 }
 
 pub fn fix < F >
   (x : F :: Applied)
   -> Fix < F >
 where
+  F : Send + 'static,
   F :
     RecApp <
       Unfix <
@@ -25,13 +59,8 @@ where
       >
     >
 {
-  unsafe {
-    let wrapped : Box < F > =
-      transmute ( Box::new ( x ) );
-
-    Fix {
-      unfix : wrapped
-    }
+  Fix {
+    unfix: Box::new( x )
   }
 }
 
@@ -39,6 +68,7 @@ pub fn unfix < F >
   (x : Fix < F >)
   -> F :: Applied
 where
+  F : Send + 'static,
   F :
     RecApp <
       Unfix <
@@ -46,12 +76,7 @@ where
       >
     >
 {
-  unsafe {
-    let wrapped : Box < F::Applied > =
-      transmute ( x.unfix );
-
-    *wrapped
-  }
+  *x.unfix.get_applied()
 }
 
 impl < A, F >
@@ -94,6 +119,8 @@ where
 impl < A >
   RecApp < Unfix < A > > for
   Z
+where
+  A: Send + 'static,
 {
   type Applied = A;
 }
@@ -124,6 +151,8 @@ where
 impl < A, N >
   RecApp < Unfix < A > > for
   S < N >
+where
+  N: Send + 'static,
 {
   type Applied = N;
 }
@@ -131,6 +160,8 @@ impl < A, N >
 impl < N >
   RecApp < Z > for
   S < N >
+where
+  N: Send + 'static,
 {
   type Applied = S < N >;
 }

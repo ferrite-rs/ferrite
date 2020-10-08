@@ -1,16 +1,9 @@
 use std::marker::PhantomData;
 use std::any::Any;
 
-use crate::base::{
-  TyCon,
-  TypeApp,
-  Protocol,
-  Context,
-  ContextLens,
-  PartialSession,
-};
-
-use crate::protocol::choice::nary::*;
+use crate::base::*;
+use crate::protocol::*;
+use crate::functional::*;
 
 pub struct InternalSessionF
   < N, C, B, Row, Del >

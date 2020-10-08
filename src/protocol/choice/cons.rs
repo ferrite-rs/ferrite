@@ -1,4 +1,6 @@
 use crate::base::*;
+use crate::functional::*;
+
 use std::any::Any;
 use std::marker::PhantomData;
 use async_std::sync::{ Sender, Receiver };

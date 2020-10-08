@@ -1,4 +1,11 @@
-pub mod nary;
-pub mod binary;
+#[macro_use]
+mod either;
 
-pub use nary::*;
+mod cons;
+mod internal_choice;
+mod external_choice;
+
+pub use cons::*;
+pub use either::*;
+pub use internal_choice::*;
+pub use external_choice::*;

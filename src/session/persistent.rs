@@ -4,7 +4,6 @@ use async_macros::join;
 use async_std::sync::{ channel };
 
 use crate::base::{
-  Nat,
   Protocol,
   Session,
   Context,
@@ -13,6 +12,8 @@ use crate::base::{
   unsafe_run_session,
   unsafe_create_session,
 };
+
+use crate::functional::nat::*;
 
 pub struct PersistentSession < P >
 where

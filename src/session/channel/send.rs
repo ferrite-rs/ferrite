@@ -4,10 +4,10 @@ use async_std::sync::{
   channel
 };
 
+use crate::functional::nat::*;
 use crate::protocol::{ SendChannel };
 
 use crate::base::{
-  Nat,
   Protocol,
   Empty,
   Context,

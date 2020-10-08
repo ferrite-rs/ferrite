@@ -5,7 +5,6 @@ use async_std::sync::{
 };
 
 use crate::base::{
-  Nat,
   Protocol,
   Session,
   Empty,
@@ -17,6 +16,7 @@ use crate::base::{
   unsafe_create_session,
 };
 
+use crate::functional::*;
 use crate::protocol::{ ReceiveChannel };
 use crate::session::forward::{ forward };
 use crate::session::include::{ include_session };

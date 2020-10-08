@@ -1,8 +1,6 @@
 #![feature(async_closure)]
 
 use ferrite::*;
-use ferrite::choice::nary::*;
-use ferrite::choice::nary::either::*;
 
 pub fn internal_choice_session ()
   -> Session < End >
@@ -19,7 +17,7 @@ pub fn internal_choice_session ()
       > > =
   receive_channel ( | chan | {
     case! { chan ;
-      either::Left => {
+      Left => {
         receive_value_from ( chan,
           async move | val: String | {
             println! ("receied string: {}", val);
@@ -27,7 +25,7 @@ pub fn internal_choice_session ()
               terminate () )
           })
       }
-      either::Right => {
+      Right => {
         send_value_to ( chan, 42,
           wait ( chan,
             terminate () ) )

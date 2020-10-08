@@ -1,4 +1,7 @@
-use crate::base::{ Protocol, Z };
+use crate::base::{ Protocol };
+
+use crate::functional::nat::*;
+use crate::functional::row::*;
 
 use crate::protocol::{
   SendValue,
@@ -8,16 +11,7 @@ use crate::protocol::{
   ReceiveChannel,
 };
 
-use crate::protocol::choice::nary:: {
-  SumRow,
-  ReceiverApp,
-  ExternalChoice,
-  InternalChoice,
-};
-
-use crate::protocol::choice::nary::either:: {
-  Either
-};
+use crate::protocol::*;
 
 pub trait SharedTypeApp < X >
 {

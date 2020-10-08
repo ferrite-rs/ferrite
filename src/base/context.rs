@@ -1,4 +1,4 @@
-use crate::base::nat::{ Nat };
+use crate::functional::nat::{ Nat };
 
 /// A list of context for input. It has multiple implementations including
 /// [crate::base::Context].

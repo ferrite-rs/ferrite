@@ -10,6 +10,7 @@ pub mod demo;
 pub mod macros;
 
 pub mod base;
+pub mod functional;
 pub mod shared;
 pub mod session;
 pub mod protocol;

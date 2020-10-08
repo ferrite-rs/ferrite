@@ -5,13 +5,13 @@ macro_rules! Sum {
     $crate::choice::nary::Bottom
   };
   ( $e:ty ) => {
-    $crate::choice::nary::Sum <
+    $crate::Sum <
       $e,
-      $crate::choice::nary::Bottom
+      $crate::Bottom
     >
   };
   ( $e:ty, $($tail:tt)* ) => {
-    $crate::choice::nary::Sum < $e, Sum!( $( $tail )* ) >
+    $crate::Sum < $e, Sum!( $( $tail )* ) >
   };
 }
 
@@ -98,6 +98,7 @@ macro_rules! define_choice_labels {
   };
   ( $acc:ty; $label:ident ) => {
     paste::paste! {
+      #[allow(non_upper_case_globals)]
       pub const [< $label Label >]
         : $crate::ChoiceSelector < $acc > =
         < $crate::ChoiceSelector < $acc > >::new();
@@ -105,11 +106,15 @@ macro_rules! define_choice_labels {
   };
   ( $acc:ty; $label:ident, $( $labels:ident ),+ ) => {
     paste::paste! {
+      #[allow(non_upper_case_globals)]
       pub const [< $label Label >]
         : $crate::ChoiceSelector < $acc > =
         < $crate::ChoiceSelector < $acc > >::new();
 
-      define_choice_labels![ $crate::S < $acc >; $( $labels ),* ];
+      define_choice_labels![
+        $crate::S < $acc >;
+        $( $labels ),*
+      ];
     }
   };
 }

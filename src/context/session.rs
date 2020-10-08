@@ -1,5 +1,6 @@
 
 use crate::base::*;
+use crate::functional::nat::*;
 
 pub fn new_session
   < P >

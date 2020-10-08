@@ -3,7 +3,6 @@ use async_std::task;
 use async_std::sync::{ channel };
 
 use crate::base::{
-  Nat,
   Slot,
   Empty,
   Context,
@@ -14,8 +13,10 @@ use crate::base::{
   unsafe_create_session,
 };
 
-pub enum Left {}
-pub enum Right {}
+use crate::functional::nat::*;
+
+pub enum L {}
+pub enum R {}
 
 pub enum AllLeft {}
 pub enum AllRight {}
@@ -100,7 +101,7 @@ where
 impl < X, A, C, C1, C2 >
   SplitContext
   < ( A, C ) >
-  for ( Left, X )
+  for ( L, X )
 where
   A : Slot,
   C : Context,
@@ -125,7 +126,7 @@ where
 impl < X, A, C, C1, C2 >
   SplitContext
   < ( A, C ) >
-  for ( Right, X )
+  for ( R, X )
 where
   A : Slot,
   C : Context,

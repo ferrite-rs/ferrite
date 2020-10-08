@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 use async_std::sync::Receiver;
 
-use crate::base::nat::{ S, Z };
+use crate::functional::nat::{ S, Z };
 use crate::base::protocol::{ Protocol };
 use crate::base::context::{ Context };
 

@@ -6,7 +6,9 @@ mod fix;
 mod value;
 mod channel;
 mod wrap;
-pub mod choice;
+mod choice;
+
+pub use choice::*;
 
 pub use end::{
   End,

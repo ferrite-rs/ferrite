@@ -20,6 +20,7 @@ impl < X, T, A >
   RecApp < X > for
   SendValue < T, A >
 where
+  T : Send + 'static,
   A : RecApp < X >,
 {
   type Applied =

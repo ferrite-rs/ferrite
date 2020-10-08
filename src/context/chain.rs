@@ -5,9 +5,9 @@ use crate::base::{
   AppendContext,
   Reversible,
   Slot,
-  Z,
-  S,
 };
+
+use crate::functional::nat::*;
 
 // Applied level list manipulation tricks copied from https://github.com/lloydmeta/frunk
 

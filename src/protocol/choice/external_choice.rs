@@ -1,7 +1,8 @@
-use crate::base::*;
-use super::row::*;
-use super::cons::*;
 use async_std::sync::{ Sender };
+
+use crate::base::*;
+use super::cons::*;
+use crate::functional::row::*;
 
 pub struct ExternalChoice < Row >
 where

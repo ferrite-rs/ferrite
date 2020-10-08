@@ -1,6 +1,6 @@
 use crate::base::*;
-use super::row::*;
 use super::cons::*;
+use crate::functional::row::*;
 
 pub struct InternalChoice < Row >
 where

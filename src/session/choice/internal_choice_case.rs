@@ -3,22 +3,9 @@ use std::marker::PhantomData;
 use std::future::Future;
 use async_std::sync::{ Sender, Receiver };
 
-use crate::base::{
-  Empty,
-  TyCon,
-  TypeApp,
-  Applied,
-  Protocol,
-  Context,
-  wrap_applied,
-  ContextLens,
-  PartialSession,
-  NaturalTransformation,
-  unsafe_run_session,
-  unsafe_create_session,
-};
-
-use crate::protocol::choice::nary::*;
+use crate::base::*;
+use crate::protocol::*;
+use crate::functional::*;
 
 use super::internal_session::*;
 
