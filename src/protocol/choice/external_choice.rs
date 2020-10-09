@@ -1,7 +1,7 @@
 use async_std::sync::{ Sender };
 
 use crate::base::*;
-use super::cons::*;
+use super::utils::*;
 use crate::functional::row::*;
 
 pub struct ExternalChoice < Row >
@@ -11,7 +11,7 @@ where
     Sender <
       ( AppliedSum < Row, () >,
         Sender <
-          AppliedSum < Row, ReceiverApp >
+          AppliedSum < Row, ReceiverF >
         >
       )
     >

@@ -104,11 +104,11 @@ impl < Row, A >
   SharedRecApp < A > for
   InternalChoice < Row >
 where
-  Row : RowApp < ReceiverApp >,
+  Row : RowApp < ReceiverF >,
   Row : SharedRecApp < A >,
   < Row
     as SharedRecApp < A >
-  >::Applied : RowApp < ReceiverApp >,
+  >::Applied : RowApp < ReceiverF >,
 {
   type Applied =
     InternalChoice <
@@ -124,7 +124,7 @@ impl < Row, A >
 where
   Row : SharedRecApp < A >,
   Row : RowApp < () >,
-  Row : RowApp < ReceiverApp >,
+  Row : RowApp < ReceiverF >,
   < Row
     as SharedRecApp < A >
   >::Applied :
@@ -132,7 +132,7 @@ where
   < Row
     as SharedRecApp < A >
   >::Applied :
-    RowApp < ReceiverApp >,
+    RowApp < ReceiverF >,
 {
   type Applied =
     ExternalChoice <

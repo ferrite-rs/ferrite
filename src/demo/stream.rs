@@ -19,7 +19,7 @@ fn producer (count: u64) ->
     info!("Producing value: {}", count);
 
     ( count,
-      rec_wrap_session ( producer ( count + 1 ) )
+      wrap_session ( producer ( count + 1 ) )
     )
   })
 }
@@ -36,7 +36,7 @@ fn consumer () ->
     receive_value_from ( stream,
       async move | count | {
         info!("Received value: {}", count);
-        rec_unwrap_session ( stream,
+        unwrap_session ( stream,
           include_session (
             consumer (),
             | next | {

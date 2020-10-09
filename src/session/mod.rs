@@ -88,6 +88,6 @@ pub use self::channel::{
 };
 
 pub use self::wrap::{
-  rec_wrap_session,
-  rec_unwrap_session,
+  wrap_session,
+  unwrap_session,
 };

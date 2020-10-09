@@ -18,26 +18,26 @@ where
   A: 'static,
 {
   pub fn get_applied(self)
-    -> Box < F::Applied >
+    -> F::Applied
   where
     F: TypeApp < A >
   {
-    self.applied.get_applied()
+    *self.applied.get_applied()
   }
 }
 
 pub fn get_applied < F, A >
   ( applied: Applied < F, A > )
-  -> Box < F::Applied >
+  -> F::Applied
 where
   F: 'static,
   A: 'static,
   F: TypeApp < A >,
 {
-  applied.applied.get_applied()
+  *applied.applied.get_applied()
 }
 
-pub fn wrap_applied < F, A >
+pub fn cloak_applied < F, A >
   ( applied: F::Applied )
   -> Applied < F, A >
 where

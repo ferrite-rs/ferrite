@@ -40,8 +40,8 @@ impl Functor for IdentityF
     A: Send + 'static,
     B: Send + 'static,
   {
-    let Identity(a) = *fa.get_applied();
+    let Identity(a) = fa.get_applied();
     let b = mapper(a);
-    wrap_applied(Identity(b))
+    cloak_applied(Identity(b))
   }
 }

@@ -15,7 +15,7 @@ pub fn offer_case
 where
   C : Context,
   A : Protocol,
-  Row : RowApp < ReceiverApp >,
+  Row : RowApp < ReceiverF >,
   N :
     Prism <
       Row,
@@ -33,7 +33,7 @@ where
       let child2 = task::spawn(async move {
         sender1.send( InternalChoice {
           field : N::inject_elem (
-            wrap_applied ( receiver2 ) )
+            cloak_applied ( receiver2 ) )
         }).await;
       });
 

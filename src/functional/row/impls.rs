@@ -79,46 +79,46 @@ where
 }
 
 impl < F, A, R >
-  WrapRow < F > for
+  UncloakRow < F > for
   ( A, R )
 where
   A: Send + 'static,
-  R: WrapRow < F >,
+  R: UncloakRow < F >,
   F: TypeApp < A >,
 {
-  type Unwrapped =
+  type Uncloaked =
     Sum <
       F::Applied,
-      R::Unwrapped
+      R::Uncloaked
     >
   ;
 
-  fn wrap_row
-    ( row1: Self::Unwrapped )
+  fn full_cloak_row
+    ( row1: Self::Uncloaked )
     -> Self::Applied
   {
     match row1 {
       Sum::Inl(field) => {
-        Sum::Inl( wrap_applied( field ) )
+        Sum::Inl( cloak_applied( field ) )
       }
       Sum::Inr(row2) => {
-        let row3 = R::wrap_row( row2 );
-        Sum::Inr( wrap_row( row3 ) )
+        let row3 = R::full_cloak_row( row2 );
+        Sum::Inr( cloak_row( row3 ) )
       }
     }
   }
 
-  fn unwrap_row
+  fn full_uncloak_row
     ( row1: AppliedSum < Self, F > )
-    -> Self::Unwrapped
+    -> Self::Uncloaked
   {
-    match *row1.get_row() {
+    match row1.get_row() {
       Sum::Inl(field1) => {
-        let field2 = *field1.get_applied();
+        let field2 = field1.get_applied();
         Sum::Inl( field2 )
       }
       Sum::Inr(row2) => {
-        let row3 = R::unwrap_row( row2 );
+        let row3 = R::full_uncloak_row( row2 );
         Sum::Inr( row3 )
       }
     }
@@ -126,30 +126,30 @@ where
 }
 
 impl < F >
-  WrapRow < F >
+  UncloakRow < F >
   for ()
 where
   F: TyCon
 {
-  type Unwrapped = Bottom;
+  type Uncloaked = Bottom;
 
-  fn wrap_row
-    ( row: Self::Unwrapped )
+  fn full_cloak_row
+    ( row: Self::Uncloaked )
     -> Self::Applied
   {
     row
   }
 
-  fn unwrap_row
+  fn full_uncloak_row
     ( row: AppliedSum < Self, F > )
-    -> Self::Unwrapped
+    -> Self::Uncloaked
   {
-    *row.get_row()
+    row.get_row()
   }
 }
 
 impl < X >
-  ElimApplied <
+  ElimField <
     Const < X >,
     X
   >
@@ -164,7 +164,7 @@ where
   where
     A: 'static
   {
-    *get_applied(x)
+    get_applied(x)
   }
 }
 
@@ -235,19 +235,19 @@ where
     F1: TyCon,
     F2: TyCon,
   {
-    let row2 = *row1.get_row();
+    let row2 = row1.get_row();
 
     match row2 {
       Sum::Inl ( row3 ) => {
-        let ( row3a, row3b ) = *row3.get_applied();
-        ( wrap_row( Sum::Inl(row3a) ),
-          wrap_row( Sum::Inl(row3b) )
+        let ( row3a, row3b ) = row3.get_applied();
+        ( cloak_row( Sum::Inl(row3a) ),
+          cloak_row( Sum::Inl(row3b) )
         )
       },
       Sum::Inr ( row3 ) => {
         let (row3a, row3b) = R::split_row (row3);
-        ( wrap_row( Sum::Inr(row3a) ),
-          wrap_row( Sum::Inr(row3b) )
+        ( cloak_row( Sum::Inr(row3a) ),
+          cloak_row( Sum::Inr(row3b) )
         )
       }
     }
@@ -297,20 +297,20 @@ where
     F1: TyCon,
     F2: TyCon,
   {
-    let row1a = *row1.get_row();
-    let row2a = *row2.get_row();
+    let row1a = row1.get_row();
+    let row2a = row2.get_row();
 
     match (row1a, row2a) {
       ( Sum::Inl(a1), Sum::Inl(a2) ) => {
-        Some ( wrap_row (
+        Some ( cloak_row (
           Sum::Inl (
-            wrap_applied(
+            cloak_applied(
               ( a1, a2 ) ) ) ) )
       }
       ( Sum::Inr(r1), Sum::Inr(r2) ) => {
         R :: intersect_sum ( r1, r2 )
           .map(| x | {
-            wrap_row ( Sum::Inr(x) )
+            cloak_row ( Sum::Inr(x) )
           })
       },
       _ => {
@@ -351,14 +351,14 @@ where
     F2: TyCon,
     T: NaturalTransformation < F1, F2 >
   {
-    let row2 = *row1.get_row();
+    let row2 = row1.get_row();
     match row2 {
       Sum::Inl(fa1) => {
         let fa2 = T::lift(fa1);
-        wrap_row ( Sum::Inl ( fa2 ) )
+        cloak_row ( Sum::Inl ( fa2 ) )
       },
       Sum::Inr(b) => {
-        wrap_row ( Sum::Inr (
+        cloak_row ( Sum::Inr (
           R :: lift_sum::< T, F1, F2 >( b )
         ) )
       }
@@ -377,7 +377,7 @@ impl
     ) ->
       AppliedSum < Self, L::InjectF >
   where
-    L: AppliedLifter < Root >,
+    L: InjectLift < Root >,
     Inject:
       Fn ( AppliedSum < Self, L::TargetF > )
         -> Root
@@ -401,13 +401,13 @@ where
     ) ->
       AppliedSum < Self, L::InjectF >
   where
-    L: AppliedLifter < Root >,
+    L: InjectLift < Root >,
     Inject:
       Fn ( AppliedSum < Self, L::TargetF > )
         -> Root
         + Send + 'static,
   {
-    let row2 = *row1.get_row();
+    let row2 = row1.get_row();
     match row2 {
       Sum::Inl(a) => {
         let inject2 =
@@ -416,13 +416,13 @@ where
           | -> Root
           {
             inject (
-              wrap_row (
+              cloak_row (
                 Sum::Inl (
                   b
                 ) ) )
           };
 
-        wrap_row (
+        cloak_row (
           Sum :: Inl(
             L::lift_field( ctx, inject2, a )
           ) )
@@ -432,10 +432,10 @@ where
           move | r : AppliedSum < R, L::TargetF > |
             -> Root
           {
-            inject ( wrap_row ( Sum::Inr (r) ) )
+            inject ( cloak_row ( Sum::Inr (r) ) )
           };
 
-        wrap_row (
+        cloak_row (
           Sum::Inr (
             R :: lift_sum_inject ( ctx, inject2, b )
           ) )
@@ -456,7 +456,7 @@ impl
       R
   where
     F: TyCon,
-    E: ElimApplied < F, R >,
+    E: ElimField < F, R >,
   {
     absurd(row)
   }
@@ -477,9 +477,9 @@ where
       K
   where
     F: TyCon,
-    E: ElimApplied < F, K >,
+    E: ElimField < F, K >,
   {
-    let row2 = *row1.get_row();
+    let row2 = row1.get_row();
     match row2 {
       Sum::Inl(a) => {
         e.elim_field ( a )
@@ -506,7 +506,7 @@ where
   where
     F: TyCon,
   {
-    wrap_row ( Sum::Inl(t) )
+    cloak_row ( Sum::Inl(t) )
   }
 
   fn extract_elem < F >
@@ -518,7 +518,7 @@ where
   where
     F: TyCon,
   {
-    match *row.get_row() {
+    match row.get_row() {
       Sum::Inl(e) => Some(e),
       Sum::Inr(_) => None,
     }
@@ -544,7 +544,7 @@ where
   where
     F: TyCon,
   {
-    wrap_row (
+    cloak_row (
       Sum::Inr(
         < ChoiceSelector < N >
           as Prism < R >
@@ -560,7 +560,7 @@ where
   where
     F: TyCon,
   {
-    match *row.get_row() {
+    match row.get_row() {
       Sum::Inl(_) => None,
       Sum::Inr(rest) =>
         < ChoiceSelector < N >

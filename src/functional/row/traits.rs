@@ -16,21 +16,21 @@ where
   type Applied: Send + 'static;
 }
 
-pub trait WrapRow < F >
+pub trait UncloakRow < F >
   : RowApp < F >
 where
   F: TyCon,
 {
-  type Unwrapped: Send + 'static;
+  type Uncloaked: Send + 'static;
 
-  fn wrap_row
-    ( row: Self::Unwrapped )
+  fn full_cloak_row
+    ( row: Self::Uncloaked )
     -> Self::Applied
   ;
 
-  fn unwrap_row
+  fn full_uncloak_row
     ( row: AppliedSum < Self, F > )
-    -> Self::Unwrapped
+    -> Self::Uncloaked
   ;
 }
 
@@ -108,7 +108,7 @@ pub trait SumFunctor
   ;
 }
 
-pub trait AppliedLifter < Root >
+pub trait InjectLift < Root >
 {
   type SourceF: TyCon;
   type TargetF: TyCon;
@@ -140,7 +140,7 @@ pub trait SumFunctorInject
     ) ->
       AppliedSum < Self, L::InjectF >
   where
-    L: AppliedLifter < Root >,
+    L: InjectLift < Root >,
     Inject:
       Fn ( AppliedSum < Self, L::TargetF > )
         -> Root
@@ -167,7 +167,7 @@ pub trait IntersectSum : RowCon
   ;
 }
 
-pub trait ElimApplied < F, R >
+pub trait ElimField < F, R >
 where
   F : TyCon
 {
@@ -191,7 +191,7 @@ pub trait ElimSum : RowCon
       R
   where
     F: TyCon,
-    E: ElimApplied < F, R >,
+    E: ElimField < F, R >,
   ;
 }
 

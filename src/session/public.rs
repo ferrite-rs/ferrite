@@ -50,8 +50,8 @@ pub use super::{
   receive_channel,
   receive_channel_slot,
 
-  rec_wrap_session,
-  rec_unwrap_session,
+  wrap_session,
+  unwrap_session,
 };
 
 pub use super::choice::*;

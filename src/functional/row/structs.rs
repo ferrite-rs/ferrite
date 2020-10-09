@@ -35,9 +35,9 @@ where
   Row: RowApp < F >,
 {
   pub fn get_row (self)
-    -> Box < Row::Applied >
+    -> Row::Applied
   {
-    self.row.get_row()
+    *self.row.get_row()
   }
 }
 
@@ -53,7 +53,7 @@ impl < N >
   }
 }
 
-pub fn wrap_row < Row, F >
+pub fn cloak_row < Row, F >
   ( row: Row::Applied )
   -> AppliedSum < Row, F >
 where

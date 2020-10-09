@@ -33,7 +33,7 @@ where
       let (receiver1, ctx2) = N::extract_source(ctx1);
 
       let choice : AppliedSum < Row, () > =
-        M::inject_elem ( wrap_applied( () ) );
+        M::inject_elem ( cloak_applied( () ) );
 
       let ExternalChoice { sender: sender2 } =
         receiver1.recv().await.unwrap();
@@ -50,7 +50,7 @@ where
       match m_receiver {
         Some(receiver4) => {
           let ctx3 = N::insert_target(
-            *receiver4.get_applied(),
+            receiver4.get_applied(),
             ctx2
           );
           unsafe_run_session ( cont, ctx3, sender1 ).await;

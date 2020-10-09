@@ -6,7 +6,7 @@ use async_std::sync::{ channel };
 use crate::base::*;
 use crate::protocol::*;
 
-pub fn rec_wrap_session
+pub fn wrap_session
   < C, T >
   ( cont :
       PartialSession <
@@ -44,7 +44,7 @@ where
     })
 }
 
-pub fn rec_unwrap_session
+pub fn unwrap_session
   < N, C, T, A >
   ( _ : N,
     cont :

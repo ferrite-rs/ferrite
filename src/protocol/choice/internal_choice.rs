@@ -1,12 +1,12 @@
 use crate::base::*;
-use super::cons::*;
+use super::utils::*;
 use crate::functional::row::*;
 
 pub struct InternalChoice < Row >
 where
   Row : RowCon,
 { pub (crate) field :
-    AppliedSum < Row, ReceiverApp >
+    AppliedSum < Row, ReceiverF >
 }
 
 impl < Row >
