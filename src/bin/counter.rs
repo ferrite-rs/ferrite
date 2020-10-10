@@ -26,16 +26,17 @@ pub fn make_counter_server
     println!("[CounterServer] starting new session");
     let counter2 = counter1.clone();
 
-    send_value_async ( async move || {
-      println!("[CounterServer] Getting count");
-      let mut count1 = counter2.lock().unwrap();
-      let count2 : u64 = *count1;
-      *count1 += 1;
+    send_value! (
+      {
+        println!("[CounterServer] Getting count");
+        let mut count1 = counter2.lock().unwrap();
+        let count2 : u64 = *count1;
+        *count1 += 1;
 
-      ( count2,
-        terminate()
-      )
-    })
+        count2
+      },
+      terminate()
+    )
   })
 }
 
@@ -50,11 +51,11 @@ pub fn make_counter_client
       sleep ( Duration::from_secs(timeout) ).await;
     });
 
-  include_session ( timer, move | timer_chan | {
-    wait_async ( timer_chan, async move || {
+  include_session! ( timer, timer_chan => {
+    wait! ( timer_chan, {
       println!("[{}] Timer reached", name);
       clone_session(&counter_server, move | counter_chan | {
-        receive_value_from ( counter_chan, async move | count | {
+        receive_value_from! ( counter_chan, count => {
           println!("[{}] Received count: {}", name, count);
 
           wait ( counter_chan, terminate () )

@@ -14,11 +14,12 @@ pub fn external_choice_session ()
         > > > =
     offer_choice! {
       Left => {
-        send_value ( "provider_left".to_string(),
+        send_value! (
+          "provider_left".to_string(),
           terminate() )
       }
       Right => {
-        receive_value ( async move | val | {
+        receive_value! ( val => {
           println! ( "received value: {}", val );
           terminate()
         })
@@ -36,10 +37,10 @@ pub fn external_choice_session ()
         >,
         End
       > > =
-    receive_channel (| chan | {
-      choose ( chan, LeftLabel,
-        receive_value_from ( chan,
-          async move | val: String | {
+    receive_channel! ( chan => {
+      choose! ( chan, Left,
+        receive_value_from! ( chan,
+          (val: String) => {
             println! ( "received string: {}", val );
 
             wait ( chan, terminate() )
@@ -57,10 +58,12 @@ pub fn external_choice_session ()
         >,
         End
       > > =
-    receive_channel (| chan | {
-      choose ( chan, RightLabel,
-        send_value_to (chan, 42,
-          wait ( chan, terminate () ) ) )
+    receive_channel! ( chan => {
+      choose! ( chan, Right,
+        send_value_to! ( chan,
+          42,
+          wait ( chan,
+            terminate () ) ) )
     });
 
   apply_channel ( client_right, provider )

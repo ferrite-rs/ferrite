@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use ferrite::*;
 
 define_choice! { FooBarBaz;
@@ -18,11 +16,12 @@ pub fn external_choice_session ()
       > > =
     offer_choice! {
       Foo => {
-        send_value ( "provider_foo".to_string(),
+        send_value! (
+          "provider_foo".to_string(),
           terminate() )
       }
       Bar => {
-        receive_value ( async move | val | {
+        receive_value! ( val => {
           println! ( "received bar value: {}", val );
           terminate()
         })
@@ -40,10 +39,11 @@ pub fn external_choice_session ()
         >,
         End
       > > =
-    receive_channel (| chan | {
-      choose ( chan, BarLabel,
+    receive_channel! ( chan => {
+      choose! ( chan, Bar,
         send_value_to (chan, 42,
-          wait ( chan, terminate () ) ) )
+          wait ( chan, terminate () ) )
+      )
     });
 
   apply_channel ( client_bar, provider )

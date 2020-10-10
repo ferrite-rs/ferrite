@@ -18,8 +18,8 @@ pub fn internal_choice_session ()
   receive_channel ( | chan | {
     case! { chan ;
       Left => {
-        receive_value_from ( chan,
-          async move | val: String | {
+        receive_value_from! ( chan,
+          (val: String) => {
             println! ("receied string: {}", val);
             wait ( chan,
               terminate () )
@@ -40,9 +40,11 @@ pub fn internal_choice_session ()
           SendValue < String, End >,
           ReceiveValue < u64, End >
         > > > =
-    offer_case ( LeftLabel,
-      send_value ( "provider_left".to_string(),
-        terminate() ) );
+    offer_case! ( Left,
+      send_value! (
+        "provider_left".to_string(),
+        terminate()
+      ) );
 
   let _provider_right :
     Session <
@@ -51,8 +53,8 @@ pub fn internal_choice_session ()
           SendValue < String, End >,
           ReceiveValue < u64, End >
         > > > =
-    offer_case ( RightLabel,
-      receive_value ( async move | val: u64 | {
+    offer_case! ( Right,
+      receive_value! ( (val: u64) => {
         println! ( "received int: {}", val );
         terminate()
       })

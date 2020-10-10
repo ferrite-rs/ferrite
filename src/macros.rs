@@ -249,3 +249,180 @@ macro_rules! define_choice {
     ];
   };
 }
+
+
+#[macro_export]
+macro_rules! send_value {
+  ( $val:expr, $cont:expr ) => {
+    $crate::step ( move || async move {
+      $crate::send_value (
+        $val,
+        $cont
+      )
+    })
+  }
+}
+
+
+#[macro_export]
+macro_rules! send_value_to {
+  ( $chan:ident, $val:expr, $cont:expr ) => {
+    $crate::step ( move || async move {
+      $crate::send_value_to (
+        $chan,
+        $val,
+        $cont
+      )
+    })
+  }
+}
+
+#[macro_export]
+macro_rules! receive_value {
+  ( $var:ident => $body:expr ) => {
+    $crate::receive_value (
+      move | $var | async move {
+        $body
+      }
+    )
+  };
+  ( ($var:ident $( : $type:ty )?) => $body:expr ) => {
+    $crate::receive_value (
+      move | $var $( : $type )* | async move {
+        $body
+      }
+    )
+  }
+}
+
+
+#[macro_export]
+macro_rules! receive_value_from {
+  ( $chan:ident,
+    $var:ident => $body:expr
+  ) => {
+    $crate::receive_value_from (
+      $chan,
+      move | $var | async move {
+        $body
+      }
+    )
+  };
+  ( $chan:ident,
+    ($var:ident $( : $type:ty )?) => $body:expr
+  ) => {
+    $crate::receive_value_from (
+      $chan,
+      move | $var $( : $type )* | async move {
+        $body
+      }
+    )
+  }
+}
+
+#[macro_export]
+macro_rules! choose {
+  ( $chan:ident,
+    $label:ident,
+    $cont:expr
+  ) => {
+    paste::paste! {
+      $crate::choose (
+        $chan,
+        [< $label Label >],
+        $cont
+      )
+    }
+  }
+}
+
+#[macro_export]
+macro_rules! offer_case {
+  ( $label:ident,
+    $cont:expr
+  ) => {
+    paste::paste! {
+      $crate::offer_case (
+        [< $label Label >],
+        $cont
+      )
+    }
+  }
+}
+
+#[macro_export]
+macro_rules! acquire_shared_session {
+  ( $chan:expr,
+    $var:ident => $body:expr
+  ) => {
+    $crate::acquire_shared_session (
+      $chan.clone(),
+      move | $var | async move {
+        $body
+      }
+    )
+  }
+}
+
+#[macro_export]
+macro_rules! receive_channel {
+  ( $var:ident => $body:expr ) => {
+    $crate::receive_channel (
+      move | $var | {
+        $body
+      }
+    )
+  }
+}
+
+#[macro_export]
+macro_rules! receive_channel_from {
+  ( $chan:ident, $var:ident => $body:expr ) => {
+    $crate::receive_channel_from (
+      $chan,
+      move | $var | {
+        $body
+      }
+    )
+  }
+}
+
+#[macro_export]
+macro_rules! include_session {
+  ( $session:expr,
+    $var:ident => $body:expr
+  ) => {
+    $crate::include_session (
+      $session,
+      move | $var | {
+        $body
+      }
+    )
+  }
+}
+
+#[macro_export]
+macro_rules! terminate {
+  () => {
+    $crate::terminate()
+  };
+  ( $cont:expr ) => {
+    $crate::terminate_async(
+      move || async {
+        $cont
+      }
+    )
+  };
+}
+
+#[macro_export]
+macro_rules! wait {
+  ( $chan:ident, $cont:expr ) => {
+    $crate::wait_async (
+      $chan,
+      move || async move {
+        $cont
+      }
+    )
+  }
+}

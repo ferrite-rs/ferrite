@@ -49,11 +49,10 @@ where
 {
   fix_session (
     offer_case ( RightLabel,
-      send_value_async ( async move || {
-        ( builder ().await
-        , rest
-        )
-      }) ) )
+      send_value! (
+        builder().await,
+        rest
+      ) ) )
 }
 
 fn append_queue

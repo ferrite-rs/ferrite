@@ -16,7 +16,7 @@ pub fn hello_session()
 {
   let server :
     Session < HelloSession >
-  = receive_value ( async move | name | {
+  = receive_value! ( name => {
       send_value (
         format!("Hello, {}!", name),
         terminate()
@@ -29,15 +29,15 @@ pub fn hello_session()
         HelloSession,
         End
       > >
-  = receive_channel ( | x | {
-      send_value_to ( x,
+  = receive_channel! ( x => {
+      send_value_to! ( x,
         "John".to_string(),
-        receive_value_from ( x,
-          async move | result | {
-              println! ("{}", result);
-              wait ( x,
-                terminate()
-              ) }) ) });
+        receive_value_from! ( x,
+          result => {
+            println! ("{}", result);
+            wait ( x,
+              terminate()
+            ) }) ) });
 
   let main : Session < End >
     = apply_channel (client, server);
