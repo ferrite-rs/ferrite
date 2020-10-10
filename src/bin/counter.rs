@@ -1,4 +1,4 @@
-extern crate log;
+#![feature(async_closure)]
 
 use ferrite::*;
 
@@ -23,11 +23,11 @@ pub fn make_counter_server
       );
 
   create_persistent_session ( move || {
-    info!("[CounterServer] starting new session");
+    println!("[CounterServer] starting new session");
     let counter2 = counter1.clone();
 
     send_value_async ( async move || {
-      info!("[CounterServer] Getting count");
+      println!("[CounterServer] Getting count");
       let mut count1 = counter2.lock().unwrap();
       let count2 : u64 = *count1;
       *count1 += 1;
@@ -52,10 +52,10 @@ pub fn make_counter_client
 
   include_session ( timer, move | timer_chan | {
     wait_async ( timer_chan, async move || {
-      info!("[{}] Timer reached", name);
+      println!("[{}] Timer reached", name);
       clone_session(&counter_server, move | counter_chan | {
         receive_value_from ( counter_chan, async move | count | {
-          info!("[{}] Received count: {}", name, count);
+          println!("[{}] Received count: {}", name, count);
 
           wait ( counter_chan, terminate () )
         })
@@ -77,6 +77,12 @@ pub fn counter_session()
     vec! [ p1, p2, p3 ],
     terminate () )
 }
+
+#[async_std::main]
+pub async fn main() {
+  run_session( counter_session () ).await
+}
+
 
 /*
   Example Log

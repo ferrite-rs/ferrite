@@ -1,4 +1,4 @@
-extern crate log;
+#![feature(async_closure)]
 
 use ferrite::*;
 
@@ -19,16 +19,16 @@ pub fn pair_session()
       SendValue < u64, End >
     >
   = send_value_async ( async move || {
-      info!("[P1] Spending 7 seconds to produce first output");
+      println!("[P1] Spending 7 seconds to produce first output");
       sleep(Duration::from_secs(7)).await;
-      info!("[P1] Done producing first output - 42");
+      println!("[P1] Done producing first output - 42");
 
       ( 42
 
       , terminate_async ( async move || {
-          info!("[P1] Spending 3 seconds to cleanup");
+          println!("[P1] Spending 3 seconds to cleanup");
           sleep(Duration::from_secs(3)).await;
-          info!("[P1] Terminating");
+          println!("[P1] Terminating");
         })
       )
     });
@@ -53,16 +53,16 @@ pub fn pair_session()
   = receive_channel ( move | val_chan | {
       send_channel_from ( val_chan,
         send_value_async ( async move || {
-          info!("[P2] Spending 2 seconds to produce second output");
+          println!("[P2] Spending 2 seconds to produce second output");
           sleep(Duration::from_secs(2)).await;
-          info!("[P2] Done producing second output - Hello World");
+          println!("[P2] Done producing second output - Hello World");
 
           ( "Hello World".to_string()
 
           , terminate_async ( async move || {
-              info!("[P2] Spending 10 seconds to cleanup");
+              println!("[P2] Spending 10 seconds to cleanup");
               sleep(Duration::from_secs(10)).await;
-              info!("[P2] Terminating");
+              println!("[P2] Terminating");
             })
           )
       }))
@@ -99,25 +99,25 @@ pub fn pair_session()
   = receive_channel ( move | str_chan | {
       receive_channel ( move | timer_chan | {
         wait_async ( timer_chan, async move || {
-          info!("[P3] P4 has terminated. Receiving channel from P1");
+          println!("[P3] P4 has terminated. Receiving channel from P1");
 
           receive_channel_from ( str_chan, move | int_chan | {
             receive_value_from ( int_chan, async move | input1 | {
-              info!("[P3] Received input from P1: {}", input1);
+              println!("[P3] Received input from P1: {}", input1);
 
               wait_async ( int_chan, async move || {
-                info!("[P3] P1 has terminated");
+                println!("[P3] P1 has terminated");
 
                 receive_value_from ( str_chan, async move | input2 | {
-                  info!("[P3] Received input from P2: {}", input2);
+                  println!("[P3] Received input from P2: {}", input2);
 
                   wait_async ( str_chan, async move || {
-                    info!("[P3] P2 has terminated");
+                    println!("[P3] P2 has terminated");
 
                     terminate_async ( async move || {
-                      info!("[P3] Spending 2 seconds to clean up");
+                      println!("[P3] Spending 2 seconds to clean up");
                       sleep(Duration::from_secs(2)).await;
-                      info!("[P3] Terminating");
+                      println!("[P3] Terminating");
                     })
                   })
                 })
@@ -135,9 +135,9 @@ pub fn pair_session()
   let p4 : Session <
     End
   > = terminate_async ( async move || {
-    info!("[P4] Sleeping for 3 seconds before terminating");
+    println!("[P4] Sleeping for 3 seconds before terminating");
     sleep(Duration::from_secs(2)).await;
-    info!("[P4] Terminating");
+    println!("[P4] Terminating");
   });
 
   let p5 :
@@ -153,4 +153,9 @@ pub fn pair_session()
   = apply_channel( apply_channel ( p3, p5), p4 );
 
   p6
+}
+
+#[async_std::main]
+pub async fn main() {
+  run_session( pair_session () ).await
 }

@@ -1,4 +1,5 @@
-extern crate log;
+#![feature(async_closure)]
+
 use std::time::Duration;
 use async_std::task::sleep;
 
@@ -16,7 +17,7 @@ fn producer (count: u64) ->
 {
   send_value_async ( async move || {
     sleep(Duration::from_secs(1)).await;
-    info!("Producing value: {}", count);
+    println!("Producing value: {}", count);
 
     ( count,
       wrap_session ( producer ( count + 1 ) )
@@ -35,7 +36,7 @@ fn consumer () ->
   receive_channel ( | stream | {
     receive_value_from ( stream,
       async move | count | {
-        info!("Received value: {}", count);
+        println!("Received value: {}", count);
         unwrap_session ( stream,
           include_session (
             consumer (),
@@ -58,4 +59,9 @@ pub fn stream_session () ->
   let p2 = consumer ();
 
   apply_channel ( p2, p1 )
+}
+
+#[async_std::main]
+pub async fn main() {
+  run_session( stream_session () ).await
 }
