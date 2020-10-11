@@ -7,8 +7,16 @@ This is an ongoing research work by [Soares Chen](https://maybevoid.com/)
 and [Stephanie Balzer](http://www.cs.cmu.edu/~balzers/) to implement
 session types in Rust.
 
-A draft technical report for Ferrite is currently available
-[here](https://maybevoid.com/pdf/ferrite-draft-2020-09.pdf)
+## Documentation
+
+A work-in-progress documentation for Ferrite is available as a
+[book](https://maybevoid.com/ferrite-book/).
+
+A draft technical report for Ferrite is currently available at
+[Arxiv](https://arxiv.org/abs/2009.13619).
+
+Auto generated rustdoc for Ferrite is available
+[here](https://maybevoid.com/ferrite-doc/ferrite/index.html).
 
 ## Build Instructions
 
