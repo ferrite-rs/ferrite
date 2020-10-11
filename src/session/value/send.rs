@@ -39,7 +39,7 @@ where
     > + Send
 {
   unsafe_create_session (
-    async move | ctx, sender1 | {
+    move | ctx, sender1 | async move {
       let (sender2, receiver2) = channel(1);
 
       let (result, cont) = cont_builder().await;
@@ -76,7 +76,7 @@ where
   A : Protocol,
   C : Context
 {
-  send_value_async ( async move || {
+  send_value_async ( move || async move {
     ( val, cont )
   })
 }
@@ -115,7 +115,7 @@ where
     >
 {
   unsafe_create_session (
-    async move | ctx1, sender | {
+    move | ctx1, sender | async move {
       let (receiver1, ctx2) =
         N :: extract_source ( ctx1 );
 

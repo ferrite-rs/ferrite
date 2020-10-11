@@ -30,7 +30,7 @@ where
   Row : UncloakRow < InjectSessionF < Row, C > >,
 {
   unsafe_create_session (
-    async move | ctx, sender1 | {
+    move | ctx, sender1 | async move {
       let (sender2, receiver2) = channel(1);
 
       let payload = ExternalChoice::< Row >

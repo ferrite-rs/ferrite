@@ -73,7 +73,7 @@ where
     >
 {
   include_session ( session1, move | chan | {
-    wait_async ( chan, async move || {
+    wait_async ( chan, move || async move {
       append_emtpy_slot ( cont )
     })
   })

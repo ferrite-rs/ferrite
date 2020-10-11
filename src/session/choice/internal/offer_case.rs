@@ -23,7 +23,7 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ctx, sender1 | {
+    move | ctx, sender1 | async move {
       let (sender2, receiver2) = channel(1);
 
       let child1 = task::spawn(async move {

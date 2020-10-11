@@ -18,7 +18,7 @@ where
     + Send
 {
   unsafe_create_session(
-    async move | ins, sender | {
+    move | ins, sender | async move {
       let cont2 = cont1().await;
 
       unsafe_run_session( cont2, ins, sender ).await;

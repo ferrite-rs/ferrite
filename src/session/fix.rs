@@ -26,12 +26,12 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ctx, sender1 | {
+    move | ctx, sender1 | async move {
       let (sender2, receiver)
         : ( Sender < A >, _ )
         = channel(1);
 
-      let child1 = task::spawn(async move {
+      let child1 = task::spawn ( async move {
         let val = receiver.recv().await.unwrap();
         sender1.send ( fix ( val ) ).await;
       });
@@ -66,7 +66,7 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ctx, sender1 | {
+    move | ctx, sender1 | async move {
       let (sender2, receiver) = channel(1);
 
       let child1 = task::spawn(async move {
@@ -92,7 +92,7 @@ where
   I : Context,
 {
   unsafe_create_session (
-    async move | ctx, sender | {
+    move | ctx, sender | async move {
       let (sender2, receiver) = channel(1);
 
       let child1 = task::spawn(async move {
@@ -139,7 +139,7 @@ where
     >,
 {
   unsafe_create_session(
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let (receiver1, ctx2) =
         N :: extract_source ( ctx1 );
 

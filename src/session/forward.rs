@@ -29,7 +29,7 @@ where
     >
 {
   unsafe_create_session (
-    async move | ctx, sender | {
+    move | ctx, sender | async move {
       let (receiver, _) = N :: extract_source ( ctx );
 
       let val = receiver.recv().await.unwrap();

@@ -29,7 +29,7 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let (receiver1, ctx2) = N::extract_source(ctx1);
 
       let choice : AppliedSum < Row, () > =

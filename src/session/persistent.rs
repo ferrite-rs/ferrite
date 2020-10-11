@@ -83,7 +83,7 @@ where
   );
 
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let session3 = (session2.new_session)();
 
       let (sender2, receiver2) = channel(1);

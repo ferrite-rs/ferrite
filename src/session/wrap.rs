@@ -25,7 +25,7 @@ where
   T :: Unwrap : Protocol,
 {
   unsafe_create_session (
-    async move | ctx, sender1 | {
+    move | ctx, sender1 | async move {
       let (sender2, receiver) = channel(1);
 
       let child1 = task::spawn(async move {
@@ -66,7 +66,7 @@ where
     >
 {
   unsafe_create_session(
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let (receiver1, ctx2) = N :: extract_source ( ctx1 );
 
       let (sender2, receiver2) = channel(1);

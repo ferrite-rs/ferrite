@@ -50,7 +50,7 @@ where
     >
 {
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let (p_chan, ctx2) =
         N :: extract_source (ctx1);
 
@@ -123,7 +123,7 @@ where
   );
 
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let ( pair_chan, ctx2 ) =
         N :: extract_source ( ctx1 );
 
@@ -178,7 +178,7 @@ where
   CQ: 'static
 {
   unsafe_create_session (
-    async move | ctx, sender | {
+    move | ctx, sender | async move {
       let (ctx1, ctx2) = CP :: split_context(ctx);
 
       let (sender1, receiver1) = channel(1);
@@ -245,7 +245,7 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let ( pair_chan, ctx2 ) =
         SourceLens :: extract_source ( ctx1 );
 

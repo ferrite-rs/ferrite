@@ -89,7 +89,7 @@ where
   F::Applied : Protocol
 {
   unsafe_create_shared_session (
-    async move |
+    move |
       receiver1 :
         Receiver <
           Sender <
@@ -98,7 +98,7 @@ where
             >
           >
         >
-    | {
+    | async move {
       let (sender2, receiver2)
         : (Sender < Lock < F > >, _)
         = channel (1);
@@ -168,7 +168,7 @@ where
   C : EmptyContext
 {
   unsafe_create_session (
-    async move |
+    move |
       (receiver1, _) :
         ( Receiver <
             Lock < F >
@@ -176,7 +176,7 @@ where
           C :: Endpoints
         ),
       sender1
-    | {
+    | async move {
       let child1 = task::spawn ( async move {
         debug!("[detach_shared_session] receiving sender2");
         let Lock { unlock : receiver2 }
@@ -231,7 +231,7 @@ where
   F::Applied : Protocol,
 {
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let cont = cont_builder (
         < C::Length as Nat > :: nat ()
       ).await;
@@ -285,7 +285,7 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let (receiver2, ctx2) = N :: extract_source ( ctx1 );
 
       let ctx3 = N :: insert_target ( (), ctx2 );

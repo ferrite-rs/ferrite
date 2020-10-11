@@ -53,7 +53,7 @@ where
   );
 
   unsafe_create_session (
-    async move | ctx1, sender | {
+    move | ctx1, sender | async move {
       let (sender1, receiver1)
         = channel(1);
 
@@ -94,7 +94,7 @@ where
     >
 {
   unsafe_create_session (
-    async move | ctx1, sender | {
+    move | ctx1, sender | async move {
       let ((), ctx2) = N :: extract_source (ctx1);
 
       let (sender1, receiver1)
@@ -163,7 +163,7 @@ where
     >
 {
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let (receiver1, ctx2) =
         N2 :: extract_source (ctx1);
 

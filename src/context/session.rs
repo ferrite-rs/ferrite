@@ -19,7 +19,7 @@ where
   P : Protocol
 {
   unsafe_create_session (
-    async move | (), sender | {
+    move | (), sender | async move {
       let ctx = < C as EmptyContext > :: empty_values();
       unsafe_run_session ( cont, ctx, sender ).await;
     })
@@ -34,7 +34,7 @@ where
   P : Protocol
 {
   unsafe_create_session (
-    async move | _, sender | {
+    move | _, sender | async move {
       unsafe_run_session ( cont, (), sender ).await
     })
 }
@@ -55,7 +55,7 @@ where
   I : AppendContext < ( Empty, () ) >
 {
   unsafe_create_session (
-    async move | ctx1, sender | {
+    move | ctx1, sender | async move {
       let (ctx2, _) =
         < I as
           AppendContext < ( Empty, () ) >

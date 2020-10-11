@@ -34,12 +34,12 @@ where
     > + Send
 {
   unsafe_create_session (
-    async move |
+    move |
       ctx,
       sender1 : Sender <
         ReceiveValue < T, A >,
       >
-    | {
+    | async move {
       let (sender2, receiver2) = channel(1);
 
       sender1.send ( ReceiveValue ( sender2 ) ).await;
@@ -90,7 +90,7 @@ where
     >
 {
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let (receiver1, ctx2) = N :: extract_source ( ctx1 );
 
       let ReceiveValue ( sender2 )
@@ -137,7 +137,7 @@ where
     >
 {
   unsafe_create_session (
-    async move | ctx1, sender1 | {
+    move | ctx1, sender1 | async move {
       let (receiver1, ctx2) = N :: extract_source ( ctx1 );
 
       let ReceiveValue ( sender2 )

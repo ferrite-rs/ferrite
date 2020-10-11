@@ -35,7 +35,7 @@ where
     Future < Output = () > + Send
 {
   unsafe_create_session (
-    async move | _, sender | {
+    move | _, sender | async move {
       cleaner().await;
       sender.send( End () ).await;
     })
@@ -47,7 +47,7 @@ pub fn terminate < C >
 where
   C : EmptyContext
 {
-  terminate_async ( async || { } )
+  terminate_async ( || async { } )
 }
 
 pub fn terminate_nil
@@ -87,7 +87,7 @@ where
   N : ContextLens < C, End, Empty >
 {
   unsafe_create_session (
-    async move | ctx1, sender | {
+    move | ctx1, sender | async move {
       let (receiver, ctx2) =
         N :: extract_source (ctx1);
 
@@ -118,7 +118,7 @@ where
   P : Protocol,
   N : ContextLens < I, End, Empty >
 {
-  wait_async ( lens, async move || {
+  wait_async ( lens, move || async move {
     cont
   })
 }

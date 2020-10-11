@@ -223,7 +223,7 @@ where
   let cont3 = cont2 ( C2::Length::nat () );
 
   unsafe_create_session (
-    async move | ctx, sender1 | {
+    move | ctx, sender1 | async move {
       let ( ctx1, ctx2 ) = X :: split_endpoints ( ctx );
       let ( sender2, receiver2 ) = channel(1);
       let ctx3 = C2::append_context ( ctx2, ( receiver2, () ) );
@@ -276,7 +276,7 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ctx1, b_sender | {
+    move | ctx1, b_sender | async move {
       let (ctx2, ctx3) =
         < C1 as
           AppendContext < C2 >

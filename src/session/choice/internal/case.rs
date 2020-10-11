@@ -40,7 +40,7 @@ where
     >,
 {
   unsafe_create_session (
-    async move | ctx1, sender | {
+    move | ctx1, sender | async move {
       let (sum_chan, ctx2) =
         N::extract_source ( ctx1 );
 
