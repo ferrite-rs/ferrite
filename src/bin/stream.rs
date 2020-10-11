@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use std::time::Duration;
 use async_std::task::sleep;
 
@@ -12,14 +10,15 @@ fn producer (count: u64) ->
   Session < IntStream >
 {
   fix_session (
-    send_value_async ( async move || {
-      sleep(Duration::from_secs(1)).await;
-      println!("[producer] Producing value: {}", count);
+    send_value! (
+      {
+        sleep(Duration::from_secs(1)).await;
+        println!("[producer] Producing value: {}", count);
 
-      ( count,
-        producer ( count + 1 )
-      )
-    }))
+        count
+      },
+      producer ( count + 1 )
+    ) )
 }
 
 fn consumer < A: Protocol > () ->
@@ -32,8 +31,8 @@ fn consumer < A: Protocol > () ->
 {
   receive_channel ( | stream | {
     unfix_session_for ( stream,
-      receive_value_from ( stream,
-        async move | count | {
+      receive_value_from! ( stream,
+        count => {
           println!("[consumer] Received value: {}", count);
           include_session (
             consumer (),

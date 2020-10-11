@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use ferrite::*;
 
 use std::sync::Arc;
@@ -47,18 +45,20 @@ pub fn make_counter_client
   ) -> Session < End >
 {
   let timer : Session < End > =
-    terminate_async ( async move || {
+    terminate! ({
       sleep ( Duration::from_secs(timeout) ).await;
     });
 
   include_session! ( timer, timer_chan => {
     wait! ( timer_chan, {
       println!("[{}] Timer reached", name);
-      clone_session(&counter_server, move | counter_chan | {
+
+      clone_session ( &counter_server, move | counter_chan | {
         receive_value_from! ( counter_chan, count => {
           println!("[{}] Received count: {}", name, count);
 
-          wait ( counter_chan, terminate () )
+          wait! ( counter_chan,
+            terminate! () )
         })
       })
     })

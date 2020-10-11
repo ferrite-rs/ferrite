@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 pub use ferrite::*;
 
 use std::time::Duration;
@@ -19,38 +17,33 @@ fn cut_session ()
           ReceiveChannel <
             Producer,
             End > > > >
-  = receive_channel ( | c1 | {
-      receive_channel ( | c2 | {
-        receive_channel ( | c3 | {
-          < ( R, ( L, ( R, () ) ) ) > :: cut (
-            receive_value_from! ( c2, x2 => {
-              println! ("[right] got x2: {}", x2);
-              sleep(Duration::from_secs(1)).await;
+  = receive_channels! ( (c1, c2, c3) => {
+      cut! {
+        [ R, L, R ] ;
+        receive_value_from! ( c2, x2 => {
+          println! ("[right] got x2: {}", x2);
+          sleep(Duration::from_secs(1)).await;
 
-              wait! ( c2,
+          wait! ( c2,
+            terminate! ({
+              println! ("[right] terminating");
+            }) )
+        });
+        c4 => {
+          receive_value_from! ( c1, x1 => {
+            println! ("[left] got x1: {}", x1);
+
+            receive_value_from! ( c3, x3 => {
+              println! ("[left] got x3: {}", x3);
+
+              wait_all! ( [ c1, c3, c4 ],
                 terminate! ({
-                  println! ("[right] terminating");
+                  println! ("[left] terminating");
                 }) )
-            }),
-            | c4 | {
-              receive_value_from! ( c1, x1 => {
-                println! ("[left] got x1: {}", x1);
-
-                receive_value_from! ( c3, x3 => {
-                  println! ("[left] got x3: {}", x3);
-
-                  wait! ( c1,
-                    wait! ( c3,
-                      wait! ( c4,
-                        terminate! ({
-                          println! ("[left] terminating");
-                        }) ) ) )
-                })
-              })
-            }
-          )
-        })
-      })
+            })
+          })
+        }
+      }
     });
 
   let p1 : Session < Producer >

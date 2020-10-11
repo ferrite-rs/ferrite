@@ -1,9 +1,6 @@
-#![feature(async_closure)]
-
 use std::time::Duration;
 use std::future::{ Future };
 use async_std::task::sleep;
-use std::pin::Pin;
 
 use ferrite::*;
 
@@ -30,31 +27,6 @@ where
     ) )
 }
 
-fn append_queue_2
-  < A, Func >
-  ( builder : Func,
-    rest : Session < Queue < A > >
-  ) ->
-    Session < Queue < A > >
-where
-  A : Send + 'static,
-  Func :
-    FnOnce() ->
-      Pin < Box <
-        dyn Future <
-          Output = A
-        > + Send + 'static
-      > >
-    + Send + 'static,
-{
-  fix_session (
-    offer_case ( RightLabel,
-      send_value! (
-        builder().await,
-        rest
-      ) ) )
-}
-
 fn append_queue
   < A, Func, Fut >
   ( builder : Func,
@@ -64,30 +36,20 @@ fn append_queue
 where
   A : Send + 'static,
   Func :
-    FnOnce () -> Fut
+    FnOnce() -> Fut
     + Send + 'static,
-  Fut :
-    Future < Output = A > + Send
+  Fut:
+    Future <
+      Output = A
+    >
+    + Send + 'static
 {
-  let builder2
-    : Box <
-        dyn FnOnce () ->
-          Pin < Box <
-            dyn Future < Output = A >
-                + Send
-          > >
-        + Send
-      >
-  = Box::new ( move || {
-      Box::pin ( async move {
-        builder().await
-      })
-    });
-
-  append_queue_2 (
-    builder2,
-    rest
-  )
+  fix_session (
+    offer_case ( RightLabel,
+      send_value! (
+        builder().await,
+        rest
+      ) ) )
 }
 
 fn read_queue () ->
@@ -97,15 +59,15 @@ fn read_queue () ->
       End
     > >
 {
-  receive_channel ( | queue | {
+  receive_channel! ( queue => {
     unfix_session_for ( queue,
       case! { queue ;
         Left => {
           wait ( queue, terminate () )
         }
         Right => {
-          receive_value_from ( queue,
-            async move | val | {
+          receive_value_from! ( queue,
+            val => {
               println!("Receive value: {}", val);
 
               include_session (
@@ -132,7 +94,7 @@ pub fn queue_session () ->
 
   let p12
     : Session < StringQueue >
-  = append_queue ( async || {
+  = append_queue ( || async {
       println!("producing world..");
       sleep(Duration::from_secs(3)).await;
       "World".to_string()
@@ -142,7 +104,7 @@ pub fn queue_session () ->
 
   let p13
     : Session < StringQueue >
-  = append_queue ( async || {
+  = append_queue ( || async {
       println!("producing hello..");
       sleep(Duration::from_secs(2)).await;
       "Hello".to_string()

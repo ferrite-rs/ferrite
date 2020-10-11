@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use ferrite::*;
 
 use std::time::Duration;

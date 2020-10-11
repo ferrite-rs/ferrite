@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use ferrite::*;
 
 use rand::prelude::*;
@@ -21,16 +19,17 @@ pub fn make_counter_session
     SharedSession < SharedCounter >
 {
   accept_shared_session (
-    send_value_async ( async move || {
-      println!("[Server] Producing count {}", count);
-      random_sleep(100, 1000).await;
-      println!("[Server] Produced count {}", count);
+    send_value! (
+      {
+        println!("[Server] Producing count {}", count);
+        random_sleep(100, 1000).await;
+        println!("[Server] Produced count {}", count);
 
-      ( count,
-        detach_shared_session (
-          make_counter_session ( count + 1 ) ) )
-    })
-  )
+        count
+      },
+      detach_shared_session (
+        make_counter_session ( count + 1 ) ) )
+    )
 }
 
 pub fn read_counter_session
@@ -42,11 +41,11 @@ pub fn read_counter_session
 {
   let shared2 = shared.clone();
 
-  step ( async move || {
+  step ( move || async move {
     random_sleep(100, 2000).await;
 
-    acquire_shared_session ( shared, async move | counter | {
-      receive_value_from ( counter, async move | count | {
+    acquire_shared_session ( shared, move | counter | async move {
+      receive_value_from! ( counter, count => {
         println!("[{}] Received count: {}", name, count);
 
         release_shared_session ( counter, {
@@ -68,9 +67,9 @@ pub fn read_counter_session_2
       & SharedChannel < SharedCounter >
   ) -> Session < End >
 {
-  shared_counter.acquire ( async move | linear_counter | {
+  shared_counter.acquire ( move | linear_counter | async move {
     random_sleep(100, 2000).await;
-    receive_value_from ( linear_counter, async move | count | {
+    receive_value_from! ( linear_counter, count => {
       println!("Received count: {}", count);
       release_shared_session ( linear_counter,
         terminate() )

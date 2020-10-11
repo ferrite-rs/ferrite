@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use ferrite::*;
 
 pub fn external_choice_session ()

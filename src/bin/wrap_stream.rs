@@ -15,14 +15,15 @@ type IntStream = SendValue < u64, Wrap < WrapIntStream > >;
 fn producer (count: u64) ->
   Session < IntStream >
 {
-  send_value_async ( async move || {
-    sleep(Duration::from_secs(1)).await;
-    println!("Producing value: {}", count);
+  send_value! (
+    {
+      sleep(Duration::from_secs(1)).await;
+      println!("Producing value: {}", count);
 
-    ( count,
-      wrap_session ( producer ( count + 1 ) )
-    )
-  })
+      count
+    },
+    wrap_session ( producer ( count + 1 ) )
+  )
 }
 
 fn consumer () ->
@@ -34,8 +35,8 @@ fn consumer () ->
   >
 {
   receive_channel ( | stream | {
-    receive_value_from ( stream,
-      async move | count | {
+    receive_value_from! ( stream,
+      count => {
         println!("Received value: {}", count);
         unwrap_session ( stream,
           include_session (

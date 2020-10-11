@@ -266,7 +266,7 @@ macro_rules! send_value {
 
 #[macro_export]
 macro_rules! send_value_to {
-  ( $chan:ident, $val:expr, $cont:expr ) => {
+  ( $chan:expr, $val:expr, $cont:expr ) => {
     $crate::step ( move || async move {
       $crate::send_value_to (
         $chan,
@@ -298,7 +298,7 @@ macro_rules! receive_value {
 
 #[macro_export]
 macro_rules! receive_value_from {
-  ( $chan:ident,
+  ( $chan:expr,
     $var:ident => $body:expr
   ) => {
     $crate::receive_value_from (
@@ -308,7 +308,7 @@ macro_rules! receive_value_from {
       }
     )
   };
-  ( $chan:ident,
+  ( $chan:expr,
     ($var:ident $( : $type:ty )?) => $body:expr
   ) => {
     $crate::receive_value_from (
@@ -322,7 +322,7 @@ macro_rules! receive_value_from {
 
 #[macro_export]
 macro_rules! choose {
-  ( $chan:ident,
+  ( $chan:expr,
     $label:ident,
     $cont:expr
   ) => {
@@ -376,8 +376,25 @@ macro_rules! receive_channel {
 }
 
 #[macro_export]
+macro_rules! receive_channels {
+  ( ( $var:ident $(,)? ) => $body:expr ) => {
+    receive_channel!( $var => $body )
+  };
+  ( ( $var:ident, $( $vars:ident ),* $(,)? )
+    => $body:expr
+  ) => {
+    receive_channel! ( $var => {
+      receive_channels! (
+        ( $( $vars ),* ) =>
+          $body
+      )
+    })
+  };
+}
+
+#[macro_export]
 macro_rules! receive_channel_from {
-  ( $chan:ident, $var:ident => $body:expr ) => {
+  ( $chan:expr, $var:ident => $body:expr ) => {
     $crate::receive_channel_from (
       $chan,
       move | $var | {
@@ -408,7 +425,7 @@ macro_rules! terminate {
   };
   ( $cont:expr ) => {
     $crate::terminate_async(
-      move || async {
+      move || async move {
         $cont
       }
     )
@@ -417,12 +434,46 @@ macro_rules! terminate {
 
 #[macro_export]
 macro_rules! wait {
-  ( $chan:ident, $cont:expr ) => {
+  ( $chan:expr, $cont:expr ) => {
     $crate::wait_async (
       $chan,
       move || async move {
         $cont
       }
+    )
+  };
+}
+
+#[macro_export]
+macro_rules! wait_all {
+  ( [ $chan:expr $(,)? ],
+    $cont:expr
+  ) => {
+    wait! ( $chan, $cont )
+  };
+  ( [ $chan:expr, $( $chans:expr ),* $(,)? ],
+    $cont:expr
+  ) => {
+    wait! ( $chan,
+      wait_all! (
+        [ $( $chans ),* ],
+        $cont
+      )
+    )
+  };
+}
+
+#[macro_export]
+macro_rules! cut {
+  ( [ $( $labels:ty ),+ $(,)? ] ;
+    $cont1:expr ;
+    $var:ident => $cont2:expr
+  ) => {
+    < HList![ $( $labels ),* ]
+      as $crate::Cut < _ >
+    > :: cut (
+      $cont1,
+      | $var | { $cont2 }
     )
   }
 }

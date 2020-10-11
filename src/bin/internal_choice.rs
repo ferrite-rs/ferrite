@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use ferrite::*;
 
 pub fn internal_choice_session ()
@@ -15,20 +13,21 @@ pub fn internal_choice_session ()
           > >,
         End
       > > =
-  receive_channel ( | chan | {
+  receive_channel! ( chan => {
     case! { chan ;
       Left => {
         receive_value_from! ( chan,
           (val: String) => {
             println! ("receied string: {}", val);
-            wait ( chan,
-              terminate () )
+            wait! ( chan,
+              terminate! () )
           })
       }
       Right => {
-        send_value_to ( chan, 42,
-          wait ( chan,
-            terminate () ) )
+        send_value_to! ( chan,
+          42,
+          wait! ( chan,
+            terminate! () ) )
       }
     }
   });
@@ -43,7 +42,7 @@ pub fn internal_choice_session ()
     offer_case! ( Left,
       send_value! (
         "provider_left".to_string(),
-        terminate()
+        terminate! ()
       ) );
 
   let _provider_right :
@@ -56,7 +55,7 @@ pub fn internal_choice_session ()
     offer_case! ( Right,
       receive_value! ( (val: u64) => {
         println! ( "received int: {}", val );
-        terminate()
+        terminate! ()
       })
     );
 

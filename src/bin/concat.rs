@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 use std::vec::*;
 use std::time::Duration;
 use async_std::task::sleep;

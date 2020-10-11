@@ -57,7 +57,8 @@ where
             fix_session (
               offer_choice! {
                 Next => {
-                  send_value ( val,
+                  send_value! (
+                    val,
                     release_shared_session ( chan,
                         partial_session (
                           make_receiver ( source ) ) )
@@ -65,7 +66,7 @@ where
                 }
                 Close => {
                   release_shared_session ( chan,
-                    terminate () )
+                    terminate! () )
                 }
               })
           },
@@ -102,7 +103,7 @@ where
         chan,
         make_val().await,
         release_shared_session ( chan,
-            terminate () )
+          terminate! () )
       ) )
   })
 }
@@ -123,6 +124,7 @@ where
       ReceiveNext => {
         receive_value! ( val => {
           queue.push_back ( val );
+
           detach_shared_session (
             do_create_channel ( queue ) )
         })
@@ -175,12 +177,12 @@ pub fn channel_session ()
               unfix_session_for ( receiver,
                 choose! ( receiver, Next,
                   receive_value_from! ( receiver, val => {
-                    println!("[Consumer 1] Receive second value: {}", val);
+                    println! ("[Consumer 1] Receive second value: {}", val);
 
                     unfix_session_for ( receiver,
-                      choose ( receiver, CloseLabel,
-                        wait ( receiver,
-                          terminate () ) )
+                      choose! ( receiver, Close,
+                        wait! ( receiver,
+                          terminate! () ) )
                     )
                   } ) )
               )

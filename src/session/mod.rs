@@ -17,6 +17,7 @@ pub use choice::*;
 
 pub use self::run::{
   run_session,
+  run_session_with_result,
 };
 
 pub use self::step::{
