@@ -84,7 +84,7 @@ pub fn restaurant_session()
         ExternalChoice < MainMenu >
       >
     > =
-    include_session ( soup_of_the_day, | chan | {
+    include_session! ( soup_of_the_day, chan => {
       send_channel_from ( chan,
         partial_session( main_dish ) )
     });

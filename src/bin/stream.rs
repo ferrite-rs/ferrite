@@ -29,14 +29,14 @@ fn consumer < A: Protocol > () ->
     >
   >
 {
-  receive_channel ( | stream | {
+  receive_channel! ( stream => {
     unfix_session_for ( stream,
       receive_value_from! ( stream,
         count => {
           println!("[consumer] Received value: {}", count);
-          include_session (
+          include_session! (
             consumer (),
-            | next | {
+            next => {
               send_channel_to (
                 next,
                 stream,

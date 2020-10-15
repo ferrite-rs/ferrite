@@ -14,54 +14,6 @@ use crate::base::{
   unsafe_create_session,
 };
 
-/*
-          cont_builder() :: T ; cont :: Δ ⊢ P
-    ==============================================
-      send_value_async(cont_builder) :: Δ ⊢  T ∧ P
- */
-pub fn send_value_async
-  < T, C, A, Fut >
-  ( cont_builder: impl
-      FnOnce() -> Fut
-      + Send + 'static
-  ) ->
-    PartialSession <
-      C,
-      SendValue < T, A >
-    >
-where
-  T : Send + 'static,
-  A : Protocol,
-  C : Context,
-  Fut :
-    Future <
-      Output = ( T,  PartialSession < C, A > )
-    > + Send
-{
-  unsafe_create_session (
-    move | ctx, sender1 | async move {
-      let (sender2, receiver2) = channel(1);
-
-      let (result, cont) = cont_builder().await;
-
-      let child1 = task::spawn(async move {
-        sender1.send(
-          SendValue
-            ( result,
-              receiver2
-            ) ).await;
-      });
-
-      let child2 = task::spawn(async move {
-        unsafe_run_session
-          ( cont, ctx, sender2
-          ).await;
-      });
-
-      join!(child1, child2).await;
-    })
-}
-
 pub fn send_value
   < T, C, A >
   ( val : T,
@@ -76,9 +28,26 @@ where
   A : Protocol,
   C : Context
 {
-  send_value_async ( move || async move {
-    ( val, cont )
-  })
+  unsafe_create_session (
+    move | ctx, sender1 | async move {
+      let (sender2, receiver2) = channel(1);
+
+      let child1 = task::spawn(async move {
+        sender1.send(
+          SendValue
+            ( val,
+              receiver2
+            ) ).await;
+      });
+
+      let child2 = task::spawn(async move {
+        unsafe_run_session
+          ( cont, ctx, sender2
+          ).await;
+      });
+
+      join!(child1, child2).await;
+    })
 }
 
 /*

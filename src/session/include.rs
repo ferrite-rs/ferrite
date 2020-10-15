@@ -1,3 +1,4 @@
+use std::future::Future;
 use std::collections::{ LinkedList };
 
 use crate::protocol::{ End };
@@ -28,15 +29,11 @@ use crate::session::cut::{
 };
 
 pub fn include_session
-  < C, A, B >
+  < C, A, B, Fut >
   ( session : Session < A >,
     cont : impl FnOnce
       ( C :: Length )
-      ->
-        PartialSession <
-          C :: Appended,
-          B
-        >
+      -> Fut
   ) ->
     PartialSession < C, B >
 where
@@ -44,6 +41,14 @@ where
   B : Protocol,
   C : Context,
   C : AppendContext < ( A, () ) >,
+  Fut :
+    Future < Output =
+      PartialSession <
+        C :: Appended,
+        B
+      >
+    >
+    + Send + 'static
 {
   AllRight :: cut ( session, cont  )
 }
@@ -72,7 +77,7 @@ where
         >::Appended
     >
 {
-  include_session ( session1, move | chan | {
+  include_session ( session1, move | chan | async move {
     wait_async ( chan, move || async move {
       append_emtpy_slot ( cont )
     })
@@ -132,10 +137,10 @@ fn do_join_sessions
 {
   match sessions.pop_front() {
     Some (session) => {
-      include_session ( session, move | c1 | {
+      include_session ( session, move | c1 | async move {
         include_session (
           do_join_sessions ( sessions ),
-          move | c2 | {
+          move | c2 | async move {
             wait ( c1,
               wait ( c2,
                 terminate ()))

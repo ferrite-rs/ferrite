@@ -1,3 +1,4 @@
+use std::future::Future;
 use async_macros::join;
 use async_std::task;
 use async_std::sync::{ channel };
@@ -154,22 +155,26 @@ where
   C : Context,
 {
   fn cut
-    < A, B >
+    < A, B, Fut >
     ( cont1 : PartialSession < Self::Left, A >,
       cont2 : impl FnOnce
         ( < Self::Right as Context > ::Length )
-        ->
-          PartialSession <
-            < Self::Right
-              as AppendContext < ( A, () ) >
-            > ::Appended, B
-          >
+        -> Fut
     ) ->
       PartialSession < C, B >
   where
     A : Protocol,
     B : Protocol,
     Self::Right : AppendContext < ( A, () ) >,
+    Fut :
+      Future < Output =
+        PartialSession <
+          < Self::Right
+            as AppendContext < ( A, () ) >
+          > ::Appended, B
+        >
+      >
+      + Send + 'static
   ;
 }
 
@@ -181,32 +186,35 @@ where
   X : SplitContext < C >
 {
   fn cut
-    < A, B >
+    < A, B, Fut >
     ( cont1 : PartialSession < Self::Left, A >
     , cont2 : impl FnOnce
         ( < Self::Right as Context > ::Length )
-        ->
-          PartialSession <
-            < Self::Right
-              as AppendContext < ( A, () ) >
-            > ::Appended, B
-          >,
-
+        -> Fut
     ) ->
       PartialSession < C, B >
   where
     A : Protocol,
     B : Protocol,
     Self::Right : AppendContext < ( A, () ) >,
+    Fut :
+      Future < Output =
+        PartialSession <
+          < Self::Right
+            as AppendContext < ( A, () ) >
+          > ::Appended, B
+        >
+      >
+      + Send + 'static
   {
-    cut :: < X, _, _, _, _, _, _> ( cont1, cont2 )
+    cut :: < X, _, _, _, _, _, _, _> ( cont1, cont2 )
   }
 }
 
 pub fn cut
-  < X, C, C1, C2, A, B, F >
+  < X, C, C1, C2, A, B, Func, Fut >
   ( cont1 : PartialSession < C1, A >,
-    cont2 : F
+    cont2 : Func
   ) ->
     PartialSession < C, B >
 where
@@ -217,8 +225,12 @@ where
   C2 : Context,
   X : SplitContext < C, Left = C1, Right = C2 >,
   C2 : AppendContext < ( A, () ) >,
-  F : FnOnce ( C2::Length )
-      -> PartialSession < C2::Appended, B >
+  Func : FnOnce ( C2::Length ) -> Fut,
+  Fut :
+    Future < Output =
+      PartialSession < C2::Appended, B >
+    >
+    + Send + 'static
 {
   let cont3 = cont2 ( C2::Length::nat () );
 
@@ -230,7 +242,7 @@ where
 
       let child1 = task::spawn ( async move {
         unsafe_run_session (
-          cont3,
+          cont3.await,
           ctx3, sender1
         ).await;
       });

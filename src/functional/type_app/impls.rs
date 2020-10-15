@@ -12,6 +12,20 @@ where
 {
   fn get_applied (self: Box < T >) -> Box < T >
   { self }
+
+  fn get_applied_borrow < 'a >
+    ( &'a self )
+    -> &'a F::Applied
+  where
+    F: TypeApp < A >
+  { self }
+
+  fn get_applied_borrow_mut < 'a >
+    ( &'a mut self )
+    -> &'a mut F::Applied
+  where
+    F: TypeApp < A >
+  { self }
 }
 
 impl < T, F, A, K >

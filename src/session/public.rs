@@ -34,12 +34,10 @@ pub use super::{
   create_persistent_session,
 
   send_value,
-  send_value_async,
   receive_value_from,
 
   receive_value,
   send_value_to,
-  send_value_to_async,
 
   fork,
   send_channel_from,

@@ -166,9 +166,9 @@ pub fn channel_session ()
       create_channel ();
 
   let consumer1 : Session < End > =
-    include_session (
+    include_session! (
       make_receiver ( channel.clone() ),
-      | receiver | {
+      receiver => {
         unfix_session_for ( receiver,
           choose! ( receiver, Next,
             receive_value_from! ( receiver, val => {

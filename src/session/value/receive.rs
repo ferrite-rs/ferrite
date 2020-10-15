@@ -55,64 +55,6 @@ where
     })
 }
 
-/*
-          cont_builder() :: T ; Q, Δ ⊢ P
-    ===========================================
-      send_value_to_async(cont_builder) :: T ⊃ Q, Δ ⊢ P
- */
-pub fn send_value_to_async
-  < N, T, C, A, B, Fut >
-  ( _ : N,
-    cont_builder : impl
-      FnOnce() -> Fut
-      + Send + 'static
-  ) ->
-    PartialSession < C, B >
-where
-  A : Protocol,
-  B : Protocol,
-  C : Context,
-  T : Send + 'static,
-  Fut :
-    Future <
-      Output =
-        ( T,
-          PartialSession <
-            N :: Target,
-            B
-          > )
-    > + Send,
-  N :
-    ContextLens <
-      C,
-      ReceiveValue < T, A >,
-      A
-    >
-{
-  unsafe_create_session (
-    move | ctx1, sender1 | async move {
-      let (receiver1, ctx2) = N :: extract_source ( ctx1 );
-
-      let ReceiveValue ( sender2 )
-        = receiver1.recv().await.unwrap();
-
-      let (val, cont) = cont_builder().await;
-
-      let (sender3, receiver3) = channel(1);
-
-      let ctx3 = N :: insert_target( receiver3, ctx2 );
-
-      sender2.send( (
-        val,
-        sender3
-      ) ).await;
-
-      unsafe_run_session
-        (cont, ctx3, sender1
-        ).await;
-    })
-}
-
 pub fn send_value_to
   < N, C, A, B, T >
   ( _ : N,

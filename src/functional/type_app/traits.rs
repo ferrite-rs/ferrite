@@ -21,6 +21,20 @@ where
   where
     F: TypeApp < A >
   ;
+
+  fn get_applied_borrow < 'a >
+    ( &'a self )
+    -> &'a F::Applied
+  where
+    F: TypeApp < A >
+  ;
+
+  fn get_applied_borrow_mut < 'a >
+    ( &'a mut self )
+    -> &'a mut F::Applied
+  where
+    F: TypeApp < A >
+  ;
 }
 
 pub trait TypeAppWitnessCont < F, A, K >

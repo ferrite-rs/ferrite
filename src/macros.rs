@@ -44,7 +44,7 @@ macro_rules! match_choice_value {
 #[macro_export]
 macro_rules! match_choice {
   ( $( $label:path => $e:expr $(,)? )+ ) => {
-    move | ferrite_choice_internal__ | {
+    move | ferrite_choice_internal__ | async move {
       match_choice_value! { ferrite_choice_internal__;
         $( $label => $e ),*
       }
@@ -368,7 +368,7 @@ macro_rules! acquire_shared_session {
 macro_rules! receive_channel {
   ( $var:ident => $body:expr ) => {
     $crate::receive_channel (
-      move | $var | {
+      move | $var | async move {
         $body
       }
     )
@@ -411,7 +411,7 @@ macro_rules! include_session {
   ) => {
     $crate::include_session (
       $session,
-      move | $var | {
+      move | $var | async move {
         $body
       }
     )
@@ -473,7 +473,9 @@ macro_rules! cut {
       as $crate::Cut < _ >
     > :: cut (
       $cont1,
-      | $var | { $cont2 }
+      move | $var | async move {
+        $cont2
+      }
     )
   }
 }

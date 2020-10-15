@@ -4,6 +4,7 @@ define_choice! { FooBarBaz;
   Foo : SendValue < String, End >,
   Bar : ReceiveValue < u64, End >,
   Baz : End,
+  Quux : SendValue < i32, End >,
 }
 
 pub fn external_choice_session ()
@@ -28,6 +29,11 @@ pub fn external_choice_session ()
       }
       Baz => {
         terminate()
+      }
+      Quux => {
+        send_value! (
+          8,
+          terminate() )
       }
     };
 

@@ -70,9 +70,9 @@ fn read_queue () ->
             val => {
               println!("Receive value: {}", val);
 
-              include_session (
+              include_session! (
                 read_queue (),
-                | next | {
+                next => {
                   send_channel_to (
                     next,
                     queue,

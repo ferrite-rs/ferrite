@@ -20,9 +20,23 @@ where
   where
     F: TyCon,
     Row: RowApp < F >,
-  {
-    self
-  }
+  { self }
+
+  fn get_row_borrow < 'a >
+    ( &'a self )
+    -> &'a Row::Applied
+  where
+    F: TyCon,
+    Row: RowApp < F >,
+  { self }
+
+  fn get_row_borrow_mut < 'a >
+    ( &'a mut self )
+    -> &'a mut Row::Applied
+  where
+    F: TyCon,
+    Row: RowApp < F >,
+  { self }
 }
 
 impl < S, Row, F, K >

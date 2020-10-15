@@ -32,14 +32,14 @@ fn consumer () ->
     >
   >
 {
-  receive_channel ( | stream | {
+  receive_channel! ( stream => {
     receive_value_from! ( stream,
       count => {
         println!("Received value: {}", count);
         unwrap_session ( stream,
-          include_session (
+          include_session! (
             consumer (),
-            | next | {
+            next => {
               send_channel_to (
                 next,
                 stream,

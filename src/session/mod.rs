@@ -68,12 +68,10 @@ pub use self::persistent::{
 
 pub use self::value::{
   send_value,
-  send_value_async,
   receive_value_from,
 
   receive_value,
   send_value_to,
-  send_value_to_async,
 };
 
 pub use self::channel::{
