@@ -5,8 +5,15 @@ use super::traits::*;
 pub struct Applied < F, A >
 {
   pub applied:
-    Box < dyn TypeAppWitness <
-      F, A, Box < dyn Any > > >,
+    Box < dyn HasTypeApp < F, A > >,
+
+  pub witness:
+    Box < dyn
+      TypeAppWitness <
+        F, A,
+        Box < dyn Any >
+      >
+    >,
 }
 
 pub struct Const < X > ( PhantomData<X> );
@@ -44,6 +51,7 @@ where
   F: TypeApp < A >,
 {
   Applied {
-    applied: Box::new( applied )
+    applied: Box::new( applied ),
+    witness: Box::new( () ),
   }
 }

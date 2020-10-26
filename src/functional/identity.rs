@@ -19,13 +19,15 @@ impl
   TypeAppGeneric
   for IdentityF
 {
-  fn with_type_app < A, K >
-    ( cont: impl TypeAppCont < IdentityF, A, K > )
-    -> K
+  fn get_witness < A, K > () ->
+    Box < dyn
+      TypeAppWitness < Self, A, K >
+    >
   where
-    A: Send + 'static
+    A: Send + 'static,
+    K: Send + 'static,
   {
-    cont.on_type_app()
+    Box::new( () )
   }
 }
 

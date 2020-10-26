@@ -30,7 +30,7 @@ where
 
 impl < T, F, A, K >
   TypeAppWitness < F, A, K >
-  for T
+  for ()
 where
   F: 'static,
   A: 'static,
@@ -39,11 +39,18 @@ where
   F: TypeApp < A, Applied=T >,
 {
   fn with_applied
-    ( self: Box < Self >,
-      cont: Box < dyn TypeAppWitnessCont < F, A, K > >
+    ( &self,
+      cont: Box < dyn TypeAppCont < F, A, K > >
     ) -> K
   {
-    cont.on_witness(self)
+    cont.on_type_app()
+  }
+
+  fn clone_witness
+    ( &self )
+    -> Box < dyn TypeAppWitness < F, A, K > >
+  {
+    Box::new( () )
   }
 }
 

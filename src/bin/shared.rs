@@ -81,7 +81,7 @@ pub fn shared_counter_session ()
   -> Session < End >
 {
   let (shared, _) =
-    run_shared_session ( make_counter_session ( 0 ));
+    run_shared_session ( make_counter_session ( 0 ) );
 
   let p1 = read_counter_session ( "P1".to_string(), 10, shared.clone() );
   let p2 = read_counter_session ( "P2".to_string(), 8, shared.clone() );

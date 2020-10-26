@@ -45,7 +45,7 @@ where
 {
   fn on_witness
     ( self: Box < Self >,
-      applied: Box < F::Applied >
+      applied: F::Applied
     )
     -> K
   where
@@ -53,23 +53,10 @@ where
   ;
 }
 
-pub trait TypeAppWitness < F, A, K >
-  : HasTypeApp < F, A >
-where
-  F: 'static,
-  A: 'static,
-  K: 'static,
-{
-  fn with_applied
-    ( self: Box < Self >,
-      cont: Box < dyn TypeAppWitnessCont < F, A, K > >
-    ) -> K
-  ;
-}
-
 pub trait TypeAppCont < F, A, K >
 {
-  fn on_type_app (self)
+  fn on_type_app
+    ( self: Box < Self > )
     -> K
   where
     A: 'static,
@@ -77,12 +64,33 @@ pub trait TypeAppCont < F, A, K >
   ;
 }
 
+pub trait TypeAppWitness < F, A, K >
+  : Send + 'static
+where
+  F: 'static,
+  A: 'static,
+  K: 'static,
+{
+  fn with_applied
+    ( &self,
+      cont: Box < dyn TypeAppCont < F, A, K > >
+    ) -> K
+  ;
+
+  fn clone_witness
+    ( &self )
+    -> Box < dyn TypeAppWitness < F, A, K > >
+  ;
+}
+
 pub trait TypeAppGeneric : TyCon
 {
-  fn with_type_app < A, K >
-    ( cont: impl TypeAppCont < Self, A, K > )
-    -> K
+  fn get_witness < A, K > () ->
+    Box < dyn
+      TypeAppWitness < Self, A, K >
+    >
   where
-    A: Send + 'static
+    A: Send + 'static,
+    K: Send + 'static,
   ;
 }
