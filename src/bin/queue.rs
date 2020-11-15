@@ -2,7 +2,7 @@ use std::time::Duration;
 use std::future::{ Future };
 use async_std::task::sleep;
 
-use ferrite::*;
+use ferrite_session::*;
 
 type Queue < A > =
   Rec <

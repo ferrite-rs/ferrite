@@ -1,4 +1,4 @@
-pub use ferrite::*;
+pub use ferrite_session::*;
 
 use std::time::Duration;
 use async_std::task::sleep;

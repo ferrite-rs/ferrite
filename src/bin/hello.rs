@@ -1,4 +1,4 @@
-use ferrite::*;
+use ferrite_session::*;
 
 use std::format;
 

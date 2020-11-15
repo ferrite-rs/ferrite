@@ -1,4 +1,4 @@
-use ferrite::*;
+use ferrite_session::*;
 
 pub fn external_choice_session ()
   -> Session < End >

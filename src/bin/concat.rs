@@ -2,7 +2,7 @@ use std::vec::*;
 use std::time::Duration;
 use async_std::task::sleep;
 
-use ferrite::*;
+use ferrite_session::*;
 
 pub fn concat_session()
   -> Session < End >

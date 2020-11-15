@@ -1,7 +1,7 @@
 use std::time::Duration;
 use async_std::task::sleep;
 
-use ferrite::*;
+use ferrite_session::*;
 
 type IntStream = Rec <
   SendValue < u64, Z > >;

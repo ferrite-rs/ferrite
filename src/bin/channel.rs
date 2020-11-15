@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use std::future::Future;
 use async_std::task::sleep;
 
-use ferrite::*;
+use ferrite_session::*;
 
 // Example implementation of Rust channels using shared channels
 
