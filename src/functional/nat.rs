@@ -10,16 +10,16 @@ pub trait Nat
 }
 
 #[derive(Copy, Clone)]
-pub struct Z ();
+pub struct Z;
 
 #[derive(Copy, Clone)]
 pub struct S < N > ( pub PhantomData<N> );
 
 impl Nat for Z {
   #[allow(non_upper_case_globals)]
-  const Value : Z = Z();
+  const Value : Z = Z;
 
-  fn nat() -> Z { Z() }
+  fn nat() -> Z { Z }
 }
 
 impl < N > Nat

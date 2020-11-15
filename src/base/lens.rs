@@ -16,7 +16,7 @@ where
   type Endpoint = Receiver < P >;
 }
 
-pub struct Empty { }
+pub struct Empty;
 
 impl Slot for Empty {
   type Endpoint = ();

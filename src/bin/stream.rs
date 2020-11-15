@@ -3,7 +3,7 @@ use async_std::task::sleep;
 
 use ferrite::*;
 
-type IntStream = Fix <
+type IntStream = Rec <
   SendValue < u64, Z > >;
 
 fn producer (count: u64) ->

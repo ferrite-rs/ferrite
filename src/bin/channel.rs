@@ -23,7 +23,7 @@ define_choice! {
 }
 
 pub type Receiver < T > =
-  Fix <
+  Rec <
     ExternalChoice <
       ReceiverOption < T >
     >

@@ -2,7 +2,7 @@ use crate::base::*;
 
 impl < F >
   Protocol for
-  Fix < F >
+  Rec < F >
 where
   F : Send + 'static,
 { }

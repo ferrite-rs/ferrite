@@ -11,7 +11,7 @@ pub fn fix_session
   ->
     PartialSession <
       C,
-      Fix < F >
+      Rec < F >
     >
 where
   C : Context,
@@ -20,7 +20,7 @@ where
   F :
     RecApp <
       Unfix <
-        Fix < F >
+        Rec < F >
       >,
       Applied = A
     >,
@@ -49,7 +49,7 @@ pub fn unfix_session
   ( cont:
       PartialSession <
         C,
-        Fix < F >
+        Rec < F >
       >
   ) ->
     PartialSession < C, A >
@@ -60,7 +60,7 @@ where
   F :
     RecApp <
       Unfix <
-        Fix < F >
+        Rec < F >
       >,
       Applied = A
     >,
@@ -126,7 +126,7 @@ where
   F :
     RecApp <
       Unfix <
-        Fix < F >
+        Rec < F >
       >,
       Applied = A
     >,
@@ -134,7 +134,7 @@ where
   N :
     ContextLens <
       C,
-      Fix < F >,
+      Rec < F >,
       A,
     >,
 {

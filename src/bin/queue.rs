@@ -5,7 +5,7 @@ use async_std::task::sleep;
 use ferrite::*;
 
 type Queue < A > =
-  Fix <
+  Rec <
     InternalChoice <
       Either <
         End,

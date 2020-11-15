@@ -34,14 +34,14 @@ where
 
 pub struct Unfix < A > ( PhantomData<A> );
 
-pub struct Fix < F >
+pub struct Rec < F >
 {
   unfix :
     Box < dyn
       HasRecApp <
         F,
         Unfix <
-          Fix < F >
+          Rec < F >
         >
       >
     >
@@ -49,30 +49,30 @@ pub struct Fix < F >
 
 pub fn fix < F >
   (x : F :: Applied)
-  -> Fix < F >
+  -> Rec < F >
 where
   F : Send + 'static,
   F :
     RecApp <
       Unfix <
-        Fix < F >
+        Rec < F >
       >
     >
 {
-  Fix {
+  Rec {
     unfix: Box::new( x )
   }
 }
 
 pub fn unfix < F >
-  (x : Fix < F >)
+  (x : Rec < F >)
   -> F :: Applied
 where
   F : Send + 'static,
   F :
     RecApp <
       Unfix <
-        Fix < F >
+        Rec < F >
       >
     >
 {
@@ -81,7 +81,7 @@ where
 
 impl < A, F >
   RecApp < A >
-  for Fix < F >
+  for Rec < F >
 where
   F :
     RecApp <
@@ -89,7 +89,7 @@ where
     >,
   F :
     RecApp < Unfix <
-      Fix < F >
+      Rec < F >
     > >,
   < F as
     RecApp <
@@ -97,7 +97,7 @@ where
     >
   > :: Applied :
     RecApp < Unfix <
-      Fix <
+      Rec <
         < F as
           RecApp <
             S < A >
@@ -107,7 +107,7 @@ where
     > >,
 {
   type Applied =
-    Fix <
+    Rec <
       < F as
         RecApp <
           S < A >
