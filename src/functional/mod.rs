@@ -4,6 +4,9 @@ pub mod base;
 pub mod identity;
 pub mod type_app;
 
+#[macro_use]
+pub mod macros;
+
 pub use nat::*;
 pub use row::*;
 pub use base::*;

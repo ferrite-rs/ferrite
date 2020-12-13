@@ -11,38 +11,23 @@ where
   Row : SplitRow,
   Row : SumFunctor,
 {
-  let row2 = Row::lift_sum::
-        < ReceiverToSelector, _, _ >
-        ( row1 );
+  let row2 = lift_sum (
+    crate::natural_transformation! {
+      { } ;
+      ReceiverToSelector :
+        forall x .
+          ReceiverF [@x] ->
+          Merge < ReceiverF, () > [@x]
+        ;
+      (receiver) => {
+        cloak_applied ( (
+          receiver,
+          cloak_applied( () )
+        ) )
+      }
+    },
+    row1
+  );
 
   Row::split_row(row2)
-}
-
-struct ReceiverToSelector {}
-
-impl
-  NaturalTransformation
-  < ReceiverF,
-    Merge <
-      ReceiverF,
-      ()
-    >
-  >
-  for ReceiverToSelector
-{
-  fn lift < A >
-    ( receiver: Applied < ReceiverF, A > )
-    ->
-      Applied <
-        Merge < ReceiverF, () >,
-        A
-      >
-  where
-    A: Send + 'static,
-  {
-    cloak_applied ( (
-      receiver,
-      cloak_applied( () )
-    ) )
-  }
 }

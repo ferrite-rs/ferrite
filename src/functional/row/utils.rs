@@ -1,5 +1,6 @@
 use super::traits::*;
 use super::structs::*;
+use crate::functional::base::*;
 use crate::functional::type_app::*;
 
 pub fn extract < R, T >
@@ -28,6 +29,25 @@ where
   F: TyCon,
 {
   match row1.get_row() {}
+}
+
+// lift_sum : forall row f g
+//   . (forall x . f x -> g x)
+//   -> row f
+//   -> row g
+pub fn lift_sum
+  < Row, F1, F2, Lift >
+  ( lift: &Lift,
+    sum: AppliedSum < Row, F1 >
+  ) ->
+    AppliedSum < Row, F2 >
+where
+  F1: TyCon,
+  F2: TyCon,
+  Row: SumFunctor,
+  Lift: NaturalTransformation < F1, F2 >,
+{
+  Row::lift_sum ( lift, sum )
 }
 
 pub fn lift_sum_inject

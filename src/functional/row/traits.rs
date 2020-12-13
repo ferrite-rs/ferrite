@@ -115,7 +115,9 @@ pub trait SumFunctor
 {
   fn lift_sum
      < T, F1, F2 >
-    ( sum: AppliedSum < Self, F1 > )
+    ( lift: &T,
+      sum: AppliedSum < Self, F1 >
+    )
     -> AppliedSum < Self, F2 >
   where
     F1: TyCon,

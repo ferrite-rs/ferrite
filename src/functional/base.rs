@@ -48,8 +48,10 @@ where
   F2: TyCon,
 {
   fn lift < A >
-    ( fa: Applied < F1, A > )
-    -> Applied < F2, A >
+    ( &self
+    , fa: Applied < F1, A >
+    ) ->
+      Applied < F2, A >
   where
     A: Send + 'static,
   ;

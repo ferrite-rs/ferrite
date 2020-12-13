@@ -338,8 +338,10 @@ impl SumFunctor for ()
 {
   fn lift_sum
      < T, F1, F2 >
-    ( row1: AppliedSum < Self, F1 > )
-    -> AppliedSum < Self, F2 >
+    ( _lift: &T,
+      row1: AppliedSum < Self, F1 >
+    ) ->
+      AppliedSum < Self, F2 >
   where
     F1: TyCon,
     F2: TyCon,
@@ -358,8 +360,10 @@ where
 {
   fn lift_sum
      < T, F1, F2 >
-    ( row1: AppliedSum < Self, F1 > )
-    -> AppliedSum < Self, F2 >
+    ( lift: &T,
+      row1: AppliedSum < Self, F1 >
+    ) ->
+      AppliedSum < Self, F2 >
   where
     F1: TyCon,
     F2: TyCon,
@@ -368,12 +372,12 @@ where
     let row2 = row1.get_row();
     match row2 {
       Sum::Inl(fa1) => {
-        let fa2 = T::lift(fa1);
+        let fa2 = lift.lift(fa1);
         cloak_row ( Sum::Inl ( fa2 ) )
       },
       Sum::Inr(b) => {
         cloak_row ( Sum::Inr (
-          R :: lift_sum::< T, F1, F2 >( b )
+          R :: lift_sum::< T, F1, F2 >( lift, b )
         ) )
       }
     }
