@@ -1,4 +1,6 @@
 
+pub use paste::paste;
+
 #[macro_export]
 macro_rules! Sum {
   ( $(,)? ) => {
@@ -97,7 +99,7 @@ macro_rules! define_choice_labels {
     define_choice_labels![ $crate::Z; $( $labels ),* ];
   };
   ( $acc:ty; $label:ident ) => {
-    paste::paste! {
+    $crate::macros::paste! {
       #[allow(non_upper_case_globals)]
       pub const [< $label Label >]
         : $crate::ChoiceSelector < $acc > =
@@ -105,7 +107,7 @@ macro_rules! define_choice_labels {
     }
   };
   ( $acc:ty; $label:ident, $( $labels:ident ),+ ) => {
-    paste::paste! {
+    $crate::macros::paste! {
       #[allow(non_upper_case_globals)]
       pub const [< $label Label >]
         : $crate::ChoiceSelector < $acc > =
@@ -122,7 +124,7 @@ macro_rules! define_choice_labels {
 #[macro_export]
 macro_rules! define_choice_enum {
   ( $name:ident; $( $labels:ident ),+ $(,)? ) => {
-    paste::paste! {
+    $crate::macros::paste! {
       pub enum [< $name Choice >]
         < $( [< $labels T >] ),* >
       {
@@ -146,7 +148,7 @@ macro_rules! match_extract {
   ( $x:ident ;
     $label:ident
   ) => {
-    paste::paste! {
+    $crate::macros::paste! {
       match $x {
         $crate::Sum::Inl ( [< $label:snake >] ) => {
           $label ( [< $label:snake >] )
@@ -160,7 +162,7 @@ macro_rules! match_extract {
   ( $x:ident ;
     $label:ident, $( $labels:ident ),* $(,)?
   ) => {
-    paste::paste! {
+    $crate::macros::paste! {
       match $x {
         $crate::Sum::Inl ( [< $label:snake >] ) => {
           $label ( [< $label:snake >] )
@@ -182,7 +184,7 @@ macro_rules! define_extract_choice {
   ( $name:ident ;
     $( $labels:ident ),* $(,)?
   ) => {
-    paste::paste! {
+    $crate::macros::paste! {
       impl < $( [< $labels T >] ),* >
         $crate::ExtractRow <
           [< $name Choice >]
@@ -326,7 +328,7 @@ macro_rules! choose {
     $label:ident,
     $cont:expr
   ) => {
-    paste::paste! {
+    $crate::macros::paste! {
       $crate::choose (
         $chan,
         [< $label Label >],
@@ -341,7 +343,7 @@ macro_rules! offer_case {
   ( $label:ident,
     $cont:expr
   ) => {
-    paste::paste! {
+    $crate::macros::paste! {
       $crate::offer_case (
         [< $label Label >],
         $cont

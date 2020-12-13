@@ -2,7 +2,6 @@ use ferrite_session::*;
 
 use std::format;
 
-
 type HelloSession =
   ReceiveValue <
     String,
