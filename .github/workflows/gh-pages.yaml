@@ -15,10 +15,6 @@ jobs:
         with:
           toolchain: stable
 
-      - run: cargo build
-
-      - run: cargo test
-
       - run: cargo doc
 
       - name: Deploy
