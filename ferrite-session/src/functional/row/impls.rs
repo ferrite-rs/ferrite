@@ -1,3 +1,4 @@
+use serde;
 
 use super::utils::*;
 use super::traits::*;
@@ -5,6 +6,41 @@ use super::structs::*;
 use crate::functional::nat::*;
 use crate::functional::base::*;
 use crate::functional::type_app::*;
+
+impl < Row, F > serde::Serialize
+  for AppliedSum < Row, F >
+where
+  F: TyCon,
+  Row: RowApp< F >,
+  Row::Applied:
+    Send + 'static
+    + serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    let row: &Row::Applied = get_row_borrow(self);
+    row.serialize(serializer)
+  }
+}
+
+impl < 'a, Row, F, T > serde::Deserialize <'a>
+  for AppliedSum < Row, F >
+where
+  F: TyCon,
+  T: Send + 'static,
+  Row: RowApp< F, Applied = T >,
+  T: serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'a>
+  {
+    let row = T::deserialize(deserializer)?;
+    Ok(cloak_row(row))
+  }
+}
 
 impl < S, Row, F >
   HasRow < Row, F >

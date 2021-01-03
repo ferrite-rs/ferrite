@@ -1,12 +1,14 @@
 use std::any::Any;
 use std::marker::PhantomData;
+use serde::{Serialize, Deserialize};
 
 use super::traits::*;
 use crate::functional::type_app::*;
 
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum Bottom {}
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum Sum < A, B >
 {
   Inl ( A ),
@@ -15,7 +17,7 @@ pub enum Sum < A, B >
 
 pub struct AppliedSum < Row, F >
 {
-  row: Box < dyn HasRowWitness <
+  pub row: Box < dyn HasRowWitness <
     Row, F, Box < dyn Any > > >
 }
 

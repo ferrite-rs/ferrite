@@ -22,6 +22,16 @@ where
   row.get_row()
 }
 
+pub fn get_row_borrow < Row, F >
+  (row: &AppliedSum < Row, F > )
+  -> &Row::Applied
+where
+  F: TyCon,
+  Row: RowApp < F >,
+{
+  row.row.as_ref().get_row_borrow()
+}
+
 pub fn absurd < F, A >
   ( row1: AppliedSum < (), F > )
   -> A

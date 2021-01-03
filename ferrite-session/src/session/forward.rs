@@ -33,6 +33,6 @@ where
       let (receiver, _) = N :: extract_source ( ctx );
 
       let val = receiver.recv().await.unwrap();
-      sender.send( val ).await;
+      sender.send( val ).await.unwrap();
     })
 }

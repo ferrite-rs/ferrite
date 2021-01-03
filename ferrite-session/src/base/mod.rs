@@ -4,6 +4,7 @@
 //! - [`crate::base::Protocol`] - Protocol expressions in session types with
 //!   translation to Rust channel types.
 
+mod channel;
 mod protocol;
 mod context;
 mod session;
@@ -11,6 +12,13 @@ mod lens;
 mod fix;
 
 pub mod public;
+
+pub use self::channel::{
+  bounded,
+  unbounded,
+  Sender,
+  Receiver,
+};
 
 pub use self::protocol::{
   Protocol

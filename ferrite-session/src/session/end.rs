@@ -37,7 +37,7 @@ where
   unsafe_create_session (
     move | _, sender | async move {
       cleaner().await;
-      sender.send( End () ).await;
+      sender.send( End () ).await.unwrap();
     })
 }
 

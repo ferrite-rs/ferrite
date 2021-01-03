@@ -1,8 +1,4 @@
-use async_std::sync::{ Receiver };
-
-use crate::base as base;
-
-use base::{ RecApp, Protocol };
+use crate::base::*;
 
 pub struct SendChannel < A, B >
 ( pub (crate) Receiver < A >,

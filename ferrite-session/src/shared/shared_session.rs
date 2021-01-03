@@ -1,8 +1,8 @@
 
 use std::pin::Pin;
 use async_std::prelude::{ Future, FutureExt };
-use async_std::sync::{ Sender, Receiver, channel };
 
+use crate::base::*;
 use super::protocol::SharedProtocol;
 
 pub struct SharedSession < S >
@@ -113,7 +113,7 @@ pub fn unsafe_create_shared_channel < S >
 where
   S : SharedProtocol
 {
-  let ( sender, receiver ) = channel( 1000000 );
+  let ( sender, receiver ) = unbounded();
 
   ( SharedChannel { endpoint: sender }, receiver )
 }
@@ -124,7 +124,7 @@ pub async fn unsafe_receive_shared_channel < S >
 where
   S : SharedProtocol
 {
-  let (sender, receiver) = channel(1);
+  let (sender, receiver) = bounded(1);
 
   let fut1 = session.endpoint.send( sender );
   let fut2 = async move {
@@ -134,4 +134,41 @@ where
   let (receiver2, _) = fut2.join(fut1).await;
 
   receiver2
+}
+
+
+impl < A > serde::Serialize
+  for SharedChannel < A >
+where
+  A : SharedProtocol
+    + serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    self.endpoint.serialize(serializer)
+  }
+}
+
+impl < 'a, A > serde::Deserialize<'a>
+  for SharedChannel < A >
+where
+  A : SharedProtocol
+    + serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'a>
+  {
+    let endpoint = <
+      Sender <
+        Sender <
+          Receiver < A >
+        >
+      >
+    >::deserialize(deserializer)?;
+
+    Ok(SharedChannel{endpoint})
+  }
 }

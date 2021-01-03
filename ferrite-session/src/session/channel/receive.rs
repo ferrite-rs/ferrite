@@ -2,21 +2,7 @@ use async_std::task;
 use async_macros::join;
 use std::future::Future;
 
-use async_std::sync::{
-  channel,
-};
-
-use crate::base::{
-  Protocol,
-  Session,
-  Empty,
-  Context,
-  AppendContext,
-  ContextLens,
-  PartialSession,
-  unsafe_run_session,
-  unsafe_create_session,
-};
+use crate::base::*;
 
 use crate::functional::*;
 use crate::protocol::{ ReceiveChannel };
@@ -62,11 +48,11 @@ where
   unsafe_create_session (
     move | ctx1, sender | async move {
       let (sender1, receiver1)
-        = channel(1);
+        = bounded(1);
 
       sender.send(
         ReceiveChannel ( sender1 )
-      ).await;
+      ).await.unwrap();
 
       let (receiver2, sender2)
         = receiver1.recv().await.unwrap();
@@ -107,12 +93,12 @@ where
       let ((), ctx2) = N :: extract_source (ctx1);
 
       let (sender1, receiver1)
-        = channel(1);
+        = bounded(1);
 
       let child1 = task::spawn(async move {
         sender.send(
           ReceiveChannel ( sender1 )
-        ).await;
+        ).await.unwrap();
       });
 
       let child2 = task::spawn(async move {
@@ -185,10 +171,10 @@ where
       let ReceiveChannel ( sender2 )
         = receiver2.recv().await.unwrap();
 
-      let (sender3, receiver3) = channel(1);
+      let (sender3, receiver3) = bounded(1);
 
       let child1 = task::spawn(async move {
-        sender2.send((receiver1, sender3)).await;
+        sender2.send((receiver1, sender3)).await.unwrap();
       });
 
       let ctx5 =

@@ -1,6 +1,5 @@
 use async_macros::join;
 use async_std::task;
-use async_std::sync::{ Sender, channel };
 
 use crate::base::*;
 use crate::functional::nat::*;
@@ -29,11 +28,11 @@ where
     move | ctx, sender1 | async move {
       let (sender2, receiver)
         : ( Sender < A >, _ )
-        = channel(1);
+        = bounded(1);
 
       let child1 = task::spawn ( async move {
         let val = receiver.recv().await.unwrap();
-        sender1.send ( fix ( val ) ).await;
+        sender1.send ( fix ( val ) ).await.unwrap();
       });
 
       let child2 = task::spawn(
@@ -67,11 +66,11 @@ where
 {
   unsafe_create_session (
     move | ctx, sender1 | async move {
-      let (sender2, receiver) = channel(1);
+      let (sender2, receiver) = bounded(1);
 
       let child1 = task::spawn(async move {
         let val = receiver.recv().await.unwrap();
-        sender1.send ( unfix ( val ) ).await;
+        sender1.send ( unfix ( val ) ).await.unwrap();
       });
 
       let child2 = task::spawn(
@@ -93,11 +92,11 @@ where
 {
   unsafe_create_session (
     move | ctx, sender | async move {
-      let (sender2, receiver) = channel(1);
+      let (sender2, receiver) = bounded(1);
 
       let child1 = task::spawn(async move {
         let val = receiver.recv().await.unwrap();
-        sender.send ( succ ( val ) ).await;
+        sender.send ( succ ( val ) ).await.unwrap();
       });
 
       let child2 = task::spawn(
@@ -143,14 +142,14 @@ where
       let (receiver1, ctx2) =
         N :: extract_source ( ctx1 );
 
-        let (sender2, receiver2) = channel(1);
+        let (sender2, receiver2) = bounded(1);
 
       let ctx3 =
         N :: insert_target ( receiver2, ctx2 );
 
       let child1 = task::spawn ( async move {
         let val = receiver1.recv().await.unwrap();
-        sender2.send( unfix ( val ) ).await;
+        sender2.send( unfix ( val ) ).await.unwrap();
       });
 
       let child2 = task::spawn(

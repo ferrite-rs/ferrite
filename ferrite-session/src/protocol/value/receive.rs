@@ -1,38 +1,71 @@
-use async_std::sync::{ Sender };
-
-use crate::base as base;
-
-use base::{ RecApp, Protocol };
+use serde;
+use crate::base::*;
 
 pub struct ReceiveValue
-  < T, P >
+  < T, A >
 ( pub (crate)
   Sender < (
     T,
-    Sender < P >
+    Sender < A >
   ) >
 );
 
 impl
-  < T, P >
+  < T, A >
   Protocol for
-  ReceiveValue < T, P >
+  ReceiveValue < T, A >
 where
   T : Send + 'static,
-  P : Protocol
+  A : Protocol
 { }
 
-impl < A, T, P >
-  RecApp < A > for
-  ReceiveValue < T, P >
+impl < X, T, A >
+  RecApp < X > for
+  ReceiveValue < T, A >
 where
-  A : Send + 'static,
+  X : Send + 'static,
   T : Send + 'static,
-  P : RecApp < A >,
+  A : RecApp < A >,
 {
   type Applied =
     ReceiveValue <
       T,
-      P :: Applied
+      A :: Applied
     >;
+}
+
+impl < T, A > serde::Serialize
+  for ReceiveValue < T, A >
+where
+  T: Send + 'static,
+  A: Send + 'static,
+  T: serde::Serialize + for<'de> serde::Deserialize<'de>,
+  A: serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    self.0.serialize(serializer)
+  }
+}
+
+impl < 'a, T, A > serde::Deserialize <'a>
+  for ReceiveValue < T, A >
+where
+  T: Send + 'static,
+  A: Send + 'static,
+  T: serde::Serialize + for<'de> serde::Deserialize<'de>,
+  A: serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'a>
+  {
+    let sender =
+      < Sender < (T, Sender < A > ) >
+      >::deserialize(deserializer)?;
+
+    Ok(ReceiveValue(sender))
+  }
 }

@@ -1,5 +1,5 @@
-use crate::base::{ Protocol };
-use async_std::sync::{ Sender, Receiver };
+use serde;
+use crate::base::{ Protocol, Sender, Receiver };
 
 use super::fix::{ SharedRecApp };
 use super::linear_to_shared::{ LinearToShared };
@@ -27,3 +27,20 @@ where
   F : SharedRecApp < SharedToLinear < F > >,
   F::Applied : Protocol
 { }
+
+impl < F > serde::Serialize
+  for Lock < F >
+where
+  F : Send + 'static
+    + SharedRecApp < SharedToLinear < F > >,
+  F::Applied:
+    Send + 'static
+    + serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    self.unlock.serialize(serializer)
+  }
+}

@@ -1,18 +1,13 @@
 use async_std::task;
 use async_macros::join;
-use async_std::sync::{ channel };
 
+use crate::base::*;
 use crate::protocol::{ SendValue, End };
-
-use crate::base::{
-  Session,
-  unsafe_run_session,
-};
 
 pub async fn run_session
   ( session : Session < End > )
 {
-  let (sender, receiver) = channel(1);
+  let (sender, receiver) = bounded(1);
 
   let child1 = task::spawn ( async move {
     unsafe_run_session
@@ -37,7 +32,7 @@ pub async fn run_session_with_result < T >
 where
   T: Send + 'static
 {
-  let (sender, receiver1) = channel(1);
+  let (sender, receiver1) = bounded(1);
 
   let child1 = task::spawn ( async move {
     unsafe_run_session

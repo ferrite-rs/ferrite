@@ -1,6 +1,4 @@
 use std::future::Future;
-use async_std::sync::{ channel };
-
 use crate::base::*;
 use crate::protocol::*;
 use crate::functional::*;
@@ -36,12 +34,12 @@ where
 {
   unsafe_create_session (
     move | ctx, sender1 | async move {
-      let (sender2, receiver2) = channel(1);
+      let (sender2, receiver2) = bounded(1);
 
       let payload = ExternalChoice::< Row >
         { sender: sender2 };
 
-      sender1.send(payload).await;
+      sender1.send(payload).await.unwrap();
 
       let (choice, sender3) = receiver2.recv().await.unwrap();
 

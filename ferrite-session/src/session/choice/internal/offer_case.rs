@@ -1,6 +1,5 @@
 use async_std::task;
 use async_macros::join;
-use async_std::sync::{ channel };
 
 use crate::base::*;
 use crate::protocol::*;
@@ -24,7 +23,7 @@ where
 {
   unsafe_create_session (
     move | ctx, sender1 | async move {
-      let (sender2, receiver2) = channel(1);
+      let (sender2, receiver2) = bounded(1);
 
       let child1 = task::spawn(async move {
         unsafe_run_session(cont, ctx, sender2).await;
@@ -34,7 +33,7 @@ where
         sender1.send( InternalChoice {
           field : N::inject_elem (
             cloak_applied ( receiver2 ) )
-        }).await;
+        }).await.unwrap();
       });
 
       join!(child1, child2).await;

@@ -1,5 +1,3 @@
-use async_std::sync::{ channel };
-
 use crate::base::*;
 use crate::protocol::*;
 use crate::functional::*;
@@ -38,9 +36,9 @@ where
       let ExternalChoice { sender: sender2 } =
         receiver1.recv().await.unwrap();
 
-      let (sender3, receiver3) = channel(1);
+      let (sender3, receiver3) = bounded(1);
 
-      sender2.send((choice, sender3)).await;
+      sender2.send((choice, sender3)).await.unwrap();
 
       let receiver_sum = receiver3.recv().await.unwrap();
 

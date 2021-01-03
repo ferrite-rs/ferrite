@@ -1,7 +1,6 @@
 use std::pin::Pin;
 use std::future::Future;
 use std::marker::PhantomData;
-use async_std::sync::{ Sender, Receiver };
 
 use crate::base::*;
 use crate::protocol::*;

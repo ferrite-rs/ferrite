@@ -1,8 +1,8 @@
 
 use std::pin::Pin;
 use std::future::Future;
-use async_std::sync::Sender;
 
+use crate::base::channel::Sender;
 use crate::base::protocol::{ Protocol };
 use crate::base::context::{ Context };
 

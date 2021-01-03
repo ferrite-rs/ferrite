@@ -1,18 +1,9 @@
 use async_std::task;
 use async_macros::join;
 use std::future::{ Future };
-use async_std::sync::{ channel };
 
+use crate::base::*;
 use crate::protocol::{ SendValue };
-
-use crate::base::{
-  Protocol,
-  Context,
-  ContextLens,
-  PartialSession,
-  unsafe_run_session,
-  unsafe_create_session,
-};
 
 pub fn send_value
   < T, C, A >
@@ -30,14 +21,14 @@ where
 {
   unsafe_create_session (
     move | ctx, sender1 | async move {
-      let (sender2, receiver2) = channel(1);
+      let (sender2, receiver2) = bounded(1);
 
       let child1 = task::spawn(async move {
         sender1.send(
           SendValue
             ( val,
               receiver2
-            ) ).await;
+            ) ).await.unwrap();
       });
 
       let child2 = task::spawn(async move {

@@ -1,8 +1,6 @@
 use crate::base::*;
 use crate::functional::*;
 
-use async_std::sync::{ Sender, Receiver };
-
 pub struct ReceiverF {}
 pub struct SenderF {}
 

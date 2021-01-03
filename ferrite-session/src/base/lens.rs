@@ -1,9 +1,9 @@
 use std::marker::PhantomData;
-use async_std::sync::Receiver;
 
 use crate::functional::nat::{ S, Z };
 use crate::base::protocol::{ Protocol };
 use crate::base::context::{ Context };
+use crate::base::channel::Receiver;
 
 pub trait Slot : Send + 'static {
   type Endpoint : Send;

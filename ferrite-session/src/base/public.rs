@@ -12,7 +12,12 @@ pub use super::{
 
   Slot,
   Empty,
-  ContextLens
+  ContextLens,
+
+  bounded,
+  unbounded,
+  Sender,
+  Receiver,
 };
 
 pub use super::fix::*;

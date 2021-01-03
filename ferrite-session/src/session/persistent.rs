@@ -1,18 +1,8 @@
 use std::sync::Arc;
 use async_std::task;
 use async_macros::join;
-use async_std::sync::{ channel };
 
-use crate::base::{
-  Protocol,
-  Session,
-  Context,
-  AppendContext,
-  PartialSession,
-  unsafe_run_session,
-  unsafe_create_session,
-};
-
+use crate::base::*;
 use crate::functional::nat::*;
 
 pub struct PersistentSession < P >
@@ -86,7 +76,7 @@ where
     move | ctx1, sender1 | async move {
       let session3 = (session2.new_session)();
 
-      let (sender2, receiver2) = channel(1);
+      let (sender2, receiver2) = bounded(1);
 
       let child1 = task::spawn(async move {
         unsafe_run_session

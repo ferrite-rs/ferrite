@@ -19,3 +19,37 @@ where
   F : SharedRecApp < SharedToLinear < F > >,
   F::Applied : Protocol
 { }
+
+impl < F > serde::Serialize
+  for LinearToShared < F >
+where
+  F : SharedRecApp < SharedToLinear < F > >,
+  F::Applied:
+    serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    self.linear.serialize(serializer)
+  }
+}
+
+impl < 'a, F > serde::Deserialize<'a>
+for LinearToShared < F >
+where
+  F : SharedRecApp < SharedToLinear < F > >,
+  F::Applied:
+    serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'a>
+  {
+    let linear =
+      < F::Applied
+      >::deserialize(deserializer)?;
+
+    Ok(LinearToShared{linear})
+  }
+}

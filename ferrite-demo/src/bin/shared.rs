@@ -44,7 +44,7 @@ pub fn read_counter_session
   step ( move || async move {
     random_sleep(100, 2000).await;
 
-    acquire_shared_session ( shared, move | counter | async move {
+    acquire_shared_session! ( shared, counter => {
       receive_value_from! ( counter, count => {
         println!("[{}] Received count: {}", name, count);
 
@@ -67,7 +67,7 @@ pub fn read_counter_session_2
       & SharedChannel < SharedCounter >
   ) -> Session < End >
 {
-  shared_counter.acquire ( move | linear_counter | async move {
+  acquire_shared_session! ( shared_counter, linear_counter => {
     random_sleep(100, 2000).await;
     receive_value_from! ( linear_counter, count => {
       println!("Received count: {}", count);

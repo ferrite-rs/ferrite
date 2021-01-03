@@ -1,22 +1,9 @@
 use async_std::task;
 use async_macros::join;
-use async_std::sync::{
-  channel
-};
-
 use crate::functional::nat::*;
 use crate::protocol::{ SendChannel };
 
-use crate::base::{
-  Protocol,
-  Empty,
-  Context,
-  AppendContext,
-  ContextLens,
-  PartialSession,
-  unsafe_run_session,
-  unsafe_create_session,
-};
+use crate::base::*;
 
 /*
     Additive Conjunction, Right Rule
@@ -54,21 +41,21 @@ where
       let (p_chan, ctx2) =
         N :: extract_source (ctx1);
 
-      let (sender2, receiver2) = channel(1);
-      let (sender3, receiver3) = channel(1);
+      let (sender2, receiver2) = bounded(1);
+      let (sender3, receiver3) = bounded(1);
 
       let ctx3 =
         N :: insert_target ((), ctx2);
 
       let child1 = task::spawn(async move {
         let p = p_chan.recv().await.unwrap();
-        sender2.send(p).await;
+        sender2.send(p).await.unwrap();
       });
 
       let child2 = task::spawn(async move {
         sender1.send(
           SendChannel ( receiver2, receiver3 )
-        ).await;
+        ).await.unwrap();
       });
 
       let child3 = task::spawn(async {
@@ -181,8 +168,8 @@ where
     move | ctx, sender | async move {
       let (ctx1, ctx2) = CP :: split_context(ctx);
 
-      let (sender1, receiver1) = channel(1);
-      let (sender2, receiver2) = channel(1);
+      let (sender1, receiver1) = bounded(1);
+      let (sender2, receiver2) = bounded(1);
 
       // the first thread spawns immediately
 
@@ -197,7 +184,7 @@ where
       let child2 = task::spawn(async move {
         sender.send(
           SendChannel ( receiver1, receiver2 )
-        ).await;
+        ).await.unwrap();
       });
 
       // the second thread is blocked until the first channel is being accessed

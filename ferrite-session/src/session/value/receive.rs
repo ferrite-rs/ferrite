@@ -1,16 +1,7 @@
 use std::future::{ Future };
-use async_std::sync::{ Sender, channel };
 
 use crate::protocol::{ ReceiveValue };
-
-use crate::base::{
-  Protocol,
-  Context,
-  ContextLens,
-  PartialSession,
-  unsafe_run_session,
-  unsafe_create_session,
-};
+use crate::base::*;
 
 /*
               cont_builder(x) :: Δ ⊢ P
@@ -40,9 +31,9 @@ where
         ReceiveValue < T, A >,
       >
     | async move {
-      let (sender2, receiver2) = channel(1);
+      let (sender2, receiver2) = bounded(1);
 
-      sender1.send ( ReceiveValue ( sender2 ) ).await;
+      sender1.send ( ReceiveValue ( sender2 ) ).await.unwrap();
 
       let ( val, sender3 )
         = receiver2.recv().await.unwrap();
@@ -85,14 +76,14 @@ where
       let ReceiveValue ( sender2 )
         = receiver1.recv().await.unwrap();
 
-      let (sender3, receiver3) = channel(1);
+      let (sender3, receiver3) = bounded(1);
 
       let ctx3 = N :: insert_target( receiver3, ctx2 );
 
       sender2.send( (
         val,
         sender3
-      ) ).await;
+      ) ).await.unwrap();
 
       unsafe_run_session
         (cont, ctx3, sender1

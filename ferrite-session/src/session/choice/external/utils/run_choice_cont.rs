@@ -1,8 +1,6 @@
 use std::pin::Pin;
 use std::future::Future;
 use std::marker::PhantomData;
-use async_std::sync::{ Sender, Receiver, channel };
-
 use crate::base::*;
 use crate::protocol::*;
 use crate::functional::*;
@@ -29,7 +27,7 @@ where
 
   let (receiver_sum, cont6) = Row::split_row( res );
 
-  sender.send( receiver_sum ).await;
+  sender.send( receiver_sum ).await.unwrap();
   Row::elim_sum ( ElimConst{}, cont6 ).await;
 }
 
@@ -76,7 +74,7 @@ where
     C: Context,
     A: Protocol,
   {
-    let (sender, receiver) = channel(1);
+    let (sender, receiver) = bounded(1);
     let future = Box::pin(async move {
       unsafe_run_session(
         cont,

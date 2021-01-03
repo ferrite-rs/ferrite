@@ -1,5 +1,39 @@
+use serde;
 use super::traits::*;
 use super::structs::*;
+
+impl < F, X, T > serde::Serialize
+  for Applied < F, X >
+where
+  X: 'static,
+  T: Send + 'static,
+  F: TypeApp< X, Applied = T >,
+  T: serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    S: serde::Serializer,
+  {
+    self.applied.as_ref().get_applied_borrow().serialize(serializer)
+  }
+}
+
+impl < 'a, F, X, T > serde::Deserialize <'a>
+  for Applied < F, X >
+where
+  X: 'static,
+  T: Send + 'static,
+  F: TypeApp< X, Applied = T >,
+  T: serde::Serialize + for<'de> serde::Deserialize<'de>,
+{
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+  where
+    D: serde::Deserializer<'a>
+  {
+    let applied = T::deserialize(deserializer)?;
+    Ok(cloak_applied(applied))
+  }
+}
 
 impl < T, F, A >
   HasTypeApp < F, A >
