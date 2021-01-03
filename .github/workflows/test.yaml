@@ -1,4 +1,4 @@
-name: github pages
+name: Cargo Tests
 
 on:
   push:

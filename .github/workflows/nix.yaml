@@ -1,4 +1,4 @@
-name: github pages
+name: Nix Build
 
 on:
   push:
