@@ -1,5 +1,7 @@
+use std::any::type_name;
 use async_std::{channel, task};
 use ipc_channel::ipc;
+use log::debug;
 use serde::{ser, Serialize, Deserialize, Serializer, Deserializer};
 
 pub struct Sender<T>(pub channel::Sender<T>);
@@ -68,6 +70,7 @@ where
   where
     S: Serializer,
   {
+    debug!("Serializing {}", type_name::<Self>());
     let receiver = self.0.clone();
 
     let (ipc_sender, ipc_receiver) = ipc::channel::<T>()
@@ -77,10 +80,21 @@ where
     task::spawn(async move {
       loop {
         match receiver.recv().await {
-          Ok(x) => ipc_sender.send(x).unwrap(),
-          Err(_) => return
+          Ok(x) => {
+            debug!("[SerializeReceiver] forwarding message from {} to {} for serialized {}",
+              type_name::<Receiver<T>>(),
+              type_name::<ipc::IpcSender<T>>(),
+              type_name::<Receiver<T>>());
+
+            let ipc_sender = ipc_sender.clone();
+            task::spawn_blocking(move || {
+              ipc_sender.send(x).unwrap()
+            }).await;
+          },
+          Err(_) => break
         }
       }
+      debug!("Ending Serialize forwarding for {}", type_name::<Self>());
     });
 
     ipc_receiver.serialize(serializer)
@@ -97,19 +111,32 @@ where
   where
     D: Deserializer<'a>
   {
+    debug!("Deserializing {}", type_name::<Self>());
+
     let ipc_receiver =
       < ipc::IpcReceiver<T> >::deserialize(deserializer)?;
 
     let (sender, receiver) = channel::unbounded::<T>();
 
-    task::spawn(async move {
+    task::spawn_blocking(move || {
       loop {
         let res = ipc_receiver.recv();
         match res {
-          Ok(x) => sender.send(x).await.unwrap(),
-          Err(_) => return
+          Ok(x) => {
+            debug!("[DeserializeReceiver] forwarding message from {} to {} for deserialized {}",
+              type_name::<ipc::IpcReceiver<T>>(),
+              type_name::<Sender<T>>(),
+              type_name::<Receiver<T>>());
+
+            let sender = sender.clone();
+            task::block_on(async move {
+              sender.send(x).await.unwrap()
+            });
+          },
+          Err(_) => break
         }
       }
+      debug!("Ending Deserialize forwarding for {}", type_name::<Self>());
     });
 
     Ok(Receiver(receiver))
@@ -126,20 +153,33 @@ where
   where
     S: Serializer,
   {
+    debug!("Serializing {}", type_name::<Self>());
+
     let sender = self.0.clone();
 
     let (ipc_sender, ipc_receiver) = ipc::channel::<T>()
       .map_err(|err| ser::Error::custom(format!(
         "Failed to create IPC channel: {}", err)))?;
 
-    task::spawn(async move {
+    task::spawn_blocking(move || {
       loop {
         let res = ipc_receiver.recv();
         match res {
-          Ok(x) => sender.send(x).await.unwrap(),
-          Err(_) => return
+          Ok(x) => {
+            debug!("[SerializeSender] forwarding message from {} to {} for serialized {}",
+              type_name::<ipc::IpcReceiver<T>>(),
+              type_name::<Sender<T>>(),
+              type_name::<Sender<T>>());
+
+            let sender = sender.clone();
+            task::block_on(async move {
+              sender.send(x).await.unwrap()
+            });
+          },
+          Err(_) => break
         }
       }
+      debug!("Ending Serialize forwarding for {}", type_name::<Self>());
     });
 
     ipc_sender.serialize(serializer)
@@ -156,6 +196,7 @@ where
   where
     D: Deserializer<'a>
   {
+    debug!("Deserializing {}", type_name::<Self>());
     let ipc_sender =
       < ipc::IpcSender<T> >::deserialize(deserializer)?;
 
@@ -165,10 +206,21 @@ where
       loop {
         let res = receiver.recv().await;
         match res {
-          Ok(x) => ipc_sender.send(x).unwrap(),
-          Err(_) => return
+          Ok(x) => {
+            debug!("[DeserializeSender] forwarding message from {} to {} for deserialized {}",
+              type_name::<Receiver<T>>(),
+              type_name::<ipc::IpcSender<T>>(),
+              type_name::<Sender<T>>());
+
+            let ipc_sender = ipc_sender.clone();
+            task::spawn_blocking(move || {
+              ipc_sender.send(x).unwrap()
+            }).await;
+          },
+          Err(_) => break
         }
       }
+      debug!("Ending Deserialize forwarding for {}", type_name::<Self>());
     });
 
     Ok(Sender(sender))

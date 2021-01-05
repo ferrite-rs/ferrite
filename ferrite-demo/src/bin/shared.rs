@@ -1,5 +1,6 @@
 use ferrite_session::*;
 
+use ipc_channel::ipc;
 use rand::prelude::*;
 use std::time::Duration;
 use async_std::task::sleep;
@@ -83,9 +84,13 @@ pub fn shared_counter_session ()
   let (shared, _) =
     run_shared_session ( make_counter_session ( 0 ) );
 
-  let p1 = read_counter_session ( "P1".to_string(), 10, shared.clone() );
-  let p2 = read_counter_session ( "P2".to_string(), 8, shared.clone() );
-  let p3 = read_counter_session ( "P3".to_string(), 12, shared.clone() );
+  let (sender, receiver) = ipc::channel().unwrap();
+  sender.send(shared).unwrap();
+  let shared2 = receiver.recv().unwrap();
+
+  let p1 = read_counter_session ( "P1".to_string(), 10, shared2.clone() );
+  let p2 = read_counter_session ( "P2".to_string(), 8, shared2.clone() );
+  let p3 = read_counter_session ( "P3".to_string(), 12, shared2.clone() );
 
   wait_sessions (
     vec! [ p1, p2, p3 ],
@@ -94,5 +99,7 @@ pub fn shared_counter_session ()
 
 #[async_std::main]
 pub async fn main() {
+  env_logger::init();
+
   run_session ( shared_counter_session () ).await;
 }

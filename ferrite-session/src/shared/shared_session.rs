@@ -147,6 +147,7 @@ where
   where
     S: serde::Serializer,
   {
+    debug!("serializing shared channel");
     self.endpoint.serialize(serializer)
   }
 }
@@ -161,6 +162,8 @@ where
   where
     D: serde::Deserializer<'a>
   {
+    debug!("deserializing shared channel");
+
     let endpoint = <
       Sender <
         Sender <
