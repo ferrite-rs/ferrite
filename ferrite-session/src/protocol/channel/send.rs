@@ -1,8 +1,8 @@
 use crate::base::*;
 
 pub struct SendChannel < A, B >
-( pub (crate) Receiver < A >,
-  pub (crate) Receiver < B >
+( pub (crate) ReceiverOnce < A >,
+  pub (crate) ReceiverOnce < B >
 );
 
 impl < P, Q >

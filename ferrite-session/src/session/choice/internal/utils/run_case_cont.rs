@@ -11,7 +11,7 @@ use super::super::internal_session::*;
 pub async fn run_case_cont
   < N, C, D, B, Row >
   ( ctx: D::Endpoints,
-    sender: Sender < B >,
+    sender: SenderOnce < B >,
     cont1:
       AppliedSum <
         Row,
@@ -63,7 +63,7 @@ where
     >,
 {
   ctx : D::Endpoints,
-  sender : Sender < B >,
+  sender : SenderOnce < B >,
   phantom: PhantomData <( N, C, Row )>
 }
 
@@ -84,9 +84,9 @@ where
 {
   ctx : D::Endpoints,
 
-  sender : Sender < B >,
+  sender : SenderOnce < B >,
 
-  receiver : Receiver < A >,
+  receiver : ReceiverOnce < A >,
 
   phantom: PhantomData <( N, C, Row )>,
 }

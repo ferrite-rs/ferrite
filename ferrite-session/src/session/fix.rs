@@ -27,8 +27,8 @@ where
   unsafe_create_session (
     move | ctx, sender1 | async move {
       let (sender2, receiver)
-        : ( Sender < A >, _ )
-        = bounded(1);
+        : ( SenderOnce < A >, _ )
+        = once_channel();
 
       let child1 = task::spawn ( async move {
         let val = receiver.recv().await.unwrap();
@@ -66,7 +66,7 @@ where
 {
   unsafe_create_session (
     move | ctx, sender1 | async move {
-      let (sender2, receiver) = bounded(1);
+      let (sender2, receiver) = once_channel();
 
       let child1 = task::spawn(async move {
         let val = receiver.recv().await.unwrap();
@@ -92,7 +92,7 @@ where
 {
   unsafe_create_session (
     move | ctx, sender | async move {
-      let (sender2, receiver) = bounded(1);
+      let (sender2, receiver) = once_channel();
 
       let child1 = task::spawn(async move {
         let val = receiver.recv().await.unwrap();
@@ -142,7 +142,7 @@ where
       let (receiver1, ctx2) =
         N :: extract_source ( ctx1 );
 
-        let (sender2, receiver2) = bounded(1);
+        let (sender2, receiver2) = once_channel();
 
       let ctx3 =
         N :: insert_target ( receiver2, ctx2 );

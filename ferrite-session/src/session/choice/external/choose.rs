@@ -36,7 +36,7 @@ where
       let ExternalChoice { sender: sender2 } =
         receiver1.recv().await.unwrap();
 
-      let (sender3, receiver3) = bounded(1);
+      let (sender3, receiver3) = once_channel();
 
       sender2.send((choice, sender3)).await.unwrap();
 

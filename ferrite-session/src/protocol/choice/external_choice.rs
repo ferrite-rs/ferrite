@@ -6,9 +6,9 @@ pub struct ExternalChoice < Row >
 where
   Row : RowCon,
 { pub sender :
-    Sender <
+    SenderOnce <
       ( AppliedSum < Row, () >,
-        Sender <
+        SenderOnce <
           AppliedSum < Row, ReceiverF >
         >
       )
@@ -73,9 +73,9 @@ where
     D: serde::Deserializer<'a>
   {
     let sender =
-      < Sender <
+      < SenderOnce <
           ( AppliedSum < Row, () >,
-            Sender <
+            SenderOnce <
               AppliedSum < Row, ReceiverF >
             >
           ) >

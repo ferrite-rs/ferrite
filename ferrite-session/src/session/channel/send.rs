@@ -41,8 +41,8 @@ where
       let (p_chan, ctx2) =
         N :: extract_source (ctx1);
 
-      let (sender2, receiver2) = bounded(1);
-      let (sender3, receiver3) = bounded(1);
+      let (sender2, receiver2) = once_channel();
+      let (sender3, receiver3) = once_channel();
 
       let ctx3 =
         N :: insert_target ((), ctx2);
@@ -168,8 +168,8 @@ where
     move | ctx, sender | async move {
       let (ctx1, ctx2) = CP :: split_context(ctx);
 
-      let (sender1, receiver1) = bounded(1);
-      let (sender2, receiver2) = bounded(1);
+      let (sender1, receiver1) = once_channel();
+      let (sender2, receiver2) = once_channel();
 
       // the first thread spawns immediately
 

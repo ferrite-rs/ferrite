@@ -257,6 +257,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossbeam-channel"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dca26ee1f8d361640700bde38b2c37d8c22b3ce2d360e1fc1c74ea4b0aa7d775"
+dependencies = [
+ "cfg-if 1.0.0",
+ "crossbeam-utils 0.8.1",
+]
+
+[[package]]
 name = "crossbeam-utils"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -337,6 +347,7 @@ version = "0.1.0"
 dependencies = [
  "async-macros",
  "async-std",
+ "crossbeam-channel 0.5.0",
  "env_logger 0.7.1",
  "futures",
  "ipc-channel",
@@ -551,7 +562,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3698b8affd5656032a074a7d40b3c2a29b71971f3e1ff6042b9d40724e20d97c"
 dependencies = [
  "bincode",
- "crossbeam-channel",
+ "crossbeam-channel 0.4.4",
  "fnv",
  "lazy_static",
  "libc",

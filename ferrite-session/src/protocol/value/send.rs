@@ -5,7 +5,7 @@ use crate::base::*;
 pub struct SendValue < T, A >
 (
   pub (crate) T,
-  pub (crate) Receiver < A >
+  pub (crate) ReceiverOnce < A >
 );
 
 impl < T, P > Protocol for SendValue < T, P >
@@ -55,12 +55,12 @@ where
     D: serde::Deserializer<'a>
   {
     let (val, receiver) =
-      < (T, Receiver<A>) >::deserialize(deserializer)?;
+      < (T, ReceiverOnce<A>) >::deserialize(deserializer)?;
 
     Ok(SendValue(val, receiver))
 
     // let (val, ipc_receiver) =
-    //   < (T, IpcReceiver<A>) >::deserialize(deserializer)?;
+    //   < (T, IpcReceiverOnce<A>) >::deserialize(deserializer)?;
 
     // let (sender, receiver) = async_std::sync::channel::<A>(1);
 

@@ -14,7 +14,7 @@ where
   let row2 = lift_sum (
     crate::natural_transformation! {
       { } ;
-      ReceiverToSelector :
+      ReceiverOnceToSelector :
         forall x .
           ReceiverF [@x] ->
           Merge < ReceiverF, () > [@x]

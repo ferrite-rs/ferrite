@@ -16,8 +16,11 @@ pub use super::{
 
   bounded,
   unbounded,
+  once_channel,
   Sender,
+  SenderOnce,
   Receiver,
+  ReceiverOnce,
 };
 
 pub use super::fix::*;

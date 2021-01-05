@@ -7,7 +7,7 @@ use crate::protocol::{ SendValue, End };
 pub async fn run_session
   ( session : Session < End > )
 {
-  let (sender, receiver) = bounded(1);
+  let (sender, receiver) = once_channel();
 
   let child1 = task::spawn ( async move {
     unsafe_run_session
@@ -32,7 +32,7 @@ pub async fn run_session_with_result < T >
 where
   T: Send + 'static
 {
-  let (sender, receiver1) = bounded(1);
+  let (sender, receiver1) = once_channel();
 
   let child1 = task::spawn ( async move {
     unsafe_run_session

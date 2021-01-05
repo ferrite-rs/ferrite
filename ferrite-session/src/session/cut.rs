@@ -226,7 +226,7 @@ where
   unsafe_create_session (
     move | ctx, sender1 | async move {
       let ( ctx1, ctx2 ) = X :: split_endpoints ( ctx );
-      let ( sender2, receiver2 ) = bounded(1);
+      let ( sender2, receiver2 ) = once_channel();
       let ctx3 = C2::append_context ( ctx2, ( receiver2, () ) );
 
       let child1 = task::spawn ( async move {
@@ -283,7 +283,7 @@ where
           AppendContext < C2 >
         > :: split_context (ctx1);
 
-      let (a_sender, a_receiver) = bounded(1);
+      let (a_sender, a_receiver) = once_channel();
 
       let ctx4 =
         < C1 as

@@ -27,11 +27,11 @@ where
   unsafe_create_session (
     move |
       ctx,
-      sender1 : Sender <
+      sender1 : SenderOnce <
         ReceiveValue < T, A >,
       >
     | async move {
-      let (sender2, receiver2) = bounded(1);
+      let (sender2, receiver2) = once_channel();
 
       sender1.send ( ReceiveValue ( sender2 ) ).await.unwrap();
 
@@ -76,7 +76,7 @@ where
       let ReceiveValue ( sender2 )
         = receiver1.recv().await.unwrap();
 
-      let (sender3, receiver3) = bounded(1);
+      let (sender3, receiver3) = once_channel();
 
       let ctx3 = N :: insert_target( receiver3, ctx2 );
 

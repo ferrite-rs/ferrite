@@ -13,8 +13,8 @@ where
     Box < dyn
       FnOnce
         ( Receiver <
-            Sender <
-              Receiver < S >
+            SenderOnce <
+              ReceiverOnce < S >
             >
           >
         ) ->
@@ -33,8 +33,8 @@ where
 {
   endpoint :
     Sender <
-      Sender <
-        Receiver < S >
+      SenderOnce <
+        ReceiverOnce < S >
       >
     >
 }
@@ -53,7 +53,7 @@ where
 
 pub async fn unsafe_run_shared_session < S >
   ( session: SharedSession < S >,
-    sender: Receiver < Sender < Receiver < S > > >
+    sender: Receiver < SenderOnce < ReceiverOnce < S > > >
   )
 where
   S : SharedProtocol
@@ -66,8 +66,8 @@ pub fn unsafe_create_shared_session
   ( executor1 : impl
       FnOnce
         ( Receiver <
-            Sender <
-              Receiver < S >
+            SenderOnce <
+              ReceiverOnce < S >
             >
           >
         )
@@ -83,8 +83,8 @@ where
     : Box <
         dyn FnOnce
           ( Receiver <
-              Sender <
-                Receiver < S >
+              SenderOnce <
+                ReceiverOnce < S >
               >
             >
           )
@@ -105,8 +105,8 @@ pub fn unsafe_create_shared_channel < S >
   () ->
     ( SharedChannel < S >,
       Receiver <
-        Sender <
-          Receiver < S >
+        SenderOnce <
+          ReceiverOnce < S >
         >
       >
     )
@@ -120,11 +120,11 @@ where
 
 pub async fn unsafe_receive_shared_channel < S >
   ( session : SharedChannel < S > )
-  -> Receiver < S >
+  -> ReceiverOnce < S >
 where
   S : SharedProtocol
 {
-  let (sender, receiver) = bounded(1);
+  let (sender, receiver) = once_channel();
 
   let fut1 = session.endpoint.send( sender );
   let fut2 = async move {
@@ -166,8 +166,8 @@ where
 
     let endpoint = <
       Sender <
-        Sender <
-          Receiver < A >
+        SenderOnce <
+          ReceiverOnce < A >
         >
       >
     >::deserialize(deserializer)?;

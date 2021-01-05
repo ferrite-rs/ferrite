@@ -10,7 +10,7 @@ use super::super::cloak_session::*;
 pub async fn run_choice_cont
   < Row, C >
   ( ctx: C::Endpoints,
-    sender: Sender < AppliedSum < Row, ReceiverF > >,
+    sender: SenderOnce < AppliedSum < Row, ReceiverF > >,
     cont1: AppliedSum < Row, SessionF < C > >,
   )
 where
@@ -49,7 +49,7 @@ where
 impl < C, A >
   NeedPartialSession <
     C, A,
-    ( Receiver < A >,
+    ( ReceiverOnce < A >,
       Pin < Box < dyn
         Future < Output=() >
         + Send + 'static
@@ -64,7 +64,7 @@ where
     ( self: Box < Self >,
       cont: PartialSession < C, A >
     ) ->
-      ( Receiver < A >,
+      ( ReceiverOnce < A >,
         Pin < Box < dyn
           Future < Output=() >
           + Send + 'static
@@ -74,7 +74,7 @@ where
     C: Context,
     A: Protocol,
   {
-    let (sender, receiver) = bounded(1);
+    let (sender, receiver) = once_channel();
     let future = Box::pin(async move {
       unsafe_run_session(
         cont,

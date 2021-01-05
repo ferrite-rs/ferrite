@@ -4,9 +4,9 @@ use crate::base::*;
 pub struct ReceiveValue
   < T, A >
 ( pub (crate)
-  Sender < (
+  SenderOnce < (
     T,
-    Sender < A >
+    SenderOnce < A >
   ) >
 );
 
@@ -63,7 +63,7 @@ where
     D: serde::Deserializer<'a>
   {
     let sender =
-      < Sender < (T, Sender < A > ) >
+      < SenderOnce < (T, SenderOnce < A > ) >
       >::deserialize(deserializer)?;
 
     Ok(ReceiveValue(sender))

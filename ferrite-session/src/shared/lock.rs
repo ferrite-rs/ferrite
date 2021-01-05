@@ -1,5 +1,5 @@
 use serde;
-use crate::base::{ Protocol, Sender, Receiver };
+use crate::base::*;
 
 use super::fix::{ SharedRecApp };
 use super::linear_to_shared::{ LinearToShared };
@@ -11,8 +11,8 @@ where
 {
   pub (crate) unlock:
     Receiver <
-      Sender <
-        Receiver<
+      SenderOnce <
+        ReceiverOnce<
           LinearToShared < F >
         >
       >

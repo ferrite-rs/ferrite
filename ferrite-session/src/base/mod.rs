@@ -14,10 +14,13 @@ mod fix;
 pub mod public;
 
 pub use self::channel::{
+  once_channel,
   bounded,
   unbounded,
   Sender,
+  SenderOnce,
   Receiver,
+  ReceiverOnce,
 };
 
 pub use self::protocol::{

@@ -24,7 +24,7 @@ pub fn run_shared_session < A >
 where
   A : SharedProtocol
 {
-  let (sender1, receiver1) = bounded(1);
+  let (sender1, receiver1) = unbounded();
 
   let ( session2, receiver2 ) = unsafe_create_shared_channel ();
 
@@ -41,7 +41,7 @@ where
       debug!("[run_shared_session] received sender3");
       match sender3 {
         Ok ( sender4 ) => {
-          let ( sender5, receiver5 ) = bounded(1);
+          let ( sender5, receiver5 ) = once_channel();
 
           sender1.send ( sender5 ).await.unwrap();
           let receiver3 = receiver5.recv().await.unwrap();
@@ -80,24 +80,24 @@ where
     move |
       receiver1 :
         Receiver <
-          Sender <
-            Receiver <
+          SenderOnce <
+            ReceiverOnce <
               LinearToShared < F >
             >
           >
         >
     | async move {
       let (sender2, receiver2)
-        : (Sender < Lock < F > >, _)
-        = bounded(1);
+        : (SenderOnce < Lock < F > >, _)
+        = once_channel();
 
       let (sender3, receiver3)
-        : (Sender < LinearToShared < F > >, _)
-        = bounded(1);
+        : (SenderOnce < LinearToShared < F > >, _)
+        = once_channel();
 
       let (sender4, receiver4)
-        : (Sender < F :: Applied >, _)
-        = bounded(1);
+        : (SenderOnce < F :: Applied >, _)
+        = once_channel();
 
       let m_sender1 = receiver1.recv().await;
 
@@ -158,7 +158,7 @@ where
   unsafe_create_session (
     move |
       (receiver1, _) :
-        ( Receiver <
+        ( ReceiverOnce <
             Lock < F >
           >,
           C :: Endpoints
@@ -224,7 +224,7 @@ where
         < C::Length as Nat > :: nat ()
       ).await;
 
-      let (sender2, receiver2) = bounded(1);
+      let (sender2, receiver2) = once_channel();
 
       debug!("[acquire_shared_session] receiving receiver4");
       let receiver3 = unsafe_receive_shared_channel(shared).await;

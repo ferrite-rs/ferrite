@@ -76,7 +76,7 @@ where
     move | ctx1, sender1 | async move {
       let session3 = (session2.new_session)();
 
-      let (sender2, receiver2) = bounded(1);
+      let (sender2, receiver2) = once_channel();
 
       let child1 = task::spawn(async move {
         unsafe_run_session

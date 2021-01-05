@@ -3,9 +3,9 @@ use crate::base::*;
 pub struct ReceiveChannel
   < P, Q >
 ( pub (crate)
-  Sender < (
-    Receiver < P >,
-    Sender < Q >
+  SenderOnce < (
+    ReceiverOnce < P >,
+    SenderOnce < Q >
   ) >
 );
 

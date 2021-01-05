@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate log;
 
-extern crate paste;
-
 pub mod macros;
 
 mod public;

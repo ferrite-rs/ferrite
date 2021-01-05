@@ -39,12 +39,12 @@ impl < P > TypeApp < P > for ReceiverF
 where
   P: Send + 'static
 {
-  type Applied = Receiver < P >;
+  type Applied = ReceiverOnce < P >;
 }
 
 impl < P > TypeApp < P > for SenderF
 where
   P: Send + 'static
 {
-  type Applied = Sender < P >;
+  type Applied = SenderOnce < P >;
 }

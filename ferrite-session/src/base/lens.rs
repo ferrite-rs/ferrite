@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use crate::functional::nat::{ S, Z };
 use crate::base::protocol::{ Protocol };
 use crate::base::context::{ Context };
-use crate::base::channel::Receiver;
+use crate::base::channel::ReceiverOnce;
 
 pub trait Slot : Send + 'static {
   type Endpoint : Send;
@@ -13,7 +13,7 @@ impl < P > Slot for P
 where
   P : Protocol
 {
-  type Endpoint = Receiver < P >;
+  type Endpoint = ReceiverOnce < P >;
 }
 
 pub struct Empty;
