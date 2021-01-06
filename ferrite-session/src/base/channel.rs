@@ -1,5 +1,4 @@
 use std::any::type_name;
-use std::thread;
 use async_std::{channel, task};
 use ipc_channel::ipc;
 use log::debug;
@@ -114,7 +113,7 @@ where
       .map_err(|err| ser::Error::custom(format!(
         "Failed to create IPC channel: {}", err)))?;
 
-    thread::spawn(move || {
+    task::spawn_blocking(move || {
       loop {
         match task::block_on(receiver.recv()) {
           Ok(x) => {
@@ -152,7 +151,7 @@ where
 
     let (sender, receiver) = channel::unbounded::<T>();
 
-    thread::spawn(move || {
+    task::spawn_blocking(move || {
       loop {
         let res = ipc_receiver.recv();
         match res {
@@ -195,7 +194,7 @@ where
       .map_err(|err| ser::Error::custom(format!(
         "Failed to create IPC channel: {}", err)))?;
 
-    thread::spawn(move || {
+    task::spawn_blocking(move || {
       loop {
         let res = ipc_receiver.recv();
         match res {
@@ -236,7 +235,7 @@ where
 
     let (sender, receiver) = channel::unbounded::<T>();
 
-    thread::spawn(move || {
+    task::spawn_blocking(move || {
       loop {
         match task::block_on(receiver.recv()) {
           Ok(x) => {
@@ -274,7 +273,7 @@ where
       .map_err(|err| ser::Error::custom(format!(
         "Failed to create IPC channel: {}", err)))?;
 
-    thread::spawn(move || {
+    task::spawn_blocking(move || {
       match task::block_on(receiver.recv()) {
         Ok(x) => {
           // debug!("[SerializeReceiverOnce] forwarding message from {} to {} for serialized {}",
@@ -310,7 +309,7 @@ where
 
     let (sender, receiver) = channel::unbounded::<T>();
 
-    thread::spawn(move || {
+    task::spawn_blocking(move || {
       let res = ipc_receiver.recv();
       match res {
         Ok(x) => {
@@ -351,7 +350,7 @@ where
       .map_err(|err| ser::Error::custom(format!(
         "Failed to create IPC channel: {}", err)))?;
 
-    thread::spawn(move || {
+    task::spawn_blocking(move || {
       let res = ipc_receiver.recv();
       match res {
         Ok(x) => {
@@ -390,7 +389,7 @@ where
 
     let (sender, receiver) = channel::unbounded::<T>();
 
-    thread::spawn(move || {
+    task::spawn_blocking(move || {
       match task::block_on(receiver.recv()) {
         Ok(x) => {
           // debug!("[DeserializeSenderOnce] forwarding message from {} to {} for deserialized {}",
