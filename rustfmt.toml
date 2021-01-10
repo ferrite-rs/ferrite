@@ -1,0 +1,4 @@
+tab_spaces = 2
+use_field_init_shorthand = true
+edition = "2018"
+reorder_modules = true

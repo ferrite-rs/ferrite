@@ -13,14 +13,7 @@ pub use super::{
   Slot,
   Empty,
   ContextLens,
-
-  bounded,
-  unbounded,
-  once_channel,
-  Sender,
-  SenderOnce,
-  Receiver,
-  ReceiverOnce,
 };
 
+pub use super::channel::*;
 pub use super::fix::*;

@@ -32,11 +32,13 @@ where
   S : SharedProtocol
 {
   endpoint :
-    Sender <
+    Sender < Forward <
       SenderOnce <
-        ReceiverOnce < S >
+        ( Payload<()>,
+          ReceiverOnce < S >
+        )
       >
-    >
+    > >
 }
 
 impl < S > Clone for
@@ -105,8 +107,12 @@ pub fn unsafe_create_shared_channel < S >
   () ->
     ( SharedChannel < S >,
       Receiver <
-        SenderOnce <
-          ReceiverOnce < S >
+        Forward <
+          SenderOnce <
+            ( Payload<()>,
+              ReceiverOnce < S >
+            )
+          >
         >
       >
     )
@@ -126,9 +132,10 @@ where
 {
   let (sender, receiver) = once_channel();
 
-  let fut1 = session.endpoint.send( sender );
+  let fut1 = session.endpoint.send( Forward(sender) );
   let fut2 = async move {
-    receiver.recv().await.unwrap()
+    let (_, receiver2) = receiver.recv().await.unwrap();
+    receiver2
   };
 
   let (receiver2, _) = fut2.join(fut1).await;
@@ -141,7 +148,7 @@ impl < A > serde::Serialize
   for SharedChannel < A >
 where
   A : SharedProtocol
-    + serde::Serialize + for<'de> serde::Deserialize<'de>,
+    + ForwardChannel
 {
   fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
   where
