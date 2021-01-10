@@ -40,7 +40,7 @@ where
       ).await;
   });
 
-  let SendValue ( val, receiver2 ) =
+  let SendValue( ( Value(val), receiver2 )) =
     receiver1.recv().await.unwrap();
 
   receiver2.recv().await.unwrap();

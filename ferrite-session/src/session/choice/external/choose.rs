@@ -38,7 +38,7 @@ where
 
       let (sender3, receiver3) = once_channel();
 
-      sender2.send((choice, sender3)).await.unwrap();
+      sender2.send((Value(choice), sender3)).await.unwrap();
 
       let receiver_sum = receiver3.recv().await.unwrap();
 

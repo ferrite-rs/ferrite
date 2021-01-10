@@ -35,7 +35,7 @@ where
 
       sender1.send ( ReceiveValue ( sender2 ) ).await.unwrap();
 
-      let ( val, sender3 )
+      let ( Value(val), sender3 )
         = receiver2.recv().await.unwrap();
 
       let cont = cont_builder(val).await;
@@ -81,7 +81,7 @@ where
       let ctx3 = N :: insert_target( receiver3, ctx2 );
 
       sender2.send( (
-        val,
+        Value(val),
         sender3
       ) ).await.unwrap();
 

@@ -1,8 +1,10 @@
 
-use crate::base::{ Protocol };
+use crate::base::*;
 use super::fix::{ SharedRecApp };
 use super::protocol::{ SharedProtocol };
 use super::shared_to_linear::{ SharedToLinear };
+
+use ipc_channel::ipc;
 
 pub struct LinearToShared < F >
 where
@@ -20,36 +22,30 @@ where
   F::Applied : Protocol
 { }
 
-impl < F > serde::Serialize
+impl < F, T >
+  ForwardChannel
   for LinearToShared < F >
 where
-  F : SharedRecApp < SharedToLinear < F > >,
-  F::Applied:
-    serde::Serialize + for<'de> serde::Deserialize<'de>,
+  F : Send + 'static
+    + SharedRecApp < SharedToLinear < F >, Applied = T >,
+  T : Send + 'static
+    + ForwardChannel,
 {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: serde::Serializer,
+  fn forward_to(self,
+    sender: ipc::OpaqueIpcSender,
+    receiver: ipc::OpaqueIpcReceiver,
+  )
   {
-    self.linear.serialize(serializer)
+    self.linear.forward_to(sender, receiver)
   }
-}
 
-impl < 'a, F > serde::Deserialize<'a>
-for LinearToShared < F >
-where
-  F : SharedRecApp < SharedToLinear < F > >,
-  F::Applied:
-    serde::Serialize + for<'de> serde::Deserialize<'de>,
-{
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: serde::Deserializer<'a>
+  fn forward_from(
+    sender: ipc::OpaqueIpcSender,
+    receiver: ipc::OpaqueIpcReceiver,
+  ) -> Self
   {
-    let linear =
-      < F::Applied
-      >::deserialize(deserializer)?;
-
-    Ok(LinearToShared{linear})
+    LinearToShared {
+      linear: T::forward_from(sender, receiver)
+    }
   }
 }

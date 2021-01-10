@@ -25,10 +25,10 @@ where
 
       let child1 = task::spawn(async move {
         sender1.send(
-          SendValue
-            ( val,
+          SendValue (
+            ( Value(val),
               receiver2
-            ) ).await.unwrap();
+            ) ) ).await.unwrap();
       });
 
       let child2 = task::spawn(async move {
@@ -79,7 +79,7 @@ where
       let (receiver1, ctx2) =
         N :: extract_source ( ctx1 );
 
-      let SendValue ( val, receiver2 )
+      let SendValue( (Value(val), receiver2) )
         = receiver1.recv().await.unwrap();
 
       let ctx3 = N :: insert_target (receiver2, ctx2);

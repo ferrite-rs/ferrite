@@ -41,7 +41,7 @@ where
 
       sender1.send(payload).await.unwrap();
 
-      let (choice, sender3) = receiver2.recv().await.unwrap();
+      let (Value(choice), sender3) = receiver2.recv().await.unwrap();
 
       let cont3 = selector_to_inject_session( choice );
 

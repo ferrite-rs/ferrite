@@ -1,11 +1,13 @@
-use serde;
 use crate::base::*;
+
+use serde;
+use ipc_channel::ipc;
 
 pub struct ReceiveValue
   < T, A >
 ( pub (crate)
   SenderOnce < (
-    T,
+    Value<T>,
     SenderOnce < A >
   ) >
 );
@@ -34,38 +36,33 @@ where
     >;
 }
 
-impl < T, A > serde::Serialize
+impl < T, A >
+  ForwardChannel
   for ReceiveValue < T, A >
 where
+  A: ForwardChannel,
   T: Send + 'static,
-  A: Send + 'static,
   T: serde::Serialize + for<'de> serde::Deserialize<'de>,
-  A: serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: serde::Serializer,
+  fn forward_to(self,
+    sender: ipc::OpaqueIpcSender,
+    receiver: ipc::OpaqueIpcReceiver,
+  )
   {
-    self.0.serialize(serializer)
+    self.0.forward_to(sender, receiver)
   }
-}
 
-impl < 'a, T, A > serde::Deserialize <'a>
-  for ReceiveValue < T, A >
-where
-  T: Send + 'static,
-  A: Send + 'static,
-  T: serde::Serialize + for<'de> serde::Deserialize<'de>,
-  A: serde::Serialize + for<'de> serde::Deserialize<'de>,
-{
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: serde::Deserializer<'a>
+  fn forward_from(
+    sender: ipc::OpaqueIpcSender,
+    receiver: ipc::OpaqueIpcReceiver,
+  ) -> Self
   {
-    let sender =
-      < SenderOnce < (T, SenderOnce < A > ) >
-      >::deserialize(deserializer)?;
-
-    Ok(ReceiveValue(sender))
+    ReceiveValue(
+      < SenderOnce < (
+          Value<T>,
+          SenderOnce < A >
+        ) >
+      > :: forward_from(sender, receiver)
+    )
   }
 }

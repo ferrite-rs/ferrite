@@ -1,7 +1,9 @@
-use serde;
-use crate::base::*;
 use super::utils::*;
+
+use crate::base::*;
 use crate::functional::row::*;
+
+use ipc_channel::ipc;
 
 pub struct InternalChoice < Row >
 where
@@ -32,39 +34,30 @@ where
     >;
 }
 
-impl < Row > serde::Serialize
+impl < Row >
+  ForwardChannel
   for InternalChoice < Row >
 where
-  Row : RowCon,
-  AppliedSum < Row, ReceiverF >:
-    Send + 'static
-    + serde::Serialize + for<'de> serde::Deserialize<'de>,
+  Row: RowCon,
+  AppliedSum < Row, ReceiverF >: ForwardChannel,
 {
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: serde::Serializer,
+  fn forward_to(self,
+    sender: ipc::OpaqueIpcSender,
+    receiver: ipc::OpaqueIpcReceiver,
+  )
   {
-    self.field.serialize(serializer)
+    self.field.forward_to(sender, receiver)
   }
-}
 
-impl < 'a, Row > serde::Deserialize<'a>
-  for InternalChoice < Row >
-where
-  Row : RowCon,
-  AppliedSum < Row, ReceiverF >:
-    Send + 'static
-    + serde::Serialize + for<'de> serde::Deserialize<'de>,
-{
-
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: serde::Deserializer<'a>
+  fn forward_from(
+    sender: ipc::OpaqueIpcSender,
+    receiver: ipc::OpaqueIpcReceiver,
+  ) -> Self
   {
-    let field =
-      < AppliedSum < Row, ReceiverF >
-      >::deserialize(deserializer)?;
-
-    Ok(InternalChoice{field})
+    InternalChoice {
+      field: <
+        AppliedSum < Row, ReceiverF >
+      >::forward_from(sender, receiver)
+    }
   }
 }
