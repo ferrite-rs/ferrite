@@ -1,7 +1,6 @@
 use crate::base::*;
 
 use serde;
-use ipc_channel::ipc;
 
 pub struct ReceiveValue
   < T, A >
@@ -45,16 +44,16 @@ where
   T: serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
   fn forward_to(self,
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     self.0.forward_to(sender, receiver)
   }
 
   fn forward_from(
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     ReceiveValue(

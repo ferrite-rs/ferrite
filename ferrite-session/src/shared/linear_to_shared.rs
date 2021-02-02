@@ -4,8 +4,6 @@ use super::fix::{ SharedRecApp };
 use super::protocol::{ SharedProtocol };
 use super::shared_to_linear::{ SharedToLinear };
 
-use ipc_channel::ipc;
-
 pub struct LinearToShared < F >
 where
   F : SharedRecApp < SharedToLinear < F > >
@@ -32,16 +30,16 @@ where
     + ForwardChannel,
 {
   fn forward_to(self,
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     self.linear.forward_to(sender, receiver)
   }
 
   fn forward_from(
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     LinearToShared {

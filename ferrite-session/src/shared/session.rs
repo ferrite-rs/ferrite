@@ -239,7 +239,7 @@ where
       receiver1.recv().await.unwrap();
     });
 
-    let _ = join! (child1, child2, child3) .await;
+    let _ = join! (child1, child2, child3).await;
   })
 }
 

@@ -1,8 +1,6 @@
 
 use crate::base::*;
 
-use ipc_channel::ipc;
-
 pub struct End ();
 
 impl Protocol for End { }
@@ -18,19 +16,19 @@ impl ForwardChannel
   for End
 {
   fn forward_to(self,
-    sender: ipc::OpaqueIpcSender,
-    _: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    _: OpaqueReceiver,
   )
   {
-    sender.to().send(()).unwrap()
+    sender.send(())
   }
 
   fn forward_from(
-    _: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    _: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
-    let () = receiver.to().recv().unwrap();
+    let () = receiver.recv().unwrap();
     End()
   }
 }

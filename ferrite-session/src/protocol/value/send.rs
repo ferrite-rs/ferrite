@@ -1,5 +1,4 @@
 use serde;
-use ipc_channel::ipc;
 
 use crate::base::*;
 
@@ -36,16 +35,16 @@ where
   T: serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
   fn forward_to(self,
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     self.0.forward_to(sender, receiver)
   }
 
   fn forward_from(
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     SendValue(

@@ -1,7 +1,10 @@
+use serde;
+use std::mem;
 use ipc_channel::ipc;
-use std::sync::Arc;
+use std::ops::DerefMut;
+use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
-use tokio::{ task, runtime, sync::{mpsc, oneshot, Mutex} };
+use tokio::{ task, runtime, sync::{mpsc, oneshot, Mutex as AsyncMutex} };
 use serde::{ser, Serialize, Deserialize, Serializer, Deserializer};
 
 use crate::functional::*;
@@ -11,24 +14,38 @@ pub struct Value<T>(pub T);
 pub struct Sender<T>(pub mpsc::UnboundedSender<T>);
 
 pub struct Receiver<T>(
-  pub Arc<Mutex<mpsc::UnboundedReceiver<T>>>);
+  pub Arc<AsyncMutex<mpsc::UnboundedReceiver<T>>>);
 
 pub struct SenderOnce<T>(oneshot::Sender<T>);
 
 pub struct ReceiverOnce<T>(oneshot::Receiver<T>);
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct OpaqueReceiver(
+  Arc < Mutex <
+    Option<ipc::OpaqueIpcReceiver>
+  > >
+);
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct OpaqueSender(
+  Arc < Mutex <
+    Option<ipc::OpaqueIpcSender>
+  > >
+);
 
 #[derive(Debug)]
 pub struct SendError(pub String);
 
 pub trait ForwardChannel: Send + 'static {
   fn forward_to(self,
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   );
 
   fn forward_from(
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self;
 }
 
@@ -46,23 +63,57 @@ pub fn unbounded<T>()
   -> (Sender<T>, Receiver<T>)
 {
   let (sender, receiver) = mpsc::unbounded_channel();
-  (Sender(sender), Receiver(Arc::new(Mutex::new(receiver))))
+  (Sender(sender), Receiver(Arc::new(AsyncMutex::new(receiver))))
+}
+
+impl OpaqueSender {
+  pub fn send <T> (&self, val: T)
+  where
+    T: for <'de> Deserialize<'de> + Serialize
+  {
+    let mut cell = self.0.lock().unwrap();
+    let sender1 = mem::take(cell.deref_mut()).unwrap();
+    let sender2 = sender1.to();
+    sender2.send(val).unwrap();
+    let _ = mem::replace(cell.deref_mut(), Some(sender2.to_opaque()));
+  }
+}
+
+impl OpaqueReceiver {
+  pub fn recv <T> (&self) -> Option<T>
+  where
+    T: for <'de> Deserialize<'de> + Serialize
+  {
+    let mut cell = self.0.lock().unwrap();
+    let receiver1 = mem::take(cell.deref_mut()).unwrap();
+    let receiver2 = receiver1.to();
+    let val = receiver2.recv().ok();
+    let _ = mem::replace(cell.deref_mut(), Some(receiver2.to_opaque()));
+    val
+  }
+}
+
+pub fn opaque_channel() -> (OpaqueSender, OpaqueReceiver)
+{
+  let (sender, receiver) = ipc::channel::<()>().unwrap();
+
+  ( OpaqueSender(Arc::new(Mutex::new(Some(sender.to_opaque())))),
+    OpaqueReceiver(Arc::new(Mutex::new(Some(receiver.to_opaque()))))
+  )
 }
 
 pub fn serialize_channel <T>
   (payload: T)
-  -> (ipc::OpaqueIpcSender, ipc::OpaqueIpcReceiver)
+  -> (OpaqueSender, OpaqueReceiver)
 where
   T: ForwardChannel
 {
-  let (sender1, receiver1) = ipc::channel::<()>().unwrap();
-  let (sender2, receiver2) = ipc::channel::<()>().unwrap();
+  let (sender1, receiver1) = opaque_channel();
+  let (sender2, receiver2) = opaque_channel();
 
-  payload.forward_to(
-    sender1.to_opaque(), receiver2.to_opaque()
-  );
+  payload.forward_to(sender1, receiver2);
 
-  (sender2.to_opaque(), receiver1.to_opaque())
+  (sender2, receiver1)
 }
 
 impl <T> Clone for Sender<T> {
@@ -135,14 +186,14 @@ impl ForwardChannel
   for ()
 {
   fn forward_to(self,
-    _: ipc::OpaqueIpcSender,
-    _: ipc::OpaqueIpcReceiver,
+    _: OpaqueSender,
+    _: OpaqueReceiver,
   )
   { }
 
   fn forward_from(
-    _: ipc::OpaqueIpcSender,
-    _: ipc::OpaqueIpcReceiver,
+    _: OpaqueSender,
+    _: OpaqueReceiver,
   ) -> Self
   { }
 }
@@ -153,34 +204,32 @@ where
   T: ForwardChannel
 {
   fn forward_to(self,
-    sender1: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
-  ) {
-    let receiver2: ipc::IpcReceiver<()> = receiver1.to();
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
+  )
+  {
+    RUNTIME.spawn_blocking(move || {
+      receiver.recv::<()>().unwrap();
+      let payload = T::forward_from(sender, receiver);
 
-    task::spawn_blocking(move || {
-      receiver2.recv().unwrap();
-      let payload = T::forward_from(sender1, receiver2.to_opaque());
-
-      RUNTIME.block_on(async move {
+      RUNTIME.spawn(async move {
         self.send(payload).await.unwrap();
       });
     });
   }
 
   fn forward_from(
-    sender1: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
     let (sender2, receiver2) = once_channel();
-    let sender3: ipc::IpcSender<()> = sender1.to();
 
-    task::spawn(async move {
+    RUNTIME.spawn(async move {
       let payload: T = receiver2.recv().await.unwrap();
-      task::spawn_blocking(move || {
-        sender3.send(()).unwrap();
-        payload.forward_to(sender3.to_opaque(), receiver1);
+      RUNTIME.spawn_blocking(move || {
+        sender1.send(());
+        payload.forward_to(sender1, receiver1);
       });
     });
 
@@ -194,32 +243,29 @@ where
   T: ForwardChannel
 {
   fn forward_to(self,
-    sender1: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) {
-    let sender2: ipc::IpcSender<()> = sender1.to();
-
-    task::spawn(async move {
+    RUNTIME.spawn(async move {
       let channel = self.recv().await.unwrap();
 
       task::spawn_blocking(move || {
-        sender2.send(()).unwrap();
-        channel.forward_to(sender2.to_opaque(), receiver1);
+        sender1.send(());
+        channel.forward_to(sender1, receiver1);
       });
     });
   }
 
   fn forward_from(
-    sender1: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
     let (sender2, receiver2) = once_channel();
-    let receiver3: ipc::IpcReceiver<()> = receiver1.to();
 
-    task::spawn_blocking(move || {
-      receiver3.recv().unwrap();
-      let channel = T::forward_from(sender1, receiver3.to_opaque());
+    RUNTIME.spawn_blocking(move || {
+      receiver1.recv::<()>().unwrap();
+      let channel = T::forward_from(sender1, receiver1);
       task::spawn(async move {
         sender2.send(channel).await.unwrap();
       });
@@ -238,27 +284,25 @@ where
   C: ForwardChannel,
 {
   fn forward_to(self,
-    sender1: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   )
   {
     let (Value(payload), channel) = self;
-    let sender2: ipc::IpcSender<T> = sender1.to();
 
-    task::spawn_blocking(move || {
-      sender2.send(payload).unwrap();
-      channel.forward_to(sender2.to_opaque(), receiver1)
+    RUNTIME.spawn_blocking(move || {
+      sender1.send(payload);
+      channel.forward_to(sender1, receiver1)
     });
   }
 
   fn forward_from(
-    sender1: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
-    let receiver2: ipc::IpcReceiver<T> = receiver1.to();
-    let payload = receiver2.recv().unwrap();
-    let channel = C::forward_from(sender1, receiver2.to_opaque());
+    let payload = receiver1.recv().unwrap();
+    let channel = C::forward_from(sender1, receiver1);
 
     (Value(payload), channel)
   }
@@ -277,12 +321,12 @@ where
 
     let (sender1, receiver1) =
       ipc::channel::<
-        (ipc::OpaqueIpcSender, ipc::OpaqueIpcReceiver)
+        (OpaqueSender, OpaqueReceiver)
       > ()
       .map_err(|err| ser::Error::custom(format!(
         "Failed to create IPC channel: {}", err)))?;
 
-    task::spawn_blocking(move || {
+    RUNTIME.spawn_blocking(move || {
       loop {
         let res = receiver1.recv();
         match res {
@@ -313,7 +357,7 @@ where
   {
     let ipc_sender =
       < ipc::IpcSender <
-          (ipc::OpaqueIpcSender, ipc::OpaqueIpcReceiver)
+          (OpaqueSender, OpaqueReceiver)
         >
       >::deserialize(deserializer)?;
 
@@ -344,16 +388,16 @@ where
   T: ForwardChannel,
 {
   fn forward_to(self,
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     self.get_applied().forward_to(sender, receiver)
   }
 
   fn forward_from(
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     cloak_applied(
@@ -372,16 +416,16 @@ where
   T: ForwardChannel,
 {
   fn forward_to(self,
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     self.get_row().forward_to(sender, receiver)
   }
 
   fn forward_from(
-    sender: ipc::OpaqueIpcSender,
-    receiver: ipc::OpaqueIpcReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     cloak_row(
@@ -398,36 +442,33 @@ where
   B: ForwardChannel,
 {
   fn forward_to(self,
-    sender1: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   )
   {
-    let sender2: ipc::IpcSender < bool > = sender1.to();
     match self {
       Sum::Inl(a) => {
-        sender2.send(true).unwrap();
-        a.forward_to(sender2.to_opaque(), receiver1)
+        sender1.send(true);
+        a.forward_to(sender1, receiver1)
       }
       Sum::Inr(b) => {
-        sender2.send(false).unwrap();
-        b.forward_to(sender2.to_opaque(), receiver1)
+        sender1.send(false);
+        b.forward_to(sender1, receiver1)
       }
     }
   }
 
   fn forward_from(
-    sender1: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
-    let receiver2: ipc::IpcReceiver < bool > = receiver1.to();
-
-    if receiver2.recv().unwrap() {
+    if receiver1.recv().unwrap() {
       Sum::Inl(
-        A::forward_from(sender1, receiver2.to_opaque()))
+        A::forward_from(sender1, receiver1))
     } else {
       Sum::Inr(
-        B::forward_from(sender1, receiver2.to_opaque()))
+        B::forward_from(sender1, receiver1))
     }
   }
 }
@@ -435,19 +476,19 @@ where
 impl ForwardChannel for Bottom
 {
   fn forward_to(self,
-    _: ipc::OpaqueIpcSender,
-    _: ipc::OpaqueIpcReceiver,
+    _: OpaqueSender,
+    _: OpaqueReceiver,
   )
   {
     match self {}
   }
 
   fn forward_from(
-    _: ipc::OpaqueIpcSender,
-    receiver1: ipc::OpaqueIpcReceiver,
+    _: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
-    receiver1.to().recv().unwrap()
+    receiver1.recv().unwrap()
   }
 }
 
@@ -464,7 +505,7 @@ where
 
     let (ipc_sender, ipc_receiver) =
       ipc::channel::<
-        (ipc::OpaqueIpcSender, ipc::OpaqueIpcReceiver)
+        (OpaqueSender, OpaqueReceiver)
       > ()
       .map_err(|err| ser::Error::custom(format!(
         "Failed to create IPC channel: {}", err)))?;
@@ -496,7 +537,7 @@ where
   {
     let ipc_receiver =
       < ipc::IpcReceiver <
-          (ipc::OpaqueIpcSender, ipc::OpaqueIpcReceiver)
+          (OpaqueSender, OpaqueReceiver)
         >
       >::deserialize(deserializer)?;
 

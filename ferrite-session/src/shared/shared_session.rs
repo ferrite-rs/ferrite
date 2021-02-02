@@ -1,8 +1,13 @@
 
 use std::pin::Pin;
-use crate::base::*;
+use std::sync::Arc;
+use std::marker::PhantomData;
+use ipc_channel::ipc;
 use async_macros::join;
 use std::future::Future;
+use tokio::{task};
+
+use crate::base::*;
 use super::protocol::SharedProtocol;
 
 pub struct SharedSession < S >
@@ -35,8 +40,62 @@ where
     Sender <
       SenderOnce <
         ReceiverOnce < S >
-    > >
+      > >
 }
+
+pub struct SerializedSharedChannel < S >
+where
+  S: SharedProtocol
+{
+  acquire_sender: ipc::IpcSender<()>,
+  acquire_receiver: ipc::IpcReceiver<()>,
+  linear_sender: ipc::OpaqueIpcSender,
+  linear_receiver: ipc::OpaqueIpcReceiver,
+  phantom: PhantomData<S>,
+}
+
+pub fn serialize_shared_channel <S>
+  (channel: SharedChannel<S>)
+  -> SerializedSharedChannel<S>
+where
+  S: SharedProtocol + ForwardChannel
+{
+  let (sender1, receiver1) = ipc::channel::<()>().unwrap();
+  let (sender2, receiver2) = ipc::channel::<()>().unwrap();
+
+  let (sender3, receiver3) = ipc::channel::<()>().unwrap();
+  let (sender4, receiver4) = ipc::channel::<()>().unwrap();
+
+  // task::spawn(async move {
+  //   loop {
+  //     task::spawn_blocking(|| {
+  //       receiver1.recv().unwrap()
+  //     }).await.unwrap();
+  //   }
+  // });
+
+  SerializedSharedChannel {
+    acquire_sender: sender1,
+    acquire_receiver: receiver2,
+    linear_sender: sender3.to_opaque(),
+    linear_receiver: receiver4.to_opaque(),
+    phantom: PhantomData,
+  }
+}
+
+// fn forward_serialized_channel_channel
+//   ( receiver1: ipc::IpcReceiver<()>,
+//     sender1: ipc::IpcSender<()>,
+//     receiver2: ipc::OpaqueIpcReceiver,
+//     sender2: ipc::OpaqueIpcSender,
+//   )
+// {
+//   match receiver1.recv() {
+//     Ok(()) => {
+//     }
+//     Err(_) => {}
+//   }
+// }
 
 impl < S > Clone for
   SharedChannel < S >
