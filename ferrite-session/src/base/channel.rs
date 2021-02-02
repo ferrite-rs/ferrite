@@ -50,7 +50,7 @@ pub trait ForwardChannel: Send + 'static {
 }
 
 lazy_static! {
-  static ref RUNTIME : runtime::Runtime = runtime::Runtime::new().unwrap();
+  pub static ref RUNTIME : runtime::Runtime = runtime::Runtime::new().unwrap();
 }
 
 pub fn once_channel<T>() -> (SenderOnce<T>, ReceiverOnce<T>)

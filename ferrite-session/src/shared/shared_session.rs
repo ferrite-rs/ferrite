@@ -1,11 +1,8 @@
-
+use serde;
 use std::pin::Pin;
-use std::sync::Arc;
 use std::marker::PhantomData;
-use ipc_channel::ipc;
 use async_macros::join;
 use std::future::Future;
-use tokio::{task};
 
 use crate::base::*;
 use super::protocol::SharedProtocol;
@@ -43,15 +40,32 @@ where
       > >
 }
 
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct SerializedSharedChannel < S >
 where
   S: SharedProtocol
 {
-  acquire_sender: ipc::IpcSender<()>,
-  acquire_receiver: ipc::IpcReceiver<()>,
-  linear_sender: ipc::OpaqueIpcSender,
-  linear_receiver: ipc::OpaqueIpcReceiver,
+  acquire_sender: OpaqueSender,
+  acquire_receiver: OpaqueReceiver,
+  linear_sender: OpaqueSender,
+  linear_receiver: OpaqueReceiver,
   phantom: PhantomData<S>,
+}
+
+impl <S> Clone for
+  SerializedSharedChannel < S >
+where
+  S: SharedProtocol
+{
+  fn clone(&self) -> Self {
+    SerializedSharedChannel {
+      acquire_sender: self.acquire_sender.clone(),
+      acquire_receiver: self.acquire_receiver.clone(),
+      linear_sender: self.linear_sender.clone(),
+      linear_receiver: self.linear_receiver.clone(),
+      phantom: PhantomData,
+    }
+  }
 }
 
 pub fn serialize_shared_channel <S>
@@ -60,42 +74,77 @@ pub fn serialize_shared_channel <S>
 where
   S: SharedProtocol + ForwardChannel
 {
-  let (sender1, receiver1) = ipc::channel::<()>().unwrap();
-  let (sender2, receiver2) = ipc::channel::<()>().unwrap();
+  let (sender1, receiver1) = opaque_channel();
+  let (sender2, receiver2) = opaque_channel();
 
-  let (sender3, receiver3) = ipc::channel::<()>().unwrap();
-  let (sender4, receiver4) = ipc::channel::<()>().unwrap();
+  let (sender3, receiver3) = opaque_channel();
+  let (sender4, receiver4) = opaque_channel();
 
-  // task::spawn(async move {
-  //   loop {
-  //     task::spawn_blocking(|| {
-  //       receiver1.recv().unwrap()
-  //     }).await.unwrap();
-  //   }
-  // });
+  RUNTIME.spawn_blocking(move || {
+    loop {
+      match receiver1.recv() {
+        Some(()) => {
+          let (sender5, receiver5) =
+            once_channel::<ReceiverOnce<S>>();
+
+          let channel2 = channel.clone();
+          let receiver6 = RUNTIME.block_on(async move {
+            channel2.endpoint.send(sender5).await.unwrap();
+            receiver5.recv().await.unwrap()
+          });
+          receiver6.forward_to(sender4.clone(), receiver3.clone());
+          sender2.send(());
+        }
+        None => break
+      }
+    }
+  });
 
   SerializedSharedChannel {
     acquire_sender: sender1,
     acquire_receiver: receiver2,
-    linear_sender: sender3.to_opaque(),
-    linear_receiver: receiver4.to_opaque(),
+    linear_sender: sender3,
+    linear_receiver: receiver4,
     phantom: PhantomData,
   }
 }
 
-// fn forward_serialized_channel_channel
-//   ( receiver1: ipc::IpcReceiver<()>,
-//     sender1: ipc::IpcSender<()>,
-//     receiver2: ipc::OpaqueIpcReceiver,
-//     sender2: ipc::OpaqueIpcSender,
-//   )
-// {
-//   match receiver1.recv() {
-//     Ok(()) => {
-//     }
-//     Err(_) => {}
-//   }
-// }
+pub fn deserialize_shared_channel <S>
+  (channel: SerializedSharedChannel<S>)
+  -> SharedChannel<S>
+where
+  S: SharedProtocol + ForwardChannel + Send
+{
+  let (sender1, receiver1) = unbounded::<SenderOnce<ReceiverOnce<S>>>();
+
+  RUNTIME.spawn(async move {
+    loop {
+      match receiver1.recv().await {
+        Some(sender2) => {
+          let channel2 = channel.clone();
+
+          let receiver2 : ReceiverOnce<S> =
+            RUNTIME.spawn_blocking(move || {
+              channel2.acquire_sender.send(());
+              channel2.acquire_receiver.recv::<()>().unwrap();
+
+              < ReceiverOnce<S> >::forward_from(
+                channel2.linear_sender,
+                channel2.linear_receiver,
+              )
+            }).await.unwrap();
+
+          sender2.send(receiver2).await.unwrap();
+        }
+        None => break
+      }
+    }
+  });
+
+  SharedChannel {
+    endpoint: sender1
+  }
+}
 
 impl < S > Clone for
   SharedChannel < S >
@@ -205,8 +254,10 @@ where
   where
     S: serde::Serializer,
   {
-    debug!("serializing shared channel");
-    self.endpoint.serialize(serializer)
+    serialize_shared_channel(self.clone()).serialize(serializer)
+
+    // debug!("serializing shared channel");
+    // self.endpoint.serialize(serializer)
   }
 }
 
@@ -219,14 +270,20 @@ where
   where
     D: serde::Deserializer<'a>
   {
-    let endpoint = <
-      Sender <
-        SenderOnce <
-          ReceiverOnce < A >
-        >
-      >
+    let channel = <
+      SerializedSharedChannel<A>
     >::deserialize(deserializer)?;
 
-    Ok(SharedChannel{endpoint})
+    Ok(deserialize_shared_channel(channel))
+
+    // let endpoint = <
+    //   Sender <
+    //     SenderOnce <
+    //       ReceiverOnce < A >
+    //     >
+    //   >
+    // >::deserialize(deserializer)?;
+
+    // Ok(SharedChannel{endpoint})
   }
 }
