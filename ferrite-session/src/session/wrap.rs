@@ -1,6 +1,6 @@
 use async_macros::join;
 
-use async_std::task;
+use tokio::task;
 
 use crate::base::*;
 use crate::protocol::*;
@@ -39,7 +39,7 @@ where
           ( cont, ctx, sender2
           ) );
 
-      join!(child1, child2).await;
+      let _ = join!(child1, child2).await;
     })
 }
 
@@ -83,6 +83,6 @@ where
           ( cont, ctx3, sender1
           ));
 
-      join!(child1, child2).await;
+      let _ = join!(child1, child2).await;
     })
 }

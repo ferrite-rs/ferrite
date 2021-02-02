@@ -36,4 +36,5 @@ pub use session::{
   detach_shared_session,
   acquire_shared_session,
   release_shared_session,
+  async_acquire_shared_session,
 };

@@ -1,6 +1,6 @@
 use std::vec::*;
 use std::time::Duration;
-use async_std::task::sleep;
+use tokio::time::sleep;
 
 use ferrite_session::*;
 
@@ -111,7 +111,7 @@ pub fn concat_session()
   return p3;
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( concat_session() ) .await;
 }

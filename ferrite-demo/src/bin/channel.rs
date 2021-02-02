@@ -1,7 +1,7 @@
 use std::time::Duration;
 use std::collections::VecDeque;
 use std::future::Future;
-use async_std::task::sleep;
+use tokio::time::sleep;
 
 use ferrite_session::*;
 
@@ -218,7 +218,7 @@ pub fn channel_session ()
     terminate () )
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( channel_session() ) .await;
 }

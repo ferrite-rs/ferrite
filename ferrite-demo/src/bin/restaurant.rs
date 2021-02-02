@@ -1,7 +1,7 @@
 use ferrite_session::*;
 
 use std::time::Duration;
-use async_std::task::sleep;
+use tokio::time::sleep;
 
 pub struct MushroomSoup {}
 pub struct TomatoSoup {}
@@ -178,7 +178,7 @@ pub fn restaurant_session()
 }
 
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session ( restaurant_session () ) .await;
 }

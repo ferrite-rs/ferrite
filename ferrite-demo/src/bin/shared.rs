@@ -3,7 +3,7 @@ use ferrite_session::*;
 use ipc_channel::ipc;
 use rand::prelude::*;
 use std::time::Duration;
-use async_std::task::sleep;
+use tokio::time::sleep;
 
 type SharedCounter =
   LinearToShared <
@@ -97,7 +97,7 @@ pub fn shared_counter_session ()
     terminate () )
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   env_logger::init();
 

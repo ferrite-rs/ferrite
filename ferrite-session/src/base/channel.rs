@@ -1,18 +1,24 @@
-use async_std::{channel, task};
 use ipc_channel::ipc;
+use std::sync::Arc;
+use lazy_static::lazy_static;
+use tokio::{ task, runtime, sync::{mpsc, oneshot, Mutex} };
 use serde::{ser, Serialize, Deserialize, Serializer, Deserializer};
 
 use crate::functional::*;
 
 pub struct Value<T>(pub T);
 
-pub struct Sender<T>(pub channel::Sender<T>);
+pub struct Sender<T>(pub mpsc::UnboundedSender<T>);
 
-pub struct Receiver<T>(pub channel::Receiver<T>);
+pub struct Receiver<T>(
+  pub Arc<Mutex<mpsc::UnboundedReceiver<T>>>);
 
-pub struct SenderOnce<T>(channel::Sender<T>);
+pub struct SenderOnce<T>(oneshot::Sender<T>);
 
-pub struct ReceiverOnce<T>(channel::Receiver<T>);
+pub struct ReceiverOnce<T>(oneshot::Receiver<T>);
+
+#[derive(Debug)]
+pub struct SendError(pub String);
 
 pub trait ForwardChannel: Send + 'static {
   fn forward_to(self,
@@ -26,24 +32,21 @@ pub trait ForwardChannel: Send + 'static {
   ) -> Self;
 }
 
-pub fn once_channel<T>() -> (SenderOnce<T>, ReceiverOnce<T>)
-{
-  let (sender, receiver) = channel::bounded(1);
-  (SenderOnce(sender), ReceiverOnce(receiver))
+lazy_static! {
+  static ref RUNTIME : runtime::Runtime = runtime::Runtime::new().unwrap();
 }
 
-pub fn bounded<T>(cap: usize)
-  -> (Sender<T>, Receiver<T>)
+pub fn once_channel<T>() -> (SenderOnce<T>, ReceiverOnce<T>)
 {
-  let (sender, receiver) = channel::bounded(cap);
-  (Sender(sender), Receiver(receiver))
+  let (sender, receiver) = oneshot::channel();
+  (SenderOnce(sender), ReceiverOnce(receiver))
 }
 
 pub fn unbounded<T>()
   -> (Sender<T>, Receiver<T>)
 {
-  let (sender, receiver) = channel::unbounded();
-  (Sender(sender), Receiver(receiver))
+  let (sender, receiver) = mpsc::unbounded_channel();
+  (Sender(sender), Receiver(Arc::new(Mutex::new(receiver))))
 }
 
 pub fn serialize_channel <T>
@@ -76,51 +79,53 @@ impl <T> Clone for Receiver<T> {
 
 impl <T> Sender <T> {
   pub async fn send (&self, msg: T)
-    -> Result<(), channel::SendError<T>>
+    -> Result<(), SendError>
   {
-    self.0.send(msg).await
+    self.0.send(msg)
+      .map_err(|_| SendError(String::from("failed to send")))
   }
 
-  pub fn close(&self) -> bool
+  pub async fn close(&self)
   {
-    self.0.close()
+    self.0.closed().await
   }
 }
 
 impl <T> Receiver <T> {
   pub async fn recv(&self)
-    -> Result<T, channel::RecvError>
+    -> Option<T>
   {
-    self.0.recv().await
+    self.0.lock().await.recv().await
   }
 
-  pub fn close(&self) -> bool
+  pub async fn close(&self)
   {
-    self.0.close()
+    self.0.lock().await.close()
   }
 }
 
 impl <T> SenderOnce <T> {
   pub async fn send (self, msg: T)
-    -> Result<(), channel::SendError<T>>
+    -> Result< (), SendError >
   {
-    self.0.send(msg).await
+    self.0.send(msg)
+      .map_err(|_| SendError(String::from("failed to send")))
   }
 
-  pub fn close(self) -> bool
+  pub async fn close(mut self)
   {
-    self.0.close()
+    self.0.closed().await
   }
 }
 
 impl <T> ReceiverOnce <T> {
   pub async fn recv(self)
-    -> Result<T, channel::RecvError>
+    -> Result<T, oneshot::error::RecvError>
   {
-    self.0.recv().await
+    self.0.await
   }
 
-  pub fn close(self) -> bool
+  pub async fn close(mut self)
   {
     self.0.close()
   }
@@ -157,7 +162,7 @@ where
       receiver2.recv().unwrap();
       let payload = T::forward_from(sender1, receiver2.to_opaque());
 
-      task::block_on(async move {
+      RUNTIME.block_on(async move {
         self.send(payload).await.unwrap();
       });
     });
@@ -224,6 +229,7 @@ where
   }
 }
 
+
 impl < T, C > ForwardChannel
   for ( Value<T>, C )
 where
@@ -267,7 +273,7 @@ where
   where
     S: Serializer,
   {
-    let sender = self.0.clone();
+    let sender = self.clone();
 
     let (sender1, receiver1) =
       ipc::channel::<
@@ -315,12 +321,12 @@ where
 
     task::spawn_blocking(move || {
       loop {
-        match task::block_on(receiver1.recv()) {
-          Ok(payload) => {
+        match RUNTIME.block_on(receiver1.recv()) {
+          Some(payload) => {
             let channel = serialize_channel(payload);
             ipc_sender.send(channel).unwrap();
           },
-          Err(_) => break
+          None => break
         }
       }
     });
@@ -454,7 +460,7 @@ where
   where
     S: Serializer,
   {
-    let receiver = self.0.clone();
+    let receiver = self.clone();
 
     let (ipc_sender, ipc_receiver) =
       ipc::channel::<
@@ -465,12 +471,12 @@ where
 
     task::spawn_blocking(move || {
       loop {
-        match task::block_on(receiver.recv()) {
-          Ok(payload) => {
+        match RUNTIME.block_on(receiver.recv()) {
+          Some(payload) => {
             let channel = serialize_channel(payload);
             ipc_sender.send(channel).unwrap();
           },
-          Err(_) => break
+          None => break
         }
       }
     });

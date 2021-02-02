@@ -1,7 +1,7 @@
 pub use ferrite_session::*;
 
 use std::time::Duration;
-use async_std::task::sleep;
+use tokio::time::sleep;
 
 type Producer = SendValue < String, End >;
 
@@ -67,7 +67,7 @@ fn cut_session ()
   )
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( cut_session() ) .await;
 }

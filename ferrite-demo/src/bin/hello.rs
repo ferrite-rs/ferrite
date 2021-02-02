@@ -42,7 +42,7 @@ pub fn hello_session()
   return main;
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( hello_session() ).await
 }

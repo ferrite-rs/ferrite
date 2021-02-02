@@ -1,6 +1,6 @@
 use std::future::Future;
 use async_macros::join;
-use async_std::task;
+use tokio::task;
 
 use crate::base::*;
 use crate::functional::nat::*;
@@ -240,7 +240,7 @@ where
         unsafe_run_session( cont1, ctx1, sender2 ).await;
       });
 
-      join!(child1, child2).await;
+      let _ = join!(child1, child2).await;
     })
 }
 
@@ -302,6 +302,6 @@ where
           ).await;
       });
 
-      join!(child1, child2).await;
+      let _ = join!(child1, child2).await;
     })
 }

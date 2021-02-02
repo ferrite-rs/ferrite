@@ -1,4 +1,4 @@
-use async_std::task;
+use tokio::task;
 use async_macros::join;
 use crate::functional::nat::*;
 use crate::protocol::{ SendChannel };
@@ -64,7 +64,7 @@ where
           ).await;
       });
 
-      join!(child1, child2, child3).await;
+      let _ = join!(child1, child2, child3).await;
   })
 }
 
@@ -195,7 +195,7 @@ where
           ).await;
       });
 
-      join!(child1, child2, child3).await;
+      let _ = join!(child1, child2, child3).await;
     })
 }
 

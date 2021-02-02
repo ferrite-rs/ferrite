@@ -1,5 +1,5 @@
 use std::time::Duration;
-use async_std::task::sleep;
+use tokio::time::sleep;
 
 use ferrite_session::*;
 
@@ -60,7 +60,7 @@ pub fn stream_session () ->
   apply_channel ( p2, p1 )
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( stream_session () ).await
 }

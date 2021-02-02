@@ -144,7 +144,7 @@ pub fn create_authenticated_pub_sub
   todo!()
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
 
 }

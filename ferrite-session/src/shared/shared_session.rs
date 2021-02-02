@@ -1,8 +1,8 @@
 
 use std::pin::Pin;
-use async_std::prelude::{ Future, FutureExt };
-
 use crate::base::*;
+use async_macros::join;
+use std::future::Future;
 use super::protocol::SharedProtocol;
 
 pub struct SharedSession < S >
@@ -131,7 +131,7 @@ where
     receiver2
   };
 
-  let (receiver2, _) = fut2.join(fut1).await;
+  let (receiver2, _) = join!(fut2, fut1).await;
 
   receiver2
 }

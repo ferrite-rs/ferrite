@@ -3,7 +3,7 @@ use ferrite_session::*;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::Duration;
-use async_std::task::sleep;
+use tokio::time::sleep;
 
 type CounterSession = SendValue < u64, End >;
 
@@ -79,7 +79,7 @@ pub fn counter_session()
     terminate () )
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( counter_session () ).await
 }

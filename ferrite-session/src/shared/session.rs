@@ -1,6 +1,6 @@
 // extern crate log;
 
-use async_std::task;
+use tokio::task;
 use async_macros::join;
 use std::future::Future;
 use std::marker::PhantomData;
@@ -13,6 +13,7 @@ use super::shared_to_linear::SharedToLinear;
 use super::shared_session::*;
 
 use crate::base::*;
+use crate::protocol::{End};
 use crate::functional::nat::*;
 
 pub fn run_shared_session < A >
@@ -40,7 +41,7 @@ where
 
       debug!("[run_shared_session] received sender3");
       match sender3 {
-        Ok ( sender4 ) => {
+        Some ( sender4 ) => {
           let ( sender5, receiver5 ) = once_channel();
 
           sender1.send ( sender5 ).await.unwrap();
@@ -50,7 +51,7 @@ where
           sender4.send(receiver3).await.unwrap();
           debug!("[run_shared_session] sent receiver3");
         },
-        Err (_) => {
+        None => {
           debug!("[run_shared_session] terminating shared session");
           return;
         }
@@ -58,7 +59,7 @@ where
     }
   });
 
-  (session2, fut)
+  (session2, async { fut.await.unwrap() })
 }
 
 pub fn accept_shared_session
@@ -102,7 +103,7 @@ where
       let m_sender1 = receiver1.recv().await;
 
       match m_sender1 {
-        Ok ( sender1 ) => {
+        Some ( sender1 ) => {
           let child1 = task::spawn ( async move {
             debug!("[accept_shared_session] calling cont");
             unsafe_run_session
@@ -128,9 +129,9 @@ where
             debug!("[accept_shared_session] sent sender12");
           });
 
-          join! ( child1, child2, child3, child4 ).await;
+          let _ = join! ( child1, child2, child3, child4 ).await;
         },
-        Err (_) => {
+        None => {
           // shared session is terminated with all references to it
           // being dropped
         }
@@ -183,8 +184,63 @@ where
         debug!("[detach_shared_session] sent sender1");
       });
 
-      join! ( child1, child2 ).await;
+      let _ = join! ( child1, child2 ).await;
     })
+}
+
+pub async fn async_acquire_shared_session
+  < F, Fut >
+  ( shared : SharedChannel <
+      LinearToShared < F >
+    >,
+    cont_builder : impl
+      FnOnce ( Z ) -> Fut
+      + Send + 'static
+  ) ->
+    task::JoinHandle<()>
+where
+  F : Protocol,
+  F : SharedRecApp < SharedToLinear < F > >,
+  Fut :
+    Future <
+      Output =
+        PartialSession < (
+          F::Applied , () ),
+          End
+        >
+    > + Send,
+  F::Applied : Protocol,
+{
+
+  debug!("[acquire_shared_session] receiving receiver3");
+  let receiver3 = unsafe_receive_shared_channel(shared).await;
+  debug!("[acquire_shared_session] received receiver3");
+
+  task::spawn(async move {
+    let (sender1, receiver1) = once_channel();
+    let (sender2, receiver2) = once_channel();
+
+    let cont = cont_builder ( Z ).await;
+
+    let ctx = (receiver2, ());
+
+    let child1 = task::spawn ( async move {
+      let LinearToShared { linear } = receiver3.recv().await.unwrap();
+      sender2.send(linear).await.unwrap();
+    });
+
+    let child2 = task::spawn ( async move {
+      unsafe_run_session
+        ( cont, ctx, sender1
+        ).await;
+    });
+
+    let child3 = task::spawn( async move {
+      receiver1.recv().await.unwrap();
+    });
+
+    let _ = join! (child1, child2, child3) .await;
+  })
 }
 
 pub fn acquire_shared_session
@@ -226,9 +282,9 @@ where
 
       let (sender2, receiver2) = once_channel();
 
-      debug!("[acquire_shared_session] receiving receiver4");
+      debug!("[acquire_shared_session] receiving receiver3");
       let receiver3 = unsafe_receive_shared_channel(shared).await;
-      debug!("[acquire_shared_session] received receiver4");
+      debug!("[acquire_shared_session] received receiver3");
 
       let ctx2 = C :: append_context
         ( ctx1, (receiver2, ()) );
@@ -244,7 +300,7 @@ where
           ).await;
       });
 
-      join! (child1, child2) .await;
+      let _ = join! (child1, child2) .await;
 
       // debug!("[acquire_shared_session] ran cont");
     })

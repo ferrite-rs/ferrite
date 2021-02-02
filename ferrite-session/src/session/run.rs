@@ -1,4 +1,4 @@
-use async_std::task;
+use tokio::task;
 use async_macros::join;
 
 use crate::base::*;
@@ -19,7 +19,7 @@ pub async fn run_session
     receiver.recv().await.unwrap();
   });
 
-  join!(child1, child2).await;
+  let _ = join!(child1, child2).await;
 }
 
 
@@ -45,7 +45,7 @@ where
 
   receiver2.recv().await.unwrap();
 
-  child1.await;
+  let _ = child1.await;
 
   val
 }

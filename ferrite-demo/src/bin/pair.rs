@@ -1,7 +1,7 @@
 use ferrite_session::*;
 
 use std::time::Duration;
-use async_std::task::sleep;
+use tokio::time::sleep;
 
 pub fn pair_session()
   -> Session < End >
@@ -152,7 +152,7 @@ pub fn pair_session()
   p6
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( pair_session () ).await
 }

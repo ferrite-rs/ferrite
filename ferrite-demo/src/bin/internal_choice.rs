@@ -63,7 +63,7 @@ pub fn internal_choice_session ()
   apply_channel ( client, provider_left )
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( internal_choice_session() ).await
 }

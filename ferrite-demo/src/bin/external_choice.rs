@@ -67,7 +67,7 @@ pub fn external_choice_session ()
   apply_channel ( client_right, provider )
 }
 
-#[async_std::main]
+#[tokio::main]
 pub async fn main() {
   run_session( external_choice_session() ).await
 }
