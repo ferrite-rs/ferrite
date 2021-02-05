@@ -150,6 +150,7 @@ version = "0.1.0"
 dependencies = [
  "env_logger 0.8.2",
  "ferrite-session",
+ "futures",
  "ipc-channel",
  "log",
  "rand",

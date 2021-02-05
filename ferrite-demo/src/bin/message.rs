@@ -1,5 +1,6 @@
 use ferrite_session::*;
 use ipc_channel::ipc;
+use futures::future::join_all;
 
 define_choice!{ CounterCommand;
   Increment: Z,
@@ -37,14 +38,32 @@ async fn use_counter
   ) ->
     u64
 {
-  for _ in 0..count {
-    run_session (
-      acquire_shared_session! ( counter, chan =>
-        choose! ( chan, Increment,
-          release_shared_session ( chan,
-            terminate() ) ) )
-    ).await;
+  // for _ in 0..count {
+  //   run_session (
+  //     acquire_shared_session! ( counter, chan =>
+  //       choose! ( chan, Increment,
+  //         release_shared_session ( chan,
+  //           terminate() ) ) )
+  //   ).await;
+  // }
+
+  let mut futures = vec![];
+
+  for i in 0..count {
+    let future = async_acquire_shared_session ( counter.clone(), move | chan | async move {
+      choose! ( chan, Increment,
+        release_shared_session ( chan,
+          terminate() ) )
+    }).await;
+
+    futures.push(future);
+
+    if i % 1000 == 0 {
+      join_all(futures.drain(0..)).await;
+    }
   }
+
+  join_all(futures).await;
 
   run_session_with_result (
     acquire_shared_session! ( counter, chan =>
