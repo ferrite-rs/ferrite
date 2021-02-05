@@ -1,6 +1,7 @@
 use crate::base::*;
 
 use super::fix::{ SharedRecApp };
+use super::shared_session::{ SharedPayload };
 use super::linear_to_shared::{ LinearToShared };
 use super::shared_to_linear::{ SharedToLinear };
 
@@ -12,10 +13,11 @@ where
 {
   pub (crate) unlock:
     Receiver <
-      ( SenderOnce < () >,
-        SenderOnce < LinearToShared < F > >
-      )
-    >
+      SharedPayload < LinearToShared < F > >
+    >,
+
+  pub (crate) release:
+    SenderOnce < () >,
 }
 
 impl < F >
