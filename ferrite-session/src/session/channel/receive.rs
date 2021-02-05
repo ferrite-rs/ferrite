@@ -1,4 +1,3 @@
-use tokio::task;
 use async_macros::join;
 use std::future::Future;
 
@@ -95,13 +94,13 @@ where
       let (sender1, receiver1)
         = once_channel();
 
-      let child1 = task::spawn(async move {
+      let child1 = spawn(async move {
         sender.send(
           ReceiveChannel ( sender1 )
         ).await.unwrap();
       });
 
-      let child2 = task::spawn(async move {
+      let child2 = spawn(async move {
         let (receiver2, sender2)
           = receiver1.recv().await.unwrap();
 
@@ -173,14 +172,14 @@ where
 
       let (sender3, receiver3) = once_channel();
 
-      let child1 = task::spawn(async move {
+      let child1 = spawn(async move {
         sender2.send((receiver1, sender3)).await.unwrap();
       });
 
       let ctx5 =
         N1 :: insert_target (receiver3, ctx4);
 
-      let child2 = task::spawn(async move {
+      let child2 = spawn(async move {
         unsafe_run_session
           ( cont, ctx5, sender1
           ).await;

@@ -1,4 +1,3 @@
-use tokio::task;
 use async_macros::join;
 use std::future::{ Future };
 
@@ -23,7 +22,7 @@ where
     move | ctx, sender1 | async move {
       let (sender2, receiver2) = once_channel();
 
-      let child1 = task::spawn(async move {
+      let child1 = spawn(async move {
         sender1.send(
           SendValue (
             ( Value(val),
@@ -31,7 +30,7 @@ where
             ) ) ).await.unwrap();
       });
 
-      let child2 = task::spawn(async move {
+      let child2 = spawn(async move {
         unsafe_run_session
           ( cont, ctx, sender2
           ).await;

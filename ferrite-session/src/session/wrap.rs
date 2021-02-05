@@ -1,7 +1,5 @@
 use async_macros::join;
 
-use tokio::task;
-
 use crate::base::*;
 use crate::protocol::*;
 
@@ -27,14 +25,14 @@ where
     move | ctx, sender1 | async move {
       let (sender2, receiver) = once_channel();
 
-      let child1 = task::spawn(async move {
+      let child1 = spawn(async move {
         let val = receiver.recv().await.unwrap();
         sender1.send (
           Wrap { unwrap : Box::new ( val ) }
         ).await.unwrap();
       });
 
-      let child2 = task::spawn(
+      let child2 = spawn(
         unsafe_run_session
           ( cont, ctx, sender2
           ) );
@@ -73,12 +71,12 @@ where
       let ctx3 =
         N :: insert_target ( receiver2, ctx2 );
 
-      let child1 = task::spawn ( async move {
+      let child1 = spawn ( async move {
         let wrapped = receiver1.recv().await.unwrap();
         sender2.send( *wrapped.unwrap ).await.unwrap();
       });
 
-      let child2 = task::spawn(
+      let child2 = spawn(
         unsafe_run_session
           ( cont, ctx3, sender1
           ));

@@ -1,5 +1,6 @@
 use serde;
 use std::mem;
+use std::future::Future;
 use ipc_channel::ipc;
 use std::ops::DerefMut;
 use std::sync::{Arc, Mutex};
@@ -50,7 +51,30 @@ pub trait ForwardChannel: Send + 'static {
 }
 
 lazy_static! {
-  pub static ref RUNTIME : runtime::Runtime = runtime::Runtime::new().unwrap();
+  pub static ref RUNTIME : runtime::Runtime =
+    runtime::Builder::new_multi_thread()
+      .worker_threads(16)
+      .max_blocking_threads(1024)
+      .build()
+      .unwrap();
+}
+
+pub fn spawn<T>(task: T) ->
+  task::JoinHandle<T::Output>
+where
+  T: Future + Send + 'static,
+  T::Output: Send + 'static,
+{
+  RUNTIME.spawn(task)
+}
+
+pub fn spawn_blocking<F, R>(f: F) ->
+  task::JoinHandle<R>
+where
+  F: FnOnce() -> R + Send + 'static,
+  R: Send + 'static,
+{
+  RUNTIME.spawn_blocking(f)
 }
 
 pub fn once_channel<T>() -> (SenderOnce<T>, ReceiverOnce<T>)
@@ -249,7 +273,7 @@ where
     RUNTIME.spawn(async move {
       let channel = self.recv().await.unwrap();
 
-      task::spawn_blocking(move || {
+      spawn_blocking(move || {
         sender1.send(());
         channel.forward_to(sender1, receiver1);
       });
@@ -266,7 +290,7 @@ where
     RUNTIME.spawn_blocking(move || {
       receiver1.recv::<()>().unwrap();
       let channel = T::forward_from(sender1, receiver1);
-      task::spawn(async move {
+      spawn(async move {
         sender2.send(channel).await.unwrap();
       });
     });
@@ -333,7 +357,7 @@ where
           Ok((sender2, receiver2)) => {
             let payload = T::forward_from(sender2, receiver2);
             let sender3 = sender.clone();
-            task::spawn(async move {
+            spawn(async move {
               sender3.send(payload).await.unwrap();
             });
           },
@@ -363,7 +387,7 @@ where
 
     let (sender1, receiver1) = unbounded();
 
-    task::spawn_blocking(move || {
+    spawn_blocking(move || {
       loop {
         match RUNTIME.block_on(receiver1.recv()) {
           Some(payload) => {
@@ -510,7 +534,7 @@ where
       .map_err(|err| ser::Error::custom(format!(
         "Failed to create IPC channel: {}", err)))?;
 
-    task::spawn_blocking(move || {
+    spawn_blocking(move || {
       loop {
         match RUNTIME.block_on(receiver.recv()) {
           Some(payload) => {
@@ -543,14 +567,14 @@ where
 
     let (sender1, receiver1) = unbounded();
 
-    task::spawn_blocking(move || {
+    spawn_blocking(move || {
       loop {
         let res = ipc_receiver.recv();
         match res {
           Ok((sender2, receiver2)) => {
             let payload = T::forward_from(sender2, receiver2);
             let sender3 = sender1.clone();
-            task::spawn(async move {
+            spawn(async move {
               sender3.send(payload).await.unwrap();
             });
           },

@@ -1,4 +1,3 @@
-use tokio::task;
 use async_macros::join;
 use crate::functional::nat::*;
 use crate::protocol::{ SendChannel };
@@ -47,18 +46,18 @@ where
       let ctx3 =
         N :: insert_target ((), ctx2);
 
-      let child1 = task::spawn(async move {
+      let child1 = spawn(async move {
         let p = p_chan.recv().await.unwrap();
         sender2.send(p).await.unwrap();
       });
 
-      let child2 = task::spawn(async move {
+      let child2 = spawn(async move {
         sender1.send(
           SendChannel ( receiver2, receiver3 )
         ).await.unwrap();
       });
 
-      let child3 = task::spawn(async {
+      let child3 = spawn(async {
         unsafe_run_session
           ( cont, ctx3, sender3
           ).await;
@@ -173,7 +172,7 @@ where
 
       // the first thread spawns immediately
 
-      let child1 = task::spawn(async move {
+      let child1 = spawn(async move {
         unsafe_run_session
           ( cont1, ctx1, sender1
           ).await;
@@ -181,7 +180,7 @@ where
 
       // the sender here blocks until the inner channel pairs
       // are received on the other side
-      let child2 = task::spawn(async move {
+      let child2 = spawn(async move {
         sender.send(
           SendChannel ( receiver1, receiver2 )
         ).await.unwrap();
@@ -189,7 +188,7 @@ where
 
       // the second thread is blocked until the first channel is being accessed
 
-      let child3 = task::spawn(async move {
+      let child3 = spawn(async move {
         unsafe_run_session
           ( cont2, ctx2, sender2
           ).await;

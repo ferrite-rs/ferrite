@@ -151,6 +151,7 @@ dependencies = [
  "env_logger 0.8.2",
  "ferrite-session",
  "ipc-channel",
+ "log",
  "rand",
  "serde",
  "tokio",

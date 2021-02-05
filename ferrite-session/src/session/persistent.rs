@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use tokio::task;
 use async_macros::join;
 
 use crate::base::*;
@@ -78,7 +77,7 @@ where
 
       let (sender2, receiver2) = once_channel();
 
-      let child1 = task::spawn(async move {
+      let child1 = spawn(async move {
         unsafe_run_session
           ( session3, (), sender2
           ).await;
@@ -91,7 +90,7 @@ where
           >
         > :: append_context ( ctx1, (receiver2, ()) );
 
-      let child2 = task::spawn(async move {
+      let child2 = spawn(async move {
         unsafe_run_session
           ( cont, ctx2, sender1
           ).await;

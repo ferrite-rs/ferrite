@@ -10,6 +10,7 @@ license = "MIT OR Apache-2.0"
 keywords = [ "session-types" ]
 
 [dependencies]
+log = "0.4.11"
 rand = "0.7.3"
 ferrite-session = { path = "../ferrite-session" }
 serde = { version = "1.0.118", features = [ "derive" ] }
