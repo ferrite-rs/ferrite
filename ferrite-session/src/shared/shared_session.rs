@@ -233,9 +233,9 @@ where
   ( SharedChannel { endpoint: sender }, receiver )
 }
 
-pub async fn unsafe_receive_shared_channel < S >
+pub fn unsafe_receive_shared_channel < S >
   ( session : SharedChannel < S > )
-  -> ReceiverOnce < S >
+  -> (ReceiverOnce < () >, ReceiverOnce < S >)
 where
   S : SharedProtocol
 {
@@ -243,9 +243,8 @@ where
   let (sender2, receiver2) = once_channel::<S>();
 
   session.endpoint.send( (sender1, sender2) ).unwrap();
-  receiver1.recv().await.unwrap();
 
-  receiver2
+  (receiver1, receiver2)
 }
 
 

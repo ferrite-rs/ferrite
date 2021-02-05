@@ -54,7 +54,7 @@ async fn use_counter
       choose! ( chan, Increment,
         release_shared_session ( chan,
           terminate() ) )
-    }).await;
+    });
 
     futures.push(future);
 

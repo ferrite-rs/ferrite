@@ -191,7 +191,7 @@ where
     })
 }
 
-pub async fn async_acquire_shared_session
+pub fn async_acquire_shared_session
   < F, Fut >
   ( shared : SharedChannel <
       LinearToShared < F >
@@ -216,7 +216,7 @@ where
 {
 
   debug!("[acquire_shared_session] receiving receiver3");
-  let receiver3 = unsafe_receive_shared_channel(shared).await;
+  let (receiver3, receiver4) = unsafe_receive_shared_channel(shared);
   debug!("[acquire_shared_session] received receiver3");
 
   spawn(async move {
@@ -228,7 +228,7 @@ where
     let ctx = (receiver2, ());
 
     let child1 = spawn ( async move {
-      let LinearToShared { linear } = receiver3.recv().await.unwrap();
+      let LinearToShared { linear } = receiver4.recv().await.unwrap();
       sender2.send(linear).unwrap();
     });
 
@@ -242,7 +242,11 @@ where
       receiver1.recv().await.unwrap();
     });
 
-    let _ = join! (child1, child2, child3).await;
+    let child4 = spawn(async move {
+      receiver3.recv().await.unwrap();
+    });
+
+    let _ = join! (child1, child2, child3, child4).await;
   })
 }
 
@@ -286,14 +290,15 @@ where
       let (sender2, receiver2) = once_channel();
 
       debug!("[acquire_shared_session] receiving receiver3");
-      let receiver3 = unsafe_receive_shared_channel(shared).await;
+      let (receiver3, receiver4) = unsafe_receive_shared_channel(shared);
+      receiver3.recv().await.unwrap();
       debug!("[acquire_shared_session] received receiver3");
 
       let ctx2 = C :: append_context
         ( ctx1, (receiver2, ()) );
 
       let child1 = spawn ( async move {
-        let LinearToShared { linear } = receiver3.recv().await.unwrap();
+        let LinearToShared { linear } = receiver4.recv().await.unwrap();
         sender2.send(linear).unwrap();
       });
 
