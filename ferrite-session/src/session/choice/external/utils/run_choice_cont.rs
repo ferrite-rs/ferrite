@@ -27,7 +27,7 @@ where
 
   let (receiver_sum, cont6) = Row::split_row( res );
 
-  sender.send( receiver_sum ).await.unwrap();
+  sender.send( receiver_sum ).unwrap();
   Row::elim_sum ( ElimConst{}, cont6 ).await;
 }
 

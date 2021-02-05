@@ -32,7 +32,7 @@ where
         sender1.send( InternalChoice {
           field : N::inject_elem (
             cloak_applied ( receiver2 ) )
-        }).await.unwrap();
+        }).unwrap();
       });
 
       let _ = join!(child1, child2).await;

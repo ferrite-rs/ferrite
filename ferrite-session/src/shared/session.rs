@@ -37,19 +37,20 @@ where
 
   let fut = spawn(async move {
     loop {
-      let sender3 = receiver2.recv().await;
+      let m_senders = receiver2.recv().await;
 
       debug!("[run_shared_session] received sender3");
-      match sender3 {
-        Some ( sender4 ) => {
-          let ( sender5, receiver5 ) = once_channel();
+      match m_senders {
+        Some ( senders ) => {
+          sender1.send(senders).unwrap();
+          // let ( sender5, receiver5 ) = once_channel();
 
-          sender1.send ( sender5 ).await.unwrap();
-          let receiver3 = receiver5.recv().await.unwrap();
+          // sender1.send ( sender5 ).await.unwrap();
+          // let receiver3 = receiver5.recv().await.unwrap();
 
-          debug!("[run_shared_session] received receiver3");
-          sender4.send(receiver3).await.unwrap();
-          debug!("[run_shared_session] sent receiver3");
+          // debug!("[run_shared_session] received receiver3");
+          // sender4.send(receiver3).await.unwrap();
+          // debug!("[run_shared_session] sent receiver3");
         },
         None => {
           debug!("[run_shared_session] terminating shared session");
@@ -59,7 +60,7 @@ where
     }
   });
 
-  (session2, async { fut.await.unwrap() })
+  (session2, async { fut.await.unwrap(); })
 }
 
 pub fn accept_shared_session
@@ -81,20 +82,18 @@ where
     move |
       receiver1 :
         Receiver <
-          SenderOnce <
-            ReceiverOnce <
-              LinearToShared < F >
-            >
-          >
+          ( SenderOnce < () >,
+            SenderOnce < LinearToShared < F > >
+          )
         >
     | async move {
       let (sender2, receiver2)
         : (SenderOnce < Lock < F > >, _)
         = once_channel();
 
-      let (sender3, receiver3)
-        : (SenderOnce < LinearToShared < F > >, _)
-        = once_channel();
+      // let (sender3, receiver3)
+      //   : (SenderOnce < LinearToShared < F > >, _)
+      //   = once_channel();
 
       let (sender4, receiver4)
         : (SenderOnce < F :: Applied >, _)
@@ -103,7 +102,7 @@ where
       let m_sender1 = receiver1.recv().await;
 
       match m_sender1 {
-        Some ( sender1 ) => {
+        Some (( sender5, sender6 )) => {
           let child1 = spawn ( async move {
             debug!("[accept_shared_session] calling cont");
             unsafe_run_session
@@ -114,18 +113,16 @@ where
           let child2 = spawn ( async move {
             let linear = receiver4.recv().await.unwrap();
             debug!("[accept_shared_session] received from receiver4");
-            sender3.send ( LinearToShared { linear: linear } ).await.unwrap();
+            sender6.send ( LinearToShared { linear: linear } ).unwrap();
           });
 
           let child3 = spawn ( async move {
-            debug!("[accept_shared_session] sending receiver3");
-            sender1.send( receiver3 ).await.unwrap();
-            debug!("[accept_shared_session] sent receiver3");
+            sender5.send( () ).unwrap();
           });
 
           let child4 = spawn ( async move {
             debug!("[accept_shared_session] sending sender12");
-            sender2.send( Lock { unlock : receiver1 } ).await.unwrap();
+            sender2.send( Lock { unlock : receiver1 } ).unwrap();
             debug!("[accept_shared_session] sent sender12");
           });
 
@@ -136,8 +133,7 @@ where
           // being dropped
         }
       }
-    }
-  )
+    })
 }
 
 pub fn detach_shared_session
@@ -166,7 +162,7 @@ where
         ),
       sender1
     | async move {
-      let (sender3, receiver3) = once_channel();
+      let (sender3, receiver3) = once_channel::<()>();
 
       let child1 = spawn ( async move {
         debug!("[detach_shared_session] receiving sender2");
@@ -187,7 +183,7 @@ where
             unlock: sender3,
             phantom: PhantomData
           }
-        ).await.unwrap();
+        ).unwrap();
         debug!("[detach_shared_session] sent sender1");
       });
 
@@ -233,7 +229,7 @@ where
 
     let child1 = spawn ( async move {
       let LinearToShared { linear } = receiver3.recv().await.unwrap();
-      sender2.send(linear).await.unwrap();
+      sender2.send(linear).unwrap();
     });
 
     let child2 = spawn ( async move {
@@ -298,7 +294,7 @@ where
 
       let child1 = spawn ( async move {
         let LinearToShared { linear } = receiver3.recv().await.unwrap();
-        sender2.send(linear).await.unwrap();
+        sender2.send(linear).unwrap();
       });
 
       let child2 = spawn ( async move {
@@ -346,7 +342,7 @@ where
       let lock: SharedToLinear<F> =
         receiver2.recv().await.unwrap();
 
-      lock.unlock.send(()).await.unwrap();
+      lock.unlock.send(()).unwrap();
 
       debug!("[release_shared_session] received receiver2");
       unsafe_run_session

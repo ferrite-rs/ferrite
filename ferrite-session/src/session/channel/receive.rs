@@ -51,7 +51,7 @@ where
 
       sender.send(
         ReceiveChannel ( sender1 )
-      ).await.unwrap();
+      ).unwrap();
 
       let (receiver2, sender2)
         = receiver1.recv().await.unwrap();
@@ -97,7 +97,7 @@ where
       let child1 = spawn(async move {
         sender.send(
           ReceiveChannel ( sender1 )
-        ).await.unwrap();
+        ).unwrap();
       });
 
       let child2 = spawn(async move {
@@ -173,7 +173,7 @@ where
       let (sender3, receiver3) = once_channel();
 
       let child1 = spawn(async move {
-        sender2.send((receiver1, sender3)).await.unwrap();
+        sender2.send((receiver1, sender3)).unwrap();
       });
 
       let ctx5 =

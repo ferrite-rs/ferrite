@@ -3,6 +3,7 @@ use std::mem;
 use std::future::Future;
 use ipc_channel::ipc;
 use std::ops::DerefMut;
+use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
 use tokio::{ task, runtime, sync::{mpsc, oneshot, Mutex as AsyncMutex} };
@@ -22,18 +23,31 @@ pub struct SenderOnce<T>(oneshot::Sender<T>);
 pub struct ReceiverOnce<T>(oneshot::Receiver<T>);
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-pub struct OpaqueReceiver(
+pub struct OpaqueReceiver (
   Arc < Mutex <
     Option<ipc::OpaqueIpcReceiver>
   > >
 );
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-pub struct OpaqueSender(
+pub struct OpaqueSender (
   Arc < Mutex <
     Option<ipc::OpaqueIpcSender>
   > >
 );
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct IpcSender < T > {
+  sender: OpaqueSender,
+  phantom: PhantomData < T >
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+pub struct IpcReceiver < T >
+{
+  receiver: OpaqueReceiver,
+  phantom: PhantomData < T >
+}
 
 #[derive(Debug)]
 pub struct SendError(pub String);
@@ -117,6 +131,43 @@ impl OpaqueReceiver {
   }
 }
 
+impl < T > IpcSender < T >
+where
+  T: for<'de> Deserialize<'de> + Serialize,
+{
+  pub fn send(&self, data: T)
+  {
+    self.sender.send(data)
+  }
+}
+
+impl < T > IpcReceiver< T >
+where
+  T: for<'de> Deserialize<'de> + Serialize,
+{
+  pub fn recv(&self) -> Option<T>
+  {
+    self.receiver.recv()
+  }
+}
+
+pub fn ipc_channel<T>() -> (IpcSender<T>, IpcReceiver<T>)
+where
+  IpcReceiver<T>: Send
+{
+  let (sender, receiver) = opaque_channel();
+
+  ( IpcSender {
+      sender: sender,
+      phantom: PhantomData,
+    },
+    IpcReceiver {
+      receiver: receiver,
+      phantom: PhantomData,
+    }
+  )
+}
+
 pub fn opaque_channel() -> (OpaqueSender, OpaqueReceiver)
 {
   let (sender, receiver) = ipc::channel::<()>().unwrap();
@@ -153,7 +204,7 @@ impl <T> Clone for Receiver<T> {
 }
 
 impl <T> Sender <T> {
-  pub async fn send (&self, msg: T)
+  pub fn send (&self, msg: T)
     -> Result<(), SendError>
   {
     self.0.send(msg)
@@ -180,7 +231,7 @@ impl <T> Receiver <T> {
 }
 
 impl <T> SenderOnce <T> {
-  pub async fn send (self, msg: T)
+  pub fn send (self, msg: T)
     -> Result< (), SendError >
   {
     self.0.send(msg)
@@ -236,9 +287,7 @@ where
       receiver.recv::<()>().unwrap();
       let payload = T::forward_from(sender, receiver);
 
-      RUNTIME.spawn(async move {
-        self.send(payload).await.unwrap();
-      });
+      self.send(payload).unwrap();
     });
   }
 
@@ -290,9 +339,7 @@ where
     RUNTIME.spawn_blocking(move || {
       receiver1.recv::<()>().unwrap();
       let channel = T::forward_from(sender1, receiver1);
-      spawn(async move {
-        sender2.send(channel).await.unwrap();
-      });
+      sender2.send(channel).unwrap();
     });
 
     receiver2
@@ -357,9 +404,7 @@ where
           Ok((sender2, receiver2)) => {
             let payload = T::forward_from(sender2, receiver2);
             let sender3 = sender.clone();
-            spawn(async move {
-              sender3.send(payload).await.unwrap();
-            });
+            sender3.send(payload).unwrap();
           },
           Err(_) => break
         }
@@ -574,9 +619,7 @@ where
           Ok((sender2, receiver2)) => {
             let payload = T::forward_from(sender2, receiver2);
             let sender3 = sender1.clone();
-            spawn(async move {
-              sender3.send(payload).await.unwrap();
-            });
+            sender3.send(payload).unwrap();
           },
           Err(_) => break
         }

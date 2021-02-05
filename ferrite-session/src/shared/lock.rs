@@ -12,11 +12,9 @@ where
 {
   pub (crate) unlock:
     Receiver <
-      SenderOnce <
-        ReceiverOnce<
-          LinearToShared < F >
-        >
-      >
+      ( SenderOnce < () >,
+        SenderOnce < LinearToShared < F > >
+      )
     >
 }
 

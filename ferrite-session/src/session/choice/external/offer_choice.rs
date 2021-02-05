@@ -39,7 +39,7 @@ where
       let payload = ExternalChoice::< Row >
         { sender: sender2 };
 
-      sender1.send(payload).await.unwrap();
+      sender1.send(payload).unwrap();
 
       let (Value(choice), sender3) = receiver2.recv().await.unwrap();
 

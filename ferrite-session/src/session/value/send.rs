@@ -27,7 +27,7 @@ where
           SendValue (
             ( Value(val),
               receiver2
-            ) ) ).await.unwrap();
+            ) ) ).unwrap();
       });
 
       let child2 = spawn(async move {

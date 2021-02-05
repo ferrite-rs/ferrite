@@ -1,4 +1,5 @@
 use ferrite_session::*;
+use ipc_channel::ipc;
 
 define_choice!{ CounterCommand;
   Increment: Z,
@@ -62,5 +63,11 @@ pub async fn main() {
   let (counter, _) =
     run_shared_session ( make_counter_session ( 0 ) );
 
-  use_counter ( counter, 100000 ).await;
+  let (sender, receiver) = ipc::channel().unwrap();
+  sender.send(counter).unwrap();
+  let shared = receiver.recv().unwrap();
+  // let shared = counter.clone();
+
+  let count = use_counter ( shared, 100000 ).await;
+  println!("count: {}", count);
 }

@@ -33,7 +33,7 @@ where
     | async move {
       let (sender2, receiver2) = once_channel();
 
-      sender1.send ( ReceiveValue ( sender2 ) ).await.unwrap();
+      sender1.send ( ReceiveValue ( sender2 ) ).unwrap();
 
       let ( Value(val), sender3 )
         = receiver2.recv().await.unwrap();
@@ -83,7 +83,7 @@ where
       sender2.send( (
         Value(val),
         sender3
-      ) ).await.unwrap();
+      ) ).unwrap();
 
       unsafe_run_session
         (cont, ctx3, sender1

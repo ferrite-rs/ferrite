@@ -48,13 +48,13 @@ where
 
       let child1 = spawn(async move {
         let p = p_chan.recv().await.unwrap();
-        sender2.send(p).await.unwrap();
+        sender2.send(p).unwrap();
       });
 
       let child2 = spawn(async move {
         sender1.send(
           SendChannel ( receiver2, receiver3 )
-        ).await.unwrap();
+        ).unwrap();
       });
 
       let child3 = spawn(async {
@@ -183,7 +183,7 @@ where
       let child2 = spawn(async move {
         sender.send(
           SendChannel ( receiver1, receiver2 )
-        ).await.unwrap();
+        ).unwrap();
       });
 
       // the second thread is blocked until the first channel is being accessed

@@ -29,7 +29,7 @@ where
         let val = receiver.recv().await.unwrap();
         sender1.send (
           Wrap { unwrap : Box::new ( val ) }
-        ).await.unwrap();
+        ).unwrap();
       });
 
       let child2 = spawn(
@@ -73,7 +73,7 @@ where
 
       let child1 = spawn ( async move {
         let wrapped = receiver1.recv().await.unwrap();
-        sender2.send( *wrapped.unwrap ).await.unwrap();
+        sender2.send( *wrapped.unwrap ).unwrap();
       });
 
       let child2 = spawn(

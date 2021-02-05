@@ -31,7 +31,7 @@ where
 
       let child1 = spawn ( async move {
         let val = receiver.recv().await.unwrap();
-        sender1.send ( fix ( val ) ).await.unwrap();
+        sender1.send ( fix ( val ) ).unwrap();
       });
 
       let child2 = spawn(
@@ -69,7 +69,7 @@ where
 
       let child1 = spawn(async move {
         let val = receiver.recv().await.unwrap();
-        sender1.send ( unfix ( val ) ).await.unwrap();
+        sender1.send ( unfix ( val ) ).unwrap();
       });
 
       let child2 = spawn(
@@ -95,7 +95,7 @@ where
 
       let child1 = spawn(async move {
         let val = receiver.recv().await.unwrap();
-        sender.send ( succ ( val ) ).await.unwrap();
+        sender.send ( succ ( val ) ).unwrap();
       });
 
       let child2 = spawn(
@@ -148,7 +148,7 @@ where
 
       let child1 = spawn ( async move {
         let val = receiver1.recv().await.unwrap();
-        sender2.send( unfix ( val ) ).await.unwrap();
+        sender2.send( unfix ( val ) ).unwrap();
       });
 
       let child2 = spawn(

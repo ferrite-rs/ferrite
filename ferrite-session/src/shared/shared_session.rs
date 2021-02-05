@@ -1,7 +1,6 @@
 use serde;
 use std::pin::Pin;
 use std::marker::PhantomData;
-use async_macros::join;
 use std::future::Future;
 
 use crate::base::*;
@@ -15,9 +14,9 @@ where
     Box < dyn
       FnOnce
         ( Receiver <
-            SenderOnce <
-              ReceiverOnce < S >
-            >
+            ( SenderOnce < () >,
+              SenderOnce < S >
+            )
           >
         ) ->
           Pin < Box <
@@ -35,9 +34,10 @@ where
 {
   endpoint :
     Sender <
-      SenderOnce <
-        ReceiverOnce < S >
-      > >
+      ( SenderOnce < () >,
+        SenderOnce < S >
+      )
+    >
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -45,8 +45,8 @@ pub struct SerializedSharedChannel < S >
 where
   S: SharedProtocol
 {
-  acquire_sender: OpaqueSender,
-  acquire_receiver: OpaqueReceiver,
+  acquire_sender: IpcSender < () >,
+  acquire_receiver: IpcReceiver < () >,
   linear_sender: OpaqueSender,
   linear_receiver: OpaqueReceiver,
   phantom: PhantomData<S>,
@@ -74,8 +74,8 @@ pub fn serialize_shared_channel <S>
 where
   S: SharedProtocol + ForwardChannel
 {
-  let (sender1, receiver1) = opaque_channel();
-  let (sender2, receiver2) = opaque_channel();
+  let (sender1, receiver1) = ipc_channel::<()>();
+  let (sender2, receiver2) = ipc_channel::<()>();
 
   let (sender3, receiver3) = opaque_channel();
   let (sender4, receiver4) = opaque_channel();
@@ -84,16 +84,22 @@ where
     loop {
       match receiver1.recv() {
         Some(()) => {
-          let (sender5, receiver5) =
-            once_channel::<ReceiverOnce<S>>();
+          let (sender5, receiver5) = once_channel::<()>();
+          let (sender6, receiver6) = once_channel::<S>();
 
-          let channel2 = channel.clone();
-          let receiver6 = RUNTIME.block_on(async move {
-            channel2.endpoint.send(sender5).await.unwrap();
-            receiver5.recv().await.unwrap()
-          });
-          receiver6.forward_to(sender4.clone(), receiver3.clone());
-          sender2.send(());
+          {
+            let channel = channel.clone();
+            let sender2 = sender2.clone();
+            let receiver3 = receiver3.clone();
+            let sender4 = sender4.clone();
+
+            RUNTIME.spawn (async move {
+              channel.endpoint.send((sender5, sender6)).unwrap();
+              receiver5.recv().await.unwrap();
+              receiver6.forward_to(sender4, receiver3);
+              sender2.send(());
+            });
+          }
         }
         None => break
       }
@@ -115,26 +121,24 @@ pub fn deserialize_shared_channel <S>
 where
   S: SharedProtocol + ForwardChannel + Send
 {
-  let (sender1, receiver1) = unbounded::<SenderOnce<ReceiverOnce<S>>>();
+  let (sender1, receiver1) =
+    unbounded::<( SenderOnce<()>, SenderOnce<S> )>();
 
   RUNTIME.spawn(async move {
     loop {
       match receiver1.recv().await {
-        Some(sender2) => {
+        Some((sender2, sender3)) => {
           let channel2 = channel.clone();
+          RUNTIME.spawn_blocking(move || {
+            channel2.acquire_sender.send(());
+            channel2.acquire_receiver.recv().unwrap();
 
-          let receiver2 : ReceiverOnce<S> =
-            RUNTIME.spawn_blocking(move || {
-              channel2.acquire_sender.send(());
-              channel2.acquire_receiver.recv::<()>().unwrap();
-
-              < ReceiverOnce<S> >::forward_from(
-                channel2.linear_sender,
-                channel2.linear_receiver,
-              )
-            }).await.unwrap();
-
-          sender2.send(receiver2).await.unwrap();
+            sender2.send(()).unwrap();
+            sender3.forward_to(
+              channel2.linear_sender,
+              channel2.linear_receiver
+            );
+          });
         }
         None => break
       }
@@ -160,7 +164,11 @@ where
 
 pub async fn unsafe_run_shared_session < S >
   ( session: SharedSession < S >,
-    sender: Receiver < SenderOnce < ReceiverOnce < S > > >
+    sender: Receiver <
+      ( SenderOnce < () >,
+        SenderOnce < S >
+      )
+    >
   )
 where
   S : SharedProtocol
@@ -173,9 +181,9 @@ pub fn unsafe_create_shared_session
   ( executor1 : impl
       FnOnce
         ( Receiver <
-            SenderOnce <
-              ReceiverOnce < S >
-            >
+            ( SenderOnce < () >,
+              SenderOnce < S >
+            )
           >
         )
         -> Fut
@@ -190,9 +198,9 @@ where
     : Box <
         dyn FnOnce
           ( Receiver <
-              SenderOnce <
-                ReceiverOnce < S >
-              >
+              ( SenderOnce < () >,
+                SenderOnce < S >
+              )
             >
           )
           -> Pin < Box < dyn Future < Output=() > + Send > >
@@ -212,9 +220,9 @@ pub fn unsafe_create_shared_channel < S >
   () ->
     ( SharedChannel < S >,
       Receiver <
-        SenderOnce <
-          ReceiverOnce < S >
-        >
+        ( SenderOnce < () >,
+          SenderOnce < S >
+        )
       >
     )
 where
@@ -231,15 +239,11 @@ pub async fn unsafe_receive_shared_channel < S >
 where
   S : SharedProtocol
 {
-  let (sender, receiver) = once_channel();
+  let (sender1, receiver1) = once_channel::<()>();
+  let (sender2, receiver2) = once_channel::<S>();
 
-  let fut1 = session.endpoint.send( sender );
-  let fut2 = async move {
-    let receiver2 = receiver.recv().await.unwrap();
-    receiver2
-  };
-
-  let (receiver2, _) = join!(fut2, fut1).await;
+  session.endpoint.send( (sender1, sender2) ).unwrap();
+  receiver1.recv().await.unwrap();
 
   receiver2
 }
