@@ -7,7 +7,7 @@ use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
 use lazy_static::lazy_static;
 use tokio::{ task, runtime, sync::{mpsc, oneshot, Mutex as AsyncMutex} };
-use serde::{ser, Serialize, Deserialize, Serializer, Deserializer};
+use serde::{Serialize, Deserialize};
 
 use crate::functional::*;
 
@@ -379,75 +379,6 @@ where
   }
 }
 
-impl < T > Serialize
-  for Sender < T >
-where
-  T: ForwardChannel,
-{
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let sender = self.clone();
-
-    let (sender1, receiver1) =
-      ipc::channel::<
-        (OpaqueSender, OpaqueReceiver)
-      > ()
-      .map_err(|err| ser::Error::custom(format!(
-        "Failed to create IPC channel: {}", err)))?;
-
-    RUNTIME.spawn_blocking(move || {
-      loop {
-        let res = receiver1.recv();
-        match res {
-          Ok((sender2, receiver2)) => {
-            let payload = T::forward_from(sender2, receiver2);
-            let sender3 = sender.clone();
-            sender3.send(payload).unwrap();
-          },
-          Err(_) => break
-        }
-      }
-    });
-
-    sender1.serialize(serializer)
-  }
-}
-
-impl < 'a, T > Deserialize <'a>
-  for Sender < T >
-where
-  T: ForwardChannel,
-{
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: Deserializer<'a>
-  {
-    let ipc_sender =
-      < ipc::IpcSender <
-          (OpaqueSender, OpaqueReceiver)
-        >
-      >::deserialize(deserializer)?;
-
-    let (sender1, receiver1) = unbounded();
-
-    spawn_blocking(move || {
-      loop {
-        match RUNTIME.block_on(receiver1.recv()) {
-          Some(payload) => {
-            let channel = serialize_channel(payload);
-            ipc_sender.send(channel).unwrap();
-          },
-          None => break
-        }
-      }
-    });
-
-    Ok(sender1)
-  }
-}
-
 impl < F, X, T >
   ForwardChannel
   for Applied < F, X >
@@ -558,74 +489,5 @@ impl ForwardChannel for Bottom
   ) -> Self
   {
     receiver1.recv().unwrap()
-  }
-}
-
-impl < T > Serialize
-  for Receiver < T >
-where
-  T: ForwardChannel
-{
-  fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    S: Serializer,
-  {
-    let receiver = self.clone();
-
-    let (ipc_sender, ipc_receiver) =
-      ipc::channel::<
-        (OpaqueSender, OpaqueReceiver)
-      > ()
-      .map_err(|err| ser::Error::custom(format!(
-        "Failed to create IPC channel: {}", err)))?;
-
-    spawn_blocking(move || {
-      loop {
-        match RUNTIME.block_on(receiver.recv()) {
-          Some(payload) => {
-            let channel = serialize_channel(payload);
-            ipc_sender.send(channel).unwrap();
-          },
-          None => break
-        }
-      }
-    });
-
-    ipc_receiver.serialize(serializer)
-  }
-}
-
-impl < 'a, T > Deserialize <'a>
-  for Receiver < T >
-where
-  T: ForwardChannel
-{
-  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-  where
-    D: Deserializer<'a>
-  {
-    let ipc_receiver =
-      < ipc::IpcReceiver <
-          (OpaqueSender, OpaqueReceiver)
-        >
-      >::deserialize(deserializer)?;
-
-    let (sender1, receiver1) = unbounded();
-
-    spawn_blocking(move || {
-      loop {
-        let res = ipc_receiver.recv();
-        match res {
-          Ok((sender2, receiver2)) => {
-            let payload = T::forward_from(sender2, receiver2);
-            let sender3 = sender1.clone();
-            sender3.send(payload).unwrap();
-          },
-          Err(_) => break
-        }
-      }
-    });
-
-    Ok(receiver1)
   }
 }
