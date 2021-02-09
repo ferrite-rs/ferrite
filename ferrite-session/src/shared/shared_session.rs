@@ -1,4 +1,5 @@
 use serde;
+use tokio::task;
 use std::pin::Pin;
 use std::marker::PhantomData;
 use std::future::Future;
@@ -80,7 +81,7 @@ where
   let (sender3, receiver3) = opaque_channel();
   let (sender4, receiver4) = opaque_channel();
 
-  RUNTIME.spawn_blocking(move || {
+  task::spawn_blocking(move || {
     loop {
       match receiver1.recv() {
         Some(()) => {
@@ -93,7 +94,7 @@ where
             let receiver3 = receiver3.clone();
             let sender4 = sender4.clone();
 
-            RUNTIME.spawn (async move {
+            task::spawn (async move {
               channel.endpoint.send((sender5, sender6)).unwrap();
               receiver5.recv().await.unwrap();
               receiver6.forward_to(sender4, receiver3);
@@ -124,12 +125,12 @@ where
   let (sender1, receiver1) =
     unbounded::<( SenderOnce<()>, SenderOnce<S> )>();
 
-  RUNTIME.spawn(async move {
+  task::spawn(async move {
     loop {
       match receiver1.recv().await {
         Some((sender2, sender3)) => {
           let channel2 = channel.clone();
-          RUNTIME.spawn_blocking(move || {
+          task::spawn_blocking(move || {
             channel2.acquire_sender.send(());
             channel2.acquire_receiver.recv().unwrap();
 

@@ -15,4 +15,5 @@ pub use super::{
   acquire_shared_session,
   release_shared_session,
   async_acquire_shared_session,
+  async_acquire_shared_session_with_result,
 };

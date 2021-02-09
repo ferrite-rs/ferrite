@@ -1,3 +1,4 @@
+use tokio::task;
 use async_macros::join;
 
 use crate::base::*;
@@ -8,13 +9,13 @@ pub async fn run_session
 {
   let (sender, receiver) = once_channel();
 
-  let child1 = spawn ( async move {
+  let child1 = task::spawn ( async move {
     unsafe_run_session
       ( session, (), sender
       ).await;
   });
 
-  let child2 = spawn ( async move {
+  let child2 = task::spawn ( async move {
     receiver.recv().await.unwrap();
   });
 
@@ -33,7 +34,7 @@ where
 {
   let (sender, receiver1) = once_channel();
 
-  let child1 = spawn ( async move {
+  let child1 = task::spawn ( async move {
     unsafe_run_session
       ( session, (), sender
       ).await;

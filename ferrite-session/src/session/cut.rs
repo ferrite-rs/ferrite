@@ -1,3 +1,4 @@
+use tokio::task;
 use std::future::Future;
 use async_macros::join;
 
@@ -228,14 +229,14 @@ where
       let ( sender2, receiver2 ) = once_channel();
       let ctx3 = C2::append_context ( ctx2, ( receiver2, () ) );
 
-      let child1 = spawn ( async move {
+      let child1 = task::spawn ( async move {
         unsafe_run_session (
           cont3.await,
           ctx3, sender1
         ).await;
       });
 
-      let child2 = spawn ( async {
+      let child2 = task::spawn ( async {
         unsafe_run_session( cont1, ctx1, sender2 ).await;
       });
 
@@ -289,13 +290,13 @@ where
           AppendContext < (A, ()) >
         > :: append_context ( ctx2, (a_receiver, ()) );
 
-      let child1 = spawn(async {
+      let child1 = task::spawn(async {
         unsafe_run_session
           ( cont1, ctx4, b_sender
           ).await;
       });
 
-      let child2 = spawn(async {
+      let child2 = task::spawn(async {
         unsafe_run_session
           ( cont2, ctx3, a_sender
           ).await;

@@ -1,12 +1,10 @@
 use serde;
 use std::mem;
-use std::future::Future;
 use ipc_channel::ipc;
 use std::ops::DerefMut;
 use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
-use lazy_static::lazy_static;
-use tokio::{ task, runtime, sync::{mpsc, oneshot, Mutex as AsyncMutex} };
+use tokio::{ task, sync::{mpsc, oneshot, Mutex as AsyncMutex} };
 use serde::{Serialize, Deserialize};
 
 use crate::functional::*;
@@ -62,33 +60,6 @@ pub trait ForwardChannel: Send + 'static {
     sender: OpaqueSender,
     receiver: OpaqueReceiver,
   ) -> Self;
-}
-
-lazy_static! {
-  pub static ref RUNTIME : runtime::Runtime =
-    runtime::Builder::new_multi_thread()
-      .worker_threads(16)
-      .max_blocking_threads(1024)
-      .build()
-      .unwrap();
-}
-
-pub fn spawn<T>(task: T) ->
-  task::JoinHandle<T::Output>
-where
-  T: Future + Send + 'static,
-  T::Output: Send + 'static,
-{
-  RUNTIME.spawn(task)
-}
-
-pub fn spawn_blocking<F, R>(f: F) ->
-  task::JoinHandle<R>
-where
-  F: FnOnce() -> R + Send + 'static,
-  R: Send + 'static,
-{
-  RUNTIME.spawn_blocking(f)
 }
 
 pub fn once_channel<T>() -> (SenderOnce<T>, ReceiverOnce<T>)
@@ -283,7 +254,7 @@ where
     receiver: OpaqueReceiver,
   )
   {
-    RUNTIME.spawn_blocking(move || {
+    task::spawn_blocking(move || {
       receiver.recv::<()>().unwrap();
       let payload = T::forward_from(sender, receiver);
 
@@ -298,9 +269,9 @@ where
   {
     let (sender2, receiver2) = once_channel();
 
-    RUNTIME.spawn(async move {
+    task::spawn(async move {
       let payload: T = receiver2.recv().await.unwrap();
-      RUNTIME.spawn_blocking(move || {
+      task::spawn_blocking(move || {
         sender1.send(());
         payload.forward_to(sender1, receiver1);
       });
@@ -319,10 +290,10 @@ where
     sender1: OpaqueSender,
     receiver1: OpaqueReceiver,
   ) {
-    RUNTIME.spawn(async move {
+    task::spawn(async move {
       let channel = self.recv().await.unwrap();
 
-      spawn_blocking(move || {
+      task::spawn_blocking(move || {
         sender1.send(());
         channel.forward_to(sender1, receiver1);
       });
@@ -336,7 +307,7 @@ where
   {
     let (sender2, receiver2) = once_channel();
 
-    RUNTIME.spawn_blocking(move || {
+    task::spawn_blocking(move || {
       receiver1.recv::<()>().unwrap();
       let channel = T::forward_from(sender1, receiver1);
       sender2.send(channel).unwrap();
@@ -361,7 +332,7 @@ where
   {
     let (Value(payload), channel) = self;
 
-    RUNTIME.spawn_blocking(move || {
+    task::spawn_blocking(move || {
       sender1.send(payload);
       channel.forward_to(sender1, receiver1)
     });
