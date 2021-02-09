@@ -81,9 +81,13 @@ where
   let (sender3, receiver3) = opaque_channel();
   let (sender4, receiver4) = opaque_channel();
 
-  task::spawn_blocking(move || {
+  task::spawn(async move {
     loop {
-      match receiver1.recv() {
+      let receiver1 = receiver1.clone();
+      let signal = task::spawn_blocking(
+        move || { receiver1.recv() }).await.unwrap();
+
+      match signal {
         Some(()) => {
           let (sender5, receiver5) = once_channel::<()>();
           let (sender6, receiver6) = once_channel::<S>();
@@ -94,12 +98,10 @@ where
             let receiver3 = receiver3.clone();
             let sender4 = sender4.clone();
 
-            task::spawn (async move {
-              channel.endpoint.send((sender5, sender6)).unwrap();
-              receiver5.recv().await.unwrap();
-              receiver6.forward_to(sender4, receiver3);
-              sender2.send(());
-            });
+            channel.endpoint.send((sender5, sender6)).unwrap();
+            receiver5.recv().await.unwrap();
+            receiver6.forward_to(sender4, receiver3);
+            sender2.send(());
           }
         }
         None => break
@@ -129,17 +131,15 @@ where
     loop {
       match receiver1.recv().await {
         Some((sender2, sender3)) => {
-          let channel2 = channel.clone();
-          task::spawn_blocking(move || {
-            channel2.acquire_sender.send(());
-            channel2.acquire_receiver.recv().unwrap();
+          channel.acquire_sender.send(());
+          channel.acquire_receiver.recv().unwrap();
 
-            sender2.send(()).unwrap();
-            sender3.forward_to(
-              channel2.linear_sender,
-              channel2.linear_receiver
-            );
-          });
+          let channel2 = channel.clone();
+          sender2.send(()).unwrap();
+          sender3.forward_to(
+            channel2.linear_sender,
+            channel2.linear_receiver
+          );
         }
         None => break
       }
@@ -259,9 +259,6 @@ where
     S: serde::Serializer,
   {
     serialize_shared_channel(self.clone()).serialize(serializer)
-
-    // debug!("serializing shared channel");
-    // self.endpoint.serialize(serializer)
   }
 }
 
@@ -279,15 +276,5 @@ where
     >::deserialize(deserializer)?;
 
     Ok(deserialize_shared_channel(channel))
-
-    // let endpoint = <
-    //   Sender <
-    //     SenderOnce <
-    //       ReceiverOnce < A >
-    //     >
-    //   >
-    // >::deserialize(deserializer)?;
-
-    // Ok(SharedChannel{endpoint})
   }
 }
