@@ -17,4 +17,4 @@ ferrite-session = { path = "../ferrite-session" }
 serde = { version = "1.0.118", features = [ "derive" ] }
 ipc-channel = "0.14.1"
 env_logger = "0.8.2"
-tokio = { version = "1.1.1", features = [ "full" ] }
+tokio = { version = "1.2.0", features = [ "full" ] }

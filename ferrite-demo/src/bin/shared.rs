@@ -85,10 +85,10 @@ pub fn shared_counter_session ()
   let (shared, _) =
     run_shared_session ( make_counter_session ( 0 ) );
 
-  // let (sender, receiver) = ipc::channel().unwrap();
-  // sender.send(shared).unwrap();
-  // let shared2 = receiver.recv().unwrap();
-  let shared2 = shared.clone();
+  let (sender, receiver) = ipc::channel().unwrap();
+  sender.send(shared).unwrap();
+  let shared2 = receiver.recv().unwrap();
+  // let shared2 = shared.clone();
 
   let mut sessions = vec![];
   for i in 0..10000 {

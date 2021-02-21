@@ -160,14 +160,14 @@ where
         ),
       sender1
     | async move {
-      // let (sender3, receiver3) = once_channel::<()>();
+      let (sender3, receiver3) = once_channel::<()>();
 
       let child1 = task::spawn ( async move {
         debug!("[detach_shared_session] receiving sender2");
         let Lock { unlock : receiver2 }
           = receiver1.recv().await.unwrap();
 
-        // receiver3.recv().await.unwrap();
+        receiver3.recv().await.unwrap();
 
         debug!("[detach_shared_session] received sender2");
         unsafe_run_shared_session ( cont, receiver2 ).await;
@@ -178,7 +178,7 @@ where
         debug!("[detach_shared_session] sending sender1");
         sender1.send (
           SharedToLinear {
-            // unlock: sender3,
+            unlock: sender3,
             phantom: PhantomData
           }
         ).unwrap();
@@ -407,10 +407,10 @@ where
 
       debug!("[release_shared_session] waiting receiver2");
 
-      let _lock: SharedToLinear<F> =
+      let lock: SharedToLinear<F> =
         receiver2.recv().await.unwrap();
 
-      // lock.unlock.send(()).unwrap();
+      lock.unlock.send(()).unwrap();
 
       debug!("[release_shared_session] received receiver2");
       unsafe_run_session
