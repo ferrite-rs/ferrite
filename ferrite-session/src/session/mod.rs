@@ -26,7 +26,6 @@ pub use self::step::{
 
 pub use self::end::{
   wait,
-  wait_async,
   terminate,
   terminate_async,
   terminate_nil,

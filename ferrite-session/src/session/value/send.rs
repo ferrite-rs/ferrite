@@ -1,6 +1,5 @@
 use tokio::task;
 use async_macros::join;
-use std::future::{ Future };
 
 use crate::base::*;
 use crate::protocol::{ SendValue };
@@ -47,10 +46,11 @@ where
       receive_value_from(cont_builder) :: T ∧ Q, Δ ⊢ P
  */
 pub fn receive_value_from
-  < N, C, T, A, B, Fut >
+  < N, C, T, A, B >
   ( _ : N,
     cont : impl
-      FnOnce ( T ) -> Fut
+      FnOnce ( T )
+      -> PartialSession < N :: Target, B >
       + Send + 'static
   ) ->
     PartialSession < C, B >
@@ -59,14 +59,6 @@ where
   B : Protocol,
   C : Context,
   T : Send + 'static,
-  Fut :
-    Future <
-      Output =
-        PartialSession <
-          N :: Target,
-          B
-        >
-    > + Send,
   N :
     ContextLens <
       C,
@@ -84,7 +76,7 @@ where
 
       let ctx3 = N :: insert_target (receiver2, ctx2);
 
-      let cont2 = cont(val).await;
+      let cont2 = cont(val);
 
       unsafe_run_session
         ( cont2, ctx3, sender

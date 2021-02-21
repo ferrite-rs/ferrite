@@ -2,24 +2,21 @@ use std::future::Future;
 
 use crate::base::*;
 
-pub fn step < C, A, Fut >
+pub fn step < C, A >
   ( cont1 : impl
-      FnOnce () -> Fut
+      Future <
+        Output = PartialSession < C, A >
+      >
       + Send + 'static
   ) ->
     PartialSession < C, A >
 where
   C : Context,
   A : Protocol,
-  Fut :
-    Future <
-      Output = PartialSession < C, A >
-    >
-    + Send
 {
   unsafe_create_session(
     move | ins, sender | async move {
-      let cont2 = cont1().await;
+      let cont2 = cont1.await;
 
       unsafe_run_session( cont2, ins, sender ).await;
     })

@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use crate::base::*;
 use crate::protocol::*;
 use crate::functional::*;
@@ -10,11 +8,14 @@ use super::internal_session::*;
 use super::utils::*;
 
 pub fn case
-  < N, C, D, B, Row, Fut >
+  < N, C, D, B, Row >
   ( _ : N,
     cont1 : impl FnOnce
-      ( Row::Uncloaked )
-      -> Fut
+      ( Row::Uncloaked ) ->
+        AppliedSum <
+          Row,
+          InternalSessionF < N, C, B, Row, D >
+        >
       + Send + 'static,
   ) ->
     PartialSession < C, B >
@@ -36,14 +37,6 @@ where
       Empty,
       Deleted = D,
     >,
-  Fut :
-    Future < Output =
-      AppliedSum <
-        Row,
-        InternalSessionF < N, C, B, Row, D >
-      >
-    >
-    + Send + 'static
 {
   unsafe_create_session (
     move | ctx1, sender | async move {
@@ -60,7 +53,7 @@ where
 
       let cont3a = Row::full_uncloak_row( cont3 );
 
-      let cont4 = cont1 ( cont3a ).await;
+      let cont4 = cont1 ( cont3a );
 
       let cont5 =
         Row::intersect_sum ( receiver_sum2, cont4 );

@@ -28,9 +28,9 @@ where
   let ( session2, receiver2 ) = unsafe_create_shared_channel ();
 
   task::spawn(async move {
-    // debug!("[run_shared_session] exec_shared_session");
+    info!("[run_shared_session] exec_shared_session");
     unsafe_run_shared_session ( session, receiver1 ).await;
-    // debug!("[run_shared_session] exec_shared_session returned");
+    info!("[run_shared_session] exec_shared_session returned");
   });
 
   let fut = task::spawn(async move {
@@ -41,17 +41,9 @@ where
       match m_senders {
         Some ( senders ) => {
           sender1.send(senders).unwrap();
-          // let ( sender5, receiver5 ) = once_channel();
-
-          // sender1.send ( sender5 ).await.unwrap();
-          // let receiver3 = receiver5.recv().await.unwrap();
-
-          // debug!("[run_shared_session] received receiver3");
-          // sender4.send(receiver3).await.unwrap();
-          // debug!("[run_shared_session] sent receiver3");
         },
         None => {
-          debug!("[run_shared_session] terminating shared session");
+          info!("[run_shared_session] terminating shared session");
           return;
         }
       }
@@ -88,10 +80,6 @@ where
       let (sender2, receiver2)
         : (SenderOnce < Lock < F > >, _)
         = once_channel();
-
-      // let (sender3, receiver3)
-      //   : (SenderOnce < LinearToShared < F > >, _)
-      //   = once_channel();
 
       let (sender4, receiver4)
         : (SenderOnce < F :: Applied >, _)
@@ -190,26 +178,22 @@ where
 }
 
 pub fn async_acquire_shared_session
-  < F, Fut >
+  < F >
   ( shared : SharedChannel <
       LinearToShared < F >
     >,
     cont_builder : impl
-      FnOnce ( Z ) -> Fut
+      FnOnce ( Z ) ->
+        PartialSession < (
+          F::Applied , () ),
+          End
+        >
       + Send + 'static
   ) ->
     task::JoinHandle<()>
 where
   F : Protocol,
   F : SharedRecApp < SharedToLinear < F > >,
-  Fut :
-    Future <
-      Output =
-        PartialSession < (
-          F::Applied , () ),
-          End
-        >
-    > + Send,
   F::Applied : Protocol,
 {
   debug!("[async_acquire_shared_session] acquiring shared session");
@@ -219,7 +203,7 @@ where
     let (sender1, receiver1) = once_channel();
     let (sender2, receiver2) = once_channel();
 
-    let cont = cont_builder ( Z ).await;
+    let cont = cont_builder ( Z );
 
     let ctx = (receiver2, ());
 
@@ -248,12 +232,16 @@ where
 }
 
 pub fn async_acquire_shared_session_with_result
-  < T, F, Fut >
+  < T, F >
   ( shared : SharedChannel <
       LinearToShared < F >
     >,
     cont_builder : impl
-      FnOnce ( Z ) -> Fut
+      FnOnce ( Z ) ->
+        PartialSession < (
+          F::Applied , () ),
+          SendValue < T, End >
+        >
       + Send + 'static
   ) ->
     task::JoinHandle<T>
@@ -261,14 +249,6 @@ where
   F : Protocol,
   T : Send + 'static,
   F : SharedRecApp < SharedToLinear < F > >,
-  Fut :
-    Future <
-      Output =
-        PartialSession < (
-          F::Applied , () ),
-          SendValue < T, End >
-        >
-    > + Send,
   F::Applied : Protocol,
 {
   debug!("[async_acquire_shared_session_with_result] acquiring shared session");
@@ -278,7 +258,7 @@ where
     let (sender1, receiver1) = once_channel();
     let (sender2, receiver2) = once_channel();
 
-    let cont = cont_builder ( Z ).await;
+    let cont = cont_builder ( Z );
 
     let ctx = (receiver2, ());
 
@@ -314,14 +294,17 @@ where
 }
 
 pub fn acquire_shared_session
-  < F, C, A, Fut >
+  < F, C, A >
   ( shared : SharedChannel <
       LinearToShared < F >
     >,
     cont_builder : impl
       FnOnce
-        ( C :: Length )
-        -> Fut
+        ( C :: Length ) ->
+          PartialSession <
+            C :: Appended,
+            A
+          >
       + Send + 'static
   ) ->
     PartialSession < C, A >
@@ -334,21 +317,13 @@ where
     AppendContext <
       ( F::Applied , () )
     >,
-  Fut :
-    Future <
-      Output =
-        PartialSession <
-          C :: Appended,
-          A
-        >
-    > + Send,
   F::Applied : Protocol,
 {
   unsafe_create_session (
     move | ctx1, sender1 | async move {
       let cont = cont_builder (
         < C::Length as Nat > :: nat ()
-      ).await;
+      );
 
       let (sender2, receiver2) = once_channel();
       let (receiver3, receiver4) = unsafe_receive_shared_channel(shared);
@@ -430,12 +405,15 @@ where
   F : SharedRecApp < SharedToLinear < F > >,
   F::Applied : Protocol,
 {
-  pub fn acquire < C, A, Fut >
+  pub fn acquire < C, A >
     ( &self,
       cont : impl
         FnOnce
-          ( C :: Length )
-          -> Fut
+          ( C :: Length ) ->
+            PartialSession <
+              C :: Appended,
+              A
+            >
         + Send + 'static
     ) ->
       PartialSession < C, A >
@@ -446,14 +424,6 @@ where
       AppendContext <
         ( F::Applied , () )
       >,
-    Fut :
-      Future <
-        Output =
-          PartialSession <
-            C :: Appended,
-            A
-          >
-      > + Send,
   { acquire_shared_session (
       self.clone(),
       cont )

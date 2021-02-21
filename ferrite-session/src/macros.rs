@@ -36,7 +36,11 @@ macro_rules! match_choice_value {
     match $crate::extract( $choice ) {
       $(
         $label ( cont ) => {
-          $crate::run_cont ( cont, $e )
+          $crate::run_cont ( cont,
+            step ( async move {
+              $e
+            })
+          )
         }
       )*
     }
@@ -46,7 +50,7 @@ macro_rules! match_choice_value {
 #[macro_export]
 macro_rules! match_choice {
   ( $( $label:path => $e:expr $(,)? )+ ) => {
-    move | ferrite_choice_internal__ | async move {
+    move | ferrite_choice_internal__ | {
       match_choice_value! { ferrite_choice_internal__;
         $( $label => $e ),*
       }
@@ -256,7 +260,7 @@ macro_rules! define_choice {
 #[macro_export]
 macro_rules! send_value {
   ( $val:expr, $cont:expr ) => {
-    $crate::step ( move || async move {
+    $crate::step ( async move {
       $crate::send_value (
         $val,
         $cont
@@ -269,7 +273,7 @@ macro_rules! send_value {
 #[macro_export]
 macro_rules! send_value_to {
   ( $chan:expr, $val:expr, $cont:expr ) => {
-    $crate::step ( move || async move {
+    $crate::step ( async move {
       $crate::send_value_to (
         $chan,
         $val,
@@ -283,15 +287,19 @@ macro_rules! send_value_to {
 macro_rules! receive_value {
   ( $var:ident => $body:expr ) => {
     $crate::receive_value (
-      move | $var | async move {
-        $body
+      move | $var | {
+        step ( async move {
+          $body
+        })
       }
     )
   };
   ( ($var:ident $( : $type:ty )?) => $body:expr ) => {
     $crate::receive_value (
-      move | $var $( : $type )* | async move {
-        $body
+      move | $var $( : $type )* | {
+        step ( async move {
+          $body
+        })
       }
     )
   }
@@ -305,8 +313,10 @@ macro_rules! receive_value_from {
   ) => {
     $crate::receive_value_from (
       $chan,
-      move | $var | async move {
-        $body
+      move | $var | {
+        step ( async move {
+          $body
+        })
       }
     )
   };
@@ -315,8 +325,10 @@ macro_rules! receive_value_from {
   ) => {
     $crate::receive_value_from (
       $chan,
-      move | $var $( : $type )* | async move {
-        $body
+      move | $var $( : $type )* | {
+        step ( async move {
+          $body
+        })
       }
     )
   }
@@ -359,8 +371,10 @@ macro_rules! acquire_shared_session {
   ) => {
     $crate::acquire_shared_session (
       $chan.clone(),
-      move | $var | async move {
-        $body
+      move | $var | {
+        step ( async move {
+          $body
+        })
       }
     )
   }
@@ -370,8 +384,10 @@ macro_rules! acquire_shared_session {
 macro_rules! receive_channel {
   ( $var:ident => $body:expr ) => {
     $crate::receive_channel (
-      move | $var | async move {
-        $body
+      move | $var | {
+        step ( async move {
+          $body
+        })
       }
     )
   }
@@ -413,8 +429,10 @@ macro_rules! include_session {
   ) => {
     $crate::include_session (
       $session,
-      move | $var | async move {
-        $body
+      move | $var | {
+        step ( async move {
+          $body
+        })
       }
     )
   }
@@ -437,11 +455,11 @@ macro_rules! terminate {
 #[macro_export]
 macro_rules! wait {
   ( $chan:expr, $cont:expr ) => {
-    $crate::wait_async (
+    $crate::wait (
       $chan,
-      move || async move {
+      step ( async move {
         $cont
-      }
+      })
     )
   };
 }
@@ -475,8 +493,10 @@ macro_rules! cut {
       as $crate::Cut < _ >
     > :: cut (
       $cont1,
-      move | $var | async move {
-        $cont2
+      move | $var | {
+        step ( async move {
+          $cont2
+        })
       }
     )
   }

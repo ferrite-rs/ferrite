@@ -50,12 +50,11 @@ async fn use_counter
   let mut futures = vec![];
 
   for i in 0..count {
-    let future =
-      async_acquire_shared_session ( counter.clone(), move | chan | async move {
-        choose! ( chan, Increment,
-          release_shared_session ( chan,
-            terminate() ) )
-      });
+    let future = async_acquire_shared_session ( counter.clone(), move | chan | {
+      choose! ( chan, Increment,
+        release_shared_session ( chan,
+          terminate() ) )
+    });
 
     futures.push(future);
 

@@ -80,8 +80,7 @@ pub fn receive_channel_from
   ( _ : N,
     cont_builder: impl
       FnOnce
-        ( C2 :: Length
-        ) ->
+        ( C2 :: Length ) ->
           PartialSession <
             C2 :: Appended,
             B

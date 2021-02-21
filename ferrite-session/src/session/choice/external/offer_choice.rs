@@ -1,4 +1,3 @@
-use std::future::Future;
 use crate::base::*;
 use crate::protocol::*;
 use crate::functional::*;
@@ -8,11 +7,15 @@ use super::cloak_session::*;
 use super::inject_session::*;
 
 pub fn offer_choice
-  < C, Row, Fut >
-  ( cont1 : impl FnOnce
-      ( Row::Uncloaked )
-      -> Fut
-    + Send + 'static
+  < C, Row >
+  ( cont1 :
+      impl FnOnce
+        ( Row::Uncloaked ) ->
+          AppliedSum <
+            Row,
+            SessionF < C >
+          >
+      + Send + 'static
   ) ->
     PartialSession < C, ExternalChoice < Row > >
 where
@@ -23,14 +26,6 @@ where
   Row : SumFunctor,
   Row : SumFunctorInject,
   Row : UncloakRow < InjectSessionF < Row, C > >,
-  Fut :
-    Future < Output =
-      AppliedSum <
-        Row,
-        SessionF < C >
-      >
-    >
-    + Send + 'static
 {
   unsafe_create_session (
     move | ctx, sender1 | async move {
@@ -47,7 +42,7 @@ where
 
       let cont4 = Row::full_uncloak_row( cont3 );
 
-      let cont5 = cont1 ( cont4 ).await;
+      let cont5 = cont1 ( cont4 );
 
       run_choice_cont( ctx, sender3, cont5 ).await;
     })

@@ -1,6 +1,5 @@
 use tokio::task;
 use async_macros::join;
-use std::future::Future;
 
 use crate::base::*;
 
@@ -17,10 +16,10 @@ use crate::session::include::{ include_session };
       receive_channel(cont) :: Δ  ⊢ P ⊸ Q
  */
 pub fn receive_channel
-  < C, A, B, Fut >
+  < C, A, B >
   ( cont : impl
       FnOnce ( C::Length )
-        -> Fut
+      -> PartialSession < C :: Appended, B >
   )
   ->
     PartialSession <
@@ -32,14 +31,6 @@ where
   B : Protocol,
   C : Context,
   C : AppendContext < ( A, () ) >,
-  Fut :
-    Future < Output =
-      PartialSession <
-        C :: Appended,
-        B
-      >
-    >
-    + Send + 'static
 {
   let cont2 = cont (
     C::Length::nat()
@@ -61,7 +52,7 @@ where
             ctx1, (receiver2, ()) );
 
       unsafe_run_session
-        ( cont2.await,
+        ( cont2,
           ctx2,
           sender2
         ).await;
@@ -208,8 +199,8 @@ where
   A : Protocol,
   B : Protocol,
 {
-  include_session ( f, move | c1 | async move {
-    include_session ( a, move | c2 | async move {
+  include_session ( f, move | c1 | {
+    include_session ( a, move | c2 | {
       send_channel_to ( c1, c2,
         forward ( c1 )
       )

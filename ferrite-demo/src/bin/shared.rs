@@ -43,7 +43,7 @@ pub fn read_counter_session
 {
   let shared2 = shared.clone();
 
-  step ( move || async move {
+  step ( async move {
     // random_sleep(10, 20).await;
 
     acquire_shared_session! ( shared, counter => {

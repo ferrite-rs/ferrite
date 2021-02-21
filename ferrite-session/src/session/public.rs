@@ -4,7 +4,6 @@ pub use super::{
   step,
 
   wait,
-  wait_async,
   terminate,
   terminate_async,
   terminate_nil,

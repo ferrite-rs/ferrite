@@ -1,5 +1,3 @@
-use std::future::{ Future };
-
 use crate::protocol::{ ReceiveValue };
 use crate::base::*;
 
@@ -9,9 +7,9 @@ use crate::base::*;
       send_input(cont_builder) :: Δ ⊢ T ⊃ P
  */
 pub fn receive_value
-  < T, C, A, Fut >
+  < T, C, A >
   ( cont_builder : impl
-      FnOnce (T) -> Fut
+      FnOnce (T) -> PartialSession < C, A >
       + Send + 'static
   ) ->
      PartialSession < C, ReceiveValue < T, A > >
@@ -19,10 +17,6 @@ where
   T : Send + 'static,
   A : Protocol,
   C : Context,
-  Fut :
-    Future <
-      Output = PartialSession < C, A >
-    > + Send
 {
   unsafe_create_session (
     move |
@@ -38,7 +32,7 @@ where
       let ( Value(val), sender3 )
         = receiver2.recv().await.unwrap();
 
-      let cont = cont_builder(val).await;
+      let cont = cont_builder(val);
 
       unsafe_run_session
         ( cont, ctx, sender3

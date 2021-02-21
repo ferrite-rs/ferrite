@@ -65,47 +65,9 @@ pub fn terminate_nil
     Wait for a given input protocol to terminate, then continue as P.
  */
 
-pub fn wait_async
-  < N, C, A, Fut >
-  ( _ : N,
-    cont_builder : impl
-      FnOnce () -> Fut
-      + Send + 'static
-  ) ->
-    PartialSession < C, A >
-where
-  C : Context,
-  A : Protocol,
-  Fut :
-    Future <
-      Output =
-        PartialSession <
-          N :: Target,
-          A
-        >
-    > + Send,
-  N : ContextLens < C, End, Empty >
-{
-  unsafe_create_session (
-    move | ctx1, sender | async move {
-      let (receiver, ctx2) =
-        N :: extract_source (ctx1);
-
-      let ctx3 =
-        N :: insert_target ((), ctx2);
-
-      receiver.recv().await.unwrap();
-      let cont = cont_builder().await;
-
-      unsafe_run_session
-        ( cont, ctx3, sender
-        ).await;
-    })
-}
-
 pub fn wait
   < N, I, P >
-  ( lens : N,
+  ( _ : N,
     cont :
       PartialSession <
         N :: Target,
@@ -118,7 +80,18 @@ where
   P : Protocol,
   N : ContextLens < I, End, Empty >
 {
-  wait_async ( lens, move || async move {
-    cont
-  })
+  unsafe_create_session (
+    move | ctx1, sender | async move {
+      let (receiver, ctx2) =
+        N :: extract_source (ctx1);
+
+      let ctx3 =
+        N :: insert_target ((), ctx2);
+
+      receiver.recv().await.unwrap();
+
+      unsafe_run_session
+        ( cont, ctx3, sender
+        ).await;
+    })
 }
