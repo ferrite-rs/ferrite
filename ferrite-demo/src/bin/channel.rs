@@ -148,7 +148,7 @@ pub fn create_channel
 where
   T : Send + 'static
 {
-  let (session, _) =
+  let session =
     run_shared_session (
       do_create_channel (
         VecDeque::new() ) );

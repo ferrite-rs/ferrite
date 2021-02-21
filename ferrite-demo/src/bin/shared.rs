@@ -82,8 +82,7 @@ pub fn read_counter_session_2
 pub fn shared_counter_session ()
   -> Session < End >
 {
-  let (shared, _) =
-    run_shared_session ( make_counter_session ( 0 ) );
+  let shared = run_shared_session ( make_counter_session ( 0 ) );
 
   let (sender, receiver) = ipc::channel().unwrap();
   sender.send(shared).unwrap();

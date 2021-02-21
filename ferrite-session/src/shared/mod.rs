@@ -32,6 +32,7 @@ pub use shared_session::{
 
 pub use session::{
   run_shared_session,
+  run_shared_session_with_join_handle,
   accept_shared_session,
   detach_shared_session,
   acquire_shared_session,

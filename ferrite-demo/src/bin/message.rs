@@ -38,15 +38,6 @@ async fn use_counter
   ) ->
     u64
 {
-  // for _ in 0..count {
-  //   run_session (
-  //     acquire_shared_session! ( counter, chan =>
-  //       choose! ( chan, Increment,
-  //         release_shared_session ( chan,
-  //           terminate() ) ) )
-  //   ).await;
-  // }
-
   let mut futures = vec![];
 
   for i in 0..count {
@@ -79,8 +70,7 @@ async fn use_counter
 pub async fn main() {
   env_logger::init();
 
-  let (counter, _) =
-    run_shared_session ( make_counter_session ( 0 ) );
+  let counter = run_shared_session ( make_counter_session ( 0 ) );
 
   let (sender, receiver) = ipc::channel().unwrap();
   sender.send(counter).unwrap();

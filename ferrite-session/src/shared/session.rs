@@ -1,6 +1,5 @@
 use tokio::task;
 use async_macros::join;
-use std::future::Future;
 use std::marker::PhantomData;
 
 use super::lock::Lock;
@@ -16,9 +15,19 @@ use crate::functional::nat::*;
 
 pub fn run_shared_session < A >
   ( session : SharedSession < A > )
+  -> SharedChannel < A >
+where
+  A : SharedProtocol
+{
+  let (chan, _) = run_shared_session_with_join_handle(session);
+  chan
+}
+
+pub fn run_shared_session_with_join_handle < A >
+  ( session : SharedSession < A > )
   ->
   ( SharedChannel < A >
-  , impl Future < Output = () >
+  , task::JoinHandle<()>
   )
 where
   A : SharedProtocol
@@ -33,7 +42,7 @@ where
     info!("[run_shared_session] exec_shared_session returned");
   });
 
-  let fut = task::spawn(async move {
+  let handle = task::spawn(async move {
     loop {
       let m_senders = receiver2.recv().await;
 
@@ -50,7 +59,7 @@ where
     }
   });
 
-  (session2, async { fut.await.unwrap(); })
+  (session2, handle)
 }
 
 pub fn accept_shared_session
