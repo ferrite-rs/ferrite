@@ -160,14 +160,14 @@ where
         ),
       sender1
     | async move {
-      let (sender3, receiver3) = once_channel::<()>();
+      // let (sender3, receiver3) = once_channel::<()>();
 
       let child1 = task::spawn ( async move {
         debug!("[detach_shared_session] receiving sender2");
         let Lock { unlock : receiver2 }
           = receiver1.recv().await.unwrap();
 
-        receiver3.recv().await.unwrap();
+        // receiver3.recv().await.unwrap();
 
         debug!("[detach_shared_session] received sender2");
         unsafe_run_shared_session ( cont, receiver2 ).await;
@@ -178,7 +178,7 @@ where
         debug!("[detach_shared_session] sending sender1");
         sender1.send (
           SharedToLinear {
-            unlock: sender3,
+            // unlock: sender3,
             phantom: PhantomData
           }
         ).unwrap();
@@ -212,9 +212,8 @@ where
     > + Send,
   F::Applied : Protocol,
 {
-  debug!("[acquire_shared_session] receiving receiver3");
+  debug!("[async_acquire_shared_session] acquiring shared session");
   let (receiver3, receiver4) = unsafe_receive_shared_channel(shared);
-  debug!("[acquire_shared_session] received receiver3");
 
   task::spawn(async move {
     let (sender1, receiver1) = once_channel();
@@ -241,6 +240,7 @@ where
 
     let child4 = task::spawn(async move {
       receiver3.recv().await.unwrap();
+      debug!("[async_acquire_shared_session] acquired shared session");
     });
 
     let _ = join! (child1, child2, child3, child4).await;
@@ -271,9 +271,8 @@ where
     > + Send,
   F::Applied : Protocol,
 {
-  debug!("[acquire_shared_session] receiving receiver3");
+  debug!("[async_acquire_shared_session_with_result] acquiring shared session");
   let (receiver3, receiver4) = unsafe_receive_shared_channel(shared);
-  debug!("[acquire_shared_session] received receiver3");
 
   task::spawn(async move {
     let (sender1, receiver1) = once_channel();
@@ -303,6 +302,7 @@ where
 
     let child4 = task::spawn(async move {
       receiver3.recv().await.unwrap();
+      debug!("[async_acquire_shared_session_with_result] acquired shared session");
     });
 
     let (_, _, val, _) = join! (
@@ -351,11 +351,11 @@ where
       ).await;
 
       let (sender2, receiver2) = once_channel();
-
-      debug!("[acquire_shared_session] receiving receiver3");
       let (receiver3, receiver4) = unsafe_receive_shared_channel(shared);
+
+      debug!("[acquire_shared_session] acquiring shared endpoint");
       receiver3.recv().await.unwrap();
-      debug!("[acquire_shared_session] received receiver3");
+      debug!("[acquire_shared_session] acquired shared endpoint");
 
       let ctx2 = C :: append_context
         ( ctx1, (receiver2, ()) );
@@ -407,10 +407,10 @@ where
 
       debug!("[release_shared_session] waiting receiver2");
 
-      let lock: SharedToLinear<F> =
+      let _lock: SharedToLinear<F> =
         receiver2.recv().await.unwrap();
 
-      lock.unlock.send(()).unwrap();
+      // lock.unlock.send(()).unwrap();
 
       debug!("[release_shared_session] received receiver2");
       unsafe_run_session

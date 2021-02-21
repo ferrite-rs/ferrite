@@ -8,7 +8,8 @@ macro_rules! natural_transformation {
       struct $name <'a> {
         $( $field : &'a $field_type ),*
         _phantom : &'a ()
-      };
+      }
+
       impl <'a> $crate::functional::NaturalTransformation
         < $f1, $f2 >
       for $name<'a>

@@ -38,7 +38,7 @@ where
       ( SenderOnce < () >,
         SenderOnce < S >
       )
-    >
+    >,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -98,10 +98,12 @@ where
             let receiver3 = receiver3.clone();
             let sender4 = sender4.clone();
 
+            debug!("[serialize_shared_channel] acquiring local shared channel");
             channel.endpoint.send((sender5, sender6)).unwrap();
             receiver5.recv().await.unwrap();
-            receiver6.forward_to(sender4, receiver3);
+            debug!("[serialize_shared_channel] acquired local shared channel");
             sender2.send(());
+            receiver6.forward_to(sender4, receiver3);
           }
         }
         None => break
@@ -131,11 +133,16 @@ where
     loop {
       match receiver1.recv().await {
         Some((sender2, sender3)) => {
+          debug!("[deserialize_shared_channel] acquiring remote shared channel");
           channel.acquire_sender.send(());
-          channel.acquire_receiver.recv().unwrap();
+          let acquire_receiver = channel.acquire_receiver.clone();
+          task::spawn_blocking(move || {
+            acquire_receiver.recv().unwrap();
+          }).await.unwrap();
+          debug!("[deserialize_shared_channel] acquired remote shared channel");
+          sender2.send(()).unwrap();
 
           let channel2 = channel.clone();
-          sender2.send(()).unwrap();
           sender3.forward_to(
             channel2.linear_sender,
             channel2.linear_receiver
@@ -147,7 +154,7 @@ where
   });
 
   SharedChannel {
-    endpoint: sender1
+    endpoint: sender1,
   }
 }
 
@@ -158,14 +165,14 @@ where
 {
   fn clone ( &self ) -> Self {
     SharedChannel {
-      endpoint : self.endpoint.clone()
+      endpoint : self.endpoint.clone(),
     }
   }
 }
 
 pub async fn unsafe_run_shared_session < S >
   ( session: SharedSession < S >,
-    sender: Receiver <
+    receiver: Receiver <
       ( SenderOnce < () >,
         SenderOnce < S >
       )
@@ -174,7 +181,7 @@ pub async fn unsafe_run_shared_session < S >
 where
   S : SharedProtocol
 {
-  (session.executor)(sender).await;
+  (session.executor)(receiver).await;
 }
 
 pub fn unsafe_create_shared_session
@@ -231,7 +238,10 @@ where
 {
   let ( sender, receiver ) = unbounded();
 
-  ( SharedChannel { endpoint: sender }, receiver )
+  ( SharedChannel {
+      endpoint: sender,
+    }, receiver
+  )
 }
 
 pub fn unsafe_receive_shared_channel < S >

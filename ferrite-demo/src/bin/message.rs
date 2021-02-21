@@ -47,23 +47,24 @@ async fn use_counter
   //   ).await;
   // }
 
-  let mut futures = vec![];
+  // let mut futures = vec![];
 
   for i in 0..count {
-    let future = async_acquire_shared_session ( counter.clone(), move | chan | async move {
-      choose! ( chan, Increment,
-        release_shared_session ( chan,
-          terminate() ) )
-    });
+    // let future =
+      async_acquire_shared_session ( counter.clone(), move | chan | async move {
+        choose! ( chan, Increment,
+          release_shared_session ( chan,
+            terminate() ) )
+      }).await.unwrap();
 
-    futures.push(future);
+    // futures.push(future);
 
-    if i % 1000 == 0 {
-      join_all(futures.drain(0..)).await;
-    }
+    // if i % 1000 == 0 {
+    //   join_all(futures.drain(0..)).await;
+    // }
   }
 
-  join_all(futures).await;
+  // join_all(futures).await;
 
   run_session_with_result (
     acquire_shared_session! ( counter, chan =>
@@ -82,11 +83,11 @@ pub async fn main() {
   let (counter, _) =
     run_shared_session ( make_counter_session ( 0 ) );
 
-  let (sender, receiver) = ipc::channel().unwrap();
-  sender.send(counter).unwrap();
-  let shared = receiver.recv().unwrap();
-  // let shared = counter.clone();
+  // let (sender, receiver) = ipc::channel().unwrap();
+  // sender.send(counter).unwrap();
+  // let shared = receiver.recv().unwrap();
+  let shared = counter.clone();
 
-  let count = use_counter ( shared, 100000 ).await;
+  let count = use_counter ( shared, 2500 ).await;
   println!("count: {}", count);
 }

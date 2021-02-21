@@ -4,7 +4,7 @@ use crate::base::*;
 
 pub struct SharedToLinear < F >
 {
-  pub unlock: SenderOnce<()>,
+  // pub unlock: SenderOnce<()>,
   pub phantom: PhantomData<F>,
 }
 
@@ -21,22 +21,22 @@ where
   F: Send + 'static,
 {
   fn forward_to(self,
-    sender: OpaqueSender,
-    receiver: OpaqueReceiver,
+    _sender: OpaqueSender,
+    _receiver: OpaqueReceiver,
   )
   {
-    self.unlock.forward_to(sender, receiver);
+    // self.unlock.forward_to(sender, receiver);
   }
 
   fn forward_from(
-    sender: OpaqueSender,
-    receiver: OpaqueReceiver,
+    _sender: OpaqueSender,
+    _receiver: OpaqueReceiver,
   ) -> Self
   {
-    let unlock = <SenderOnce<()>>::forward_from(sender, receiver);
+    // let unlock = <SenderOnce<()>>::forward_from(sender, receiver);
 
     SharedToLinear {
-      unlock,
+      // unlock,
       phantom: PhantomData
     }
   }

@@ -1,3 +1,5 @@
+use std::convert::From;
+
 use super::traits::*;
 use super::structs::*;
 use crate::functional::base::*;
@@ -7,9 +9,9 @@ pub fn extract < R, T >
   ( row: R )
   -> T
 where
-  R: ExtractRow < T >
+  T: From < R >
 {
-  row.extract()
+  T::from(row)
 }
 
 pub fn get_row < Row, F >

@@ -186,18 +186,18 @@ macro_rules! define_extract_choice {
   ) => {
     $crate::macros::paste! {
       impl < $( [< $labels T >] ),* >
-        $crate::ExtractRow <
-          [< $name Choice >]
-          < $( [< $labels T >] ),* >
+        std::convert::From <
+          Sum![ $( [< $labels T >] ),* ]
         >
-        for Sum![ $( [< $labels T >] ),* ]
-      {
-        fn extract (self) ->
-          [< $name Choice >]
+        for [< $name Choice >]
           < $( [< $labels T >] ),* >
+      {
+        fn from
+          (row: Sum![ $( [< $labels T >] ),* ] )
+          -> Self
         {
           match_extract! {
-            self ;
+            row ;
             $( $labels ),*
           }
         }

@@ -27,15 +27,19 @@ pub use EitherChoice::{
 };
 
 impl < A, B >
-  ExtractRow < EitherChoice < A, B > >
-  for Sum < A,
-    Sum < B, Bottom >
+  From <
+    Sum < A,
+      Sum < B, Bottom >
+    >
   >
+  for
+  EitherChoice < A, B >
 {
-  fn extract (self)
+  fn from
+    (row: Sum < A, Sum < B, Bottom > >)
     -> EitherChoice < A, B >
   {
-    match self {
+    match row {
       Sum::Inl ( a ) => { Left ( a ) }
       Sum::Inr ( Sum::Inl ( b ) ) => { Right ( b ) }
       Sum::Inr ( Sum::Inr ( bot ) ) => { match bot {} }
