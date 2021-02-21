@@ -1,8 +1,10 @@
-{ nixpkgs }:
+{ nixpkgs, project-src }:
 let
   rustPkgs = nixpkgs.rustBuilder.makePackageSet' {
-    rustChannel = "1.46.0";
-    packageFun = import ../../ferrite-session/Cargo.nix;
+    rustChannel = "stable";
+    packageFun = import ../../Cargo.nix;
+    workspaceSrc = project-src;
+    localPatterns = [];
   };
 in
 rustPkgs.workspace.ferrite-session

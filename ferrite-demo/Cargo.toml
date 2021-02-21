@@ -14,7 +14,6 @@ log = "0.4.11"
 rand = "0.7.3"
 futures = "0.3"
 ferrite-session = { path = "../ferrite-session" }
-serde = { version = "1.0.118", features = [ "derive" ] }
 ipc-channel = "0.14.1"
 env_logger = "0.8.2"
 tokio = { version = "1.2.0", features = [ "full" ] }
