@@ -18,7 +18,7 @@ fn make_counter_session
   ( count: u64 )
   -> SharedSession < CounterSession >
 {
-  accept_shared_session (
+  accept_shared_session ( move ||
     offer_choice! {
       Increment =>
         detach_shared_session (

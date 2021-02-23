@@ -64,10 +64,11 @@ where
 
 pub fn accept_shared_session
   < F >
-  ( cont : PartialSession <
-      (Lock < F >, ()),
-      F :: Applied
-    >
+  ( cont : impl FnOnce() ->
+      PartialSession <
+        (Lock < F >, ()),
+        F :: Applied
+      > + Send + 'static
   ) ->
     SharedSession <
       LinearToShared < F >
@@ -86,6 +87,8 @@ where
           )
         >
     | async move {
+      let cont2 = cont();
+
       let (sender2, receiver2)
         : (SenderOnce < Lock < F > >, _)
         = once_channel();
@@ -101,7 +104,7 @@ where
           let child1 = task::spawn ( async move {
             debug!("[accept_shared_session] calling cont");
             unsafe_run_session
-              ( cont, (receiver2, ()), sender4 ).await;
+              ( cont2, (receiver2, ()), sender4 ).await;
             debug!("[accept_shared_session] returned from cont");
           });
 

@@ -20,7 +20,7 @@ pub fn make_counter_session
   ( count : u64 ) ->
     SharedSession < SharedCounter >
 {
-  accept_shared_session (
+  accept_shared_session ( move ||
     send_value! (
       {
         debug!("[Server] Producing count {}", count);

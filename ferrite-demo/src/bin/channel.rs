@@ -119,7 +119,7 @@ fn do_create_channel
 where
   T : Send + 'static
 {
-  accept_shared_session (
+  accept_shared_session ( move ||
     offer_choice! {
       ReceiveNext => {
         receive_value! ( val => {
