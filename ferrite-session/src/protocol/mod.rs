@@ -3,7 +3,6 @@ pub mod public;
 mod channel;
 mod choice;
 mod end;
-mod fix;
 mod linear_to_shared;
 mod lock;
 mod shared_to_linear;
@@ -14,14 +13,20 @@ pub use channel::{
   ReceiveChannel,
   SendChannel,
 };
-pub use choice::*;
+pub use choice::{
+  either,
+  ExternalChoice,
+  InternalChoice,
+};
 pub use end::End;
-pub use fix::*;
 pub use value::{
   ReceiveValue,
   SendValue,
 };
-pub use wrap::*;
+pub use wrap::{
+  Wrap,
+  Wrapper,
+};
 
 pub use self::{
   linear_to_shared::LinearToShared,

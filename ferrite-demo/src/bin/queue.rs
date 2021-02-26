@@ -3,7 +3,10 @@ use std::{
   time::Duration,
 };
 
-use ferrite_session::*;
+use ferrite_session::{
+  either::*,
+  *,
+};
 use tokio::time::sleep;
 
 type Queue<A> = Rec<InternalChoice<Either<End, SendValue<A, Z>>>>;

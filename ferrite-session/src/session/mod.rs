@@ -9,7 +9,6 @@ mod end;
 mod fix;
 mod forward;
 mod include;
-mod persistent;
 mod run;
 mod shared;
 mod step;
@@ -71,11 +70,6 @@ pub use self::{
     join_sessions,
     wait_session,
     wait_sessions,
-  },
-  persistent::{
-    clone_session,
-    create_persistent_session,
-    PersistentSession,
   },
   run::{
     run_session,

@@ -8,11 +8,9 @@ pub type Either<A, B> = (A, (B, ()));
 pub type EitherRow<A, B> = Sum<A, Sum<B, Bottom>>;
 
 #[allow(non_upper_case_globals)]
-
 pub const LeftLabel : ChoiceSelector<Z> = <ChoiceSelector<Z>>::new();
 
 #[allow(non_upper_case_globals)]
-
 pub const RightLabel : ChoiceSelector<S<Z>> = <ChoiceSelector<S<Z>>>::new();
 
 pub enum EitherChoice<A, B>

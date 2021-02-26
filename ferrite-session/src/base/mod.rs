@@ -1,7 +1,7 @@
 mod channel;
 mod context;
-mod fix;
 mod protocol;
+mod rec;
 mod session;
 mod shared;
 
@@ -34,7 +34,11 @@ pub use self::{
     EmptyContext,
     Slot,
   },
-  fix::{
+  protocol::{
+    Protocol,
+    SharedProtocol,
+  },
+  rec::{
     fix,
     unfix,
     HasRecApp,
@@ -42,10 +46,6 @@ pub use self::{
     RecApp,
     SharedRecApp,
     Unfix,
-  },
-  protocol::{
-    Protocol,
-    SharedProtocol,
   },
   session::{
     unsafe_create_session,

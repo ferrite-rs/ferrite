@@ -1,6 +1,7 @@
 pub use super::{
-  choice::*,
   End,
+  ExternalChoice,
+  InternalChoice,
   LinearToShared,
   ReceiveChannel,
   ReceiveValue,

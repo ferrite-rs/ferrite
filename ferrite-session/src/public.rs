@@ -1,6 +1,9 @@
 pub use crate::{
   base::public::*,
   functional::*,
-  protocol::public::*,
+  protocol::{
+    either,
+    public::*,
+  },
   session::public::*,
 };

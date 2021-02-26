@@ -1,4 +1,7 @@
-use ferrite_session::*;
+use ferrite_session::{
+  either::*,
+  *,
+};
 
 pub fn external_choice_session() -> Session<End>
 {

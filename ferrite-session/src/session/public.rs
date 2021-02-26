@@ -7,8 +7,6 @@ pub use super::{
   async_acquire_shared_session_with_result,
   case,
   choose,
-  clone_session,
-  create_persistent_session,
   cut,
   cut_append,
   detach_shared_session,
@@ -57,7 +55,6 @@ pub use super::{
   AllLeft,
   AllRight,
   Cut,
-  PersistentSession,
   L,
   R,
 };

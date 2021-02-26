@@ -1,6 +1,10 @@
 use std::marker::PhantomData;
 
-use crate::functional::nat::*;
+use super::protocol::Protocol;
+use crate::functional::nat::{
+  S,
+  Z,
+};
 
 pub trait RecApp<A>: Sized + 'static
 {
@@ -56,6 +60,10 @@ where
 {
   *x.unfix.get_applied()
 }
+
+impl<F> Protocol for Rec<F> where F : Send + 'static {}
+
+impl<F> Protocol for Unfix<F> where F : Send + 'static {}
 
 impl<A, F> RecApp<A> for Rec<F>
 where
