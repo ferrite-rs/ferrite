@@ -6,6 +6,7 @@ pub mod macros;
 mod public;
 
 mod functional;
+mod traits;
 
 mod base;
 mod context;

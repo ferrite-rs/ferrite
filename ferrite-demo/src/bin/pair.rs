@@ -5,7 +5,6 @@ use tokio::time::sleep;
 
 pub fn pair_session() -> Session<End>
 {
-
   /*
          cont_builder() :: Prim Int ; End
    =====================================================
@@ -14,7 +13,6 @@ pub fn pair_session() -> Session<End>
 
   let p1 : Session<SendValue<u64, End>> = send_value!(
     {
-
       println!("[P1] Spending 7 seconds to produce first output");
 
       sleep(Duration::from_secs(7)).await;
@@ -24,7 +22,6 @@ pub fn pair_session() -> Session<End>
       42
     },
     terminate!({
-
       println!("[P1] Spending 3 seconds to cleanup");
 
       sleep(Duration::from_secs(3)).await;
@@ -123,7 +120,6 @@ pub fn pair_session() -> Session<End>
   */
 
   let p4 : Session<End> = terminate!({
-
     println!("[P4] Sleeping for 3 seconds before terminating");
 
     sleep(Duration::from_secs(2)).await;
@@ -143,6 +139,5 @@ pub fn pair_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(pair_session()).await
 }

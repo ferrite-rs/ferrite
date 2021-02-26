@@ -31,7 +31,6 @@ where
     receiver : OpaqueReceiver,
   )
   {
-
     self.0.forward_to(sender, receiver)
   }
 
@@ -40,7 +39,6 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-
     SendValue(<(Value<T>, ReceiverOnce<A>)>::forward_from(
       sender, receiver,
     ))

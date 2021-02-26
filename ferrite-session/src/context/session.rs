@@ -1,10 +1,12 @@
-use crate::{base::*, functional::nat::*};
+use crate::{
+  base::*,
+  functional::nat::*,
+};
 
 pub fn new_session<P>(cont : Session<P>) -> Session<P>
 where
   P : Protocol,
 {
-
   cont
 }
 
@@ -13,9 +15,7 @@ where
   C : EmptyContext,
   P : Protocol,
 {
-
   unsafe_create_session(move |(), sender| async move {
-
     let ctx = <C as EmptyContext>::empty_values();
 
     unsafe_run_session(cont, ctx, sender).await;
@@ -27,9 +27,7 @@ where
   C : EmptyContext,
   P : Protocol,
 {
-
   unsafe_create_session(move |_, sender| async move {
-
     unsafe_run_session(cont, (), sender).await
   })
 }
@@ -42,9 +40,7 @@ where
   I : Context,
   I : AppendContext<(Empty, ())>,
 {
-
   unsafe_create_session(move |ctx1, sender| async move {
-
     let (ctx2, _) = <I as AppendContext<(Empty, ())>>::split_context(ctx1);
 
     unsafe_run_session(cont, ctx2, sender).await
@@ -56,7 +52,6 @@ where
   P : Protocol,
   F : FnOnce(Z) -> PartialSession<(Empty, ()), P>,
 {
-
   session(cont(Z::Value))
 }
 
@@ -65,7 +60,6 @@ where
   P : Protocol,
   F : FnOnce(Z, S<Z>) -> PartialSession<(Empty, (Empty, ())), P>,
 {
-
   session(cont(Z::Value, <S<Z>>::Value))
 }
 
@@ -75,7 +69,6 @@ where
   Q : Protocol,
   F : FnOnce(Z) -> PartialSession<(P1, ()), Q>,
 {
-
   cont(Z::Value)
 }
 
@@ -88,6 +81,5 @@ where
   Q : Protocol,
   F : FnOnce(Z, S<Z>) -> PartialSession<(P1, (P2, ())), Q>,
 {
-
   cont(Z::Value, <S<Z>>::Value)
 }

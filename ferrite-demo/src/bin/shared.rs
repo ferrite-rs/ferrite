@@ -15,12 +15,9 @@ type SharedCounter = LinearToShared<SendValue<u64, Z>>;
 
 pub fn make_counter_session(count : u64) -> SharedSession<SharedCounter>
 {
-
   accept_shared_session(move || {
-
     send_value!(
       {
-
         debug!("[Server] Producing count {}", count);
 
         // random_sleep(10, 20).await;
@@ -39,11 +36,9 @@ pub fn read_counter_session(
   shared : SharedChannel<SharedCounter>,
 ) -> Session<End>
 {
-
   let shared2 = shared.clone();
 
   step(async move {
-
     // random_sleep(10, 20).await;
 
     acquire_shared_session! ( shared, counter => {
@@ -68,7 +63,6 @@ pub fn read_counter_session_2(
   shared_counter : &SharedChannel<SharedCounter>
 ) -> Session<End>
 {
-
   acquire_shared_session! ( shared_counter, linear_counter => {
     // random_sleep(10, 20).await;
     receive_value_from! ( linear_counter, count => {
@@ -81,7 +75,6 @@ pub fn read_counter_session_2(
 
 pub fn shared_counter_session() -> Session<End>
 {
-
   let shared = run_shared_session(make_counter_session(0));
 
   let (sender, receiver) = ipc::channel().unwrap();
@@ -95,7 +88,6 @@ pub fn shared_counter_session() -> Session<End>
   let mut sessions = vec![];
 
   for i in 0..10000 {
-
     sessions.push(read_counter_session(format!("P{}", i), 10, shared2.clone()));
   }
 
@@ -106,7 +98,6 @@ pub fn shared_counter_session() -> Session<End>
 
 pub async fn main()
 {
-
   env_logger::init();
 
   run_session(shared_counter_session()).await;

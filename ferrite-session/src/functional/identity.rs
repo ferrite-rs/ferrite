@@ -1,4 +1,7 @@
-use super::{base::*, type_app::*};
+use super::{
+  base::*,
+  type_app::*,
+};
 
 struct IdentityF {}
 
@@ -20,7 +23,6 @@ impl TypeAppGeneric for IdentityF
     A : Send + 'static,
     K : Send + 'static,
   {
-
     Box::new(())
   }
 }
@@ -35,7 +37,6 @@ impl Functor for IdentityF
     A : Send + 'static,
     B : Send + 'static,
   {
-
     let Identity(a) = fa.get_applied();
 
     let b = mapper(a);

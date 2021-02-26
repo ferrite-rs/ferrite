@@ -1,5 +1,8 @@
 use super::utils::*;
-use crate::{base::*, functional::row::*};
+use crate::{
+  base::*,
+  functional::row::*,
+};
 
 pub struct InternalChoice<Row>
 where
@@ -35,7 +38,6 @@ where
     receiver : OpaqueReceiver,
   )
   {
-
     self.field.forward_to(sender, receiver)
   }
 
@@ -44,7 +46,6 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-
     InternalChoice {
       field : <AppliedSum<Row, ReceiverF>>::forward_from(sender, receiver),
     }

@@ -1,5 +1,12 @@
-use super::{structs::*, traits::*};
-use crate::{base::*, functional::*, protocol::*};
+use super::{
+  structs::*,
+  traits::*,
+};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 impl<N, C, B, Row, Del> TyCon for InternalSessionF<N, C, B, Row, Del>
 where
@@ -37,7 +44,6 @@ where
     self: Box<Self>
   ) -> InternalSession<N, C, A, B, Row, Del>
   {
-
     *self
   }
 }
@@ -57,7 +63,6 @@ where
     cont : Box<dyn NeedInternalSession<N, C, A, B, Row, Del, K>>,
   ) -> K
   {
-
     cont.on_internal_session(*self)
   }
 }

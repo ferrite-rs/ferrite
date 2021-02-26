@@ -1,9 +1,13 @@
-use std::{future::Future, pin::Pin};
+use std::{
+  future::Future,
+  pin::Pin,
+};
 
-use crate::base::{channel::SenderOnce, context::Context, protocol::Protocol};
-
-/// A session builder is a consumer for the given list of
-/// input context and output a protocol with given Out type.
+use crate::base::{
+  channel::SenderOnce,
+  context::Context,
+  protocol::Protocol,
+};
 
 pub type Session<P> = PartialSession<(), P>;
 
@@ -21,25 +25,22 @@ where
   >,
 }
 
-pub fn unsafe_create_session<I, P, Fut>(
-  executor : impl FnOnce(I::Endpoints, SenderOnce<P>) -> Fut + Send + 'static
-) -> PartialSession<I, P>
+pub fn unsafe_create_session<C, A, Fut>(
+  executor : impl FnOnce(C::Endpoints, SenderOnce<A>) -> Fut + Send + 'static
+) -> PartialSession<C, A>
 where
-  P : Protocol,
-  I : Context,
+  A : Protocol,
+  C : Context,
   Fut : Future<Output = ()> + Send,
 {
-
   let executor2 : Box<
     dyn FnOnce(
-        I::Endpoints,
-        SenderOnce<P>,
+        C::Endpoints,
+        SenderOnce<A>,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
       + Send,
   > = Box::new(move |ctx, sender| {
-
     Box::pin(async {
-
       executor(ctx, sender).await;
     })
   });
@@ -57,6 +58,5 @@ pub async fn unsafe_run_session<C, A>(
   A : Protocol,
   C : Context,
 {
-
   (session.executor)(ctx, sender).await;
 }

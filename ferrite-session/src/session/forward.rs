@@ -15,9 +15,7 @@ where
   N::Target : EmptyContext,
   N : ContextLens<C, A, Empty>,
 {
-
   unsafe_create_session(move |ctx, sender| async move {
-
     let (receiver, _) = N::extract_source(ctx);
 
     let val = receiver.recv().await.unwrap();

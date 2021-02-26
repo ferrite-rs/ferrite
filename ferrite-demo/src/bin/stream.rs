@@ -7,10 +7,8 @@ type IntStream = Rec<SendValue<u64, Z>>;
 
 fn producer(count : u64) -> Session<IntStream>
 {
-
   fix_session(send_value!(
     {
-
       sleep(Duration::from_secs(1)).await;
 
       println!("[producer] Producing value: {}", count);
@@ -23,7 +21,6 @@ fn producer(count : u64) -> Session<IntStream>
 
 fn consumer<A : Protocol>() -> Session<ReceiveChannel<IntStream, A>>
 {
-
   receive_channel! ( stream => {
     unfix_session_for ( stream,
       receive_value_from! ( stream,
@@ -44,7 +41,6 @@ fn consumer<A : Protocol>() -> Session<ReceiveChannel<IntStream, A>>
 
 pub fn stream_session() -> Session<End>
 {
-
   let p1 = producer(0);
 
   let p2 = consumer();
@@ -56,6 +52,5 @@ pub fn stream_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(stream_session()).await;
 }

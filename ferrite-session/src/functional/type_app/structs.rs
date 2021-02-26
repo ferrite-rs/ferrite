@@ -1,4 +1,7 @@
-use std::{any::Any, marker::PhantomData};
+use std::{
+  any::Any,
+  marker::PhantomData,
+};
 
 use super::traits::*;
 
@@ -20,7 +23,6 @@ where
   where
     F : TypeApp<A>,
   {
-
     *self.applied.get_applied()
   }
 }
@@ -31,7 +33,6 @@ where
   A : 'static,
   F : TypeApp<A>,
 {
-
   *applied.applied.get_applied()
 }
 
@@ -39,7 +40,6 @@ pub fn cloak_applied<F, A>(applied : F::Applied) -> Applied<F, A>
 where
   F : TypeApp<A>,
 {
-
   Applied {
     applied : Box::new(applied),
     witness : Box::new(()),

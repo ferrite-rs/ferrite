@@ -1,7 +1,13 @@
 use std::marker::PhantomData;
 
-use super::super::{cloak_session::*, inject_session::*};
-use crate::{base::*, functional::*};
+use super::super::{
+  cloak_session::*,
+  inject_session::*,
+};
+use crate::{
+  base::*,
+  functional::*,
+};
 
 pub fn selector_to_inject_session<Row, C>(
   selector : AppliedSum<Row, ()>
@@ -10,7 +16,6 @@ where
   C : Context,
   Row : SumFunctorInject,
 {
-
   lift_sum_inject(SelectorToCont::<Row, C>(PhantomData), selector)
 }
 
@@ -37,7 +42,6 @@ where
   where
     A : 'static,
   {
-
     let inject2 = SessionInjectorImpl {
       injector : Box::new(inject1),
     };
@@ -67,7 +71,6 @@ impl<Row, C, A> SessionInjector<Row, C, A> for SessionInjectorImpl<Row, C, A>
     C : Context,
     A : Protocol,
   {
-
     (self.injector)(cloak_applied(cloak_session(session)))
   }
 }

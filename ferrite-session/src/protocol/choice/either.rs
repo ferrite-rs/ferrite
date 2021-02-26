@@ -1,4 +1,7 @@
-use crate::functional::{nat::*, row::*};
+use crate::functional::{
+  nat::*,
+  row::*,
+};
 
 pub type Either<A, B> = (A, (B, ()));
 
@@ -18,13 +21,15 @@ pub enum EitherChoice<A, B>
   Right(B),
 }
 
-pub use EitherChoice::{Left, Right};
+pub use EitherChoice::{
+  Left,
+  Right,
+};
 
 impl<A, B> From<Sum<A, Sum<B, Bottom>>> for EitherChoice<A, B>
 {
   fn from(row : Sum<A, Sum<B, Bottom>>) -> EitherChoice<A, B>
   {
-
     match row {
       Sum::Inl(a) => Left(a),
       Sum::Inr(Sum::Inl(b)) => Right(b),

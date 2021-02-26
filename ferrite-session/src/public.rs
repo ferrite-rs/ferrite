@@ -5,4 +5,5 @@ pub use crate::{
   protocol::public::*,
   session::public::*,
   shared::public::*,
+  traits::*,
 };

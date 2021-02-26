@@ -1,5 +1,8 @@
 use super::super::cloak_session::*;
-use crate::{base::*, functional::*};
+use crate::{
+  base::*,
+  functional::*,
+};
 
 pub trait SessionInjector<Row, C, A>: Send
 {

@@ -17,7 +17,6 @@ impl ForwardChannel for End
     _ : OpaqueReceiver,
   )
   {
-
     sender.send(())
   }
 
@@ -26,7 +25,6 @@ impl ForwardChannel for End
     receiver : OpaqueReceiver,
   ) -> Self
   {
-
     let () = receiver.recv().unwrap();
 
     End()

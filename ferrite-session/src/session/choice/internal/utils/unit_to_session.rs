@@ -1,7 +1,14 @@
 use std::marker::PhantomData;
 
-use super::super::{inject_session::*, internal_session::*};
-use crate::{base::*, functional::*, protocol::*};
+use super::super::{
+  inject_session::*,
+  internal_session::*,
+};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub fn lift_unit_to_session<N, C, D, B, Row>(
   row : AppliedSum<Row, ()>
@@ -14,7 +21,6 @@ where
   Row : RowCon,
   Row : SumFunctorInject,
 {
-
   lift_sum_inject(LiftUnitToSession(PhantomData), row)
 }
 
@@ -48,7 +54,6 @@ where
   where
     A : Send + 'static,
   {
-
     let inject2 = SessionInjectorImpl {
       injector : Box::new(inject1),
     };
@@ -87,7 +92,6 @@ impl<N, C, A, B, Row, Del> SessionInjector<N, C, A, B, Row, Del>
     Row : RowCon,
     N : ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
   {
-
     let session2 = cloak_internal_session::<N, C, A, B, Row, Del>(session1);
 
     (self.injector)(cloak_applied(session2))

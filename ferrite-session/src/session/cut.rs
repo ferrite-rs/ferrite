@@ -1,7 +1,10 @@
 use async_macros::join;
 use tokio::task;
 
-use crate::{base::*, functional::nat::*};
+use crate::{
+  base::*,
+  functional::nat::*,
+};
 
 pub enum L {}
 
@@ -35,7 +38,6 @@ impl SplitContext<()> for ()
 
   fn split_endpoints(_ : ()) -> ((), ())
   {
-
     ((), ())
   }
 }
@@ -50,7 +52,6 @@ where
 
   fn split_endpoints(ctx : C::Endpoints) -> (C::Endpoints, ())
   {
-
     (ctx, ())
   }
 }
@@ -65,7 +66,6 @@ where
 
   fn split_endpoints(ctx : C::Endpoints) -> ((), C::Endpoints)
   {
-
     ((), ctx)
   }
 }
@@ -85,7 +85,6 @@ where
     (a, ctx) : ((), C::Endpoints)
   ) -> (((), C1::Endpoints), ((), C2::Endpoints))
   {
-
     let (ctx1, ctx2) = X::split_endpoints(ctx);
 
     ((a, ctx1), ((), ctx2))
@@ -108,7 +107,6 @@ where
     (a, ctx) : (A::Endpoint, C::Endpoints)
   ) -> ((A::Endpoint, C1::Endpoints), ((), C2::Endpoints))
   {
-
     let (ctx1, ctx2) = X::split_endpoints(ctx);
 
     ((a, ctx1), ((), ctx2))
@@ -131,7 +129,6 @@ where
     (a, ctx) : (A::Endpoint, C::Endpoints)
   ) -> (((), C1::Endpoints), (A::Endpoint, C2::Endpoints))
   {
-
     let (ctx1, ctx2) = X::split_endpoints(ctx);
 
     (((), ctx1), (a, ctx2))
@@ -176,7 +173,6 @@ where
     B : Protocol,
     Self::Right : AppendContext<(A, ())>,
   {
-
     cut::<X, _, _, _, _, _, _>(cont1, cont2)
   }
 }
@@ -195,11 +191,9 @@ where
   C2 : AppendContext<(A, ())>,
   Func : FnOnce(C2::Length) -> PartialSession<C2::Appended, B>,
 {
-
   let cont3 = cont2(C2::Length::nat());
 
   unsafe_create_session(move |ctx, sender1| async move {
-
     let (ctx1, ctx2) = X::split_endpoints(ctx);
 
     let (sender2, receiver2) = once_channel();
@@ -207,12 +201,10 @@ where
     let ctx3 = C2::append_context(ctx2, (receiver2, ()));
 
     let child1 = task::spawn(async move {
-
       unsafe_run_session(cont3, ctx3, sender1).await;
     });
 
     let child2 = task::spawn(async {
-
       unsafe_run_session(cont1, ctx1, sender2).await;
     });
 
@@ -242,9 +234,7 @@ where
   C1 : AppendContext<(A, ()), Appended = C3>,
   C1 : AppendContext<C2, Appended = C4>,
 {
-
   unsafe_create_session(move |ctx1, b_sender| async move {
-
     let (ctx2, ctx3) = <C1 as AppendContext<C2>>::split_context(ctx1);
 
     let (a_sender, a_receiver) = once_channel();
@@ -253,12 +243,10 @@ where
       <C1 as AppendContext<(A, ())>>::append_context(ctx2, (a_receiver, ()));
 
     let child1 = task::spawn(async {
-
       unsafe_run_session(cont1, ctx4, b_sender).await;
     });
 
     let child2 = task::spawn(async {
-
       unsafe_run_session(cont2, ctx3, a_sender).await;
     });
 

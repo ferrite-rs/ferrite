@@ -3,7 +3,10 @@ use std::sync::Arc;
 use async_macros::join;
 use tokio::task;
 
-use crate::{base::*, functional::nat::*};
+use crate::{
+  base::*,
+  functional::nat::*,
+};
 
 pub struct PersistentSession<P>
 where
@@ -18,7 +21,6 @@ where
 {
   fn clone(&self) -> Self
   {
-
     PersistentSession {
       new_session : self.new_session.clone(),
     }
@@ -30,7 +32,6 @@ where
   P : Protocol,
   F : Fn() -> Session<P> + Send + Sync + 'static,
 {
-
   return PersistentSession {
     new_session : Arc::new(f),
   };
@@ -49,19 +50,16 @@ where
     I::Length,
   ) -> PartialSession<<I as AppendContext<(P, ())>>::Appended, Q>,
 {
-
   let session2 = session1.clone();
 
   let cont = cont_builder(I::Length::nat());
 
   unsafe_create_session(move |ctx1, sender1| async move {
-
     let session3 = (session2.new_session)();
 
     let (sender2, receiver2) = once_channel();
 
     let child1 = task::spawn(async move {
-
       unsafe_run_session(session3, (), sender2).await;
     });
 
@@ -69,7 +67,6 @@ where
       <I as AppendContext<(P, ())>>::append_context(ctx1, (receiver2, ()));
 
     let child2 = task::spawn(async move {
-
       unsafe_run_session(cont, ctx2, sender1).await;
     });
 

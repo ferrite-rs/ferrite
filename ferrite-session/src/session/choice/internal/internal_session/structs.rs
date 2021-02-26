@@ -1,7 +1,14 @@
-use std::{any::Any, marker::PhantomData};
+use std::{
+  any::Any,
+  marker::PhantomData,
+};
 
 use super::traits::*;
-use crate::{base::*, functional::*, protocol::*};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub struct InternalSessionF<N, C, B, Row, Del>
 {

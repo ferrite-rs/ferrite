@@ -31,7 +31,6 @@ where
     receiver : OpaqueReceiver,
   )
   {
-
     self.linear.forward_to(sender, receiver)
   }
 
@@ -40,7 +39,6 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-
     LinearToShared {
       linear : T::forward_from(sender, receiver),
     }

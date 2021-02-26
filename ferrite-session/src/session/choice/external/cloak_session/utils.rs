@@ -1,6 +1,9 @@
 use std::any::Any;
 
-use super::{structs::*, traits::*};
+use super::{
+  structs::*,
+  traits::*,
+};
 use crate::base::*;
 
 struct SessionContWrapper<C, A, K>
@@ -21,7 +24,6 @@ where
     C : Context,
     A : Protocol,
   {
-
     let res = self.cont.on_partial_session(session);
 
     Box::new(res)
@@ -37,7 +39,6 @@ where
   A : 'static,
   K : 'static,
 {
-
   let cont2 = SessionContWrapper { cont : cont1 };
 
   let res = session.session.with_partial_session(Box::new(cont2));

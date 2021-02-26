@@ -1,5 +1,12 @@
-use super::{super::internal_session::*, structs::*};
-use crate::{base::*, functional::*, protocol::*};
+use super::{
+  super::internal_session::*,
+  structs::*,
+};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 impl<N, C, B, Row, Del> TyCon for InjectSessionF<N, C, B, Row, Del>
 where
@@ -28,7 +35,6 @@ where
     session : PartialSession<N::Target, B>,
   ) -> AppliedSum<Row, InternalSessionF<N, C, B, Row, Del>>
   {
-
     self.injector.inject_session(session)
   }
 }

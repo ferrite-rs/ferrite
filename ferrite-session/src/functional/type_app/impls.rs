@@ -1,6 +1,9 @@
 use serde;
 
-use super::{structs::*, traits::*};
+use super::{
+  structs::*,
+  traits::*,
+};
 
 impl<F, X, T> serde::Serialize for Applied<F, X>
 where
@@ -16,7 +19,6 @@ where
   where
     S : serde::Serializer,
   {
-
     self
       .applied
       .as_ref()
@@ -36,7 +38,6 @@ where
   where
     D : serde::Deserializer<'a>,
   {
-
     let applied = T::deserialize(deserializer)?;
 
     Ok(cloak_applied(applied))
@@ -52,7 +53,6 @@ where
 {
   fn get_applied(self: Box<T>) -> Box<T>
   {
-
     self
   }
 
@@ -60,7 +60,6 @@ where
   where
     F : TypeApp<A>,
   {
-
     self
   }
 
@@ -68,7 +67,6 @@ where
   where
     F : TypeApp<A>,
   {
-
     self
   }
 }
@@ -86,13 +84,11 @@ where
     cont : Box<dyn TypeAppCont<F, A, K>>,
   ) -> K
   {
-
     cont.on_type_app()
   }
 
   fn clone_witness(&self) -> Box<dyn TypeAppWitness<F, A, K>>
   {
-
     Box::new(())
   }
 }

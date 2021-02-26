@@ -1,13 +1,18 @@
 use std::convert::From;
 
-use super::{structs::*, traits::*};
-use crate::functional::{base::*, type_app::*};
+use super::{
+  structs::*,
+  traits::*,
+};
+use crate::functional::{
+  base::*,
+  type_app::*,
+};
 
 pub fn extract<R, T>(row : R) -> T
 where
   T : From<R>,
 {
-
   T::from(row)
 }
 
@@ -16,7 +21,6 @@ where
   F : TyCon,
   Row : RowApp<F>,
 {
-
   row.get_row()
 }
 
@@ -25,7 +29,6 @@ where
   F : TyCon,
   Row : RowApp<F>,
 {
-
   row.row.as_ref().get_row_borrow()
 }
 
@@ -33,7 +36,6 @@ pub fn absurd<F, A>(row1 : AppliedSum<(), F>) -> A
 where
   F : TyCon,
 {
-
   match row1.get_row() {}
 }
 
@@ -51,7 +53,6 @@ where
   Row : SumFunctor,
   Lift : NaturalTransformation<F1, F2>,
 {
-
   Row::lift_sum(lift, sum)
 }
 
@@ -64,6 +65,5 @@ where
   Row : SumFunctorInject,
   Lift : InjectLift<AppliedSum<Row, TargetF>, TargetF = TargetF>,
 {
-
   Row::lift_sum_inject(lift, |x| x, row)
 }

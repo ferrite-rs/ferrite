@@ -1,11 +1,13 @@
-use std::{time::Duration, vec::*};
+use std::{
+  time::Duration,
+  vec::*,
+};
 
 use ferrite_session::*;
 use tokio::time::sleep;
 
 pub fn concat_session() -> Session<End>
 {
-
   let p1 : Session<
     ReceiveValue<
       Vec<String>,
@@ -96,6 +98,5 @@ pub fn concat_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(concat_session()).await;
 }

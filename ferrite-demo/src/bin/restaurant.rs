@@ -25,12 +25,10 @@ define_choice! {
 
 pub fn restaurant_session() -> Session<End>
 {
-
   let soup_of_the_day : Session<InternalChoice<SoupMenu>> = offer_case(
     MushroomMenuLabel,
     send_value!(
       {
-
         println!("[Soup] Spending 3 seconds to prepare mushroom soup");
 
         sleep(Duration::from_secs(2)).await;
@@ -40,7 +38,6 @@ pub fn restaurant_session() -> Session<End>
         MushroomSoup {}
       },
       terminate!({
-
         println!("[Soup] Served mushroom soup. Terminating soup protocol");
       })
     ),
@@ -172,6 +169,5 @@ pub fn restaurant_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(restaurant_session()).await;
 }

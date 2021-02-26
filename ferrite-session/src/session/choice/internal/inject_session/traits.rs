@@ -1,5 +1,9 @@
 use super::super::internal_session::*;
-use crate::{base::*, functional::*, protocol::*};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub trait SessionInjector<N, C, A, B, Row, Del>: Send
 {

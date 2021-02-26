@@ -1,5 +1,9 @@
 use super::structs::*;
-use crate::{base::*, functional::*, protocol::*};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub trait HasInternalSession<N, C, A, B, Row, Del>: Send
 {

@@ -2,13 +2,24 @@ use std::{
   marker::PhantomData,
   mem,
   ops::DerefMut,
-  sync::{Arc, Mutex},
+  sync::{
+    Arc,
+    Mutex,
+  },
 };
 
 use ipc_channel::ipc;
-use serde::{self, Deserialize, Serialize};
+use serde::{
+  self,
+  Deserialize,
+  Serialize,
+};
 use tokio::{
-  sync::{mpsc, oneshot, Mutex as AsyncMutex},
+  sync::{
+    mpsc,
+    oneshot,
+    Mutex as AsyncMutex,
+  },
   task,
 };
 
@@ -25,15 +36,12 @@ pub struct SenderOnce<T>(oneshot::Sender<T>);
 pub struct ReceiverOnce<T>(oneshot::Receiver<T>);
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-
 pub struct OpaqueReceiver(Arc<Mutex<Option<ipc::OpaqueIpcReceiver>>>);
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-
 pub struct OpaqueSender(Arc<Mutex<Option<ipc::OpaqueIpcSender>>>);
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-
 pub struct IpcSender<T>
 {
   sender : OpaqueSender,
@@ -41,7 +49,6 @@ pub struct IpcSender<T>
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-
 pub struct IpcReceiver<T>
 {
   receiver : OpaqueReceiver,
@@ -49,7 +56,6 @@ pub struct IpcReceiver<T>
 }
 
 #[derive(Debug)]
-
 pub struct SendError(pub String);
 
 pub trait ForwardChannel: Send + 'static
@@ -68,7 +74,6 @@ pub trait ForwardChannel: Send + 'static
 
 pub fn once_channel<T>() -> (SenderOnce<T>, ReceiverOnce<T>)
 {
-
   let (sender, receiver) = oneshot::channel();
 
   (SenderOnce(sender), ReceiverOnce(receiver))
@@ -76,7 +81,6 @@ pub fn once_channel<T>() -> (SenderOnce<T>, ReceiverOnce<T>)
 
 pub fn unbounded<T>() -> (Sender<T>, Receiver<T>)
 {
-
   let (sender, receiver) = mpsc::unbounded_channel();
 
   (
@@ -93,7 +97,6 @@ impl OpaqueSender
   ) where
     T : for<'de> Deserialize<'de> + Serialize,
   {
-
     let mut cell = self.0.lock().unwrap();
 
     let sender1 = mem::take(cell.deref_mut()).unwrap();
@@ -112,7 +115,6 @@ impl OpaqueReceiver
   where
     T : for<'de> Deserialize<'de> + Serialize,
   {
-
     let mut cell = self.0.lock().unwrap();
 
     let receiver1 = mem::take(cell.deref_mut()).unwrap();
@@ -136,7 +138,6 @@ where
     data : T,
   )
   {
-
     self.sender.send(data)
   }
 }
@@ -147,7 +148,6 @@ where
 {
   pub fn recv(&self) -> Option<T>
   {
-
     self.receiver.recv()
   }
 }
@@ -156,7 +156,6 @@ pub fn ipc_channel<T>() -> (IpcSender<T>, IpcReceiver<T>)
 where
   IpcReceiver<T> : Send,
 {
-
   let (sender, receiver) = opaque_channel();
 
   (
@@ -173,7 +172,6 @@ where
 
 pub fn opaque_channel() -> (OpaqueSender, OpaqueReceiver)
 {
-
   let (sender, receiver) = ipc::channel::<()>().unwrap();
 
   (
@@ -182,25 +180,10 @@ pub fn opaque_channel() -> (OpaqueSender, OpaqueReceiver)
   )
 }
 
-pub fn serialize_channel<T>(payload : T) -> (OpaqueSender, OpaqueReceiver)
-where
-  T : ForwardChannel,
-{
-
-  let (sender1, receiver1) = opaque_channel();
-
-  let (sender2, receiver2) = opaque_channel();
-
-  payload.forward_to(sender1, receiver2);
-
-  (sender2, receiver1)
-}
-
 impl<T> Clone for Sender<T>
 {
   fn clone(&self) -> Sender<T>
   {
-
     Sender(self.0.clone())
   }
 }
@@ -209,7 +192,6 @@ impl<T> Clone for Receiver<T>
 {
   fn clone(&self) -> Receiver<T>
   {
-
     Receiver(self.0.clone())
   }
 }
@@ -221,17 +203,10 @@ impl<T> Sender<T>
     msg : T,
   ) -> Result<(), SendError>
   {
-
     self
       .0
       .send(msg)
       .map_err(|_| SendError(String::from("failed to send")))
-  }
-
-  pub async fn close(&self)
-  {
-
-    self.0.closed().await
   }
 }
 
@@ -239,14 +214,7 @@ impl<T> Receiver<T>
 {
   pub async fn recv(&self) -> Option<T>
   {
-
     self.0.lock().await.recv().await
-  }
-
-  pub async fn close(&self)
-  {
-
-    self.0.lock().await.close()
   }
 }
 
@@ -257,7 +225,6 @@ impl<T> SenderOnce<T>
     msg : T,
   ) -> Result<(), SendError>
   {
-
     self
       .0
       .send(msg)
@@ -266,7 +233,6 @@ impl<T> SenderOnce<T>
 
   pub async fn close(mut self)
   {
-
     self.0.closed().await
   }
 }
@@ -275,13 +241,11 @@ impl<T> ReceiverOnce<T>
 {
   pub async fn recv(self) -> Result<T, oneshot::error::RecvError>
   {
-
     self.0.await
   }
 
   pub async fn close(mut self)
   {
-
     self.0.close()
   }
 }
@@ -314,9 +278,7 @@ where
     receiver : OpaqueReceiver,
   )
   {
-
     task::spawn_blocking(move || {
-
       receiver.recv::<()>().unwrap();
 
       let payload = T::forward_from(sender, receiver);
@@ -330,15 +292,12 @@ where
     receiver1 : OpaqueReceiver,
   ) -> Self
   {
-
     let (sender2, receiver2) = once_channel();
 
     task::spawn(async move {
-
       let payload : T = receiver2.recv().await.unwrap();
 
       task::spawn_blocking(move || {
-
         sender1.send(());
 
         payload.forward_to(sender1, receiver1);
@@ -359,13 +318,10 @@ where
     receiver1 : OpaqueReceiver,
   )
   {
-
     task::spawn(async move {
-
       let channel = self.recv().await.unwrap();
 
       task::spawn_blocking(move || {
-
         sender1.send(());
 
         channel.forward_to(sender1, receiver1);
@@ -378,11 +334,9 @@ where
     receiver1 : OpaqueReceiver,
   ) -> Self
   {
-
     let (sender2, receiver2) = once_channel();
 
     task::spawn_blocking(move || {
-
       receiver1.recv::<()>().unwrap();
 
       let channel = T::forward_from(sender1, receiver1);
@@ -406,11 +360,9 @@ where
     receiver1 : OpaqueReceiver,
   )
   {
-
     let (Value(payload), channel) = self;
 
     task::spawn_blocking(move || {
-
       sender1.send(payload);
 
       channel.forward_to(sender1, receiver1)
@@ -422,7 +374,6 @@ where
     receiver1 : OpaqueReceiver,
   ) -> Self
   {
-
     let payload = receiver1.recv().unwrap();
 
     let channel = C::forward_from(sender1, receiver1);
@@ -443,7 +394,6 @@ where
     receiver : OpaqueReceiver,
   )
   {
-
     self.get_applied().forward_to(sender, receiver)
   }
 
@@ -452,7 +402,6 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-
     cloak_applied(T::forward_from(sender, receiver))
   }
 }
@@ -470,7 +419,6 @@ where
     receiver : OpaqueReceiver,
   )
   {
-
     self.get_row().forward_to(sender, receiver)
   }
 
@@ -479,7 +427,6 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-
     cloak_row(T::forward_from(sender, receiver))
   }
 }
@@ -495,16 +442,13 @@ where
     receiver1 : OpaqueReceiver,
   )
   {
-
     match self {
       Sum::Inl(a) => {
-
         sender1.send(true);
 
         a.forward_to(sender1, receiver1)
       }
       Sum::Inr(b) => {
-
         sender1.send(false);
 
         b.forward_to(sender1, receiver1)
@@ -517,12 +461,9 @@ where
     receiver1 : OpaqueReceiver,
   ) -> Self
   {
-
     if receiver1.recv().unwrap() {
-
       Sum::Inl(A::forward_from(sender1, receiver1))
     } else {
-
       Sum::Inr(B::forward_from(sender1, receiver1))
     }
   }
@@ -536,7 +477,6 @@ impl ForwardChannel for Bottom
     _ : OpaqueReceiver,
   )
   {
-
     match self {}
   }
 
@@ -545,7 +485,6 @@ impl ForwardChannel for Bottom
     receiver1 : OpaqueReceiver,
   ) -> Self
   {
-
     receiver1.recv().unwrap()
   }
 }

@@ -1,5 +1,11 @@
-use super::{structs::*, traits::*};
-use crate::{base::*, functional::*};
+use super::{
+  structs::*,
+  traits::*,
+};
+use crate::{
+  base::*,
+  functional::*,
+};
 
 impl<C, A> HasPartialSession<C, A> for PartialSession<C, A>
 where
@@ -8,7 +14,6 @@ where
 {
   fn get_partial_session(self: Box<Self>) -> PartialSession<C, A>
   {
-
     *self
   }
 }
@@ -23,7 +28,6 @@ where
     cont : Box<dyn NeedPartialSession<C, A, K>>,
   ) -> K
   {
-
     cont.on_partial_session(*self)
   }
 }

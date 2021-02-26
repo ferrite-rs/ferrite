@@ -1,5 +1,8 @@
 use super::structs::*;
-use crate::functional::{base::*, type_app::*};
+use crate::functional::{
+  base::*,
+  type_app::*,
+};
 
 pub trait RowCon: Sized + Send + 'static
 {

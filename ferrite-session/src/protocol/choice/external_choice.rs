@@ -1,7 +1,10 @@
 use serde;
 
 use super::utils::*;
-use crate::{base::*, functional::row::*};
+use crate::{
+  base::*,
+  functional::row::*,
+};
 
 pub struct ExternalChoice<Row>
 where
@@ -42,7 +45,6 @@ where
     receiver : OpaqueReceiver,
   )
   {
-
     self.sender.forward_to(sender, receiver)
   }
 
@@ -51,7 +53,6 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-
     ExternalChoice {
       sender : <SenderOnce<(
         Value<AppliedSum<Row, ()>>,

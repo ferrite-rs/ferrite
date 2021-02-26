@@ -1,4 +1,8 @@
-use std::{collections::VecDeque, future::Future, time::Duration};
+use std::{
+  collections::VecDeque,
+  future::Future,
+  time::Duration,
+};
 
 use ferrite_session::*;
 use tokio::time::sleep;
@@ -30,7 +34,6 @@ pub fn make_receiver<T>(
 where
   T : Send + 'static,
 {
-
   acquire_shared_session! ( source, chan => {
     choose! ( chan, SendNext,
       receive_value_from! ( chan, m_val => {
@@ -72,7 +75,6 @@ where
   T : Send + 'static,
   Fut : Future<Output = T> + Send,
 {
-
   acquire_shared_session! ( source, chan => {
     choose! ( chan, ReceiveNext,
       send_value_to! (
@@ -88,9 +90,7 @@ fn do_create_channel<T>(mut queue : VecDeque<T>) -> SharedSession<Channel<T>>
 where
   T : Send + 'static,
 {
-
   accept_shared_session(move || {
-
     offer_choice! {
       ReceiveNext => {
         receive_value! ( val => {
@@ -115,7 +115,6 @@ pub fn create_channel<T>() -> SharedChannel<Channel<T>>
 where
   T : Send + 'static,
 {
-
   let session = run_shared_session(do_create_channel(VecDeque::new()));
 
   session
@@ -123,7 +122,6 @@ where
 
 pub fn channel_session() -> Session<End>
 {
-
   let channel : SharedChannel<Channel<String>> = create_channel();
 
   let consumer1 : Session<End> = include_session! (
@@ -152,16 +150,13 @@ pub fn channel_session() -> Session<End>
 
   let producer1 : Session<End> =
     sender_session(channel.clone(), move || async move {
-
       sleep(Duration::from_secs(2)).await;
 
       "hello".to_string()
     });
 
   let producer2 : Session<End> = sender_session(channel.clone(), || {
-
     Box::pin(async {
-
       sleep(Duration::from_secs(1)).await;
 
       "world".to_string()
@@ -169,9 +164,7 @@ pub fn channel_session() -> Session<End>
   });
 
   let producer3 : Session<End> = sender_session(channel.clone(), || {
-
     Box::pin(async {
-
       sleep(Duration::from_secs(3)).await;
 
       "bye".to_string()
@@ -188,6 +181,5 @@ pub fn channel_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(channel_session()).await;
 }

@@ -1,7 +1,16 @@
 use crate::{
   base::Protocol,
-  functional::{nat::*, row::*},
-  protocol::{ReceiveChannel, ReceiveValue, SendChannel, SendValue, *},
+  functional::{
+    nat::*,
+    row::*,
+  },
+  protocol::{
+    ReceiveChannel,
+    ReceiveValue,
+    SendChannel,
+    SendValue,
+    *,
+  },
 };
 
 pub trait SharedRecApp<X>

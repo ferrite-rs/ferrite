@@ -1,5 +1,13 @@
-use super::{inject_session::*, internal_session::*, utils::*};
-use crate::{base::*, functional::*, protocol::*};
+use super::{
+  inject_session::*,
+  internal_session::*,
+  utils::*,
+};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub fn case<N, C, D, B, Row>(
   _ : N,
@@ -20,9 +28,7 @@ where
   Row : UncloakRow<InjectSessionF<N, C, B, Row, D>>,
   N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
-
   unsafe_create_session(move |ctx1, sender| async move {
-
     let (sum_chan, ctx2) = N::extract_source(ctx1);
 
     let InternalChoice {
@@ -41,11 +47,9 @@ where
 
     match cont5 {
       Some(cont6) => {
-
         run_case_cont(ctx2, sender, cont6).await;
       }
       None => {
-
         panic!("impossible happened: received mismatch choice continuation");
       }
     }

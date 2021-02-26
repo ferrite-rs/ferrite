@@ -134,7 +134,6 @@ define_choice! { SubscribeEvent;
 
 pub fn create_authenticated_pub_sub() -> SharedSession<AuthenticatedPubSub>
 {
-
   todo!()
 }
 

@@ -1,6 +1,9 @@
 use std::any::Any;
 
-use super::{structs::*, traits::*};
+use super::{
+  structs::*,
+  traits::*,
+};
 
 pub fn with_applied<F, A, K>(
   applied : Applied<F, A>,
@@ -11,7 +14,6 @@ where
   A : 'static,
   K : 'static,
 {
-
   struct TypeAppWitnessContWrapper<F, A, K>
   {
     applied : Applied<F, A>,
@@ -29,7 +31,6 @@ where
     where
       F : TypeApp<A>,
     {
-
       let res = self.cont.on_witness(self.applied.get_applied());
 
       Box::new(res)

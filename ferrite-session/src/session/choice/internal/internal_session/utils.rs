@@ -1,7 +1,14 @@
 use std::any::Any;
 
-use super::{structs::*, traits::*};
-use crate::{base::*, functional::*, protocol::*};
+use super::{
+  structs::*,
+  traits::*,
+};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub fn cloak_internal_session<N, C, A, B, Row, Del>(
   session1 : PartialSession<N::Target, B>
@@ -15,7 +22,6 @@ where
   N : 'static,
   N : ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
 {
-
   let session2 = InternalSession::<N, C, A, B, Row, Del> { session : session1 };
 
   CloakInternalSession {
@@ -36,7 +42,6 @@ where
   Del : 'static,
   K : 'static,
 {
-
   let cont2 = InternalSessionContWrapper { cont : cont1 };
 
   let res = session.session.with_internal_session(Box::new(cont2));
@@ -67,7 +72,6 @@ where
     Row : RowCon,
     N : ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
   {
-
     let res = self.cont.on_internal_session(session);
 
     Box::new(res)

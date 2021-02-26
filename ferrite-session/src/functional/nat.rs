@@ -25,7 +25,6 @@ impl Nat for Z
 
   fn nat() -> Z
   {
-
     Z
   }
 }
@@ -40,13 +39,11 @@ where
 
   fn nat() -> S<N>
   {
-
     S(PhantomData)
   }
 }
 
 pub fn succ<N>(_ : N) -> S<N>
 {
-
   S(PhantomData)
 }

@@ -1,5 +1,8 @@
 use std::{
-  sync::{Arc, Mutex},
+  sync::{
+    Arc,
+    Mutex,
+  },
   time::Duration,
 };
 
@@ -12,18 +15,15 @@ pub fn make_counter_server(
   initial_count : u64
 ) -> PersistentSession<CounterSession>
 {
-
   let counter1 : Arc<Mutex<u64>> = Arc::new(Mutex::new(initial_count));
 
   create_persistent_session(move || {
-
     println!("[CounterServer] starting new session");
 
     let counter2 = counter1.clone();
 
     send_value!(
       {
-
         println!("[CounterServer] Getting count");
 
         let mut count1 = counter2.lock().unwrap();
@@ -45,9 +45,7 @@ pub fn make_counter_client(
   counter_server : PersistentSession<CounterSession>,
 ) -> Session<End>
 {
-
   let timer : Session<End> = terminate!({
-
     sleep(Duration::from_secs(timeout)).await;
   });
 
@@ -69,7 +67,6 @@ pub fn make_counter_client(
 
 pub fn counter_session() -> Session<End>
 {
-
   let counter = make_counter_server(8);
 
   let p1 = make_counter_client("P1".to_string(), 8, counter.clone());
@@ -85,7 +82,6 @@ pub fn counter_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(counter_session()).await
 }
 

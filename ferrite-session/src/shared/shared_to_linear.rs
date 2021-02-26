@@ -20,7 +20,6 @@ where
     receiver : OpaqueReceiver,
   )
   {
-
     self.unlock.forward_to(sender, receiver);
   }
 
@@ -29,7 +28,6 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-
     let unlock = <SenderOnce<()>>::forward_from(sender, receiver);
 
     SharedToLinear {

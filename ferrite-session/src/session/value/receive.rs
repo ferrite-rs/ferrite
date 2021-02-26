@@ -1,4 +1,7 @@
-use crate::{base::*, protocol::ReceiveValue};
+use crate::{
+  base::*,
+  protocol::ReceiveValue,
+};
 
 /*
              cont_builder(x) :: Δ ⊢ P
@@ -14,10 +17,8 @@ where
   A : Protocol,
   C : Context,
 {
-
   unsafe_create_session(
     move |ctx, sender1 : SenderOnce<ReceiveValue<T, A>>| async move {
-
       let (sender2, receiver2) = once_channel();
 
       sender1.send(ReceiveValue(sender2)).unwrap();
@@ -43,9 +44,7 @@ where
   T : Send + 'static,
   N : ContextLens<C, ReceiveValue<T, B>, B>,
 {
-
   unsafe_create_session(move |ctx1, sender1| async move {
-
     let (receiver1, ctx2) = N::extract_source(ctx1);
 
     let ReceiveValue(sender2) = receiver1.recv().await.unwrap();

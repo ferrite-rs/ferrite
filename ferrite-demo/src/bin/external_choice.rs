@@ -2,7 +2,6 @@ use ferrite_session::*;
 
 pub fn external_choice_session() -> Session<End>
 {
-
   let provider : Session<
     ExternalChoice<Either<SendValue<String, End>, ReceiveValue<u64, End>>>,
   > = offer_choice! {
@@ -54,6 +53,5 @@ pub fn external_choice_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(external_choice_session()).await
 }

@@ -30,9 +30,7 @@ where
   Func : FnOnce() -> Fut + Send + 'static,
   Fut : Future<Output = ()> + Send,
 {
-
   unsafe_create_session(move |_, sender| async move {
-
     cleaner().await;
 
     sender.send(End()).unwrap();
@@ -43,13 +41,11 @@ pub fn terminate<C>() -> PartialSession<C, End>
 where
   C : EmptyContext,
 {
-
   terminate_async(|| async {})
 }
 
 pub fn terminate_nil() -> Session<End>
 {
-
   terminate()
 }
 
@@ -70,9 +66,7 @@ where
   A : Protocol,
   N : ContextLens<C, End, Empty>,
 {
-
   unsafe_create_session(move |ctx1, sender| async move {
-
     let (receiver, ctx2) = N::extract_source(ctx1);
 
     let ctx3 = N::insert_target((), ctx2);

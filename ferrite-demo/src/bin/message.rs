@@ -11,9 +11,7 @@ type CounterSession = LinearToShared<ExternalChoice<CounterCommand>>;
 
 fn make_counter_session(count : u64) -> SharedSession<CounterSession>
 {
-
   accept_shared_session(move || {
-
     offer_choice! {
       Increment =>
         detach_shared_session (
@@ -32,20 +30,16 @@ async fn use_counter(
   count : u64,
 ) -> u64
 {
-
   let mut futures = vec![];
 
   for i in 0..count {
-
     let future = async_acquire_shared_session(counter.clone(), move |chan| {
-
       choose!(chan, Increment, release_shared_session(chan, terminate()))
     });
 
     futures.push(future);
 
     if i % 1000 == 0 {
-
       join_all(futures.drain(0..)).await;
     }
   }
@@ -65,7 +59,6 @@ async fn use_counter(
 
 pub async fn main()
 {
-
   env_logger::init();
 
   let counter = run_shared_session(make_counter_session(0));

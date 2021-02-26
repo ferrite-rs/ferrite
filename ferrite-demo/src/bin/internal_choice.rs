@@ -2,7 +2,6 @@ use ferrite_session::*;
 
 pub fn internal_choice_session() -> Session<End>
 {
-
   let client : Session<
     ReceiveChannel<
       InternalChoice<Either<SendValue<String, End>, ReceiveValue<u64, End>>>,
@@ -48,6 +47,5 @@ pub fn internal_choice_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(internal_choice_session()).await
 }

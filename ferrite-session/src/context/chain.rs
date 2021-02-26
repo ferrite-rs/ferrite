@@ -1,5 +1,11 @@
 use crate::{
-  base::{AppendContext, Context, Empty, EmptyContext, Reversible, Slot},
+  base::{
+    AppendContext,
+    Context,
+    Empty,
+    EmptyContext,
+    Slot,
+  },
   functional::nat::*,
 };
 
@@ -20,7 +26,6 @@ impl EmptyContext for ()
 {
   fn empty_values()
   {
-
     ()
   }
 }
@@ -31,7 +36,6 @@ where
 {
   fn empty_values() -> ((), R::Endpoints)
   {
-
     ((), R::empty_values())
   }
 }
@@ -55,7 +59,6 @@ impl<R : Context> AppendContext<R> for ()
     r : <R as Context>::Endpoints,
   ) -> <R as Context>::Endpoints
   {
-
     return r;
   }
 
@@ -63,25 +66,7 @@ impl<R : Context> AppendContext<R> for ()
     r : <R as Context>::Endpoints
   ) -> ((), <R as Context>::Endpoints)
   {
-
     return ((), r);
-  }
-}
-
-impl Reversible for ()
-{
-  type Reversed = ();
-
-  fn reverse_channels(_ : ())
-  {
-
-    return ();
-  }
-
-  fn unreverse_channels(_ : ())
-  {
-
-    return ();
   }
 }
 
@@ -99,7 +84,6 @@ where
     s : <S as Context>::Endpoints,
   ) -> (<P as Slot>::Endpoint, <R::Appended as Context>::Endpoints)
   {
-
     return (p, <R as AppendContext<S>>::append_context(r, s));
   }
 
@@ -107,7 +91,6 @@ where
     (p, r) : (P::Endpoint, <R::Appended as Context>::Endpoints)
   ) -> (<(P, R) as Context>::Endpoints, <S as Context>::Endpoints)
   {
-
     let (r2, s) = R::split_context(r);
 
     return ((p, r2), s);

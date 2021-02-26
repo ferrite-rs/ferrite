@@ -1,4 +1,7 @@
-use crate::{base::*, functional::*};
+use crate::{
+  base::*,
+  functional::*,
+};
 
 pub struct ReceiverF {}
 
@@ -26,7 +29,6 @@ where
   A : Protocol,
   Runner : RunCont<C, A>,
 {
-
   runner.run_cont(cont)
 }
 

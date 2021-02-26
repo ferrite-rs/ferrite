@@ -1,4 +1,7 @@
-use crate::{functional::*, protocol::*};
+use crate::{
+  functional::*,
+  protocol::*,
+};
 
 pub fn receiver_to_selector<Row>(
   row1 : AppliedSum<Row, ReceiverF>
@@ -7,7 +10,6 @@ where
   Row : SplitRow,
   Row : SumFunctor,
 {
-
   let row2 = lift_sum(
     crate::natural_transformation! {
       { } ;

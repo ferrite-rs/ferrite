@@ -21,5 +21,8 @@ pub use session::{
   run_shared_session,
   run_shared_session_with_join_handle,
 };
-pub use shared_session::{SharedChannel, SharedSession};
+pub use shared_session::{
+  SharedChannel,
+  SharedSession,
+};
 pub use shared_to_linear::SharedToLinear;

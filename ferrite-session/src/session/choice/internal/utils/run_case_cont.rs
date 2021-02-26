@@ -1,7 +1,15 @@
-use std::{future::Future, marker::PhantomData, pin::Pin};
+use std::{
+  future::Future,
+  marker::PhantomData,
+  pin::Pin,
+};
 
 use super::super::internal_session::*;
-use crate::{base::*, functional::*, protocol::*};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub async fn run_case_cont<N, C, D, B, Row>(
   ctx : D::Endpoints,
@@ -14,7 +22,6 @@ pub async fn run_case_cont<N, C, D, B, Row>(
   Row : ElimSum,
   N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
-
   let cont2 = ContRunner1::<N, C, B, Row, D> {
     ctx,
     sender,
@@ -83,7 +90,6 @@ where
     Row : RowCon,
     N : ContextLens<C, InternalChoice<Row>, A, Deleted = D>,
   {
-
     let ctx1 = self.ctx;
 
     let sender = self.sender;
@@ -95,7 +101,6 @@ where
     );
 
     Box::pin(async move {
-
       unsafe_run_session(cont.session, ctx2, sender).await;
     })
   }
@@ -120,7 +125,6 @@ where
   where
     A : Send + 'static,
   {
-
     let (receiver1, session1) = fa.get_applied();
 
     let receiver2 = receiver1.get_applied();

@@ -1,4 +1,8 @@
-use std::{future::Future, marker::PhantomData, pin::Pin};
+use std::{
+  future::Future,
+  marker::PhantomData,
+  pin::Pin,
+};
 
 use serde;
 use tokio::task;
@@ -44,7 +48,6 @@ where
 {
   fn clone(&self) -> Self
   {
-
     SerializedSharedChannel {
       acquire_sender : self.acquire_sender.clone(),
       acquire_receiver : self.acquire_receiver.clone(),
@@ -61,7 +64,6 @@ pub fn serialize_shared_channel<S>(
 where
   S : SharedProtocol + ForwardChannel,
 {
-
   let (sender1, receiver1) = ipc_channel::<()>();
 
   let (sender2, receiver2) = ipc_channel::<()>();
@@ -71,9 +73,7 @@ where
   let (sender4, receiver4) = opaque_channel();
 
   task::spawn(async move {
-
     loop {
-
       let receiver1 = receiver1.clone();
 
       let signal = task::spawn_blocking(move || receiver1.recv())
@@ -82,13 +82,11 @@ where
 
       match signal {
         Some(()) => {
-
           let (sender5, receiver5) = once_channel::<()>();
 
           let (sender6, receiver6) = once_channel::<S>();
 
           {
-
             let channel = channel.clone();
 
             let sender2 = sender2.clone();
@@ -130,16 +128,12 @@ pub fn deserialize_shared_channel<S>(
 where
   S : SharedProtocol + ForwardChannel + Send,
 {
-
   let (sender1, receiver1) = unbounded::<(SenderOnce<()>, SenderOnce<S>)>();
 
   task::spawn(async move {
-
     loop {
-
       match receiver1.recv().await {
         Some((sender2, sender3)) => {
-
           debug!(
             "[deserialize_shared_channel] acquiring remote shared channel"
           );
@@ -149,7 +143,6 @@ where
           let acquire_receiver = channel.acquire_receiver.clone();
 
           task::spawn_blocking(move || {
-
             acquire_receiver.recv().unwrap();
           })
           .await
@@ -177,7 +170,6 @@ where
 {
   fn clone(&self) -> Self
   {
-
     SharedChannel {
       endpoint : self.endpoint.clone(),
     }
@@ -190,7 +182,6 @@ pub async fn unsafe_run_shared_session<S>(
 ) where
   S : SharedProtocol,
 {
-
   (session.executor)(receiver).await;
 }
 
@@ -203,16 +194,13 @@ where
   S : SharedProtocol,
   Fut : Future<Output = ()> + Send,
 {
-
   let executor : Box<
     dyn FnOnce(
         Receiver<(SenderOnce<()>, SenderOnce<S>)>,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
       + Send,
   > = Box::new(move |sender| {
-
     Box::pin(async {
-
       executor1(sender).await;
     })
   });
@@ -225,7 +213,6 @@ pub fn unsafe_create_shared_channel<S>(
 where
   S : SharedProtocol,
 {
-
   let (sender, receiver) = unbounded();
 
   (SharedChannel { endpoint : sender }, receiver)
@@ -237,7 +224,6 @@ pub fn unsafe_receive_shared_channel<S>(
 where
   S : SharedProtocol,
 {
-
   let (sender1, receiver1) = once_channel::<()>();
 
   let (sender2, receiver2) = once_channel::<S>();
@@ -258,7 +244,6 @@ where
   where
     S : serde::Serializer,
   {
-
     serialize_shared_channel(self.clone()).serialize(serializer)
   }
 }
@@ -271,7 +256,6 @@ where
   where
     D : serde::Deserializer<'a>,
   {
-
     let channel = <SerializedSharedChannel<A>>::deserialize(deserializer)?;
 
     Ok(deserialize_shared_channel(channel))

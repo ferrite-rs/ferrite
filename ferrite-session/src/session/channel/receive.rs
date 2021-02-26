@@ -5,7 +5,10 @@ use crate::{
   base::*,
   functional::*,
   protocol::ReceiveChannel,
-  session::{forward::forward, include::include_session},
+  session::{
+    forward::forward,
+    include::include_session,
+  },
 };
 
 /*
@@ -25,11 +28,9 @@ where
   C : Context,
   C : AppendContext<(A, ())>,
 {
-
   let cont2 = cont(C::Length::nat());
 
   unsafe_create_session(move |ctx1, sender| async move {
-
     let (sender1, receiver1) = once_channel();
 
     sender.send(ReceiveChannel(sender1)).unwrap();
@@ -52,20 +53,16 @@ where
   I : Context,
   N : ContextLens<I, Empty, P>,
 {
-
   unsafe_create_session(move |ctx1, sender| async move {
-
     let ((), ctx2) = N::extract_source(ctx1);
 
     let (sender1, receiver1) = once_channel();
 
     let child1 = task::spawn(async move {
-
       sender.send(ReceiveChannel(sender1)).unwrap();
     });
 
     let child2 = task::spawn(async move {
-
       let (receiver2, sender2) = receiver1.recv().await.unwrap();
 
       let ctx3 =
@@ -99,9 +96,7 @@ where
   N2 : ContextLens<C, A1, Empty>,
   N1 : ContextLens<N2::Target, ReceiveChannel<A1, A2>, A2>,
 {
-
   unsafe_create_session(move |ctx1, sender1| async move {
-
     let (receiver1, ctx2) = N2::extract_source(ctx1);
 
     let ctx3 = N2::insert_target((), ctx2);
@@ -113,14 +108,12 @@ where
     let (sender3, receiver3) = once_channel();
 
     let child1 = task::spawn(async move {
-
       sender2.send((receiver1, sender3)).unwrap();
     });
 
     let ctx5 = N1::insert_target(receiver3, ctx4);
 
     let child2 = task::spawn(async move {
-
       unsafe_run_session(cont, ctx5, sender1).await;
     });
 
@@ -144,9 +137,7 @@ where
   A : Protocol,
   B : Protocol,
 {
-
   include_session(f, move |c1| {
-
     include_session(a, move |c2| send_channel_to(c1, c2, forward(c1)))
   })
 }

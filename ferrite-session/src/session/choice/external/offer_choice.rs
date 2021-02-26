@@ -1,5 +1,13 @@
-use super::{cloak_session::*, inject_session::*, utils::*};
-use crate::{base::*, functional::*, protocol::*};
+use super::{
+  cloak_session::*,
+  inject_session::*,
+  utils::*,
+};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub fn offer_choice<C, Row>(
   cont1 : impl FnOnce(Row::Uncloaked) -> AppliedSum<Row, SessionF<C>>
@@ -15,9 +23,7 @@ where
   Row : SumFunctorInject,
   Row : UncloakRow<InjectSessionF<Row, C>>,
 {
-
   unsafe_create_session(move |ctx, sender1| async move {
-
     let (sender2, receiver2) = once_channel();
 
     let payload = ExternalChoice::<Row> { sender : sender2 };

@@ -1,7 +1,10 @@
 use async_macros::join;
 use tokio::task;
 
-use crate::{base::*, protocol::SendValue};
+use crate::{
+  base::*,
+  protocol::SendValue,
+};
 
 pub fn send_value<T, C, A>(
   val : T,
@@ -12,18 +15,14 @@ where
   A : Protocol,
   C : Context,
 {
-
   unsafe_create_session(move |ctx, sender1| async move {
-
     let (sender2, receiver2) = once_channel();
 
     let child1 = task::spawn(async move {
-
       sender1.send(SendValue((Value(val), receiver2))).unwrap();
     });
 
     let child2 = task::spawn(async move {
-
       unsafe_run_session(cont, ctx, sender2).await;
     });
 
@@ -48,9 +47,7 @@ where
   T : Send + 'static,
   N : ContextLens<C, SendValue<T, A>, A>,
 {
-
   unsafe_create_session(move |ctx1, sender| async move {
-
     let (receiver1, ctx2) = N::extract_source(ctx1);
 
     let SendValue((Value(val), receiver2)) = receiver1.recv().await.unwrap();

@@ -1,7 +1,15 @@
-use std::{future::Future, marker::PhantomData, pin::Pin};
+use std::{
+  future::Future,
+  marker::PhantomData,
+  pin::Pin,
+};
 
 use super::super::cloak_session::*;
-use crate::{base::*, functional::*, protocol::*};
+use crate::{
+  base::*,
+  functional::*,
+  protocol::*,
+};
 
 pub async fn run_choice_cont<Row, C>(
   ctx : C::Endpoints,
@@ -13,7 +21,6 @@ pub async fn run_choice_cont<Row, C>(
   Row : SplitRow,
   Row : SumFunctorInject,
 {
-
   let res = lift_sum_inject(RunSession { ctx }, cont1);
 
   let (receiver_sum, cont6) = Row::split_row(res);
@@ -61,11 +68,9 @@ where
     C : Context,
     A : Protocol,
   {
-
     let (sender, receiver) = once_channel();
 
     let future = Box::pin(async move {
-
       unsafe_run_session(cont, self.ctx, sender).await;
     });
 
@@ -92,7 +97,6 @@ where
   where
     A : Send + 'static,
   {
-
     let cont2 : CloakedSession<C, A> = get_applied(cont1);
 
     let runner : SessionRunner<C, A> = SessionRunner {

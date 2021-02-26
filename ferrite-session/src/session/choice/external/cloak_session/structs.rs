@@ -1,4 +1,7 @@
-use std::{any::Any, marker::PhantomData};
+use std::{
+  any::Any,
+  marker::PhantomData,
+};
 
 use super::traits::*;
 use crate::base::*;
@@ -15,7 +18,6 @@ where
 {
   pub fn get_session(self) -> PartialSession<C, A>
   {
-
     self.session.get_partial_session()
   }
 }
@@ -32,7 +34,6 @@ where
   C : Context,
   A : Protocol,
 {
-
   CloakedSession {
     session : Box::new(session),
   }

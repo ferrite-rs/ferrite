@@ -9,7 +9,6 @@ define_choice! { FooBarBaz;
 
 pub fn external_choice_session() -> Session<End>
 {
-
   let provider : Session<ExternalChoice<FooBarBaz>> = offer_choice! {
     Foo => {
       send_value! (
@@ -46,6 +45,5 @@ pub fn external_choice_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(external_choice_session()).await
 }

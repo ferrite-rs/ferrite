@@ -1,6 +1,12 @@
-use std::{any::Any, marker::PhantomData};
+use std::{
+  any::Any,
+  marker::PhantomData,
+};
 
-use serde::{Deserialize, Serialize};
+use serde::{
+  Deserialize,
+  Serialize,
+};
 
 use super::traits::*;
 use crate::functional::type_app::*;
@@ -38,7 +44,6 @@ where
 {
   pub fn get_row(self) -> Row::Applied
   {
-
     *self.row.get_row()
   }
 }
@@ -47,7 +52,6 @@ impl<N> ChoiceSelector<N>
 {
   pub const fn new() -> ChoiceSelector<N>
   {
-
     ChoiceSelector {
       phantom : PhantomData,
     }
@@ -59,7 +63,6 @@ where
   F : TyCon,
   Row : RowApp<F>,
 {
-
   AppliedSum {
     row : Box::new(row),
   }

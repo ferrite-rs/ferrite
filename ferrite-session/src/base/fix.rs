@@ -23,7 +23,6 @@ where
 {
   fn get_applied(self: Box<T>) -> Box<T>
   {
-
     self
   }
 }
@@ -40,7 +39,6 @@ where
   F : Send + 'static,
   F : RecApp<Unfix<Rec<F>>>,
 {
-
   Rec {
     unfix : Box::new(x),
   }
@@ -51,7 +49,6 @@ where
   F : Send + 'static,
   F : RecApp<Unfix<Rec<F>>>,
 {
-
   *x.unfix.get_applied()
 }
 

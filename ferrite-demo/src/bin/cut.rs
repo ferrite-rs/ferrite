@@ -7,7 +7,6 @@ type Producer = SendValue<String, End>;
 
 fn cut_session() -> Session<End>
 {
-
   let client : Session<
     ReceiveChannel<
       Producer,
@@ -55,6 +54,5 @@ fn cut_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(cut_session()).await;
 }

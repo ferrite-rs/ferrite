@@ -13,8 +13,14 @@ use crate::{
   context::append_emtpy_slot,
   protocol::End,
   session::{
-    cut::{AllRight, Cut},
-    end::{terminate, wait},
+    cut::{
+      AllRight,
+      Cut,
+    },
+    end::{
+      terminate,
+      wait,
+    },
   },
 };
 
@@ -28,7 +34,6 @@ where
   C : Context,
   C : AppendContext<(A, ())>,
 {
-
   AllRight::cut(session, cont)
 }
 
@@ -48,7 +53,6 @@ where
     Target = <I as AppendContext<(Empty, ())>>::Appended,
   >,
 {
-
   include_session(session1, move |chan| wait(chan, append_emtpy_slot(cont)))
 }
 
@@ -67,24 +71,19 @@ where
     Target = <I as AppendContext<(Empty, ())>>::Appended,
   >,
 {
-
   wait_session(join_sessions(sessions), cont)
 }
 
 pub fn join_sessions(sessions : Vec<Session<End>>) -> Session<End>
 {
-
   do_join_sessions(sessions.into_iter().collect())
 }
 
 fn do_join_sessions(mut sessions : LinkedList<Session<End>>) -> Session<End>
 {
-
   match sessions.pop_front() {
     Some(session) => include_session(session, move |c1| {
-
       include_session(do_join_sessions(sessions), move |c2| {
-
         wait(c1, wait(c2, terminate()))
       })
     }),

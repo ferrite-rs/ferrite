@@ -6,7 +6,6 @@ type HelloSession = ReceiveValue<String, SendValue<String, End>>;
 
 pub fn hello_session() -> Session<End>
 {
-
   let server : Session<HelloSession> = receive_value! ( name => {
     send_value (
       format!("Hello, {}!", name),
@@ -33,6 +32,5 @@ pub fn hello_session() -> Session<End>
 
 pub async fn main()
 {
-
   run_session(hello_session()).await
 }

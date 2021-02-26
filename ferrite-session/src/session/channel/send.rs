@@ -1,7 +1,11 @@
 use async_macros::join;
 use tokio::task;
 
-use crate::{base::*, functional::nat::*, protocol::SendChannel};
+use crate::{
+  base::*,
+  functional::nat::*,
+  protocol::SendChannel,
+};
 
 /*
    Additive Conjunction, Right Rule
@@ -21,9 +25,7 @@ where
   C : Context,
   N : ContextLens<C, A, Empty>,
 {
-
   unsafe_create_session(move |ctx1, sender1| async move {
-
     let (p_chan, ctx2) = N::extract_source(ctx1);
 
     let (sender2, receiver2) = once_channel();
@@ -33,19 +35,16 @@ where
     let ctx3 = N::insert_target((), ctx2);
 
     let child1 = task::spawn(async move {
-
       let p = p_chan.recv().await.unwrap();
 
       sender2.send(p).unwrap();
     });
 
     let child2 = task::spawn(async move {
-
       sender1.send(SendChannel(receiver2, receiver3)).unwrap();
     });
 
     let child3 = task::spawn(async {
-
       unsafe_run_session(cont, ctx3, sender3).await;
     });
 
@@ -73,11 +72,9 @@ where
   C2 : AppendContext<(A1, ())>,
   N : ContextLens<C1, SendChannel<A1, A2>, A2, Target = C2>,
 {
-
   let cont = cont_builder(C2::Length::nat());
 
   unsafe_create_session(move |ctx1, sender1| async move {
-
     let (pair_chan, ctx2) = N::extract_source(ctx1);
 
     let SendChannel(p_chan, y_chan) = pair_chan.recv().await.unwrap();
@@ -120,9 +117,7 @@ where
   CP : 'static,
   CQ : 'static,
 {
-
   unsafe_create_session(move |ctx, sender| async move {
-
     let (ctx1, ctx2) = CP::split_context(ctx);
 
     let (sender1, receiver1) = once_channel();
@@ -132,21 +127,18 @@ where
     // the first thread task::spawns immediately
 
     let child1 = task::spawn(async move {
-
       unsafe_run_session(cont1, ctx1, sender1).await;
     });
 
     // the sender here blocks until the inner channel pairs
     // are received on the other side
     let child2 = task::spawn(async move {
-
       sender.send(SendChannel(receiver1, receiver2)).unwrap();
     });
 
     // the second thread is blocked until the first channel is being accessed
 
     let child3 = task::spawn(async move {
-
       unsafe_run_session(cont2, ctx2, sender2).await;
     });
 
@@ -167,9 +159,7 @@ where
   SourceLens : ContextLens<I, SendChannel<P1, P2>, P2>,
   TargetLens : ContextLens<SourceLens::Target, Empty, P1>,
 {
-
   unsafe_create_session(move |ctx1, sender1| async move {
-
     let (pair_chan, ctx2) = SourceLens::extract_source(ctx1);
 
     let SendChannel(p_chan, y_chan) = pair_chan.recv().await.unwrap();
