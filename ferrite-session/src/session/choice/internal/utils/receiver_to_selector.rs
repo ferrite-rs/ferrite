@@ -1,17 +1,14 @@
-use crate::protocol::*;
-use crate::functional::*;
+use crate::{functional::*, protocol::*};
 
-pub fn receiver_to_selector < Row >
-  ( row1: AppliedSum < Row, ReceiverF > )
-  ->
-    ( AppliedSum < Row, ReceiverF >,
-      AppliedSum < Row, () >
-    )
+pub fn receiver_to_selector<Row>(
+  row1 : AppliedSum<Row, ReceiverF>
+) -> (AppliedSum<Row, ReceiverF>, AppliedSum<Row, ()>)
 where
   Row : SplitRow,
   Row : SumFunctor,
 {
-  let row2 = lift_sum (
+
+  let row2 = lift_sum(
     crate::natural_transformation! {
       { } ;
       ReceiverOnceToSelector :
@@ -26,7 +23,7 @@ where
         ) )
       }
     },
-    row1
+    row1,
   );
 
   Row::split_row(row2)

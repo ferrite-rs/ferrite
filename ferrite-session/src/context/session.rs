@@ -1,135 +1,93 @@
+use crate::{base::*, functional::nat::*};
 
-use crate::base::*;
-use crate::functional::nat::*;
-
-pub fn new_session
-  < P >
-  (cont : Session < P >)
-  -> Session < P >
+pub fn new_session<P>(cont : Session<P>) -> Session<P>
 where
-  P : Protocol
-{ cont }
-
-pub fn session
-  < C, P >
-  (cont : PartialSession < C, P >)
-  -> Session < P >
-where
-  C : EmptyContext,
-  P : Protocol
+  P : Protocol,
 {
-  unsafe_create_session (
-    move | (), sender | async move {
-      let ctx = < C as EmptyContext > :: empty_values();
-      unsafe_run_session ( cont, ctx, sender ).await;
-    })
+
+  cont
 }
 
-pub fn partial_session
-  < C, P >
-  (cont : Session < P >)
-  -> PartialSession < C, P >
+pub fn session<C, P>(cont : PartialSession<C, P>) -> Session<P>
 where
   C : EmptyContext,
-  P : Protocol
+  P : Protocol,
 {
-  unsafe_create_session (
-    move | _, sender | async move {
-      unsafe_run_session ( cont, (), sender ).await
-    })
+
+  unsafe_create_session(move |(), sender| async move {
+
+    let ctx = <C as EmptyContext>::empty_values();
+
+    unsafe_run_session(cont, ctx, sender).await;
+  })
 }
 
-pub fn append_emtpy_slot
-  < I, P >
-  ( cont : PartialSession < I, P > )
-  ->
-    PartialSession <
-      < I as
-        AppendContext < ( Empty, () ) >
-      > :: Appended,
-      P
-    >
+pub fn partial_session<C, P>(cont : Session<P>) -> PartialSession<C, P>
+where
+  C : EmptyContext,
+  P : Protocol,
+{
+
+  unsafe_create_session(move |_, sender| async move {
+
+    unsafe_run_session(cont, (), sender).await
+  })
+}
+
+pub fn append_emtpy_slot<I, P>(
+  cont : PartialSession<I, P>
+) -> PartialSession<<I as AppendContext<(Empty, ())>>::Appended, P>
 where
   P : Protocol,
   I : Context,
-  I : AppendContext < ( Empty, () ) >
+  I : AppendContext<(Empty, ())>,
 {
-  unsafe_create_session (
-    move | ctx1, sender | async move {
-      let (ctx2, _) =
-        < I as
-          AppendContext < ( Empty, () ) >
-        > :: split_context ( ctx1 );
 
-      unsafe_run_session ( cont, ctx2, sender ).await
-    })
+  unsafe_create_session(move |ctx1, sender| async move {
+
+    let (ctx2, _) = <I as AppendContext<(Empty, ())>>::split_context(ctx1);
+
+    unsafe_run_session(cont, ctx2, sender).await
+  })
 }
 
-pub fn session_1
-  < P, F >
-  ( cont : F ) ->
-    Session < P >
+pub fn session_1<P, F>(cont : F) -> Session<P>
 where
   P : Protocol,
-  F : FnOnce (Z) ->
-        PartialSession <
-          ( Empty, () ),
-          P
-        >
+  F : FnOnce(Z) -> PartialSession<(Empty, ()), P>,
 {
+
   session(cont(Z::Value))
 }
 
-pub fn session_2
-  < P, F >
-  ( cont : F ) ->
-    Session < P >
+pub fn session_2<P, F>(cont : F) -> Session<P>
 where
   P : Protocol,
-  F : FnOnce (Z, S<Z>) ->
-        PartialSession <
-          ( Empty, ( Empty, () )),
-          P
-        >
+  F : FnOnce(Z, S<Z>) -> PartialSession<(Empty, (Empty, ())), P>,
 {
-  session(cont(Z::Value, < S<Z> >::Value))
+
+  session(cont(Z::Value, <S<Z>>::Value))
 }
 
-pub fn partial_session_1
-  < P1, Q, F >
-  ( cont : F ) ->
-    PartialSession <
-      (P1, ()),
-      Q
-    >
+pub fn partial_session_1<P1, Q, F>(cont : F) -> PartialSession<(P1, ()), Q>
 where
   P1 : Slot,
   Q : Protocol,
-  F : FnOnce (Z) ->
-        PartialSession <
-          (P1, ()),
-          Q
-        >
+  F : FnOnce(Z) -> PartialSession<(P1, ()), Q>,
 {
-  cont (Z::Value)
+
+  cont(Z::Value)
 }
 
-pub fn partial_session_2
-  < P1, P2, Q, F >
-  ( cont : F ) ->
-    PartialSession <
-      (P1, (P2, ())),
-      Q
-    >
+pub fn partial_session_2<P1, P2, Q, F>(
+  cont : F
+) -> PartialSession<(P1, (P2, ())), Q>
 where
   P1 : Slot,
   P2 : Slot,
   Q : Protocol,
-  F : FnOnce (Z, S<Z>) ->
-        PartialSession <
-          (P1, (P2, ())),
-          Q
-        >
+  F : FnOnce(Z, S<Z>) -> PartialSession<(P1, (P2, ())), Q>,
 {
-  cont (Z::Value, < S<Z> >::Value)
+
+  cont(Z::Value, <S<Z>>::Value)
 }

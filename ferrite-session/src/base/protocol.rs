@@ -1,24 +1,19 @@
 use crate::functional::nat::*;
 
-pub trait Protocol : Send + 'static
-{ }
-
-pub mod public {
-  pub trait Protocol : super::Protocol {}
+pub trait Protocol: Send + 'static
+{
 }
 
-impl < A >
-  public::Protocol
-  for A
-where
-  A : Protocol
-{}
+pub mod public
+{
 
-impl Protocol for Z { }
+  pub trait Protocol: super::Protocol
+  {
+  }
+}
 
-impl < N >
-  Protocol for
-  S < N >
-where
-  N : Protocol
-{ }
+impl<A> public::Protocol for A where A : Protocol {}
+
+impl Protocol for Z {}
+
+impl<N> Protocol for S<N> where N : Protocol {}

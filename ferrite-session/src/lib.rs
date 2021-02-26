@@ -8,9 +8,9 @@ mod public;
 mod functional;
 
 mod base;
-mod session;
-mod protocol;
 mod context;
+mod protocol;
+mod session;
 mod shared;
 
 #[cfg(test)]

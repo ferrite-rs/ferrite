@@ -1,4 +1,13 @@
 tab_spaces = 2
+max_width = 80
 use_field_init_shorthand = true
 edition = "2018"
 reorder_modules = true
+brace_style = "AlwaysNextLine"
+blank_lines_lower_bound = 1
+fn_args_layout = "Vertical"
+imports_layout = "HorizontalVertical"
+imports_granularity = "Crate"
+group_imports = "StdExternalCrate"
+space_before_colon = true
+fn_single_line = false

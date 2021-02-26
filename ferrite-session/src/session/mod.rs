@@ -1,91 +1,39 @@
 pub mod public;
 
-mod run;
-mod end;
-mod wrap;
-mod fix;
+mod channel;
+mod choice;
 mod cut;
+mod end;
+mod fix;
+mod forward;
+mod include;
+mod persistent;
+mod run;
 mod step;
 mod value;
-mod include;
-mod channel;
-mod forward;
-mod persistent;
-mod choice;
+mod wrap;
 
 pub use choice::*;
 
-pub use self::run::{
-  run_session,
-  run_session_with_result,
-};
-
-pub use self::step::{
-  step,
-};
-
-pub use self::end::{
-  wait,
-  terminate,
-  terminate_async,
-  terminate_nil,
-};
-
-pub use self::fix::{
-  fix_session,
-  succ_session,
-  unfix_session,
-  unfix_session_for,
-};
-
-pub use self::forward::{
-  forward,
-};
-
-pub use self::include::{
-  include_session,
-  wait_session,
-  wait_sessions,
-  join_sessions,
-};
-
-pub use self::cut::{
-  cut,
-  cut_append,
-  Cut,
-  L,
-  R,
-  AllLeft,
-  AllRight,
-};
-
-pub use self::persistent::{
-  clone_session,
-  PersistentSession,
-  create_persistent_session,
-};
-
-pub use self::value::{
-  send_value,
-  receive_value_from,
-
-  receive_value,
-  send_value_to,
-};
-
-pub use self::channel::{
-  fork,
-  send_channel_from,
-  receive_channel_from,
-  receive_channel_from_slot,
-
-  apply_channel,
-  send_channel_to,
-  receive_channel,
-  receive_channel_slot,
-};
-
-pub use self::wrap::{
-  wrap_session,
-  unwrap_session,
+pub use self::{
+  channel::{
+    apply_channel,
+    fork,
+    receive_channel,
+    receive_channel_from,
+    receive_channel_from_slot,
+    receive_channel_slot,
+    send_channel_from,
+    send_channel_to,
+  },
+  cut::{cut, cut_append, AllLeft, AllRight, Cut, L, R},
+  end::{terminate, terminate_async, terminate_nil, wait},
+  fix::{fix_session, succ_session, unfix_session, unfix_session_for},
+  forward::forward,
+  include::{include_session, join_sessions, wait_session, wait_sessions},
+  persistent::{clone_session, create_persistent_session, PersistentSession},
+  run::{run_session, run_session_with_result},
+  step::step,
+  value::{receive_value, receive_value_from, send_value, send_value_to},
+  wrap::{unwrap_session, wrap_session},
 };

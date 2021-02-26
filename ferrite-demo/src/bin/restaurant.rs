@@ -1,11 +1,14 @@
-use ferrite_session::*;
-
 use std::time::Duration;
+
+use ferrite_session::*;
 use tokio::time::sleep;
 
 pub struct MushroomSoup {}
+
 pub struct TomatoSoup {}
+
 pub struct BeefSteak {}
+
 pub struct PorkChop {}
 
 define_choice! {
@@ -20,86 +23,74 @@ define_choice! {
   PorkMenu: SendValue < PorkChop, End >,
 }
 
-pub fn restaurant_session()
-  -> Session < End >
+pub fn restaurant_session() -> Session<End>
 {
-  let soup_of_the_day :
-    Session <
-      InternalChoice < SoupMenu >
-    > =
-    offer_case ( MushroomMenuLabel,
-      send_value! (
-        {
-          println!("[Soup] Spending 3 seconds to prepare mushroom soup");
-          sleep(Duration::from_secs(2)).await;
-          println!("[Soup] Finished preparing mushroom soup");
 
-          MushroomSoup {}
+  let soup_of_the_day : Session<InternalChoice<SoupMenu>> = offer_case(
+    MushroomMenuLabel,
+    send_value!(
+      {
+
+        println!("[Soup] Spending 3 seconds to prepare mushroom soup");
+
+        sleep(Duration::from_secs(2)).await;
+
+        println!("[Soup] Finished preparing mushroom soup");
+
+        MushroomSoup {}
+      },
+      terminate!({
+
+        println!("[Soup] Served mushroom soup. Terminating soup protocol");
+      })
+    ),
+  );
+
+  let main_dish : Session<ExternalChoice<MainMenu>> = offer_choice! {
+    BeefMenu => {
+      println!("[MainCourse] Customer chose to eat beef steak");
+
+      send_value!(
+        {
+          println!("[MainCourse] Spending 7 seconds to prepare beef steak");
+          sleep(Duration::from_secs(7)).await;
+
+          BeefSteak{}
+
         },
         terminate! ({
-          println!("[Soup] Served mushroom soup. Terminating soup protocol");
-        })
-      ));
+          println!("[MainCourse] Served beef steak. Terminating main course protocol");
+        }))
+    }
+    PorkMenu => {
+      println!("[MainCourse] Customer chose to eat pork chop");
 
-  let main_dish
-    : Session <
-        ExternalChoice < MainMenu >
-      > =
-    offer_choice! {
-      BeefMenu => {
-        println!("[MainCourse] Customer chose to eat beef steak");
+      send_value! (
+        {
+          println!("[MainCourse] Spending 5 seconds to prepare pork chop");
+          sleep(Duration::from_secs(5)).await;
 
-        send_value!(
-          {
-            println!("[MainCourse] Spending 7 seconds to prepare beef steak");
-            sleep(Duration::from_secs(7)).await;
+          PorkChop{}
+        },
+        terminate! ({
+          println!("[MainCourse] Served pork chop. Terminating main course protocol");
+        }) )
+    }
+  };
 
-            BeefSteak{}
+  let menu : Session<
+    SendChannel<InternalChoice<SoupMenu>, ExternalChoice<MainMenu>>,
+  > = include_session! ( soup_of_the_day, chan => {
+    send_channel_from ( chan,
+      partial_session( main_dish ) )
+  });
 
-          },
-          terminate! ({
-            println!("[MainCourse] Served beef steak. Terminating main course protocol");
-          }))
-      }
-      PorkMenu => {
-        println!("[MainCourse] Customer chose to eat pork chop");
-
-        send_value! (
-          {
-            println!("[MainCourse] Spending 5 seconds to prepare pork chop");
-            sleep(Duration::from_secs(5)).await;
-
-            PorkChop{}
-          },
-          terminate! ({
-            println!("[MainCourse] Served pork chop. Terminating main course protocol");
-          }) )
-      }
-    };
-
-  let menu :
-    Session <
-      SendChannel <
-        InternalChoice < SoupMenu >,
-        ExternalChoice < MainMenu >
-      >
-    > =
-    include_session! ( soup_of_the_day, chan => {
-      send_channel_from ( chan,
-        partial_session( main_dish ) )
-    });
-
-  let diner :
-    Session <
-      ReceiveChannel <
-        SendChannel <
-          InternalChoice < SoupMenu >,
-          ExternalChoice < MainMenu >
-        >,
-        End
-      >
-    > =
-    receive_channel! ( menu_chan => {
+  let diner : Session<
+    ReceiveChannel<
+      SendChannel<InternalChoice<SoupMenu>, ExternalChoice<MainMenu>>,
+      End,
+    >,
+  > = receive_channel! ( menu_chan => {
       receive_channel_from! ( menu_chan, soup_chan => {
         case! { soup_chan ;
           MushroomMenu => {
@@ -177,8 +168,10 @@ pub fn restaurant_session()
   return restaurant;
 }
 
-
 #[tokio::main]
-pub async fn main() {
-  run_session ( restaurant_session () ) .await;
+
+pub async fn main()
+{
+
+  run_session(restaurant_session()).await;
 }

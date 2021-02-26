@@ -1,6 +1,5 @@
-mod send;
 mod receive;
+mod send;
 
-pub use send::{ SendChannel };
-
-pub use receive::{ ReceiveChannel };
+pub use receive::ReceiveChannel;
+pub use send::SendChannel;

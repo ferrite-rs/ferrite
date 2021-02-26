@@ -1,20 +1,15 @@
-
-pub use super::protocol::public::{
-  SharedProtocol,
-};
-
 pub use super::{
-  LinearToShared,
-  SharedToLinear,
-
-  SharedChannel,
-  SharedSession,
-  run_shared_session,
-  run_shared_session_with_join_handle,
   accept_shared_session,
-  detach_shared_session,
   acquire_shared_session,
-  release_shared_session,
   async_acquire_shared_session,
   async_acquire_shared_session_with_result,
+  detach_shared_session,
+  protocol::public::SharedProtocol,
+  release_shared_session,
+  run_shared_session,
+  run_shared_session_with_join_handle,
+  LinearToShared,
+  SharedChannel,
+  SharedSession,
+  SharedToLinear,
 };

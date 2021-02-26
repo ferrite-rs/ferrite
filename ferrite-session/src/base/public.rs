@@ -1,19 +1,14 @@
-
-pub use super::protocol::public::{ Protocol };
-
 pub use super::{
-  Context,
-  EmptyContext,
+  channel::*,
+  fix::*,
+  protocol::public::Protocol,
   AppendContext,
-  Reversible,
-
-  Session,
-  PartialSession,
-
-  Slot,
-  Empty,
+  Context,
   ContextLens,
+  Empty,
+  EmptyContext,
+  PartialSession,
+  Reversible,
+  Session,
+  Slot,
 };
-
-pub use super::channel::*;
-pub use super::fix::*;

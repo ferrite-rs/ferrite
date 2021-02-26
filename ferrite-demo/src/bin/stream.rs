@@ -1,34 +1,29 @@
 use std::time::Duration;
-use tokio::time::sleep;
 
 use ferrite_session::*;
+use tokio::time::sleep;
 
-type IntStream = Rec <
-  SendValue < u64, Z > >;
+type IntStream = Rec<SendValue<u64, Z>>;
 
-fn producer (count: u64) ->
-  Session < IntStream >
+fn producer(count : u64) -> Session<IntStream>
 {
-  fix_session (
-    send_value! (
-      {
-        sleep(Duration::from_secs(1)).await;
-        println!("[producer] Producing value: {}", count);
 
-        count
-      },
-      producer ( count + 1 )
-    ) )
+  fix_session(send_value!(
+    {
+
+      sleep(Duration::from_secs(1)).await;
+
+      println!("[producer] Producing value: {}", count);
+
+      count
+    },
+    producer(count + 1)
+  ))
 }
 
-fn consumer < A: Protocol > () ->
-  Session <
-    ReceiveChannel <
-      IntStream,
-      A
-    >
-  >
+fn consumer<A : Protocol>() -> Session<ReceiveChannel<IntStream, A>>
 {
+
   receive_channel! ( stream => {
     unfix_session_for ( stream,
       receive_value_from! ( stream,
@@ -47,16 +42,20 @@ fn consumer < A: Protocol > () ->
   })
 }
 
-pub fn stream_session () ->
-  Session < End >
+pub fn stream_session() -> Session<End>
 {
-  let p1 = producer ( 0 );
-  let p2 = consumer ();
 
-  apply_channel ( p2, p1 )
+  let p1 = producer(0);
+
+  let p2 = consumer();
+
+  apply_channel(p2, p1)
 }
 
 #[tokio::main]
-pub async fn main() {
-  run_session ( stream_session() ).await;
+
+pub async fn main()
+{
+
+  run_session(stream_session()).await;
 }

@@ -1,37 +1,36 @@
 use std::time::Duration;
-use tokio::time::sleep;
 
 use ferrite_session::*;
+use tokio::time::sleep;
 
 struct WrapIntStream;
 
 impl Wrapper for WrapIntStream
-{ type Unwrap = IntStream; }
-
-type IntStream = SendValue < u64, Wrap < WrapIntStream > >;
-
-fn producer (count: u64) ->
-  Session < IntStream >
 {
-  send_value! (
+  type Unwrap = IntStream;
+}
+
+type IntStream = SendValue<u64, Wrap<WrapIntStream>>;
+
+fn producer(count : u64) -> Session<IntStream>
+{
+
+  send_value!(
     {
+
       sleep(Duration::from_secs(1)).await;
+
       println!("Producing value: {}", count);
 
       count
     },
-    wrap_session ( producer ( count + 1 ) )
+    wrap_session(producer(count + 1))
   )
 }
 
-fn consumer () ->
-  Session <
-    ReceiveChannel <
-      IntStream,
-      End
-    >
-  >
+fn consumer() -> Session<ReceiveChannel<IntStream, End>>
 {
+
   receive_channel! ( stream => {
     receive_value_from! ( stream,
       count => {
@@ -51,16 +50,20 @@ fn consumer () ->
   })
 }
 
-pub fn stream_session () ->
-  Session < End >
+pub fn stream_session() -> Session<End>
 {
-  let p1 = producer ( 0 );
-  let p2 = consumer ();
 
-  apply_channel ( p2, p1 )
+  let p1 = producer(0);
+
+  let p2 = consumer();
+
+  apply_channel(p2, p1)
 }
 
 #[tokio::main]
-pub async fn main() {
-  run_session( stream_session () ).await
+
+pub async fn main()
+{
+
+  run_session(stream_session()).await
 }

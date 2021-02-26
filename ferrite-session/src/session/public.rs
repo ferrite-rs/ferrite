@@ -1,55 +1,43 @@
 pub use super::{
+  apply_channel,
+  choice::*,
+  clone_session,
+  create_persistent_session,
+  cut,
+  cut_append,
+  fix_session,
+  fork,
+  forward,
+  include_session,
+  join_sessions,
+  receive_channel,
+  receive_channel_from,
+  receive_channel_from_slot,
+  receive_channel_slot,
+  receive_value,
+  receive_value_from,
   run_session,
   run_session_with_result,
+  send_channel_from,
+  send_channel_to,
+  send_value,
+  send_value_to,
   step,
-
-  wait,
+  succ_session,
   terminate,
   terminate_async,
   terminate_nil,
-
-  fix_session,
-  succ_session,
   unfix_session,
   unfix_session_for,
-
-  forward,
-
-  include_session,
+  unwrap_session,
+  wait,
   wait_session,
   wait_sessions,
-  join_sessions,
-
-  cut,
-  cut_append,
-  Cut,
-  L,
-  R,
+  wrap_session,
   AllLeft,
   AllRight,
-
-  clone_session,
+  Cut,
   PersistentSession,
-  create_persistent_session,
-
-  send_value,
-  receive_value_from,
-
-  receive_value,
-  send_value_to,
-
-  fork,
-  send_channel_from,
-  receive_channel_from,
-  receive_channel_from_slot,
-
-  apply_channel,
-  send_channel_to,
-  receive_channel,
-  receive_channel_slot,
-
-  wrap_session,
-  unwrap_session,
+  L,
+  R,
 };
-
-pub use super::choice::*;

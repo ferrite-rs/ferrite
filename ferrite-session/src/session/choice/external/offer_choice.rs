@@ -1,23 +1,11 @@
-use crate::base::*;
-use crate::protocol::*;
-use crate::functional::*;
+use super::{cloak_session::*, inject_session::*, utils::*};
+use crate::{base::*, functional::*, protocol::*};
 
-use super::utils::*;
-use super::cloak_session::*;
-use super::inject_session::*;
-
-pub fn offer_choice
-  < C, Row >
-  ( cont1 :
-      impl FnOnce
-        ( Row::Uncloaked ) ->
-          AppliedSum <
-            Row,
-            SessionF < C >
-          >
-      + Send + 'static
-  ) ->
-    PartialSession < C, ExternalChoice < Row > >
+pub fn offer_choice<C, Row>(
+  cont1 : impl FnOnce(Row::Uncloaked) -> AppliedSum<Row, SessionF<C>>
+    + Send
+    + 'static
+) -> PartialSession<C, ExternalChoice<Row>>
 where
   C : Context,
   Row : RowCon,
@@ -25,25 +13,25 @@ where
   Row : SplitRow,
   Row : SumFunctor,
   Row : SumFunctorInject,
-  Row : UncloakRow < InjectSessionF < Row, C > >,
+  Row : UncloakRow<InjectSessionF<Row, C>>,
 {
-  unsafe_create_session (
-    move | ctx, sender1 | async move {
-      let (sender2, receiver2) = once_channel();
 
-      let payload = ExternalChoice::< Row >
-        { sender: sender2 };
+  unsafe_create_session(move |ctx, sender1| async move {
 
-      sender1.send(payload).unwrap();
+    let (sender2, receiver2) = once_channel();
 
-      let (Value(choice), sender3) = receiver2.recv().await.unwrap();
+    let payload = ExternalChoice::<Row> { sender : sender2 };
 
-      let cont3 = selector_to_inject_session( choice );
+    sender1.send(payload).unwrap();
 
-      let cont4 = Row::full_uncloak_row( cont3 );
+    let (Value(choice), sender3) = receiver2.recv().await.unwrap();
 
-      let cont5 = cont1 ( cont4 );
+    let cont3 = selector_to_inject_session(choice);
 
-      run_choice_cont( ctx, sender3, cont5 ).await;
-    })
+    let cont4 = Row::full_uncloak_row(cont3);
+
+    let cont5 = cont1(cont4);
+
+    run_choice_cont(ctx, sender3, cont5).await;
+  })
 }

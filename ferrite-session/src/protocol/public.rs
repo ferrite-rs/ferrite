@@ -1,15 +1,10 @@
-
 pub use super::{
+  choice::*,
   End,
-
-  SendValue,
-  ReceiveValue,
-
-  SendChannel,
   ReceiveChannel,
-
+  ReceiveValue,
+  SendChannel,
+  SendValue,
   Wrap,
   Wrapper,
 };
-
-pub use super::choice::*;

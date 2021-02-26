@@ -1,71 +1,54 @@
-use std::vec::*;
-use std::time::Duration;
-use tokio::time::sleep;
+use std::{time::Duration, vec::*};
 
 use ferrite_session::*;
+use tokio::time::sleep;
 
-pub fn concat_session()
-  -> Session < End >
+pub fn concat_session() -> Session<End>
 {
-  let p1 :
-    Session <
-      ReceiveValue <
-        Vec < String >,
-        ReceiveValue <
-          Vec < String >,
-          SendValue <
-            String,
-            End
-          >
-        >
-      >
-    >
-  = receive_value! ( (l1: Vec < String >) => {
-      println!("[P1] Received first list: [{}]", l1.join(", "));
 
-      receive_value! ( (l2: Vec < String >) => {
-        println!("[P1] Received second list: [{}]", l2.join(", "));
+  let p1 : Session<
+    ReceiveValue<
+      Vec<String>,
+      ReceiveValue<Vec<String>, SendValue<String, End>>,
+    >,
+  > = receive_value! ( (l1: Vec < String >) => {
+    println!("[P1] Received first list: [{}]", l1.join(", "));
 
-        send_value! (
-          {
-            println!("[P1] Spending 3 seconds to concat lists");
-            sleep(Duration::from_secs(3)).await;
+    receive_value! ( (l2: Vec < String >) => {
+      println!("[P1] Received second list: [{}]", l2.join(", "));
 
-            let l5 = {
-              let mut l3 = l1;
-              let mut l4 = l2;
-              l3.append(&mut l4);
-              l3
-            };
+      send_value! (
+        {
+          println!("[P1] Spending 3 seconds to concat lists");
+          sleep(Duration::from_secs(3)).await;
 
-            l5.join(", ")
-          },
-          terminate! ({
-            println!("[P1] Spending 2 seconds to cleanup");
-            sleep(Duration::from_secs(2)).await;
-            println!("[P1] Terminating");
-          })
-        )
-      })
-    });
+          let l5 = {
+            let mut l3 = l1;
+            let mut l4 = l2;
+            l3.append(&mut l4);
+            l3
+          };
 
-  let p2
-    : Session <
-        ReceiveChannel <
-          ReceiveValue <
-            Vec < String >,
-            ReceiveValue <
-              Vec < String >,
-              SendValue <
-                String,
-                End
-              >
-            >
-          >,
-          End
-        >
-      >
-  = receive_channel! ( val_chan => {
+          l5.join(", ")
+        },
+        terminate! ({
+          println!("[P1] Spending 2 seconds to cleanup");
+          sleep(Duration::from_secs(2)).await;
+          println!("[P1] Terminating");
+        })
+      )
+    })
+  });
+
+  let p2 : Session<
+    ReceiveChannel<
+      ReceiveValue<
+        Vec<String>,
+        ReceiveValue<Vec<String>, SendValue<String, End>>,
+      >,
+      End,
+    >,
+  > = receive_channel! ( val_chan => {
       send_value_to! ( val_chan,
         {
           println!("[P2] spending 2 seconds to produce ['hello', 'world']");
@@ -104,14 +87,15 @@ pub fn concat_session()
       )
   });
 
-  let p3 :
-    Session < End >
-  = apply_channel (p2, p1);
+  let p3 : Session<End> = apply_channel(p2, p1);
 
   return p3;
 }
 
 #[tokio::main]
-pub async fn main() {
-  run_session( concat_session() ) .await;
+
+pub async fn main()
+{
+
+  run_session(concat_session()).await;
 }

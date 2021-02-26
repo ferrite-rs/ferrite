@@ -1,13 +1,8 @@
-mod utils;
 mod choose;
-mod offer_choice;
 mod cloak_session;
 mod inject_session;
+mod offer_choice;
+mod utils;
 
-pub use offer_choice::{
-  offer_choice,
-};
-
-pub use choose::{
-  choose
-};
+pub use choose::choose;
+pub use offer_choice::offer_choice;

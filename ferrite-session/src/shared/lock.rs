@@ -1,28 +1,23 @@
+use super::{
+  fix::SharedRecApp,
+  linear_to_shared::LinearToShared,
+  shared_to_linear::SharedToLinear,
+};
 use crate::base::*;
-
-use super::fix::{ SharedRecApp };
-use super::linear_to_shared::{ LinearToShared };
-use super::shared_to_linear::{ SharedToLinear };
 
 // use ipc_channel::ipc;
 
-pub struct Lock < F >
+pub struct Lock<F>
 where
-  F : SharedRecApp < SharedToLinear < F > >
+  F : SharedRecApp<SharedToLinear<F>>,
 {
-  pub (crate) unlock:
-    Receiver <
-      ( SenderOnce < () >,
-        SenderOnce < LinearToShared < F > >
-      )
-    >
+  pub(crate) unlock : Receiver<(SenderOnce<()>, SenderOnce<LinearToShared<F>>)>,
 }
 
-impl < F >
-  Protocol for
-  Lock < F >
+impl<F> Protocol for Lock<F>
 where
   F : Protocol,
-  F : SharedRecApp < SharedToLinear < F > >,
-  F::Applied : Protocol
-{ }
+  F : SharedRecApp<SharedToLinear<F>>,
+  F::Applied : Protocol,
+{
+}

@@ -1,52 +1,35 @@
-use crate::base::*;
-use crate::protocol::*;
-use crate::functional::*;
+use super::{super::cloak_session::*, structs::*};
+use crate::{base::*, functional::*, protocol::*};
 
-use super::structs::*;
-use super::super::cloak_session::*;
-
-impl < Row, C > TyCon
-  for InjectSessionF < Row, C >
+impl<Row, C> TyCon for InjectSessionF<Row, C>
 where
-  C: 'static,
-  Row: 'static,
-{}
-
-impl < A, C, Row >
-  TypeApp < A > for
-  InjectSessionF < Row, C >
-where
-  C: Context,
-  A: 'static,
-  Row: 'static,
+  C : 'static,
+  Row : 'static,
 {
-  type Applied =
-    InjectSession < Row, C, A >;
 }
 
-impl < Row, C, A >
-  RunCont < C, A >
-  for InjectSession < Row, C, A >
+impl<A, C, Row> TypeApp<A> for InjectSessionF<Row, C>
 where
-  C: Context,
-  A: Protocol
+  C : Context,
+  A : 'static,
+  Row : 'static,
 {
-  type Ret =
-    AppliedSum <
-      Row,
-      SessionF < C >
-    >
-  ;
+  type Applied = InjectSession<Row, C, A>;
+}
 
-  fn run_cont
-    ( self,
-      session: PartialSession < C, A >
-    ) ->
-      AppliedSum <
-        Row,
-        SessionF < C >
-      >
+impl<Row, C, A> RunCont<C, A> for InjectSession<Row, C, A>
+where
+  C : Context,
+  A : Protocol,
+{
+  type Ret = AppliedSum<Row, SessionF<C>>;
+
+  fn run_cont(
+    self,
+    session : PartialSession<C, A>,
+  ) -> AppliedSum<Row, SessionF<C>>
   {
-    run_inject_session( self, session )
+
+    run_inject_session(self, session)
   }
 }

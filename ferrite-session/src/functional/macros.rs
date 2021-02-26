@@ -1,4 +1,5 @@
 #[macro_export]
+
 macro_rules! natural_transformation {
   ( { $( $field:ident : $field_type:ty ),* $(,)? } ;
     $name:ident : forall x . $f1:ty [@x] -> $f2:ty [@x] ;

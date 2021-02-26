@@ -1,7 +1,7 @@
-mod traits;
-mod structs;
 mod impls;
+mod structs;
+mod traits;
 
-pub use traits::*;
-pub use structs::*;
 pub use impls::*;
+pub use structs::*;
+pub use traits::*;

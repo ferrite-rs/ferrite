@@ -1,3 +1,2 @@
-
-mod basic_test {
-}
+mod basic_test
+{}
