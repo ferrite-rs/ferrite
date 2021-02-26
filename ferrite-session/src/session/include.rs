@@ -10,9 +10,9 @@ use crate::{
     Protocol,
     Session,
   },
-  context::append_emtpy_slot,
   protocol::End,
   session::{
+    context::append_emtpy_slot,
     cut::{
       AllRight,
       Cut,

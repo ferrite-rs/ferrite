@@ -6,10 +6,23 @@ mod session;
 
 pub mod public;
 
-pub use fix::*;
-
 pub use self::{
-  channel::*,
+  channel::{
+    ipc_channel,
+    once_channel,
+    opaque_channel,
+    unbounded,
+    ForwardChannel,
+    IpcReceiver,
+    IpcSender,
+    OpaqueReceiver,
+    OpaqueSender,
+    Receiver,
+    ReceiverOnce,
+    Sender,
+    SenderOnce,
+    Value,
+  },
   context::{
     AppendContext,
     Context,
@@ -17,6 +30,14 @@ pub use self::{
     Empty,
     EmptyContext,
     Slot,
+  },
+  fix::{
+    fix,
+    unfix,
+    HasRecApp,
+    Rec,
+    RecApp,
+    Unfix,
   },
   protocol::Protocol,
   session::{

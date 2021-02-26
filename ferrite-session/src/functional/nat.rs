@@ -3,18 +3,15 @@ use std::marker::PhantomData;
 pub trait Nat: Send + Copy + 'static
 {
   #[allow(non_upper_case_globals)]
-
   const Value : Self;
 
   fn nat() -> Self;
 }
 
 #[derive(Copy, Clone)]
-
 pub struct Z;
 
 #[derive(Copy, Clone)]
-
 pub struct S<N>(pub PhantomData<N>);
 
 impl Nat for Z

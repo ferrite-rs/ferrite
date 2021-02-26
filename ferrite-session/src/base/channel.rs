@@ -55,6 +55,7 @@ pub struct IpcReceiver<T>
   phantom : PhantomData<T>,
 }
 
+// TODO: Define proper error type
 #[derive(Debug)]
 pub struct SendError(pub String);
 

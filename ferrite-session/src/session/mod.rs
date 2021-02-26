@@ -2,6 +2,7 @@ pub mod public;
 
 mod channel;
 mod choice;
+mod context;
 mod cut;
 mod end;
 mod fix;
@@ -13,8 +14,6 @@ mod step;
 mod value;
 mod wrap;
 
-pub use choice::*;
-
 pub use self::{
   channel::{
     apply_channel,
@@ -25,6 +24,22 @@ pub use self::{
     receive_channel_slot,
     send_channel_from,
     send_channel_to,
+  },
+  choice::{
+    case,
+    choose,
+    offer_case,
+    offer_choice,
+  },
+  context::{
+    append_emtpy_slot,
+    new_session,
+    partial_session,
+    partial_session_1,
+    partial_session_2,
+    session,
+    session_1,
+    session_2,
   },
   cut::{
     cut,

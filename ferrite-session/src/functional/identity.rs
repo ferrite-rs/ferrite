@@ -3,9 +3,9 @@ use super::{
   type_app::*,
 };
 
-struct IdentityF {}
+pub struct IdentityF {}
 
-struct Identity<A>(A);
+pub struct Identity<A>(pub A);
 
 impl TyCon for IdentityF {}
 

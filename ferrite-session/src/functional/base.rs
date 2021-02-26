@@ -1,5 +1,8 @@
 use super::type_app::*;
 
+// An implementation of Functor, Applicative, and Monad
+// without resorting to HKT or GAT.
+
 pub trait Functor: TypeAppGeneric
 {
   fn fmap<A, B>(
@@ -34,6 +37,7 @@ pub trait Monad: Applicative
     B : Send + 'static;
 }
 
+// NaturalTransformation f1 f2 = forall x. f1 x -> f2 x
 pub trait NaturalTransformation<F1, F2>
 where
   F1 : TyCon,

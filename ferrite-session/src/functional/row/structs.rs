@@ -12,11 +12,9 @@ use super::traits::*;
 use crate::functional::type_app::*;
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
-
 pub enum Bottom {}
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
-
 pub enum Sum<A, B>
 {
   Inl(A),
