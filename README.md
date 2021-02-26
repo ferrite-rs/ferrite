@@ -1,5 +1,16 @@
 # Ferrite - Session Types DSL for Rust
 
+[![Crates.io][crates-badge]][crates-url]
+[![Apache licensed][license-badge]][license-url]
+[![Build Status][actions-badge]][actions-url]
+
+[crates-badge]: https://img.shields.io/crates/v/ferrite-session.svg
+[crates-url]: https://crates.io/crates/ferrite-session
+[license-badge]: https://img.shields.io/crates/l/ferrite-session.svg
+[license-url]: https://github.com/ferrite-rs/ferrite/blob/master/LICENSE
+[actions-badge]: https://github.com/ferrite-rs/ferrite/workflows/Cargo%20Tests/badge.svg
+[actions-url]: https://github.com/ferrite-rs/ferrite/actions
+
 ## Overview
 
 Ferrite is a DSL for writing session type programs in Rust.
@@ -49,13 +60,17 @@ cargo run --bin shared
 
 ## Code Organization
 
-  - [`src/base`](src/base) - Core constructs for Ferrite
-  - [`src/protocol`](src/protocol) - Type definitions for session types
-  - [`src/context`](src/context) - Type definitions for linear context
-  - [`src/session`](src/session) - Term constructors
-  - [`src/session`](src/shared) - Shared session types
-  - [`src/public.rs`](src/public.rs) - Public API exposed by Ferrite
-  - [`src/bin`](src/bin) - Demo executables
+### `ferrite-session`
+
+  - [`src/base`](ferrite-session/src/base) - Core constructs for Ferrite
+  - [`src/functional`](ferrite-session/src/function) - Functional programming constructs such as type application and natural numbers.
+  - [`src/protocol`](ferrite-session/src/protocol) - Type definitions for session types
+  - [`src/session`](ferrite-session/src/session) - Term constructors
+  - [`src/public.rs`](ferrite-session/src/public.rs) - Public API exposed by Ferrite
+
+### Demo
+
+  - [`src/bin`](ferrite-demo/src/bin) - Demo executables
 
 ## Acknowledgement
 

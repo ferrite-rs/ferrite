@@ -1,13 +1,13 @@
 #[macro_use]
 extern crate log;
 
+pub mod internal;
 pub mod macros;
 
-mod public;
-
-mod base;
-mod functional;
-mod protocol;
-mod session;
-
-pub use public::*;
+pub use internal::{
+  base::public as base,
+  functional,
+  protocol::public as protocol,
+  public::*,
+  session::public as session,
+};
