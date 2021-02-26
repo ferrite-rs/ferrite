@@ -1,11 +1,4 @@
-use crate::{
-  base::*,
-  functional::*,
-};
-
-pub struct ReceiverF {}
-
-pub struct SenderF {}
+use crate::base::*;
 
 pub trait RunCont<C, A>
 where
@@ -30,22 +23,4 @@ where
   Runner : RunCont<C, A>,
 {
   runner.run_cont(cont)
-}
-
-impl TyCon for ReceiverF {}
-
-impl TyCon for SenderF {}
-
-impl<P> TypeApp<P> for ReceiverF
-where
-  P : Send + 'static,
-{
-  type Applied = ReceiverOnce<P>;
-}
-
-impl<P> TypeApp<P> for SenderF
-where
-  P : Send + 'static,
-{
-  type Applied = SenderOnce<P>;
 }

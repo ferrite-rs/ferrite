@@ -3,5 +3,4 @@ pub use crate::{
   functional::*,
   protocol::public::*,
   session::public::*,
-  shared::public::*,
 };

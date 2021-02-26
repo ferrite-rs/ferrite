@@ -18,3 +18,10 @@ where
 {
   type Applied = ReceiveChannel<P::Applied, Q::Applied>;
 }
+
+impl<A, B, X> SharedRecApp<X> for ReceiveChannel<A, B>
+where
+  B : SharedRecApp<X>,
+{
+  type Applied = ReceiveChannel<A, B::Applied>;
+}

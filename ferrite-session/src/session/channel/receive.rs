@@ -2,22 +2,20 @@ use async_macros::join;
 use tokio::task;
 
 use crate::{
-  base::*,
-  functional::*,
-  protocol::ReceiveChannel,
-  session::{
-    forward::forward,
-    include::include_session,
+  base::{
+    once_channel,
+    unsafe_create_session,
+    unsafe_run_session,
+    AppendContext,
+    Context,
+    ContextLens,
+    Empty,
+    PartialSession,
+    Protocol,
   },
+  functional::Nat,
+  protocol::ReceiveChannel,
 };
-
-/*
-   Implication, Right Rule
-
-         cont :: Δ, P  ⊢ Q
-   ====================================
-     receive_channel(cont) :: Δ  ⊢ P ⊸ Q
-*/
 
 pub fn receive_channel<C, A, B>(
   cont : impl FnOnce(C::Length) -> PartialSession<C::Appended, B>
@@ -75,14 +73,6 @@ where
   })
 }
 
-/*
-   Implication, Left Rule
-
-               cont :: Q, Δ ⊢ S
-   ========================================
-     send_channel_to(cont) :: P, P ⊸ Q, Δ ⊢ S
-*/
-
 pub fn send_channel_to<N1, N2, C, A1, A2, B>(
   _ : N1,
   _ : N2,
@@ -118,26 +108,5 @@ where
     });
 
     let _ = join!(child1, child2).await;
-  })
-}
-
-/*
-   Implication, Application
-
-     p1 :: · ⊢ P ⊸ Q       p2 :: · ⊢ P
-   ========================================
-       apply_channel(p1, p2) :: · ⊢ Q
-*/
-
-pub fn apply_channel<A, B>(
-  f : Session<ReceiveChannel<A, B>>,
-  a : Session<A>,
-) -> Session<B>
-where
-  A : Protocol,
-  B : Protocol,
-{
-  include_session(f, move |c1| {
-    include_session(a, move |c2| send_channel_to(c1, c2, forward(c1)))
   })
 }

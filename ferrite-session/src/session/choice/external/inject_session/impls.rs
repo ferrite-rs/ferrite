@@ -1,11 +1,11 @@
 use super::{
-  super::cloak_session::*,
+  super::cloak_session::SessionF,
   structs::*,
 };
 use crate::{
   base::*,
   functional::*,
-  protocol::*,
+  session::choice::run_cont::RunCont,
 };
 
 impl<Row, C> TyCon for InjectSessionF<Row, C>

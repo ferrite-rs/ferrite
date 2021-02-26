@@ -1,10 +1,24 @@
 use super::{
-  structs::*,
-  traits::*,
+  structs::{
+    CloakedSession,
+    SessionF,
+  },
+  traits::{
+    HasPartialSession,
+    NeedPartialSession,
+    PartialSessionWitness,
+  },
 };
 use crate::{
-  base::*,
-  functional::*,
+  base::{
+    Context,
+    PartialSession,
+    Protocol,
+  },
+  functional::{
+    TyCon,
+    TypeApp,
+  },
 };
 
 impl<C, A> HasPartialSession<C, A> for PartialSession<C, A>

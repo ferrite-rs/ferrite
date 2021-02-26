@@ -1,5 +1,6 @@
 mod external;
 mod internal;
+mod run_cont;
 
 pub use self::{
   external::{
@@ -9,5 +10,9 @@ pub use self::{
   internal::{
     case,
     offer_case,
+  },
+  run_cont::{
+    run_cont,
+    RunCont,
   },
 };

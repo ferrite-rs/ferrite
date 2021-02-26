@@ -7,7 +7,6 @@ use std::{
 use serde;
 use tokio::task;
 
-use super::protocol::SharedProtocol;
 use crate::base::*;
 
 pub struct SharedSession<S>
@@ -56,112 +55,6 @@ where
       phantom : PhantomData,
     }
   }
-}
-
-pub fn serialize_shared_channel<S>(
-  channel : SharedChannel<S>
-) -> SerializedSharedChannel<S>
-where
-  S : SharedProtocol + ForwardChannel,
-{
-  let (sender1, receiver1) = ipc_channel::<()>();
-
-  let (sender2, receiver2) = ipc_channel::<()>();
-
-  let (sender3, receiver3) = opaque_channel();
-
-  let (sender4, receiver4) = opaque_channel();
-
-  task::spawn(async move {
-    loop {
-      let receiver1 = receiver1.clone();
-
-      let signal = task::spawn_blocking(move || receiver1.recv())
-        .await
-        .unwrap();
-
-      match signal {
-        Some(()) => {
-          let (sender5, receiver5) = once_channel::<()>();
-
-          let (sender6, receiver6) = once_channel::<S>();
-
-          {
-            let channel = channel.clone();
-
-            let sender2 = sender2.clone();
-
-            let receiver3 = receiver3.clone();
-
-            let sender4 = sender4.clone();
-
-            debug!("[serialize_shared_channel] acquiring local shared channel");
-
-            channel.endpoint.send((sender5, sender6)).unwrap();
-
-            receiver5.recv().await.unwrap();
-
-            debug!("[serialize_shared_channel] acquired local shared channel");
-
-            sender2.send(());
-
-            receiver6.forward_to(sender4, receiver3);
-          }
-        }
-        None => break,
-      }
-    }
-  });
-
-  SerializedSharedChannel {
-    acquire_sender : sender1,
-    acquire_receiver : receiver2,
-    linear_sender : sender3,
-    linear_receiver : receiver4,
-    phantom : PhantomData,
-  }
-}
-
-pub fn deserialize_shared_channel<S>(
-  channel : SerializedSharedChannel<S>
-) -> SharedChannel<S>
-where
-  S : SharedProtocol + ForwardChannel + Send,
-{
-  let (sender1, receiver1) = unbounded::<(SenderOnce<()>, SenderOnce<S>)>();
-
-  task::spawn(async move {
-    loop {
-      match receiver1.recv().await {
-        Some((sender2, sender3)) => {
-          debug!(
-            "[deserialize_shared_channel] acquiring remote shared channel"
-          );
-
-          channel.acquire_sender.send(());
-
-          let acquire_receiver = channel.acquire_receiver.clone();
-
-          task::spawn_blocking(move || {
-            acquire_receiver.recv().unwrap();
-          })
-          .await
-          .unwrap();
-
-          debug!("[deserialize_shared_channel] acquired remote shared channel");
-
-          sender2.send(()).unwrap();
-
-          let channel2 = channel.clone();
-
-          sender3.forward_to(channel2.linear_sender, channel2.linear_receiver);
-        }
-        None => break,
-      }
-    }
-  });
-
-  SharedChannel { endpoint : sender1 }
 }
 
 impl<S> Clone for SharedChannel<S>
@@ -260,4 +153,110 @@ where
 
     Ok(deserialize_shared_channel(channel))
   }
+}
+
+fn serialize_shared_channel<S>(
+  channel : SharedChannel<S>
+) -> SerializedSharedChannel<S>
+where
+  S : SharedProtocol + ForwardChannel,
+{
+  let (sender1, receiver1) = ipc_channel::<()>();
+
+  let (sender2, receiver2) = ipc_channel::<()>();
+
+  let (sender3, receiver3) = opaque_channel();
+
+  let (sender4, receiver4) = opaque_channel();
+
+  task::spawn(async move {
+    loop {
+      let receiver1 = receiver1.clone();
+
+      let signal = task::spawn_blocking(move || receiver1.recv())
+        .await
+        .unwrap();
+
+      match signal {
+        Some(()) => {
+          let (sender5, receiver5) = once_channel::<()>();
+
+          let (sender6, receiver6) = once_channel::<S>();
+
+          {
+            let channel = channel.clone();
+
+            let sender2 = sender2.clone();
+
+            let receiver3 = receiver3.clone();
+
+            let sender4 = sender4.clone();
+
+            debug!("[serialize_shared_channel] acquiring local shared channel");
+
+            channel.endpoint.send((sender5, sender6)).unwrap();
+
+            receiver5.recv().await.unwrap();
+
+            debug!("[serialize_shared_channel] acquired local shared channel");
+
+            sender2.send(());
+
+            receiver6.forward_to(sender4, receiver3);
+          }
+        }
+        None => break,
+      }
+    }
+  });
+
+  SerializedSharedChannel {
+    acquire_sender : sender1,
+    acquire_receiver : receiver2,
+    linear_sender : sender3,
+    linear_receiver : receiver4,
+    phantom : PhantomData,
+  }
+}
+
+fn deserialize_shared_channel<S>(
+  channel : SerializedSharedChannel<S>
+) -> SharedChannel<S>
+where
+  S : SharedProtocol + ForwardChannel + Send,
+{
+  let (sender1, receiver1) = unbounded::<(SenderOnce<()>, SenderOnce<S>)>();
+
+  task::spawn(async move {
+    loop {
+      match receiver1.recv().await {
+        Some((sender2, sender3)) => {
+          debug!(
+            "[deserialize_shared_channel] acquiring remote shared channel"
+          );
+
+          channel.acquire_sender.send(());
+
+          let acquire_receiver = channel.acquire_receiver.clone();
+
+          task::spawn_blocking(move || {
+            acquire_receiver.recv().unwrap();
+          })
+          .await
+          .unwrap();
+
+          debug!("[deserialize_shared_channel] acquired remote shared channel");
+
+          sender2.send(()).unwrap();
+
+          let channel2 = channel.clone();
+
+          sender3.forward_to(channel2.linear_sender, channel2.linear_receiver);
+        }
+        None => break,
+      }
+    }
+  });
+
+  SharedChannel { endpoint : sender1 }
 }

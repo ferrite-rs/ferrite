@@ -4,6 +4,9 @@ mod channel;
 mod choice;
 mod end;
 mod fix;
+mod linear_to_shared;
+mod lock;
+mod shared_to_linear;
 mod value;
 mod wrap;
 
@@ -19,3 +22,9 @@ pub use value::{
   SendValue,
 };
 pub use wrap::*;
+
+pub use self::{
+  linear_to_shared::LinearToShared,
+  lock::Lock,
+  shared_to_linear::SharedToLinear,
+};

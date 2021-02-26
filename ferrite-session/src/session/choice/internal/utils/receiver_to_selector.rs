@@ -1,6 +1,14 @@
 use crate::{
-  functional::*,
-  protocol::*,
+  base::ReceiverF,
+  functional::{
+    cloak_applied,
+    lift_sum,
+    Applied,
+    AppliedSum,
+    Merge,
+    SplitRow,
+    SumFunctor,
+  },
 };
 
 pub fn receiver_to_selector<Row>(

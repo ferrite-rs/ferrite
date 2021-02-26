@@ -1,5 +1,6 @@
 pub mod public;
 
+mod apply;
 mod channel;
 mod choice;
 mod context;
@@ -10,13 +11,14 @@ mod forward;
 mod include;
 mod persistent;
 mod run;
+mod shared;
 mod step;
 mod value;
 mod wrap;
 
 pub use self::{
+  apply::apply_channel,
   channel::{
-    apply_channel,
     fork,
     receive_channel,
     receive_channel_from,
@@ -30,6 +32,7 @@ pub use self::{
     choose,
     offer_case,
     offer_choice,
+    run_cont,
   },
   context::{
     append_emtpy_slot,
@@ -77,6 +80,16 @@ pub use self::{
   run::{
     run_session,
     run_session_with_result,
+    run_shared_session,
+    run_shared_session_with_join_handle,
+  },
+  shared::{
+    accept_shared_session,
+    acquire_shared_session,
+    async_acquire_shared_session,
+    async_acquire_shared_session_with_result,
+    detach_shared_session,
+    release_shared_session,
   },
   step::step,
   value::{

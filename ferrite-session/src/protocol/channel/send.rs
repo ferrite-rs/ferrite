@@ -19,3 +19,11 @@ where
 {
   type Applied = SendChannel<P::Applied, Q::Applied>;
 }
+
+impl<P, Q, R> SharedRecApp<R> for SendChannel<P, Q>
+where
+  P : Protocol,
+  Q : SharedRecApp<R>,
+{
+  type Applied = SendChannel<P, Q::Applied>;
+}

@@ -1,10 +1,14 @@
 use std::any::Any;
 
 use super::{
-  structs::*,
-  traits::*,
+  structs::CloakedSession,
+  traits::NeedPartialSession,
 };
-use crate::base::*;
+use crate::base::{
+  Context,
+  PartialSession,
+  Protocol,
+};
 
 struct SessionContWrapper<C, A, K>
 {

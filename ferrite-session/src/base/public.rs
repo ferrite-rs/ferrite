@@ -1,10 +1,10 @@
 pub use super::{
-  context::Empty,
-  fix::Rec,
-  session::{
-    PartialSession,
-    Session,
-  },
+  Empty,
+  PartialSession,
+  Rec,
+  Session,
+  SharedChannel,
+  SharedSession,
 };
 
 pub trait Protocol: super::Protocol
@@ -12,6 +12,12 @@ pub trait Protocol: super::Protocol
 }
 
 impl<A> Protocol for A where A : super::Protocol {}
+
+pub trait SharedProtocol: super::SharedProtocol
+{
+}
+
+impl<A> SharedProtocol for A where A : super::SharedProtocol {}
 
 pub trait Context: super::Context
 {
@@ -66,6 +72,12 @@ pub trait RecApp<A>: super::RecApp<A>
 }
 
 impl<A, X> RecApp<A> for X where X : super::RecApp<A> {}
+
+pub trait SharedRecApp<X>: super::SharedRecApp<X>
+{
+}
+
+impl<X, S> SharedRecApp<X> for S where S : super::SharedRecApp<X> {}
 
 pub trait HasRecApp<F, A>: super::HasRecApp<F, A>
 {

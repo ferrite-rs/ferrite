@@ -8,7 +8,6 @@ use super::super::cloak_session::*;
 use crate::{
   base::*,
   functional::*,
-  protocol::*,
 };
 
 pub async fn run_choice_cont<Row, C>(

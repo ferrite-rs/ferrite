@@ -1,11 +1,12 @@
-use super::{
-  super::internal_session::*,
-  structs::*,
-};
+use super::structs::*;
 use crate::{
   base::*,
   functional::*,
   protocol::*,
+  session::choice::{
+    internal::internal_session::InternalSessionF,
+    run_cont::RunCont,
+  },
 };
 
 impl<N, C, B, Row, Del> TyCon for InjectSessionF<N, C, B, Row, Del>

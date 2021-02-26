@@ -1,7 +1,21 @@
 use crate::{
-  base::*,
-  functional::*,
-  protocol::*,
+  base::{
+    once_channel,
+    unsafe_create_session,
+    unsafe_run_session,
+    Context,
+    ContextLens,
+    PartialSession,
+    Protocol,
+    Value,
+  },
+  functional::{
+    cloak_applied,
+    AppliedSum,
+    Prism,
+    RowCon,
+  },
+  protocol::ExternalChoice,
 };
 
 pub fn choose<N, M, C, A, B, Row>(

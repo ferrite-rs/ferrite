@@ -1,7 +1,6 @@
-use super::utils::*;
 use crate::{
   base::*,
-  functional::row::*,
+  functional::*,
 };
 
 pub struct InternalChoice<Row>
@@ -25,6 +24,15 @@ where
   Row::Applied : RowCon,
 {
   type Applied = InternalChoice<Row::Applied>;
+}
+
+impl<Row, A> SharedRecApp<A> for InternalChoice<Row>
+where
+  Row : RowApp<ReceiverF>,
+  Row : SharedRecApp<A>,
+  <Row as SharedRecApp<A>>::Applied : RowApp<ReceiverF>,
+{
+  type Applied = InternalChoice<<Row as SharedRecApp<A>>::Applied>;
 }
 
 impl<Row> ForwardChannel for InternalChoice<Row>

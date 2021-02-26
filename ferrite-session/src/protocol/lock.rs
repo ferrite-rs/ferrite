@@ -1,11 +1,8 @@
 use super::{
-  fix::SharedRecApp,
   linear_to_shared::LinearToShared,
   shared_to_linear::SharedToLinear,
 };
 use crate::base::*;
-
-// use ipc_channel::ipc;
 
 pub struct Lock<F>
 where

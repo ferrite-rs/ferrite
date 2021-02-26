@@ -1,9 +1,8 @@
 use serde;
 
-use super::utils::*;
 use crate::{
   base::*,
-  functional::row::*,
+  functional::*,
 };
 
 pub struct ExternalChoice<Row>
@@ -30,6 +29,17 @@ where
   Row::Applied : RowCon,
 {
   type Applied = ExternalChoice<Row::Applied>;
+}
+
+impl<Row, A> SharedRecApp<A> for ExternalChoice<Row>
+where
+  Row : SharedRecApp<A>,
+  Row : RowApp<()>,
+  Row : RowApp<ReceiverF>,
+  <Row as SharedRecApp<A>>::Applied : RowApp<()>,
+  <Row as SharedRecApp<A>>::Applied : RowApp<ReceiverF>,
+{
+  type Applied = ExternalChoice<<Row as SharedRecApp<A>>::Applied>;
 }
 
 impl<Row> ForwardChannel for ExternalChoice<Row>

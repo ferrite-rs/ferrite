@@ -2,8 +2,18 @@ use async_macros::join;
 use tokio::task;
 
 use crate::{
-  base::*,
-  functional::nat::*,
+  base::{
+    once_channel,
+    unsafe_create_session,
+    unsafe_run_session,
+    AppendContext,
+    Context,
+    Empty,
+    PartialSession,
+    Protocol,
+    Slot,
+  },
+  functional::nat::Nat,
 };
 
 pub enum L {}

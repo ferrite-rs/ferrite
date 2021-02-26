@@ -25,6 +25,10 @@ use tokio::{
 
 use crate::functional::*;
 
+pub struct ReceiverF {}
+
+pub struct SenderF {}
+
 pub struct Value<T>(pub T);
 
 pub struct Sender<T>(pub mpsc::UnboundedSender<T>);
@@ -128,6 +132,24 @@ impl OpaqueReceiver
 
     val
   }
+}
+
+impl TyCon for ReceiverF {}
+
+impl TyCon for SenderF {}
+
+impl<P> TypeApp<P> for ReceiverF
+where
+  P : Send + 'static,
+{
+  type Applied = ReceiverOnce<P>;
+}
+
+impl<P> TypeApp<P> for SenderF
+where
+  P : Send + 'static,
+{
+  type Applied = SenderOnce<P>;
 }
 
 impl<T> IpcSender<T>

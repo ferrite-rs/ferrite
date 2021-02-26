@@ -14,6 +14,11 @@ pub trait HasRecApp<F, A>: Send + 'static
     F : RecApp<A>;
 }
 
+pub trait SharedRecApp<X>
+{
+  type Applied;
+}
+
 impl<T, F, A> HasRecApp<F, A> for T
 where
   F : 'static,
@@ -111,4 +116,22 @@ where
   Y : RecApp<A>,
 {
   type Applied = (X::Applied, Y::Applied);
+}
+
+impl<X> SharedRecApp<X> for Z
+{
+  type Applied = X;
+}
+
+impl<R> SharedRecApp<R> for ()
+{
+  type Applied = ();
+}
+
+impl<P, Q, R> SharedRecApp<R> for (P, Q)
+where
+  P : SharedRecApp<R>,
+  Q : SharedRecApp<R>,
+{
+  type Applied = (P::Applied, Q::Applied);
 }

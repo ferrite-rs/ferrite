@@ -1,12 +1,29 @@
 use super::{
-  cloak_session::*,
-  inject_session::*,
-  utils::*,
+  cloak_session::SessionF,
+  inject_session::InjectSessionF,
+  utils::{
+    run_choice_cont,
+    selector_to_inject_session,
+  },
 };
 use crate::{
-  base::*,
-  functional::*,
-  protocol::*,
+  base::{
+    once_channel,
+    unsafe_create_session,
+    Context,
+    PartialSession,
+    Value,
+  },
+  functional::{
+    AppliedSum,
+    ElimSum,
+    RowCon,
+    SplitRow,
+    SumFunctor,
+    SumFunctorInject,
+    UncloakRow,
+  },
+  protocol::ExternalChoice,
 };
 
 pub fn offer_choice<C, Row>(

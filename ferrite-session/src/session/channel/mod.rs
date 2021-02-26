@@ -2,7 +2,6 @@ mod receive;
 mod send;
 
 pub use receive::{
-  apply_channel,
   receive_channel,
   receive_channel_slot,
   send_channel_to,

@@ -1,8 +1,4 @@
-use super::{
-  fix::SharedRecApp,
-  protocol::SharedProtocol,
-  shared_to_linear::SharedToLinear,
-};
+use super::shared_to_linear::SharedToLinear;
 use crate::base::*;
 
 pub struct LinearToShared<F>

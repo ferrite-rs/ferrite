@@ -19,6 +19,14 @@ where
   type Applied = SendValue<T, A::Applied>;
 }
 
+impl<T, A, X> SharedRecApp<X> for SendValue<T, A>
+where
+  T : Send + 'static,
+  A : SharedRecApp<X>,
+{
+  type Applied = SendValue<T, A::Applied>;
+}
+
 impl<T, A> ForwardChannel for SendValue<T, A>
 where
   A : ForwardChannel,

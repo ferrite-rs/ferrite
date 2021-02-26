@@ -1,13 +1,17 @@
 use crate::{
-  base::*,
+  base::{
+    once_channel,
+    unsafe_create_session,
+    unsafe_run_session,
+    Context,
+    ContextLens,
+    PartialSession,
+    Protocol,
+    SenderOnce,
+    Value,
+  },
   protocol::ReceiveValue,
 };
-
-/*
-             cont_builder(x) :: Δ ⊢ P
-   ==============================================
-     send_input(cont_builder) :: Δ ⊢ T ⊃ P
-*/
 
 pub fn receive_value<T, C, A>(
   cont : impl FnOnce(T) -> PartialSession<C, A> + Send + 'static

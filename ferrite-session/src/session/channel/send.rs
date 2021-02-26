@@ -2,18 +2,20 @@ use async_macros::join;
 use tokio::task;
 
 use crate::{
-  base::*,
-  functional::nat::*,
+  base::{
+    once_channel,
+    unsafe_create_session,
+    unsafe_run_session,
+    AppendContext,
+    Context,
+    ContextLens,
+    Empty,
+    PartialSession,
+    Protocol,
+  },
+  functional::Nat,
   protocol::SendChannel,
 };
-
-/*
-   Additive Conjunction, Right Rule
-
-             cont :: Δ  ⊢ Q
-   =======================================
-     send_channel_from (cont) :: P, Δ  ⊢ P ⊗ Q
-*/
 
 pub fn send_channel_from<C, A, B, N>(
   _ : N,
@@ -51,14 +53,6 @@ where
     let _ = join!(child1, child2, child3).await;
   })
 }
-
-/*
- Additive Conjunction, Left Rule
-
-           cont :: P, Q, Δ  ⊢ S
- ==========================================
-   receive_channel_from(cont) :: P ⊗ Q, Δ  ⊢ S
-*/
 
 pub fn receive_channel_from<C1, C2, A1, A2, B, N>(
   _ : N,

@@ -2,7 +2,16 @@ use async_macros::join;
 use tokio::task;
 
 use crate::{
-  base::*,
+  base::{
+    once_channel,
+    unsafe_create_session,
+    unsafe_run_session,
+    Context,
+    ContextLens,
+    PartialSession,
+    Protocol,
+    Value,
+  },
   protocol::SendValue,
 };
 

@@ -4,9 +4,25 @@ use super::{
   utils::*,
 };
 use crate::{
-  base::*,
-  functional::*,
-  protocol::*,
+  base::{
+    unsafe_create_session,
+    Context,
+    ContextLens,
+    Empty,
+    PartialSession,
+    Protocol,
+  },
+  functional::{
+    AppliedSum,
+    ElimSum,
+    IntersectSum,
+    RowCon,
+    SplitRow,
+    SumFunctor,
+    SumFunctorInject,
+    UncloakRow,
+  },
+  protocol::InternalChoice,
 };
 
 pub fn case<N, C, D, B, Row>(
