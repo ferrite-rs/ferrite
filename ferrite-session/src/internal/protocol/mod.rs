@@ -9,26 +9,28 @@ mod shared_to_linear;
 mod value;
 mod wrap;
 
-pub use channel::{
-  ReceiveChannel,
-  SendChannel,
-};
-pub use choice::{
-  either,
-  ExternalChoice,
-  InternalChoice,
-};
-pub use end::End;
-pub use value::{
-  ReceiveValue,
-  SendValue,
-};
-pub use wrap::{
-  Wrap,
-  Wrapper,
-};
-
+#[doc(inline)]
 pub use self::{
+  channel::{
+    ReceiveChannel,
+    SendChannel,
+  },
+  choice::{
+    either,
+    ExternalChoice,
+    InternalChoice,
+  },
+  end::End,
+  value::{
+    ReceiveValue,
+    SendValue,
+  },
+  wrap::{
+    Wrap,
+    Wrapper,
+  },
+
+
   linear_to_shared::LinearToShared,
   lock::Lock,
   shared_to_linear::SharedToLinear,

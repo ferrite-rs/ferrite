@@ -1,6 +1,6 @@
 use std::format;
 
-use ferrite_session::*;
+use ferrite_session::prelude::*;
 
 type HelloSession = ReceiveValue<String, SendValue<String, End>>;
 

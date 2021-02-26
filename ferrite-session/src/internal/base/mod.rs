@@ -7,6 +7,7 @@ mod shared;
 
 pub mod public;
 
+#[doc(inline)]
 pub use self::{
   channel::{
     ipc_channel,

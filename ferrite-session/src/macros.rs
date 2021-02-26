@@ -6,13 +6,13 @@ macro_rules! Sum {
     $crate::choice::nary::Bottom
   };
   ( $e:ty ) => {
-    $crate::Sum <
+    $crate::prelude::Sum <
       $e,
-      $crate::Bottom
+      $crate::prelude::Bottom
     >
   };
   ( $e:ty, $($tail:tt)* ) => {
-    $crate::Sum < $e, Sum!( $( $tail )* ) >
+    $crate::prelude::Sum < $e, Sum!( $( $tail )* ) >
   };
 }
 
@@ -32,10 +32,10 @@ macro_rules! HList {
 #[macro_export]
 macro_rules! match_choice_value {
   ( $choice:expr; $( $label:path => $e:expr $(,)? )+ ) => {
-    match $crate::extract( $choice ) {
+    match $crate::prelude::extract( $choice ) {
       $(
         $label ( cont ) => {
-          $crate::run_cont ( cont,
+          $crate::prelude::run_cont ( cont,
             step ( async move {
               $e
             })
@@ -47,11 +47,10 @@ macro_rules! match_choice_value {
 }
 
 #[macro_export]
-
 macro_rules! match_choice {
   ( $( $label:path => $e:expr $(,)? )+ ) => {
     move | ferrite_choice_internal__ | {
-      match_choice_value! { ferrite_choice_internal__;
+      $crate::match_choice_value! { ferrite_choice_internal__;
         $( $label => $e ),*
       }
     }
@@ -61,8 +60,8 @@ macro_rules! match_choice {
 #[macro_export]
 macro_rules! offer_choice {
   ( $( $label:path => $e:expr $(,)? )+ ) => {
-    $crate::offer_choice (
-      match_choice! {
+    $crate::session::offer_choice (
+      $crate::match_choice! {
         $( $label => $e ),*
       }
     )
@@ -72,8 +71,8 @@ macro_rules! offer_choice {
 #[macro_export]
 macro_rules! case {
   ( $chan:expr ; $( $label:path => $e:expr $(,)? )+ ) => {
-    $crate::case ( $chan,
-      match_choice! {
+    $crate::session::case ( $chan,
+      $crate::match_choice! {
         $( $label => $e ),*
       }
     )
@@ -100,25 +99,25 @@ macro_rules! define_choice_protocol {
 #[macro_export]
 macro_rules! define_choice_labels {
   ( $( $labels:ident ),+ $(,)? ) => {
-    define_choice_labels![ $crate::Z; $( $labels ),* ];
+    $crate::define_choice_labels![ $crate::prelude::Z; $( $labels ),* ];
   };
   ( $acc:ty; $label:ident ) => {
     $crate::macros::paste! {
       #[allow(non_upper_case_globals)]
       pub const [< $label Label >]
-        : $crate::ChoiceSelector < $acc > =
-        < $crate::ChoiceSelector < $acc > >::new();
+        : $crate::prelude::ChoiceSelector < $acc > =
+        < $crate::prelude::ChoiceSelector < $acc > >::new();
     }
   };
   ( $acc:ty; $label:ident, $( $labels:ident ),+ ) => {
     $crate::macros::paste! {
       #[allow(non_upper_case_globals)]
       pub const [< $label Label >]
-        : $crate::ChoiceSelector < $acc > =
-        < $crate::ChoiceSelector < $acc > >::new();
+        : $crate::prelude::ChoiceSelector < $acc > =
+        < $crate::prelude::ChoiceSelector < $acc > >::new();
 
-      define_choice_labels![
-        $crate::S < $acc >;
+      $crate::define_choice_labels![
+        $crate::prelude::S < $acc >;
         $( $labels ),*
       ];
     }
@@ -155,10 +154,10 @@ macro_rules! match_extract {
   ) => {
     $crate::macros::paste! {
       match $x {
-        $crate::Sum::Inl ( [< $label:snake >] ) => {
+        $crate::prelude::Sum::Inl ( [< $label:snake >] ) => {
           $label ( [< $label:snake >] )
         }
-        $crate::Sum::Inr ( bot ) => {
+        $crate::prelude::Sum::Inr ( bot ) => {
           match bot { }
         }
       }
@@ -169,11 +168,11 @@ macro_rules! match_extract {
   ) => {
     $crate::macros::paste! {
       match $x {
-        $crate::Sum::Inl ( [< $label:snake >] ) => {
+        $crate::prelude::Sum::Inl ( [< $label:snake >] ) => {
           $label ( [< $label:snake >] )
         }
-        $crate::Sum::Inr ( [< $label:snake _rest >] ) => {
-          match_extract! {
+        $crate::prelude::Sum::Inr ( [< $label:snake _rest >] ) => {
+          $crate::match_extract! {
             [< $label:snake _rest >] ;
             $( $labels ),*
           }
@@ -200,7 +199,7 @@ macro_rules! define_extract_choice {
           (row: Sum![ $( [< $labels T >] ),* ] )
           -> Self
         {
-          match_extract! {
+          $crate::match_extract! {
             row ;
             $( $labels ),*
           }
@@ -216,19 +215,19 @@ macro_rules! define_choice {
     $( $labels:ident : $protocols:ty ),+
     $(,)?
   ) => {
-    define_choice_protocol![ $name ;
+    $crate::define_choice_protocol![ $name ;
       $( $protocols ),*
     ];
 
-    define_choice_labels![
+    $crate::define_choice_labels![
       $( $labels ),*
     ];
 
-    define_choice_enum![ $name ;
+    $crate::define_choice_enum![ $name ;
       $( $labels ),*
     ];
 
-    define_extract_choice![ $name ;
+    $crate::define_extract_choice![ $name ;
       $( $labels ),*
     ];
   };
@@ -237,20 +236,20 @@ macro_rules! define_choice {
     $( $labels:ident : $protocols:ty ),+
     $(,)?
   ) => {
-    define_choice_protocol![
+    $crate::define_choice_protocol![
       $name < $( $types ),* > ;
       $( $protocols ),*
     ];
 
-    define_choice_labels![
+    $crate::define_choice_labels![
       $( $labels ),*
     ];
 
-    define_choice_enum![ $name ;
+    $crate::define_choice_enum![ $name ;
       $( $labels ),*
     ];
 
-    define_extract_choice![ $name ;
+    $crate::define_extract_choice![ $name ;
       $( $labels ),*
     ];
   };
@@ -259,21 +258,21 @@ macro_rules! define_choice {
 #[macro_export]
 macro_rules! send_value {
   ( $val:expr, $cont:expr ) => {
-    $crate::step(async move { $crate::send_value($val, $cont) })
+    $crate::prelude::step(async move { $crate::prelude::send_value($val, $cont) })
   };
 }
 
 #[macro_export]
 macro_rules! send_value_to {
   ( $chan:expr, $val:expr, $cont:expr ) => {
-    $crate::step(async move { $crate::send_value_to($chan, $val, $cont) })
+    $crate::prelude::step(async move { $crate::prelude::send_value_to($chan, $val, $cont) })
   };
 }
 
 #[macro_export]
 macro_rules! receive_value {
   ( $var:ident => $body:expr ) => {
-    $crate::receive_value (
+    $crate::prelude::receive_value (
       move | $var | {
         step ( async move {
           $body
@@ -282,7 +281,7 @@ macro_rules! receive_value {
     )
   };
   ( ($var:ident $( : $type:ty )?) => $body:expr ) => {
-    $crate::receive_value (
+    $crate::prelude::receive_value (
       move | $var $( : $type )* | {
         step ( async move {
           $body
@@ -297,7 +296,7 @@ macro_rules! receive_value_from {
   ( $chan:expr,
     $var:ident => $body:expr
   ) => {
-    $crate::receive_value_from (
+    $crate::prelude::receive_value_from (
       $chan,
       move | $var | {
         step ( async move {
@@ -309,7 +308,7 @@ macro_rules! receive_value_from {
   ( $chan:expr,
     ($var:ident $( : $type:ty )?) => $body:expr
   ) => {
-    $crate::receive_value_from (
+    $crate::prelude::receive_value_from (
       $chan,
       move | $var $( : $type )* | {
         step ( async move {
@@ -327,7 +326,7 @@ macro_rules! choose {
     $cont:expr
   ) => {
     $crate::macros::paste! {
-      $crate::choose (
+      $crate::prelude::choose (
         $chan,
         [< $label Label >],
         $cont
@@ -342,7 +341,7 @@ macro_rules! offer_case {
     $cont:expr
   ) => {
     $crate::macros::paste! {
-      $crate::offer_case (
+      $crate::prelude::offer_case (
         [< $label Label >],
         $cont
       )
@@ -355,7 +354,7 @@ macro_rules! acquire_shared_session {
   ( $chan:expr,
     $var:ident => $body:expr
   ) => {
-    $crate::acquire_shared_session($chan.clone(), move |$var| {
+    $crate::prelude::acquire_shared_session($chan.clone(), move |$var| {
       step(async move { $body })
     })
   };
@@ -364,20 +363,20 @@ macro_rules! acquire_shared_session {
 #[macro_export]
 macro_rules! receive_channel {
   ( $var:ident => $body:expr ) => {
-    $crate::receive_channel(move |$var| step(async move { $body }))
+    $crate::prelude::receive_channel(move |$var| step(async move { $body }))
   };
 }
 
 #[macro_export]
 macro_rules! receive_channels {
   ( ( $var:ident $(,)? ) => $body:expr ) => {
-    receive_channel!( $var => $body )
+    $crate::receive_channel!( $var => $body )
   };
   ( ( $var:ident, $( $vars:ident ),* $(,)? )
     => $body:expr
   ) => {
-    receive_channel! ( $var => {
-      receive_channels! (
+    $crate::receive_channel! ( $var => {
+      $crate::receive_channels! (
         ( $( $vars ),* ) =>
           $body
       )
@@ -388,7 +387,7 @@ macro_rules! receive_channels {
 #[macro_export]
 macro_rules! receive_channel_from {
   ( $chan:expr, $var:ident => $body:expr ) => {
-    $crate::receive_channel_from($chan, move |$var| $body)
+    $crate::prelude::receive_channel_from($chan, move |$var| $body)
   };
 }
 
@@ -397,24 +396,24 @@ macro_rules! include_session {
   ( $session:expr,
     $var:ident => $body:expr
   ) => {
-    $crate::include_session($session, move |$var| step(async move { $body }))
+    $crate::prelude::include_session($session, move |$var| step(async move { $body }))
   };
 }
 
 #[macro_export]
 macro_rules! terminate {
   () => {
-    $crate::terminate()
+    $crate::prelude::terminate()
   };
   ( $cont:expr ) => {
-    $crate::terminate_async(move || async move { $cont })
+    $crate::prelude::terminate_async(move || async move { $cont })
   };
 }
 
 #[macro_export]
 macro_rules! wait {
   ( $chan:expr, $cont:expr ) => {
-    $crate::wait($chan, step(async move { $cont }))
+    $crate::prelude::wait($chan, step(async move { $cont }))
   };
 }
 
@@ -444,7 +443,7 @@ macro_rules! cut {
     $var:ident => $cont2:expr
   ) => {
     < HList![ $( $labels ),* ]
-      as $crate::Cut < _ >
+      as $crate::prelude::Cut < _ >
     > :: cut (
       $cont1,
       move | $var | {

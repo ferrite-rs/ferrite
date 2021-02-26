@@ -1,4 +1,4 @@
-use ferrite_session::*;
+use ferrite_session::prelude::*;
 
 define_choice! { FooBarBaz;
   Foo : SendValue < String, End >,

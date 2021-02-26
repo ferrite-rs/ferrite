@@ -3,7 +3,7 @@ use std::{
   vec::*,
 };
 
-use ferrite_session::*;
+use ferrite_session::prelude::*;
 use tokio::time::sleep;
 
 pub fn concat_session() -> Session<End>

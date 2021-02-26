@@ -1,3 +1,4 @@
+#[doc(inline)]
 pub use super::{
   End,
   ExternalChoice,

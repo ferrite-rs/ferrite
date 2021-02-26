@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use ferrite_session::*;
+use ferrite_session::prelude::*;
 use tokio::time::sleep;
 
 pub fn pair_session() -> Session<End>

@@ -1,4 +1,4 @@
-use ferrite_session::*;
+use ferrite_session::prelude::*;
 use ipc_channel::ipc;
 use log::debug;
 

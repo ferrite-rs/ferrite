@@ -1,3 +1,4 @@
+#[doc(inline)]
 pub use super::{
   accept_shared_session,
   acquire_shared_session,

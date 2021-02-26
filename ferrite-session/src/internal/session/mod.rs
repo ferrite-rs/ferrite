@@ -15,6 +15,7 @@ mod step;
 mod value;
 mod wrap;
 
+#[doc(inline)]
 pub use self::{
   apply::apply_channel,
   channel::{
