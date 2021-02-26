@@ -1,11 +1,14 @@
 # Ferrite - Session Types DSL for Rust
 
 [![Crates.io][crates-badge]][crates-url]
+[![Documentation][doc-badge]][doc-url]
 [![Apache licensed][license-badge]][license-url]
 [![Build Status][actions-badge]][actions-url]
 
 [crates-badge]: https://img.shields.io/crates/v/ferrite-session.svg
 [crates-url]: https://crates.io/crates/ferrite-session
+[doc-badge]: https://img.shields.io/badge/docs-latest-blue.svg?style=flat-square
+[doc-url]: https://ferrite-rs.github.io/ferrite-doc/ferrite_session/
 [license-badge]: https://img.shields.io/crates/l/ferrite-session.svg
 [license-url]: https://github.com/ferrite-rs/ferrite/blob/master/LICENSE
 [actions-badge]: https://github.com/ferrite-rs/ferrite/workflows/Cargo%20Tests/badge.svg
@@ -25,9 +28,6 @@ A work-in-progress documentation for Ferrite is available as a
 
 A draft technical report for Ferrite is currently available at
 [Arxiv](https://arxiv.org/abs/2009.13619).
-
-Auto generated rustdoc for Ferrite is available
-[here](https://maybevoid.com/ferrite-doc/ferrite/index.html).
 
 ## Build Instructions
 
@@ -62,11 +62,11 @@ cargo run --bin shared
 
 ### `ferrite-session`
 
-  - [`src/base`](ferrite-session/src/base) - Core constructs for Ferrite
-  - [`src/functional`](ferrite-session/src/function) - Functional programming constructs such as type application and natural numbers.
-  - [`src/protocol`](ferrite-session/src/protocol) - Type definitions for session types
-  - [`src/session`](ferrite-session/src/session) - Term constructors
-  - [`src/public.rs`](ferrite-session/src/public.rs) - Public API exposed by Ferrite
+  - [`base`](ferrite-session/src/internal/base) - Core constructs for Ferrite
+  - [`functional`](ferrite-session/src/internal/function) - Functional programming constructs such as type application and natural numbers.
+  - [`protocol`](ferrite-session/src/internal/protocol) - Type definitions for session types
+  - [`session`](ferrite-session/src/internal/session) - Term constructors
+  - [`public.rs`](ferrite-session/src/internal/public.rs) - Public API exposed by Ferrite
 
 ### Demo
 
