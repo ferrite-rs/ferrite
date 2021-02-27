@@ -12,7 +12,7 @@ use crate::internal::{
     ReceiverF,
   },
   functional::{
-    cloak_applied,
+    wrap_type_app,
     Prism,
     SumApp,
   },
@@ -39,7 +39,7 @@ where
     let child2 = task::spawn(async move {
       sender1
         .send(InternalChoice {
-          field : N::inject_elem(cloak_applied(receiver2)),
+          field : N::inject_elem(wrap_type_app(receiver2)),
         })
         .unwrap();
     });

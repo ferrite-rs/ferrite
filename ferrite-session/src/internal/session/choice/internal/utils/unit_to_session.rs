@@ -61,7 +61,7 @@ where
       injector : Box::new(inject2),
     };
 
-    cloak_applied(inject3)
+    wrap_type_app(inject3)
   }
 }
 
@@ -93,6 +93,6 @@ impl<N, C, A, B, Row, Del> SessionInjector<N, C, A, B, Row, Del>
   {
     let session2 = cloak_internal_session::<N, C, A, B, Row, Del>(session1);
 
-    (self.injector)(cloak_applied(session2))
+    (self.injector)(wrap_type_app(session2))
   }
 }

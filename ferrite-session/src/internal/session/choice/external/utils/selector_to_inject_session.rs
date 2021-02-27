@@ -48,7 +48,7 @@ where
 
     let inject3 = create_inject_session(inject2);
 
-    cloak_applied(inject3)
+    wrap_type_app(inject3)
   }
 }
 
@@ -71,6 +71,6 @@ impl<Row, C, A> SessionInjector<Row, C, A> for SessionInjectorImpl<Row, C, A>
     C : Context,
     A : Protocol,
   {
-    (self.injector)(cloak_applied(cloak_session(session)))
+    (self.injector)(wrap_type_app(cloak_session(session)))
   }
 }

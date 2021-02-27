@@ -1,8 +1,8 @@
 use crate::internal::{
   base::ReceiverF,
   functional::{
-    cloak_applied,
     lift_sum,
+    wrap_type_app,
     App,
     AppSum,
     Merge,
@@ -27,9 +27,9 @@ where
           Merge < ReceiverF, () > [@x]
         ;
       (receiver) => {
-        cloak_applied ( (
+        wrap_type_app ( (
           receiver,
-          cloak_applied( () )
+          wrap_type_app( () )
         ) )
       }
     },

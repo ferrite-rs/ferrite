@@ -40,7 +40,7 @@ where
   {
     let applied = T::deserialize(deserializer)?;
 
-    Ok(cloak_applied(applied))
+    Ok(wrap_type_app(applied))
   }
 }
 
@@ -61,35 +61,6 @@ where
     F : TypeApp<A>,
   {
     self
-  }
-
-  fn get_applied_borrow_mut<'a>(&'a mut self) -> &'a mut F::Applied
-  where
-    F : TypeApp<A>,
-  {
-    self
-  }
-}
-
-impl<T, F, A, K> TypeAppWitness<F, A, K> for ()
-where
-  F : 'static,
-  A : 'static,
-  T : Send + 'static,
-  K : 'static,
-  F : TypeApp<A, Applied = T>,
-{
-  fn with_applied(
-    &self,
-    cont : Box<dyn TypeAppCont<F, A, K>>,
-  ) -> K
-  {
-    cont.on_type_app()
-  }
-
-  fn clone_witness(&self) -> Box<dyn TypeAppWitness<F, A, K>>
-  {
-    Box::new(())
   }
 }
 

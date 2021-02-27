@@ -44,7 +44,7 @@ where
   {
     let row = T::deserialize(deserializer)?;
 
-    Ok(cloak_row(row))
+    Ok(wrap_sum_app(row))
   }
 }
 
@@ -68,29 +68,6 @@ where
     Row : SumApp<F>,
   {
     self
-  }
-
-  fn get_sum_borrow_mut<'a>(&'a mut self) -> &'a mut Row::Applied
-  where
-    F : TyCon,
-    Row : SumApp<F>,
-  {
-    self
-  }
-}
-
-impl<S, Row, F, K> HasSumAppWitness<Row, F, K> for S
-where
-  F : TyCon,
-  S : Send + 'static,
-  Row : SumApp<F, Applied = S>,
-{
-  fn with_witness(
-    self: Box<Self>,
-    cont : Box<dyn RowWitnessCont<Row, F, K>>,
-  ) -> K
-  {
-    cont.on_row_witness(self)
   }
 }
 
@@ -132,11 +109,11 @@ where
   fn unflatten_sum(row1 : Self::FlattenApplied) -> Self::Applied
   {
     match row1 {
-      Sum::Inl(field) => Sum::Inl(cloak_applied(field)),
+      Sum::Inl(field) => Sum::Inl(wrap_type_app(field)),
       Sum::Inr(row2) => {
         let row3 = R::unflatten_sum(row2);
 
-        Sum::Inr(cloak_row(row3))
+        Sum::Inr(wrap_sum_app(row3))
       }
     }
   }
@@ -237,12 +214,12 @@ where
       Sum::Inl(row3) => {
         let (row3a, row3b) = row3.get_applied();
 
-        (cloak_row(Sum::Inl(row3a)), cloak_row(Sum::Inl(row3b)))
+        (wrap_sum_app(Sum::Inl(row3a)), wrap_sum_app(Sum::Inl(row3b)))
       }
       Sum::Inr(row3) => {
         let (row3a, row3b) = R::split_row(row3);
 
-        (cloak_row(Sum::Inr(row3a)), cloak_row(Sum::Inr(row3b)))
+        (wrap_sum_app(Sum::Inr(row3a)), wrap_sum_app(Sum::Inr(row3b)))
       }
     }
   }
@@ -281,10 +258,10 @@ where
 
     match (row1a, row2a) {
       (Sum::Inl(a1), Sum::Inl(a2)) => {
-        Some(cloak_row(Sum::Inl(cloak_applied((a1, a2)))))
+        Some(wrap_sum_app(Sum::Inl(wrap_type_app((a1, a2)))))
       }
       (Sum::Inr(r1), Sum::Inr(r2)) => {
-        R::intersect_sum(r1, r2).map(|x| cloak_row(Sum::Inr(x)))
+        R::intersect_sum(r1, r2).map(|x| wrap_sum_app(Sum::Inr(x)))
       }
       _ => None,
     }
@@ -326,9 +303,9 @@ where
       Sum::Inl(fa1) => {
         let fa2 = lift.lift(fa1);
 
-        cloak_row(Sum::Inl(fa2))
+        wrap_sum_app(Sum::Inl(fa2))
       }
-      Sum::Inr(b) => cloak_row(Sum::Inr(R::lift_sum::<T, F1, F2>(lift, b))),
+      Sum::Inr(b) => wrap_sum_app(Sum::Inr(R::lift_sum::<T, F1, F2>(lift, b))),
     }
   }
 }
@@ -367,17 +344,17 @@ where
     match row2 {
       Sum::Inl(a) => {
         let inject2 = move |b : App<L::TargetF, A>| -> Root {
-          inject(cloak_row(Sum::Inl(b)))
+          inject(wrap_sum_app(Sum::Inl(b)))
         };
 
-        cloak_row(Sum::Inl(L::lift_field(ctx, inject2, a)))
+        wrap_sum_app(Sum::Inl(L::lift_field(ctx, inject2, a)))
       }
       Sum::Inr(b) => {
         let inject2 = move |r : AppSum<R, L::TargetF>| -> Root {
-          inject(cloak_row(Sum::Inr(r)))
+          inject(wrap_sum_app(Sum::Inr(r)))
         };
 
-        cloak_row(Sum::Inr(R::lift_sum_inject(ctx, inject2, b)))
+        wrap_sum_app(Sum::Inr(R::lift_sum_inject(ctx, inject2, b)))
       }
     }
   }
@@ -430,7 +407,7 @@ where
   where
     F : TyCon,
   {
-    cloak_row(Sum::Inl(t))
+    wrap_sum_app(Sum::Inl(t))
   }
 
   fn extract_elem<F>(row : AppSum<(A, R), F>) -> Option<App<F, A>>
@@ -456,7 +433,7 @@ where
   where
     F : TyCon,
   {
-    cloak_row(Sum::Inr(<ChoiceSelector<N> as Prism<R>>::inject_elem(elem)))
+    wrap_sum_app(Sum::Inr(<ChoiceSelector<N> as Prism<R>>::inject_elem(elem)))
   }
 
   fn extract_elem<F>(row : AppSum<(A, R), F>) -> Option<App<F, Self::Elem>>

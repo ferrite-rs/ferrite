@@ -1,15 +1,10 @@
-use std::{
-  any::Any,
-  marker::PhantomData,
-};
+use std::marker::PhantomData;
 
 use super::traits::*;
 
 pub struct App<F, A>
 {
   pub applied : Box<dyn HasTypeApp<F, A>>,
-
-  pub witness : Box<dyn TypeAppWitness<F, A, Box<dyn Any>>>,
 }
 
 pub struct Const<X>(PhantomData<X>);
@@ -36,12 +31,11 @@ where
   *applied.applied.get_applied()
 }
 
-pub fn cloak_applied<F, A>(applied : F::Applied) -> App<F, A>
+pub fn wrap_type_app<F, A>(applied : F::Applied) -> App<F, A>
 where
   F : TypeApp<A>,
 {
   App {
     applied : Box::new(applied),
-    witness : Box::new(()),
   }
 }

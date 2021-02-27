@@ -3,7 +3,7 @@ use super::type_app::*;
 // An implementation of Functor, Applicative, and Monad
 // without resorting to HKT or GAT.
 
-pub trait Functor: TypeAppGeneric
+pub trait Functor: TyCon
 {
   fn fmap<A, B>(
     fa : App<Self, A>,

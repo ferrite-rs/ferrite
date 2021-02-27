@@ -13,25 +13,22 @@ use crate::internal::{
     Protocol,
   },
   functional::{
-    AppSum,
+    wrap_sum_app,
     ElimSum,
     FlattenSumApp,
     IntersectSum,
     RowCon,
     SplitRow,
+    SumApp,
     SumFunctor,
     SumFunctorInject,
   },
   protocol::InternalChoice,
 };
 
-pub fn case<N, C, D, B, Row>(
+pub fn case<N, C, D, B, Row, SessionSum, InjectSessionSum>(
   _ : N,
-  cont1 : impl FnOnce(
-      Row::FlattenApplied,
-    ) -> AppSum<Row, InternalSessionF<N, C, B, Row, D>>
-    + Send
-    + 'static,
+  cont1 : impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static,
 ) -> PartialSession<C, B>
 where
   B : Protocol,
@@ -43,8 +40,13 @@ where
   Row : SumFunctor,
   Row : IntersectSum,
   Row : SumFunctorInject,
-  Row : FlattenSumApp<InjectSessionF<N, C, B, Row, D>>,
+  Row : SumApp<InternalSessionF<N, C, B, Row, D>, Applied = SessionSum>,
+  Row : FlattenSumApp<
+    InjectSessionF<N, C, B, Row, D>,
+    FlattenApplied = InjectSessionSum,
+  >,
   N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  InjectSessionSum : Send + 'static,
 {
   unsafe_create_session(move |ctx1, sender| async move {
     let (sum_chan, ctx2) = N::extract_source(ctx1);
@@ -59,7 +61,7 @@ where
 
     let cont3a = Row::flatten_sum(cont3);
 
-    let cont4 = cont1(cont3a);
+    let cont4 = wrap_sum_app(cont1(cont3a));
 
     let cont5 = Row::intersect_sum(receiver_sum2, cont4);
 

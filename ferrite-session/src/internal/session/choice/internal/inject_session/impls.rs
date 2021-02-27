@@ -19,24 +19,26 @@ where
 {
 }
 
-impl<N, C, A, B, Row, Del> RunCont<N::Target, B>
-  for InjectSession<N, C, A, B, Row, Del>
+impl<N, C1, C2, A, B, Row, Del, SessionSum> RunCont<C2, B>
+  for InjectSession<N, C1, A, B, Row, Del>
 where
   A : Protocol,
   B : Protocol,
-  C : Context,
+  C1 : Context,
+  C2 : Context,
   Del : Context,
   Row : RowCon,
-  N : ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
+  Row : SumApp<InternalSessionF<N, C1, B, Row, Del>, Applied = SessionSum>,
+  N : ContextLens<C1, InternalChoice<Row>, A, Deleted = Del, Target = C2>,
 {
-  type Ret = AppSum<Row, InternalSessionF<N, C, B, Row, Del>>;
+  type Ret = SessionSum;
 
   fn run_cont(
     self,
     session : PartialSession<N::Target, B>,
-  ) -> AppSum<Row, InternalSessionF<N, C, B, Row, Del>>
+  ) -> SessionSum
   {
-    self.injector.inject_session(session)
+    self.injector.inject_session(session).get_sum()
   }
 }
 

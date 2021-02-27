@@ -16,17 +16,6 @@ where
   type Applied = Identity<A>;
 }
 
-impl TypeAppGeneric for IdentityF
-{
-  fn get_witness<A, K>() -> Box<dyn TypeAppWitness<Self, A, K>>
-  where
-    A : Send + 'static,
-    K : Send + 'static,
-  {
-    Box::new(())
-  }
-}
-
 impl Functor for IdentityF
 {
   fn fmap<A, B>(
@@ -41,6 +30,6 @@ impl Functor for IdentityF
 
     let b = mapper(a);
 
-    cloak_applied(Identity(b))
+    wrap_type_app(Identity(b))
   }
 }

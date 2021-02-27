@@ -38,30 +38,6 @@ pub trait HasSumApp<Row, F>: Send
   where
     F : TyCon,
     Row : SumApp<F>;
-
-  fn get_sum_borrow_mut<'a>(&'a mut self) -> &'a mut Row::Applied
-  where
-    F : TyCon,
-    Row : SumApp<F>;
-}
-
-pub trait RowWitnessCont<Row, F, K>
-{
-  fn on_row_witness(
-    self: Box<Self>,
-    row : Box<Row::Applied>,
-  ) -> K
-  where
-    F : TyCon,
-    Row : SumApp<F>;
-}
-
-pub trait HasSumAppWitness<Row, F, K>: HasSumApp<Row, F>
-{
-  fn with_witness(
-    self: Box<Self>,
-    cont : Box<dyn RowWitnessCont<Row, F, K>>,
-  ) -> K;
 }
 
 pub trait SplitRow: Sized + RowCon

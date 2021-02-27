@@ -10,7 +10,7 @@ use crate::internal::{
     Value,
   },
   functional::{
-    cloak_applied,
+    wrap_type_app,
     AppSum,
     Prism,
     RowCon,
@@ -18,23 +18,24 @@ use crate::internal::{
   protocol::ExternalChoice,
 };
 
-pub fn choose<N, M, C, A, B, Row>(
+pub fn choose<N, M, C1, C2, A, B, Row>(
   _ : N,
   _ : M,
-  cont : PartialSession<N::Target, A>,
-) -> PartialSession<C, A>
+  cont : PartialSession<C2, A>,
+) -> PartialSession<C1, A>
 where
-  C : Context,
+  C1 : Context,
+  C2 : Context,
   A : Protocol,
   B : Protocol,
   Row : RowCon,
-  N : ContextLens<C, ExternalChoice<Row>, B>,
+  N : ContextLens<C1, ExternalChoice<Row>, B, Target = C2>,
   M : Prism<Row, Elem = B>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);
 
-    let choice : AppSum<Row, ()> = M::inject_elem(cloak_applied(()));
+    let choice : AppSum<Row, ()> = M::inject_elem(wrap_type_app(()));
 
     let ExternalChoice { sender: sender2 } = receiver1.recv().await.unwrap();
 

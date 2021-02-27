@@ -105,6 +105,6 @@ where
 
     let (receiver, future) = *with_session(cont2, Box::new(runner));
 
-    cloak_applied((cloak_applied(receiver), cloak_applied(future)))
+    wrap_type_app((wrap_type_app(receiver), wrap_type_app(future)))
   }
 }

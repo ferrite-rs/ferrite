@@ -1,7 +1,4 @@
-use std::{
-  any::Any,
-  marker::PhantomData,
-};
+use std::marker::PhantomData;
 
 use serde::{
   Deserialize,
@@ -23,7 +20,7 @@ pub enum Sum<A, B>
 
 pub struct AppSum<Row, F>
 {
-  pub row : Box<dyn HasSumAppWitness<Row, F, Box<dyn Any>>>,
+  pub row : Box<dyn HasSumApp<Row, F>>,
 }
 
 pub struct ChoiceSelector<N>
@@ -56,7 +53,7 @@ impl<N> ChoiceSelector<N>
   }
 }
 
-pub fn cloak_row<Row, F>(row : Row::Applied) -> AppSum<Row, F>
+pub fn wrap_sum_app<Row, F>(row : Row::Applied) -> AppSum<Row, F>
 where
   F : TyCon,
   Row : SumApp<F>,

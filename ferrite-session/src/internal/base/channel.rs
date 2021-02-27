@@ -425,7 +425,7 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-    cloak_applied(T::forward_from(sender, receiver))
+    wrap_type_app(T::forward_from(sender, receiver))
   }
 }
 
@@ -450,7 +450,7 @@ where
     receiver : OpaqueReceiver,
   ) -> Self
   {
-    cloak_row(T::forward_from(sender, receiver))
+    wrap_sum_app(T::forward_from(sender, receiver))
   }
 }
 

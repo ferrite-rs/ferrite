@@ -24,18 +24,19 @@ where
   type Applied = InjectSession<Row, C, A>;
 }
 
-impl<Row, C, A> RunCont<C, A> for InjectSession<Row, C, A>
+impl<Row, C, A, SessionSum> RunCont<C, A> for InjectSession<Row, C, A>
 where
   C : Context,
   A : Protocol,
+  Row : SumApp<SessionF<C>, Applied = SessionSum>,
 {
-  type Ret = AppSum<Row, SessionF<C>>;
+  type Ret = SessionSum;
 
   fn run_cont(
     self,
     session : PartialSession<C, A>,
-  ) -> AppSum<Row, SessionF<C>>
+  ) -> SessionSum
   {
-    run_inject_session(self, session)
+    run_inject_session(self, session).get_sum()
   }
 }
