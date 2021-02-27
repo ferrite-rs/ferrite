@@ -46,6 +46,7 @@ where
     FlattenApplied = InjectSessionSum,
   >,
   N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  SessionSum : Send + 'static,
   InjectSessionSum : Send + 'static,
 {
   unsafe_create_session(move |ctx1, sender| async move {

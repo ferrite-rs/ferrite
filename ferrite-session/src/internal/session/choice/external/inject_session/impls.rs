@@ -29,6 +29,7 @@ where
   C : Context,
   A : Protocol,
   Row : SumApp<SessionF<C>, Applied = SessionSum>,
+  SessionSum : Send + 'static,
 {
   type Ret = SessionSum;
 

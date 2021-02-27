@@ -28,6 +28,7 @@ where
   C2 : Context,
   Del : Context,
   Row : RowCon,
+  SessionSum : Send + 'static,
   Row : SumApp<InternalSessionF<N, C1, B, Row, Del>, Applied = SessionSum>,
   N : ContextLens<C1, InternalChoice<Row>, A, Deleted = Del, Target = C2>,
 {

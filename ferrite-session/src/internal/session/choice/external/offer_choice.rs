@@ -40,6 +40,7 @@ where
   Row : SumApp<SessionF<C>, Applied = SessionSum>,
   Row :
     FlattenSumApp<InjectSessionF<Row, C>, FlattenApplied = InjectSessionSum>,
+  SessionSum : Send + 'static,
   InjectSessionSum : Send + 'static,
 {
   unsafe_create_session(move |ctx, sender1| async move {
