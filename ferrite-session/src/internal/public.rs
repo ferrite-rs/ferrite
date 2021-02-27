@@ -1,39 +1,37 @@
-pub mod prelude {
+pub mod prelude
+{
   #[doc(inline)]
-  pub use crate::{
-    internal::{
-      base::public::*,
-      functional::*,
-      protocol::{
-        either,
-        public::*,
-      },
-      session::public::*,
-    }
+  pub use crate::internal::{
+    base::public::*,
+    functional::*,
+    protocol::{
+      either,
+      public::*,
+    },
+    session::public::*,
   };
-
   #[doc(inline)]
   pub use crate::{
-    Sum,
-    HList,
-    offer_choice,
+    acquire_shared_session,
     case,
+    choose,
+    cut,
     define_choice,
-    send_value,
-    send_value_to,
+    include_session,
+    offer_case,
+    offer_choice,
+    receive_channel,
+    receive_channel_from,
+    receive_channels,
     receive_value,
     receive_value_from,
-    choose,
-    offer_case,
-    acquire_shared_session,
-    receive_channel,
-    receive_channels,
-    receive_channel_from,
-    include_session,
+    send_value,
+    send_value_to,
     terminate,
     wait,
     wait_all,
-    cut,
+    HList,
+    Sum,
   };
 }
 
@@ -41,7 +39,7 @@ pub mod prelude {
 pub use crate::internal::{
   base::public as base,
   functional,
+  protocol::either,
   protocol::public as protocol,
   session::public as session,
-  protocol::either as either,
 };

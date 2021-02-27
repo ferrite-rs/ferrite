@@ -23,7 +23,7 @@ pub enum Sum<A, B>
 
 pub struct AppSum<Row, F>
 {
-  pub row : Box<dyn HasRowWitness<Row, F, Box<dyn Any>>>,
+  pub row : Box<dyn HasSumAppWitness<Row, F, Box<dyn Any>>>,
 }
 
 pub struct ChoiceSelector<N>
@@ -40,9 +40,9 @@ where
   F : TyCon,
   Row : SumApp<F>,
 {
-  pub fn get_row(self) -> Row::Applied
+  pub fn get_sum(self) -> Row::Applied
   {
-    *self.row.get_row()
+    *self.row.get_sum()
   }
 }
 

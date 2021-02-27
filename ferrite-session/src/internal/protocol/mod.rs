@@ -21,6 +21,9 @@ pub use self::{
     InternalChoice,
   },
   end::End,
+  linear_to_shared::LinearToShared,
+  lock::Lock,
+  shared_to_linear::SharedToLinear,
   value::{
     ReceiveValue,
     SendValue,
@@ -29,9 +32,4 @@ pub use self::{
     Wrap,
     Wrapper,
   },
-
-
-  linear_to_shared::LinearToShared,
-  lock::Lock,
-  shared_to_linear::SharedToLinear,
 };

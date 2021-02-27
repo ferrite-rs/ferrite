@@ -1,6 +1,6 @@
 use ferrite_session::{
-  prelude::*,
   either::*,
+  prelude::*,
 };
 
 pub fn internal_choice_session() -> Session<End>

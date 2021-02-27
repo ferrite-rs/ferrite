@@ -9,10 +9,8 @@ pub struct ExternalChoice<Row>
 where
   Row : RowCon,
 {
-  pub(crate) sender : SenderOnce<(
-    Value<AppSum<Row, ()>>,
-    SenderOnce<AppSum<Row, ReceiverF>>,
-  )>,
+  pub(crate) sender :
+    SenderOnce<(Value<AppSum<Row, ()>>, SenderOnce<AppSum<Row, ReceiverF>>)>,
 }
 
 impl<Row> Protocol for ExternalChoice<Row>

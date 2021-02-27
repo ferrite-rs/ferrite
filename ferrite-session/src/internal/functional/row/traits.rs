@@ -15,30 +15,31 @@ where
   type Applied: Send + 'static;
 }
 
-pub trait UncloakRow<F>: SumApp<F>
+// Flatten the App wrappers in SumApp
+pub trait FlattenSumApp<F>: SumApp<F>
 where
   F : TyCon,
 {
-  type Uncloaked: Send + 'static;
+  type FlattenApplied: Send + 'static;
 
-  fn full_cloak_row(row : Self::Uncloaked) -> Self::Applied;
+  fn unflatten_sum(row : Self::FlattenApplied) -> Self::Applied;
 
-  fn full_uncloak_row(row : AppSum<Self, F>) -> Self::Uncloaked;
+  fn flatten_sum(row : AppSum<Self, F>) -> Self::FlattenApplied;
 }
 
-pub trait HasRow<Row, F>: Send
+pub trait HasSumApp<Row, F>: Send
 {
-  fn get_row(self: Box<Self>) -> Box<Row::Applied>
+  fn get_sum(self: Box<Self>) -> Box<Row::Applied>
   where
     F : TyCon,
     Row : SumApp<F>;
 
-  fn get_row_borrow<'a>(&'a self) -> &'a Row::Applied
+  fn get_sum_borrow<'a>(&'a self) -> &'a Row::Applied
   where
     F : TyCon,
     Row : SumApp<F>;
 
-  fn get_row_borrow_mut<'a>(&'a mut self) -> &'a mut Row::Applied
+  fn get_sum_borrow_mut<'a>(&'a mut self) -> &'a mut Row::Applied
   where
     F : TyCon,
     Row : SumApp<F>;
@@ -55,7 +56,7 @@ pub trait RowWitnessCont<Row, F, K>
     Row : SumApp<F>;
 }
 
-pub trait HasRowWitness<Row, F, K>: HasRow<Row, F>
+pub trait HasSumAppWitness<Row, F, K>: HasSumApp<Row, F>
 {
   fn with_witness(
     self: Box<Self>,
@@ -158,9 +159,7 @@ where
   where
     F : TyCon;
 
-  fn extract_elem<F>(
-    row : AppSum<Row, F>
-  ) -> Option<App<F, Self::Elem>>
+  fn extract_elem<F>(row : AppSum<Row, F>) -> Option<App<F, Self::Elem>>
   where
     F : TyCon;
 }

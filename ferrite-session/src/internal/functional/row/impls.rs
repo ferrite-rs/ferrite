@@ -25,7 +25,7 @@ where
   where
     S : serde::Serializer,
   {
-    let row : &Row::Applied = get_row_borrow(self);
+    let row : &Row::Applied = get_sum_borrow(self);
 
     row.serialize(serializer)
   }
@@ -48,13 +48,13 @@ where
   }
 }
 
-impl<S, Row, F> HasRow<Row, F> for S
+impl<S, Row, F> HasSumApp<Row, F> for S
 where
   F : TyCon,
   S : Send + 'static,
   Row : SumApp<F, Applied = S>,
 {
-  fn get_row(self: Box<Self>) -> Box<Row::Applied>
+  fn get_sum(self: Box<Self>) -> Box<Row::Applied>
   where
     F : TyCon,
     Row : SumApp<F>,
@@ -62,7 +62,7 @@ where
     self
   }
 
-  fn get_row_borrow<'a>(&'a self) -> &'a Row::Applied
+  fn get_sum_borrow<'a>(&'a self) -> &'a Row::Applied
   where
     F : TyCon,
     Row : SumApp<F>,
@@ -70,7 +70,7 @@ where
     self
   }
 
-  fn get_row_borrow_mut<'a>(&'a mut self) -> &'a mut Row::Applied
+  fn get_sum_borrow_mut<'a>(&'a mut self) -> &'a mut Row::Applied
   where
     F : TyCon,
     Row : SumApp<F>,
@@ -79,7 +79,7 @@ where
   }
 }
 
-impl<S, Row, F, K> HasRowWitness<Row, F, K> for S
+impl<S, Row, F, K> HasSumAppWitness<Row, F, K> for S
 where
   F : TyCon,
   S : Send + 'static,
@@ -121,36 +121,36 @@ where
   type Applied = Bottom;
 }
 
-impl<F, A, R> UncloakRow<F> for (A, R)
+impl<F, A, R> FlattenSumApp<F> for (A, R)
 where
   A : Send + 'static,
-  R : UncloakRow<F>,
+  R : FlattenSumApp<F>,
   F : TypeApp<A>,
 {
-  type Uncloaked = Sum<F::Applied, R::Uncloaked>;
+  type FlattenApplied = Sum<F::Applied, R::FlattenApplied>;
 
-  fn full_cloak_row(row1 : Self::Uncloaked) -> Self::Applied
+  fn unflatten_sum(row1 : Self::FlattenApplied) -> Self::Applied
   {
     match row1 {
       Sum::Inl(field) => Sum::Inl(cloak_applied(field)),
       Sum::Inr(row2) => {
-        let row3 = R::full_cloak_row(row2);
+        let row3 = R::unflatten_sum(row2);
 
         Sum::Inr(cloak_row(row3))
       }
     }
   }
 
-  fn full_uncloak_row(row1 : AppSum<Self, F>) -> Self::Uncloaked
+  fn flatten_sum(row1 : AppSum<Self, F>) -> Self::FlattenApplied
   {
-    match row1.get_row() {
+    match row1.get_sum() {
       Sum::Inl(field1) => {
         let field2 = field1.get_applied();
 
         Sum::Inl(field2)
       }
       Sum::Inr(row2) => {
-        let row3 = R::full_uncloak_row(row2);
+        let row3 = R::flatten_sum(row2);
 
         Sum::Inr(row3)
       }
@@ -158,20 +158,20 @@ where
   }
 }
 
-impl<F> UncloakRow<F> for ()
+impl<F> FlattenSumApp<F> for ()
 where
   F : TyCon,
 {
-  type Uncloaked = Bottom;
+  type FlattenApplied = Bottom;
 
-  fn full_cloak_row(row : Self::Uncloaked) -> Self::Applied
+  fn unflatten_sum(row : Self::FlattenApplied) -> Self::Applied
   {
     row
   }
 
-  fn full_uncloak_row(row : AppSum<Self, F>) -> Self::Uncloaked
+  fn flatten_sum(row : AppSum<Self, F>) -> Self::FlattenApplied
   {
-    row.get_row()
+    row.get_sum()
   }
 }
 
@@ -231,7 +231,7 @@ where
     F1 : TyCon,
     F2 : TyCon,
   {
-    let row2 = row1.get_row();
+    let row2 = row1.get_sum();
 
     match row2 {
       Sum::Inl(row3) => {
@@ -275,9 +275,9 @@ where
     F1 : TyCon,
     F2 : TyCon,
   {
-    let row1a = row1.get_row();
+    let row1a = row1.get_sum();
 
-    let row2a = row2.get_row();
+    let row2a = row2.get_sum();
 
     match (row1a, row2a) {
       (Sum::Inl(a1), Sum::Inl(a2)) => {
@@ -320,7 +320,7 @@ where
     F2 : TyCon,
     T : NaturalTransformation<F1, F2>,
   {
-    let row2 = row1.get_row();
+    let row2 = row1.get_sum();
 
     match row2 {
       Sum::Inl(fa1) => {
@@ -362,7 +362,7 @@ where
     L : InjectLift<Root>,
     Inject : Fn(AppSum<Self, L::TargetF>) -> Root + Send + 'static,
   {
-    let row2 = row1.get_row();
+    let row2 = row1.get_sum();
 
     match row2 {
       Sum::Inl(a) => {
@@ -410,7 +410,7 @@ where
     F : TyCon,
     E : ElimField<F, K>,
   {
-    let row2 = row1.get_row();
+    let row2 = row1.get_sum();
 
     match row2 {
       Sum::Inl(a) => e.elim_field(a),
@@ -437,7 +437,7 @@ where
   where
     F : TyCon,
   {
-    match row.get_row() {
+    match row.get_sum() {
       Sum::Inl(e) => Some(e),
       Sum::Inr(_) => None,
     }
@@ -459,13 +459,11 @@ where
     cloak_row(Sum::Inr(<ChoiceSelector<N> as Prism<R>>::inject_elem(elem)))
   }
 
-  fn extract_elem<F>(
-    row : AppSum<(A, R), F>
-  ) -> Option<App<F, Self::Elem>>
+  fn extract_elem<F>(row : AppSum<(A, R), F>) -> Option<App<F, Self::Elem>>
   where
     F : TyCon,
   {
-    match row.get_row() {
+    match row.get_sum() {
       Sum::Inl(_) => None,
       Sum::Inr(rest) => <ChoiceSelector<N> as Prism<R>>::extract_elem(rest),
     }

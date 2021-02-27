@@ -442,7 +442,7 @@ where
     receiver : OpaqueReceiver,
   )
   {
-    self.get_row().forward_to(sender, receiver)
+    self.get_sum().forward_to(sender, receiver)
   }
 
   fn forward_from(

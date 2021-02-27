@@ -16,27 +16,27 @@ where
   T::from(row)
 }
 
-pub fn get_row<Row, F>(row : AppSum<Row, F>) -> Row::Applied
+pub fn get_sum<Row, F>(row : AppSum<Row, F>) -> Row::Applied
 where
   F : TyCon,
   Row : SumApp<F>,
 {
-  row.get_row()
+  row.get_sum()
 }
 
-pub fn get_row_borrow<Row, F>(row : &AppSum<Row, F>) -> &Row::Applied
+pub fn get_sum_borrow<Row, F>(row : &AppSum<Row, F>) -> &Row::Applied
 where
   F : TyCon,
   Row : SumApp<F>,
 {
-  row.row.as_ref().get_row_borrow()
+  row.row.as_ref().get_sum_borrow()
 }
 
 pub fn absurd<F, A>(row1 : AppSum<(), F>) -> A
 where
   F : TyCon,
 {
-  match row1.get_row() {}
+  match row1.get_sum() {}
 }
 
 // lift_sum : forall row f g

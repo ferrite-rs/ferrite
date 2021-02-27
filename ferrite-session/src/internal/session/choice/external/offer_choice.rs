@@ -17,17 +17,17 @@ use crate::internal::{
   functional::{
     AppSum,
     ElimSum,
+    FlattenSumApp,
     RowCon,
     SplitRow,
     SumFunctor,
     SumFunctorInject,
-    UncloakRow,
   },
   protocol::ExternalChoice,
 };
 
 pub fn offer_choice<C, Row>(
-  cont1 : impl FnOnce(Row::Uncloaked) -> AppSum<Row, SessionF<C>>
+  cont1 : impl FnOnce(Row::FlattenApplied) -> AppSum<Row, SessionF<C>>
     + Send
     + 'static
 ) -> PartialSession<C, ExternalChoice<Row>>
@@ -38,7 +38,7 @@ where
   Row : SplitRow,
   Row : SumFunctor,
   Row : SumFunctorInject,
-  Row : UncloakRow<InjectSessionF<Row, C>>,
+  Row : FlattenSumApp<InjectSessionF<Row, C>>,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver2) = once_channel();
@@ -51,7 +51,7 @@ where
 
     let cont3 = selector_to_inject_session(choice);
 
-    let cont4 = Row::full_uncloak_row(cont3);
+    let cont4 = Row::flatten_sum(cont3);
 
     let cont5 = cont1(cont4);
 

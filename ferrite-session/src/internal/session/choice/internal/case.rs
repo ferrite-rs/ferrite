@@ -15,19 +15,21 @@ use crate::internal::{
   functional::{
     AppSum,
     ElimSum,
+    FlattenSumApp,
     IntersectSum,
     RowCon,
     SplitRow,
     SumFunctor,
     SumFunctorInject,
-    UncloakRow,
   },
   protocol::InternalChoice,
 };
 
 pub fn case<N, C, D, B, Row>(
   _ : N,
-  cont1 : impl FnOnce(Row::Uncloaked) -> AppSum<Row, InternalSessionF<N, C, B, Row, D>>
+  cont1 : impl FnOnce(
+      Row::FlattenApplied,
+    ) -> AppSum<Row, InternalSessionF<N, C, B, Row, D>>
     + Send
     + 'static,
 ) -> PartialSession<C, B>
@@ -41,7 +43,7 @@ where
   Row : SumFunctor,
   Row : IntersectSum,
   Row : SumFunctorInject,
-  Row : UncloakRow<InjectSessionF<N, C, B, Row, D>>,
+  Row : FlattenSumApp<InjectSessionF<N, C, B, Row, D>>,
   N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   unsafe_create_session(move |ctx1, sender| async move {
@@ -55,7 +57,7 @@ where
 
     let cont3 = lift_unit_to_session(selector_sum);
 
-    let cont3a = Row::full_uncloak_row(cont3);
+    let cont3a = Row::flatten_sum(cont3);
 
     let cont4 = cont1(cont3a);
 

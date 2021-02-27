@@ -258,14 +258,18 @@ macro_rules! define_choice {
 #[macro_export]
 macro_rules! send_value {
   ( $val:expr, $cont:expr ) => {
-    $crate::prelude::step(async move { $crate::prelude::send_value($val, $cont) })
+    $crate::prelude::step(
+      async move { $crate::prelude::send_value($val, $cont) },
+    )
   };
 }
 
 #[macro_export]
 macro_rules! send_value_to {
   ( $chan:expr, $val:expr, $cont:expr ) => {
-    $crate::prelude::step(async move { $crate::prelude::send_value_to($chan, $val, $cont) })
+    $crate::prelude::step(async move {
+      $crate::prelude::send_value_to($chan, $val, $cont)
+    })
   };
 }
 
@@ -396,7 +400,9 @@ macro_rules! include_session {
   ( $session:expr,
     $var:ident => $body:expr
   ) => {
-    $crate::prelude::include_session($session, move |$var| step(async move { $body }))
+    $crate::prelude::include_session($session, move |$var| {
+      step(async move { $body })
+    })
   };
 }
 

@@ -4,8 +4,8 @@ use crate::internal::base::*;
 
 pub struct SharedToLinear<F>
 {
-  pub (crate) unlock : SenderOnce<()>,
-  pub (crate) phantom : PhantomData<F>,
+  pub(crate) unlock : SenderOnce<()>,
+  pub(crate) phantom : PhantomData<F>,
 }
 
 impl<F> Protocol for SharedToLinear<F> where F : Protocol {}

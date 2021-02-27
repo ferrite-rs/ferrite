@@ -26,8 +26,7 @@ where
 
 struct LiftUnitToSession<N, C, D, A, Row>(PhantomData<(N, C, D, A, Row)>);
 
-impl<N, C, D, B, Row>
-  InjectLift<AppSum<Row, InternalSessionF<N, C, B, Row, D>>>
+impl<N, C, D, B, Row> InjectLift<AppSum<Row, InternalSessionF<N, C, B, Row, D>>>
   for LiftUnitToSession<N, C, D, B, Row>
 where
   B : Protocol,
