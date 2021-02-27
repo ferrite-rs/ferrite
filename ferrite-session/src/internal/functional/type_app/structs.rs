@@ -5,7 +5,7 @@ use std::{
 
 use super::traits::*;
 
-pub struct Applied<F, A>
+pub struct App<F, A>
 {
   pub applied : Box<dyn HasTypeApp<F, A>>,
 
@@ -14,7 +14,7 @@ pub struct Applied<F, A>
 
 pub struct Const<X>(PhantomData<X>);
 
-impl<F, A> Applied<F, A>
+impl<F, A> App<F, A>
 where
   F : 'static,
   A : 'static,
@@ -27,7 +27,7 @@ where
   }
 }
 
-pub fn get_applied<F, A>(applied : Applied<F, A>) -> F::Applied
+pub fn get_applied<F, A>(applied : App<F, A>) -> F::Applied
 where
   F : 'static,
   A : 'static,
@@ -36,11 +36,11 @@ where
   *applied.applied.get_applied()
 }
 
-pub fn cloak_applied<F, A>(applied : F::Applied) -> Applied<F, A>
+pub fn cloak_applied<F, A>(applied : F::Applied) -> App<F, A>
 where
   F : TypeApp<A>,
 {
-  Applied {
+  App {
     applied : Box::new(applied),
     witness : Box::new(()),
   }

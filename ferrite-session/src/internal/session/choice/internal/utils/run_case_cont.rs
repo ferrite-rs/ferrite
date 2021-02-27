@@ -14,7 +14,7 @@ use crate::internal::{
 pub async fn run_case_cont<N, C, D, B, Row>(
   ctx : D::Endpoints,
   sender : SenderOnce<B>,
-  cont1 : AppliedSum<Row, Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>>,
+  cont1 : AppSum<Row, Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>>,
 ) where
   C : Context,
   D : Context,
@@ -120,7 +120,7 @@ where
 {
   fn elim_field<A>(
     self,
-    fa : Applied<Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>, A>,
+    fa : App<Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>, A>,
   ) -> Pin<Box<dyn Future<Output = ()> + Send>>
   where
     A : Send + 'static,

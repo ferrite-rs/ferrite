@@ -16,23 +16,23 @@ where
   T::from(row)
 }
 
-pub fn get_row<Row, F>(row : AppliedSum<Row, F>) -> Row::Applied
+pub fn get_row<Row, F>(row : AppSum<Row, F>) -> Row::Applied
 where
   F : TyCon,
-  Row : RowApp<F>,
+  Row : SumApp<F>,
 {
   row.get_row()
 }
 
-pub fn get_row_borrow<Row, F>(row : &AppliedSum<Row, F>) -> &Row::Applied
+pub fn get_row_borrow<Row, F>(row : &AppSum<Row, F>) -> &Row::Applied
 where
   F : TyCon,
-  Row : RowApp<F>,
+  Row : SumApp<F>,
 {
   row.row.as_ref().get_row_borrow()
 }
 
-pub fn absurd<F, A>(row1 : AppliedSum<(), F>) -> A
+pub fn absurd<F, A>(row1 : AppSum<(), F>) -> A
 where
   F : TyCon,
 {
@@ -45,8 +45,8 @@ where
 //   -> row g
 pub fn lift_sum<Row, F1, F2, Lift>(
   lift : &Lift,
-  sum : AppliedSum<Row, F1>,
-) -> AppliedSum<Row, F2>
+  sum : AppSum<Row, F1>,
+) -> AppSum<Row, F2>
 where
   F1 : TyCon,
   F2 : TyCon,
@@ -58,12 +58,12 @@ where
 
 pub fn lift_sum_inject<Lift, Row, TargetF>(
   lift : Lift,
-  row : AppliedSum<Row, Lift::SourceF>,
-) -> AppliedSum<Row, Lift::InjectF>
+  row : AppSum<Row, Lift::SourceF>,
+) -> AppSum<Row, Lift::InjectF>
 where
   TargetF : TyCon,
   Row : SumFunctorInject,
-  Lift : InjectLift<AppliedSum<Row, TargetF>, TargetF = TargetF>,
+  Lift : InjectLift<AppSum<Row, TargetF>, TargetF = TargetF>,
 {
   Row::lift_sum_inject(lift, |x| x, row)
 }

@@ -6,9 +6,9 @@ use super::type_app::*;
 pub trait Functor: TypeAppGeneric
 {
   fn fmap<A, B>(
-    fa : Applied<Self, A>,
+    fa : App<Self, A>,
     mapper : impl Fn(A) -> B,
-  ) -> Applied<Self, B>
+  ) -> App<Self, B>
   where
     A : Send + 'static,
     B : Send + 'static;
@@ -17,9 +17,9 @@ pub trait Functor: TypeAppGeneric
 pub trait Applicative: Functor
 {
   fn apply<A, B, Func>(
-    fab : Applied<Self, Func>,
-    fa : Applied<Self, A>,
-  ) -> Applied<Self, B>
+    fab : App<Self, Func>,
+    fa : App<Self, A>,
+  ) -> App<Self, B>
   where
     Func : Fn(A) -> B,
     A : Send + 'static,
@@ -29,9 +29,9 @@ pub trait Applicative: Functor
 pub trait Monad: Applicative
 {
   fn bind<A, B>(
-    fa : Applied<Self, A>,
-    cont : impl Fn(A) -> Applied<Self, B>,
-  ) -> Applied<Self, B>
+    fa : App<Self, A>,
+    cont : impl Fn(A) -> App<Self, B>,
+  ) -> App<Self, B>
   where
     A : Send + 'static,
     B : Send + 'static;
@@ -45,8 +45,8 @@ where
 {
   fn lift<A>(
     &self,
-    fa : Applied<F1, A>,
-  ) -> Applied<F2, A>
+    fa : App<F1, A>,
+  ) -> App<F2, A>
   where
     A : Send + 'static;
 }

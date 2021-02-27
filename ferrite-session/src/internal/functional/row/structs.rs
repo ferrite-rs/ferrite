@@ -21,7 +21,7 @@ pub enum Sum<A, B>
   Inr(B),
 }
 
-pub struct AppliedSum<Row, F>
+pub struct AppSum<Row, F>
 {
   pub row : Box<dyn HasRowWitness<Row, F, Box<dyn Any>>>,
 }
@@ -35,10 +35,10 @@ pub struct Merge<T1, T2>(PhantomData<(T1, T2)>);
 
 pub struct ElimConst {}
 
-impl<Row, F> AppliedSum<Row, F>
+impl<Row, F> AppSum<Row, F>
 where
   F : TyCon,
-  Row : RowApp<F>,
+  Row : SumApp<F>,
 {
   pub fn get_row(self) -> Row::Applied
   {
@@ -56,12 +56,12 @@ impl<N> ChoiceSelector<N>
   }
 }
 
-pub fn cloak_row<Row, F>(row : Row::Applied) -> AppliedSum<Row, F>
+pub fn cloak_row<Row, F>(row : Row::Applied) -> AppSum<Row, F>
 where
   F : TyCon,
-  Row : RowApp<F>,
+  Row : SumApp<F>,
 {
-  AppliedSum {
+  AppSum {
     row : Box::new(row),
   }
 }

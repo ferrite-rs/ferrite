@@ -10,7 +10,7 @@ pub trait SessionInjector<N, C, A, B, Row, Del>: Send
   fn inject_session(
     self: Box<Self>,
     session : PartialSession<N::Target, B>,
-  ) -> AppliedSum<Row, InternalSessionF<N, C, B, Row, Del>>
+  ) -> AppSum<Row, InternalSessionF<N, C, B, Row, Del>>
   where
     A : Protocol,
     B : Protocol,

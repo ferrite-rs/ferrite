@@ -29,12 +29,12 @@ where
   Row : RowCon,
   N : ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
 {
-  type Ret = AppliedSum<Row, InternalSessionF<N, C, B, Row, Del>>;
+  type Ret = AppSum<Row, InternalSessionF<N, C, B, Row, Del>>;
 
   fn run_cont(
     self,
     session : PartialSession<N::Target, B>,
-  ) -> AppliedSum<Row, InternalSessionF<N, C, B, Row, Del>>
+  ) -> AppSum<Row, InternalSessionF<N, C, B, Row, Del>>
   {
     self.injector.inject_session(session)
   }

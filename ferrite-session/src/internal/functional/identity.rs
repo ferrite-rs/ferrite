@@ -30,9 +30,9 @@ impl TypeAppGeneric for IdentityF
 impl Functor for IdentityF
 {
   fn fmap<A, B>(
-    fa : Applied<IdentityF, A>,
+    fa : App<IdentityF, A>,
     mapper : impl Fn(A) -> B,
-  ) -> Applied<IdentityF, B>
+  ) -> App<IdentityF, B>
   where
     A : Send + 'static,
     B : Send + 'static,

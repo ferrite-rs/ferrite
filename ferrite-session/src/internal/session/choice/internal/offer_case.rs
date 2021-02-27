@@ -14,7 +14,7 @@ use crate::internal::{
   functional::{
     cloak_applied,
     Prism,
-    RowApp,
+    SumApp,
   },
   protocol::InternalChoice,
 };
@@ -26,7 +26,7 @@ pub fn offer_case<N, C, A, Row>(
 where
   C : Context,
   A : Protocol,
-  Row : RowApp<ReceiverF>,
+  Row : SumApp<ReceiverF>,
   N : Prism<Row, Elem = A>,
 {
   unsafe_create_session(move |ctx, sender1| async move {

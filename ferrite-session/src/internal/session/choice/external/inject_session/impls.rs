@@ -29,12 +29,12 @@ where
   C : Context,
   A : Protocol,
 {
-  type Ret = AppliedSum<Row, SessionF<C>>;
+  type Ret = AppSum<Row, SessionF<C>>;
 
   fn run_cont(
     self,
     session : PartialSession<C, A>,
-  ) -> AppliedSum<Row, SessionF<C>>
+  ) -> AppSum<Row, SessionF<C>>
   {
     run_inject_session(self, session)
   }

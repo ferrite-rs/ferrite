@@ -5,7 +5,7 @@ use super::{
   traits::*,
 };
 
-impl<F, X, T> serde::Serialize for Applied<F, X>
+impl<F, X, T> serde::Serialize for App<F, X>
 where
   X : 'static,
   T : Send + 'static,
@@ -27,7 +27,7 @@ where
   }
 }
 
-impl<'a, F, X, T> serde::Deserialize<'a> for Applied<F, X>
+impl<'a, F, X, T> serde::Deserialize<'a> for App<F, X>
 where
   X : 'static,
   T : Send + 'static,

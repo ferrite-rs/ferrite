@@ -15,7 +15,7 @@ use crate::internal::{
     Value,
   },
   functional::{
-    AppliedSum,
+    AppSum,
     ElimSum,
     RowCon,
     SplitRow,
@@ -27,7 +27,7 @@ use crate::internal::{
 };
 
 pub fn offer_choice<C, Row>(
-  cont1 : impl FnOnce(Row::Uncloaked) -> AppliedSum<Row, SessionF<C>>
+  cont1 : impl FnOnce(Row::Uncloaked) -> AppSum<Row, SessionF<C>>
     + Send
     + 'static
 ) -> PartialSession<C, ExternalChoice<Row>>

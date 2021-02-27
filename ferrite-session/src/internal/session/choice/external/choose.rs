@@ -11,7 +11,7 @@ use crate::internal::{
   },
   functional::{
     cloak_applied,
-    AppliedSum,
+    AppSum,
     Prism,
     RowCon,
   },
@@ -34,7 +34,7 @@ where
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);
 
-    let choice : AppliedSum<Row, ()> = M::inject_elem(cloak_applied(()));
+    let choice : AppSum<Row, ()> = M::inject_elem(cloak_applied(()));
 
     let ExternalChoice { sender: sender2 } = receiver1.recv().await.unwrap();
 

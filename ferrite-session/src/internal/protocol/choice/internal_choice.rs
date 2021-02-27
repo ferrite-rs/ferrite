@@ -7,7 +7,7 @@ pub struct InternalChoice<Row>
 where
   Row : RowCon,
 {
-  pub(crate) field : AppliedSum<Row, ReceiverF>,
+  pub(crate) field : AppSum<Row, ReceiverF>,
 }
 
 impl<Row> Protocol for InternalChoice<Row>
@@ -28,9 +28,9 @@ where
 
 impl<Row, A> SharedRecApp<A> for InternalChoice<Row>
 where
-  Row : RowApp<ReceiverF>,
+  Row : SumApp<ReceiverF>,
   Row : SharedRecApp<A>,
-  <Row as SharedRecApp<A>>::Applied : RowApp<ReceiverF>,
+  <Row as SharedRecApp<A>>::Applied : SumApp<ReceiverF>,
 {
   type Applied = InternalChoice<<Row as SharedRecApp<A>>::Applied>;
 }
@@ -38,7 +38,7 @@ where
 impl<Row> ForwardChannel for InternalChoice<Row>
 where
   Row : RowCon,
-  AppliedSum<Row, ReceiverF> : ForwardChannel,
+  AppSum<Row, ReceiverF> : ForwardChannel,
 {
   fn forward_to(
     self,
@@ -55,7 +55,7 @@ where
   ) -> Self
   {
     InternalChoice {
-      field : <AppliedSum<Row, ReceiverF>>::forward_from(sender, receiver),
+      field : <AppSum<Row, ReceiverF>>::forward_from(sender, receiver),
     }
   }
 }

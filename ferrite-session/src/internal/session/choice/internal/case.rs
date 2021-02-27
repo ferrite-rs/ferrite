@@ -13,7 +13,7 @@ use crate::internal::{
     Protocol,
   },
   functional::{
-    AppliedSum,
+    AppSum,
     ElimSum,
     IntersectSum,
     RowCon,
@@ -27,7 +27,7 @@ use crate::internal::{
 
 pub fn case<N, C, D, B, Row>(
   _ : N,
-  cont1 : impl FnOnce(Row::Uncloaked) -> AppliedSum<Row, InternalSessionF<N, C, B, Row, D>>
+  cont1 : impl FnOnce(Row::Uncloaked) -> AppSum<Row, InternalSessionF<N, C, B, Row, D>>
     + Send
     + 'static,
 ) -> PartialSession<C, B>

@@ -11,10 +11,10 @@ use crate::internal::functional::{
   type_app::*,
 };
 
-impl<Row, F> serde::Serialize for AppliedSum<Row, F>
+impl<Row, F> serde::Serialize for AppSum<Row, F>
 where
   F : TyCon,
-  Row : RowApp<F>,
+  Row : SumApp<F>,
   Row::Applied :
     Send + 'static + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
@@ -31,11 +31,11 @@ where
   }
 }
 
-impl<'a, Row, F, T> serde::Deserialize<'a> for AppliedSum<Row, F>
+impl<'a, Row, F, T> serde::Deserialize<'a> for AppSum<Row, F>
 where
   F : TyCon,
   T : Send + 'static,
-  Row : RowApp<F, Applied = T>,
+  Row : SumApp<F, Applied = T>,
   T : serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
   fn deserialize<D>(deserializer : D) -> Result<Self, D::Error>
@@ -52,12 +52,12 @@ impl<S, Row, F> HasRow<Row, F> for S
 where
   F : TyCon,
   S : Send + 'static,
-  Row : RowApp<F, Applied = S>,
+  Row : SumApp<F, Applied = S>,
 {
   fn get_row(self: Box<Self>) -> Box<Row::Applied>
   where
     F : TyCon,
-    Row : RowApp<F>,
+    Row : SumApp<F>,
   {
     self
   }
@@ -65,7 +65,7 @@ where
   fn get_row_borrow<'a>(&'a self) -> &'a Row::Applied
   where
     F : TyCon,
-    Row : RowApp<F>,
+    Row : SumApp<F>,
   {
     self
   }
@@ -73,7 +73,7 @@ where
   fn get_row_borrow_mut<'a>(&'a mut self) -> &'a mut Row::Applied
   where
     F : TyCon,
-    Row : RowApp<F>,
+    Row : SumApp<F>,
   {
     self
   }
@@ -83,7 +83,7 @@ impl<S, Row, F, K> HasRowWitness<Row, F, K> for S
 where
   F : TyCon,
   S : Send + 'static,
-  Row : RowApp<F, Applied = S>,
+  Row : SumApp<F, Applied = S>,
 {
   fn with_witness(
     self: Box<Self>,
@@ -105,16 +105,16 @@ impl RowCon for () {}
 
 impl RowCon for Bottom {}
 
-impl<F, A, R> RowApp<F> for (A, R)
+impl<F, A, R> SumApp<F> for (A, R)
 where
   A : Send + 'static,
   F : TyCon,
   R : RowCon,
 {
-  type Applied = Sum<Applied<F, A>, AppliedSum<R, F>>;
+  type Applied = Sum<App<F, A>, AppSum<R, F>>;
 }
 
-impl<F> RowApp<F> for ()
+impl<F> SumApp<F> for ()
 where
   F : TyCon,
 {
@@ -141,7 +141,7 @@ where
     }
   }
 
-  fn full_uncloak_row(row1 : AppliedSum<Self, F>) -> Self::Uncloaked
+  fn full_uncloak_row(row1 : AppSum<Self, F>) -> Self::Uncloaked
   {
     match row1.get_row() {
       Sum::Inl(field1) => {
@@ -169,7 +169,7 @@ where
     row
   }
 
-  fn full_uncloak_row(row : AppliedSum<Self, F>) -> Self::Uncloaked
+  fn full_uncloak_row(row : AppSum<Self, F>) -> Self::Uncloaked
   {
     row.get_row()
   }
@@ -181,7 +181,7 @@ where
 {
   fn elim_field<A>(
     self,
-    x : Applied<Const<X>, A>,
+    x : App<Const<X>, A>,
   ) -> X
   where
     A : 'static,
@@ -203,14 +203,14 @@ where
   T1 : TyCon,
   T2 : TyCon,
 {
-  type Applied = (Applied<T1, A>, Applied<T2, A>);
+  type Applied = (App<T1, A>, App<T2, A>);
 }
 
 impl SplitRow for ()
 {
   fn split_row<F1, F2>(
-    row1 : AppliedSum<Self, Merge<F1, F2>>
-  ) -> (AppliedSum<Self, F1>, AppliedSum<Self, F2>)
+    row1 : AppSum<Self, Merge<F1, F2>>
+  ) -> (AppSum<Self, F1>, AppSum<Self, F2>)
   where
     F1 : TyCon,
     F2 : TyCon,
@@ -225,8 +225,8 @@ where
   R : SplitRow,
 {
   fn split_row<F1, F2>(
-    row1 : AppliedSum<Self, Merge<F1, F2>>
-  ) -> (AppliedSum<Self, F1>, AppliedSum<Self, F2>)
+    row1 : AppSum<Self, Merge<F1, F2>>
+  ) -> (AppSum<Self, F1>, AppSum<Self, F2>)
   where
     F1 : TyCon,
     F2 : TyCon,
@@ -251,9 +251,9 @@ where
 impl IntersectSum for ()
 {
   fn intersect_sum<F1, F2>(
-    row1 : AppliedSum<(), F1>,
-    _row2 : AppliedSum<(), F2>,
-  ) -> Option<AppliedSum<(), Merge<F1, F2>>>
+    row1 : AppSum<(), F1>,
+    _row2 : AppSum<(), F2>,
+  ) -> Option<AppSum<(), Merge<F1, F2>>>
   where
     F1 : TyCon,
     F2 : TyCon,
@@ -268,9 +268,9 @@ where
   R : IntersectSum,
 {
   fn intersect_sum<F1, F2>(
-    row1 : AppliedSum<Self, F1>,
-    row2 : AppliedSum<Self, F2>,
-  ) -> Option<AppliedSum<Self, Merge<F1, F2>>>
+    row1 : AppSum<Self, F1>,
+    row2 : AppSum<Self, F2>,
+  ) -> Option<AppSum<Self, Merge<F1, F2>>>
   where
     F1 : TyCon,
     F2 : TyCon,
@@ -295,8 +295,8 @@ impl SumFunctor for ()
 {
   fn lift_sum<T, F1, F2>(
     _lift : &T,
-    row1 : AppliedSum<Self, F1>,
-  ) -> AppliedSum<Self, F2>
+    row1 : AppSum<Self, F1>,
+  ) -> AppSum<Self, F2>
   where
     F1 : TyCon,
     F2 : TyCon,
@@ -313,8 +313,8 @@ where
 {
   fn lift_sum<T, F1, F2>(
     lift : &T,
-    row1 : AppliedSum<Self, F1>,
-  ) -> AppliedSum<Self, F2>
+    row1 : AppSum<Self, F1>,
+  ) -> AppSum<Self, F2>
   where
     F1 : TyCon,
     F2 : TyCon,
@@ -338,11 +338,11 @@ impl SumFunctorInject for ()
   fn lift_sum_inject<L, Root, Inject>(
     _ctx : L,
     _inject : Inject,
-    sum : AppliedSum<Self, L::SourceF>,
-  ) -> AppliedSum<Self, L::InjectF>
+    sum : AppSum<Self, L::SourceF>,
+  ) -> AppSum<Self, L::InjectF>
   where
     L : InjectLift<Root>,
-    Inject : Fn(AppliedSum<Self, L::TargetF>) -> Root + Send + 'static,
+    Inject : Fn(AppSum<Self, L::TargetF>) -> Root + Send + 'static,
   {
     absurd(sum)
   }
@@ -356,24 +356,24 @@ where
   fn lift_sum_inject<L, Root, Inject>(
     ctx : L,
     inject : Inject,
-    row1 : AppliedSum<Self, L::SourceF>,
-  ) -> AppliedSum<Self, L::InjectF>
+    row1 : AppSum<Self, L::SourceF>,
+  ) -> AppSum<Self, L::InjectF>
   where
     L : InjectLift<Root>,
-    Inject : Fn(AppliedSum<Self, L::TargetF>) -> Root + Send + 'static,
+    Inject : Fn(AppSum<Self, L::TargetF>) -> Root + Send + 'static,
   {
     let row2 = row1.get_row();
 
     match row2 {
       Sum::Inl(a) => {
-        let inject2 = move |b : Applied<L::TargetF, A>| -> Root {
+        let inject2 = move |b : App<L::TargetF, A>| -> Root {
           inject(cloak_row(Sum::Inl(b)))
         };
 
         cloak_row(Sum::Inl(L::lift_field(ctx, inject2, a)))
       }
       Sum::Inr(b) => {
-        let inject2 = move |r : AppliedSum<R, L::TargetF>| -> Root {
+        let inject2 = move |r : AppSum<R, L::TargetF>| -> Root {
           inject(cloak_row(Sum::Inr(r)))
         };
 
@@ -387,7 +387,7 @@ impl ElimSum for ()
 {
   fn elim_sum<F, E, R>(
     _elim_field : E,
-    row : AppliedSum<Self, F>,
+    row : AppSum<Self, F>,
   ) -> R
   where
     F : TyCon,
@@ -404,7 +404,7 @@ where
 {
   fn elim_sum<F, E, K>(
     e : E,
-    row1 : AppliedSum<Self, F>,
+    row1 : AppSum<Self, F>,
   ) -> K
   where
     F : TyCon,
@@ -426,14 +426,14 @@ where
 {
   type Elem = A;
 
-  fn inject_elem<F>(t : Applied<F, A>) -> AppliedSum<(A, R), F>
+  fn inject_elem<F>(t : App<F, A>) -> AppSum<(A, R), F>
   where
     F : TyCon,
   {
     cloak_row(Sum::Inl(t))
   }
 
-  fn extract_elem<F>(row : AppliedSum<(A, R), F>) -> Option<Applied<F, A>>
+  fn extract_elem<F>(row : AppSum<(A, R), F>) -> Option<App<F, A>>
   where
     F : TyCon,
   {
@@ -452,7 +452,7 @@ where
 {
   type Elem = <ChoiceSelector<N> as Prism<R>>::Elem;
 
-  fn inject_elem<F>(elem : Applied<F, Self::Elem>) -> AppliedSum<(A, R), F>
+  fn inject_elem<F>(elem : App<F, Self::Elem>) -> AppSum<(A, R), F>
   where
     F : TyCon,
   {
@@ -460,8 +460,8 @@ where
   }
 
   fn extract_elem<F>(
-    row : AppliedSum<(A, R), F>
-  ) -> Option<Applied<F, Self::Elem>>
+    row : AppSum<(A, R), F>
+  ) -> Option<App<F, Self::Elem>>
   where
     F : TyCon,
   {

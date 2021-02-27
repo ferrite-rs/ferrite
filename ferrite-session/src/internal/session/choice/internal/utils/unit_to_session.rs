@@ -11,8 +11,8 @@ use crate::internal::{
 };
 
 pub fn lift_unit_to_session<N, C, D, B, Row>(
-  row : AppliedSum<Row, ()>
-) -> AppliedSum<Row, InjectSessionF<N, C, B, Row, D>>
+  row : AppSum<Row, ()>
+) -> AppSum<Row, InjectSessionF<N, C, B, Row, D>>
 where
   B : Protocol,
   C : Context,
@@ -27,7 +27,7 @@ where
 struct LiftUnitToSession<N, C, D, A, Row>(PhantomData<(N, C, D, A, Row)>);
 
 impl<N, C, D, B, Row>
-  InjectLift<AppliedSum<Row, InternalSessionF<N, C, B, Row, D>>>
+  InjectLift<AppSum<Row, InternalSessionF<N, C, B, Row, D>>>
   for LiftUnitToSession<N, C, D, B, Row>
 where
   B : Protocol,
@@ -45,12 +45,12 @@ where
   fn lift_field<A>(
     self,
     inject1 : impl Fn(
-        Applied<Self::TargetF, A>,
-      ) -> AppliedSum<Row, InternalSessionF<N, C, B, Row, D>>
+        App<Self::TargetF, A>,
+      ) -> AppSum<Row, InternalSessionF<N, C, B, Row, D>>
       + Send
       + 'static,
-    _row : Applied<Self::SourceF, A>,
-  ) -> Applied<Self::InjectF, A>
+    _row : App<Self::SourceF, A>,
+  ) -> App<Self::InjectF, A>
   where
     A : Send + 'static,
   {
@@ -70,8 +70,8 @@ struct SessionInjectorImpl<N, C, A, B, Row, Del>
 {
   injector : Box<
     dyn FnOnce(
-        Applied<InternalSessionF<N, C, B, Row, Del>, A>,
-      ) -> AppliedSum<Row, InternalSessionF<N, C, B, Row, Del>>
+        App<InternalSessionF<N, C, B, Row, Del>, A>,
+      ) -> AppSum<Row, InternalSessionF<N, C, B, Row, Del>>
       + Send
       + 'static,
   >,
@@ -83,7 +83,7 @@ impl<N, C, A, B, Row, Del> SessionInjector<N, C, A, B, Row, Del>
   fn inject_session(
     self: Box<Self>,
     session1 : PartialSession<N::Target, B>,
-  ) -> AppliedSum<Row, InternalSessionF<N, C, B, Row, Del>>
+  ) -> AppSum<Row, InternalSessionF<N, C, B, Row, Del>>
   where
     A : Protocol,
     B : Protocol,

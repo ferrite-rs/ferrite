@@ -82,35 +82,11 @@ where
   type Applied = A;
 }
 
-impl RecApp<Z> for Z
-{
-  type Applied = Z;
-}
-
-impl<A> RecApp<S<A>> for Z
-{
-  type Applied = Z;
-}
-
-impl<A, N> RecApp<S<A>> for S<N>
-where
-  N : RecApp<A>,
-{
-  type Applied = S<N::Applied>;
-}
-
 impl<A, N> RecApp<Unfix<A>> for S<N>
 where
   N : Send + 'static,
 {
   type Applied = N;
-}
-
-impl<N> RecApp<Z> for S<N>
-where
-  N : Send + 'static,
-{
-  type Applied = S<N>;
 }
 
 impl<A> RecApp<A> for ()

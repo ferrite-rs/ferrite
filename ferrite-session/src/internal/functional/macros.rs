@@ -17,9 +17,9 @@ macro_rules! natural_transformation {
       {
         fn lift < A >
           ( &self,
-            $arg: Applied < $f1, A >
+            $arg: App < $f1, A >
           )
-          -> Applied < $f2, A >
+          -> App < $f2, A >
         where
           A: Send + 'static
         {

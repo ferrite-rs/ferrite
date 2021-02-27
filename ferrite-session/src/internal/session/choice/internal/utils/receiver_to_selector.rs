@@ -3,8 +3,8 @@ use crate::internal::{
   functional::{
     cloak_applied,
     lift_sum,
-    Applied,
-    AppliedSum,
+    App,
+    AppSum,
     Merge,
     SplitRow,
     SumFunctor,
@@ -12,8 +12,8 @@ use crate::internal::{
 };
 
 pub fn receiver_to_selector<Row>(
-  row1 : AppliedSum<Row, ReceiverF>
-) -> (AppliedSum<Row, ReceiverF>, AppliedSum<Row, ()>)
+  row1 : AppSum<Row, ReceiverF>
+) -> (AppSum<Row, ReceiverF>, AppSum<Row, ()>)
 where
   Row : SplitRow,
   Row : SumFunctor,

@@ -10,8 +10,8 @@ where
   Row : RowCon,
 {
   pub(crate) sender : SenderOnce<(
-    Value<AppliedSum<Row, ()>>,
-    SenderOnce<AppliedSum<Row, ReceiverF>>,
+    Value<AppSum<Row, ()>>,
+    SenderOnce<AppSum<Row, ReceiverF>>,
   )>,
 }
 
@@ -34,10 +34,10 @@ where
 impl<Row, A> SharedRecApp<A> for ExternalChoice<Row>
 where
   Row : SharedRecApp<A>,
-  Row : RowApp<()>,
-  Row : RowApp<ReceiverF>,
-  <Row as SharedRecApp<A>>::Applied : RowApp<()>,
-  <Row as SharedRecApp<A>>::Applied : RowApp<ReceiverF>,
+  Row : SumApp<()>,
+  Row : SumApp<ReceiverF>,
+  <Row as SharedRecApp<A>>::Applied : SumApp<()>,
+  <Row as SharedRecApp<A>>::Applied : SumApp<ReceiverF>,
 {
   type Applied = ExternalChoice<<Row as SharedRecApp<A>>::Applied>;
 }
@@ -45,8 +45,8 @@ where
 impl<Row> ForwardChannel for ExternalChoice<Row>
 where
   Row : RowCon,
-  AppliedSum<Row, ReceiverF> : ForwardChannel,
-  AppliedSum<Row, ()> :
+  AppSum<Row, ReceiverF> : ForwardChannel,
+  AppSum<Row, ()> :
     Send + 'static + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
   fn forward_to(
@@ -65,8 +65,8 @@ where
   {
     ExternalChoice {
       sender : <SenderOnce<(
-        Value<AppliedSum<Row, ()>>,
-        SenderOnce<AppliedSum<Row, ReceiverF>>,
+        Value<AppSum<Row, ()>>,
+        SenderOnce<AppSum<Row, ReceiverF>>,
       )>>::forward_from(sender, receiver),
     }
   }

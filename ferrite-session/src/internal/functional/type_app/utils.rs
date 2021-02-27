@@ -6,7 +6,7 @@ use super::{
 };
 
 pub fn with_applied<F, A, K>(
-  applied : Applied<F, A>,
+  applied : App<F, A>,
   cont1 : Box<dyn TypeAppWitnessCont<F, A, K>>,
 ) -> Box<K>
 where
@@ -16,7 +16,7 @@ where
 {
   struct TypeAppWitnessContWrapper<F, A, K>
   {
-    applied : Applied<F, A>,
+    applied : App<F, A>,
     cont : Box<dyn TypeAppWitnessCont<F, A, K>>,
   }
 

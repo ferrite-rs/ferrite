@@ -12,8 +12,8 @@ use crate::internal::{
 
 pub async fn run_choice_cont<Row, C>(
   ctx : C::Endpoints,
-  sender : SenderOnce<AppliedSum<Row, ReceiverF>>,
-  cont1 : AppliedSum<Row, SessionF<C>>,
+  sender : SenderOnce<AppSum<Row, ReceiverF>>,
+  cont1 : AppSum<Row, SessionF<C>>,
 ) where
   C : Context,
   Row : ElimSum,
@@ -90,9 +90,9 @@ where
 
   fn lift_field<A>(
     self,
-    _inject : impl Fn(Applied<Self::TargetF, A>) -> Root + Send + 'static,
-    cont1 : Applied<Self::SourceF, A>,
-  ) -> Applied<Self::InjectF, A>
+    _inject : impl Fn(App<Self::TargetF, A>) -> Root + Send + 'static,
+    cont1 : App<Self::SourceF, A>,
+  ) -> App<Self::InjectF, A>
   where
     A : Send + 'static,
   {

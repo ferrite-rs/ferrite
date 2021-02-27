@@ -405,7 +405,7 @@ where
   }
 }
 
-impl<F, X, T> ForwardChannel for Applied<F, X>
+impl<F, X, T> ForwardChannel for App<F, X>
 where
   X : Send + 'static,
   F : TypeApp<X, Applied = T>,
@@ -429,11 +429,11 @@ where
   }
 }
 
-impl<Row, F, T> ForwardChannel for AppliedSum<Row, F>
+impl<Row, F, T> ForwardChannel for AppSum<Row, F>
 where
   F : TyCon,
   F : Send + 'static,
-  Row : RowApp<F, Applied = T>,
+  Row : SumApp<F, Applied = T>,
   T : ForwardChannel,
 {
   fn forward_to(
