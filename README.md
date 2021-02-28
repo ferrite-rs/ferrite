@@ -54,8 +54,8 @@ To run a particular demo, use `cargo run` with the name of the demo file.
 For example:
 
 ```bash
-cargo run --bin hello
-cargo run --bin shared
+RUST_LOG=info cargo run --bin hello
+RUST_LOG=info cargo run --bin shared
 ```
 
 ## Code Organization
