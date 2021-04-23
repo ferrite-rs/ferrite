@@ -229,7 +229,7 @@ where
 
 pub fn acquire_shared_session<F, C, A>(
   shared : SharedChannel<LinearToShared<F>>,
-  cont_builder : impl FnOnce(C::Length) -> PartialSession<C::Appended, A>
+  cont1 : impl FnOnce(C::Length) -> PartialSession<C::Appended, A>
     + Send
     + 'static,
 ) -> PartialSession<C, A>
@@ -242,7 +242,7 @@ where
   F::Applied : Protocol,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
-    let cont = cont_builder(<C::Length as Nat>::nat());
+    let cont2 = cont1(<C::Length as Nat>::nat());
 
     let (sender2, receiver2) = once_channel();
 
@@ -263,7 +263,7 @@ where
     });
 
     let child2 = task::spawn(async move {
-      unsafe_run_session(cont, ctx2, sender1).await;
+      unsafe_run_session(cont2, ctx2, sender1).await;
     });
 
     let _ = join!(child1, child2).await;
@@ -280,7 +280,6 @@ where
   A : Protocol,
   C : Context,
   F : Protocol,
-  F : SharedRecApp<SharedToLinear<F>>,
   N : ContextLens<C, SharedToLinear<F>, Empty>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
