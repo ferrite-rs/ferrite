@@ -1,7 +1,2 @@
 [workspace]
 members = [ "ferrite-session", "ferrite-demo" ]
-
-[profile.release]
-opt-level = 3
-debug = true
-lto = false
