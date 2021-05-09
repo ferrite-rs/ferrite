@@ -6,14 +6,15 @@ use crate::internal::{
   functional::nat::*,
 };
 
-pub fn fix_session<F, A, C>(
+pub fn fix_session<R, F, A, C>(
   cont : PartialSession<C, A>
-) -> PartialSession<C, Rec<F>>
+) -> PartialSession<C, Rec<R, F>>
 where
   C : Context,
+  R : Context,
   F : Protocol,
   A : Protocol,
-  F : RecApp<Unfix<Rec<F>>, Applied = A>,
+  F : RecApp<(Rec<R, F>, R), Applied = A>,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver) : (SenderOnce<A>, _) = once_channel();
@@ -30,14 +31,15 @@ where
   })
 }
 
-pub fn unfix_session<C, F, A>(
-  cont : PartialSession<C, Rec<F>>
+pub fn unfix_session<R, F, C, A>(
+  cont : PartialSession<C, Rec<R, F>>
 ) -> PartialSession<C, A>
 where
   C : Context,
+  R : Context,
   F : Protocol,
   A : Protocol,
-  F : RecApp<Unfix<Rec<F>>, Applied = A>,
+  F : RecApp<(Rec<R, F>, R), Applied = A>,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver) = once_channel();
@@ -76,7 +78,7 @@ where
   })
 }
 
-pub fn unfix_session_for<N, C, A, B, F>(
+pub fn unfix_session_for<N, C, A, B, R, F>(
   _ : N,
   cont : PartialSession<N::Target, B>,
 ) -> PartialSession<C, B>
@@ -84,9 +86,10 @@ where
   B : Protocol,
   C : Context,
   F : Protocol,
-  F : RecApp<Unfix<Rec<F>>, Applied = A>,
+  R : Context,
+  F : RecApp<(Rec<R, F>, R), Applied = A>,
   A : Protocol,
-  N : ContextLens<C, Rec<F>, A>,
+  N : ContextLens<C, Rec<R, F>, A>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);

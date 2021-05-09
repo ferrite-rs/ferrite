@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use super::protocol::Protocol;
 use crate::internal::functional::nat::{
   S,
@@ -36,57 +34,71 @@ where
   }
 }
 
-pub struct Unfix<A>(PhantomData<A>);
-
-pub struct Rec<F>
+pub struct Rec<C, F>
 {
-  unfix : Box<dyn HasRecApp<F, Unfix<Rec<F>>>>,
+  unfix : Box<dyn HasRecApp<F, (Rec<C, F>, C)>>,
 }
 
-pub fn fix<F>(x : F::Applied) -> Rec<F>
+pub type Rec1<F> = Rec<(), F>;
+
+pub fn fix<C, F>(x : F::Applied) -> Rec<C, F>
 where
+  C : Send + 'static,
   F : Send + 'static,
-  F : RecApp<Unfix<Rec<F>>>,
+  F : RecApp<(Rec<C, F>, C)>,
 {
   Rec {
     unfix : Box::new(x),
   }
 }
 
-pub fn unfix<F>(x : Rec<F>) -> F::Applied
+pub fn unfix<C, F>(x : Rec<C, F>) -> F::Applied
 where
+  C : Send + 'static,
   F : Send + 'static,
-  F : RecApp<Unfix<Rec<F>>>,
+  F : RecApp<(Rec<C, F>, C)>,
 {
   *x.unfix.get_applied()
 }
 
-impl<F> Protocol for Rec<F> where F : Send + 'static {}
-
-impl<F> Protocol for Unfix<F> where F : Send + 'static {}
-
-impl<A, F> RecApp<A> for Rec<F>
+impl<C, F> Protocol for Rec<C, F>
 where
-  F : RecApp<S<A>>,
-  F : RecApp<Unfix<Rec<F>>>,
-  <F as RecApp<S<A>>>::Applied :
-    RecApp<Unfix<Rec<<F as RecApp<S<A>>>::Applied>>>,
+  C : Send + 'static,
+  F : Send + 'static,
 {
-  type Applied = Rec<<F as RecApp<S<A>>>::Applied>;
 }
 
-impl<A> RecApp<Unfix<A>> for Z
+impl<C, F> RecApp<C> for Rec<(), F>
+where
+  C : Send + 'static,
+  F : RecApp<(Rec<C, F>, C)>,
+{
+  type Applied = Rec<C, F>;
+}
+
+impl<C, A> RecApp<(A, C)> for Z
 where
   A : Send + 'static,
+  C : Send + 'static,
 {
   type Applied = A;
 }
 
-impl<A, N> RecApp<Unfix<A>> for S<N>
+impl<N> RecApp<()> for S<N>
 where
   N : Send + 'static,
 {
-  type Applied = N;
+  type Applied = S<N>;
+}
+
+impl<C, A, N> RecApp<(A, C)> for S<N>
+where
+  N : Send + 'static,
+  C : Send + 'static,
+  A : Send + 'static,
+  N : RecApp<C>,
+{
+  type Applied = N::Applied;
 }
 
 impl<A> RecApp<A> for ()

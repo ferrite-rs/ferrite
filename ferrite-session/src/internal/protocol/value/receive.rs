@@ -15,7 +15,7 @@ impl<X, T, A> RecApp<X> for ReceiveValue<T, A>
 where
   X : Send + 'static,
   T : Send + 'static,
-  A : RecApp<A>,
+  A : RecApp<X>,
 {
   type Applied = ReceiveValue<T, A::Applied>;
 }

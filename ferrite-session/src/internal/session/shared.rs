@@ -229,9 +229,7 @@ where
 
 pub fn acquire_shared_session<F, C, A>(
   shared : SharedChannel<LinearToShared<F>>,
-  cont1 : impl FnOnce(C::Length) -> PartialSession<C::Appended, A>
-    + Send
-    + 'static,
+  cont1 : impl FnOnce(C::Length) -> PartialSession<C::Appended, A> + Send + 'static,
 ) -> PartialSession<C, A>
 where
   C : Context,

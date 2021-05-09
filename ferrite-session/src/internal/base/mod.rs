@@ -44,9 +44,9 @@ pub use self::{
     unfix,
     HasRecApp,
     Rec,
+    Rec1,
     RecApp,
     SharedRecApp,
-    Unfix,
   },
   session::{
     unsafe_create_session,
