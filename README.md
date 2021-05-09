@@ -31,18 +31,6 @@ A draft technical report for Ferrite is currently available at
 
 ## Build Instructions
 
-The library code requires nightly version of Rust to be compiled.
-You can use `rustup` to install Rust nightly as follows:
-
-```bash
-# Install rustup
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-rustup default nightly
-```
-
-After that, the library can be build with `cargo` as follows:
-
 ```bash
 cargo build
 ```
@@ -63,7 +51,7 @@ RUST_LOG=info cargo run --bin shared
 ### `ferrite-session`
 
   - [`base`](ferrite-session/src/internal/base) - Core constructs for Ferrite
-  - [`functional`](ferrite-session/src/internal/function) - Functional programming constructs such as type application and natural numbers.
+  - [`functional`](ferrite-session/src/internal/functional) - Functional programming constructs such as type application and natural numbers.
   - [`protocol`](ferrite-session/src/internal/protocol) - Type definitions for session types
   - [`session`](ferrite-session/src/internal/session) - Term constructors
   - [`public.rs`](ferrite-session/src/internal/public.rs) - Public API exposed by Ferrite
