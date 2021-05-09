@@ -47,7 +47,7 @@ After that, the library can be build with `cargo` as follows:
 cargo build
 ```
 
-## Runnnig Demo
+## Running Demo
 
 A number of demo executables are available in the [`src/bin`](src/bin) directory.
 To run a particular demo, use `cargo run` with the name of the demo file.
