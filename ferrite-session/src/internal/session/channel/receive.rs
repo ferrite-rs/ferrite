@@ -18,13 +18,13 @@ use crate::internal::{
 };
 
 pub fn receive_channel<C, A, B>(
-  cont : impl FnOnce(C::Length) -> PartialSession<C::Appended, B>
+  cont: impl FnOnce(C::Length) -> PartialSession<C::Appended, B>
 ) -> PartialSession<C, ReceiveChannel<A, B>>
 where
-  A : Protocol,
-  B : Protocol,
-  C : Context,
-  C : AppendContext<(A, ())>,
+  A: Protocol,
+  B: Protocol,
+  C: Context,
+  C: AppendContext<(A, ())>,
 {
   let cont2 = cont(C::Length::nat());
 
@@ -42,14 +42,14 @@ where
 }
 
 pub fn receive_channel_slot<I, P, Q, N>(
-  _ : N,
-  cont : PartialSession<N::Target, Q>,
+  _: N,
+  cont: PartialSession<N::Target, Q>,
 ) -> PartialSession<I, ReceiveChannel<P, Q>>
 where
-  P : Protocol,
-  Q : Protocol,
-  I : Context,
-  N : ContextLens<I, Empty, P>,
+  P: Protocol,
+  Q: Protocol,
+  I: Context,
+  N: ContextLens<I, Empty, P>,
 {
   unsafe_create_session(move |ctx1, sender| async move {
     let ((), ctx2) = N::extract_source(ctx1);
@@ -74,17 +74,17 @@ where
 }
 
 pub fn send_channel_to<N1, N2, C, A1, A2, B>(
-  _ : N1,
-  _ : N2,
-  cont : PartialSession<N1::Target, B>,
+  _: N1,
+  _: N2,
+  cont: PartialSession<N1::Target, B>,
 ) -> PartialSession<C, B>
 where
-  C : Context,
-  A1 : Protocol,
-  A2 : Protocol,
-  B : Protocol,
-  N2 : ContextLens<C, A1, Empty>,
-  N1 : ContextLens<N2::Target, ReceiveChannel<A1, A2>, A2>,
+  C: Context,
+  A1: Protocol,
+  A2: Protocol,
+  B: Protocol,
+  N2: ContextLens<C, A1, Empty>,
+  N1: ContextLens<N2::Target, ReceiveChannel<A1, A2>, A2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N2::extract_source(ctx1);

@@ -5,7 +5,7 @@ use ferrite_session::{
 
 pub fn external_choice_session() -> Session<End>
 {
-  let provider : Session<
+  let provider: Session<
     ExternalChoice<Either<SendValue<String, End>, ReceiveValue<u64, End>>>,
   > = offer_choice! {
     Left => {
@@ -21,7 +21,7 @@ pub fn external_choice_session() -> Session<End>
     }
   };
 
-  let _client_left : Session<
+  let _client_left: Session<
     ReceiveChannel<
       ExternalChoice<Either<SendValue<String, End>, ReceiveValue<u64, End>>>,
       End,
@@ -36,7 +36,7 @@ pub fn external_choice_session() -> Session<End>
         }) )
   });
 
-  let client_right : Session<
+  let client_right: Session<
     ReceiveChannel<
       ExternalChoice<Either<SendValue<String, End>, ReceiveValue<u64, End>>>,
       End,

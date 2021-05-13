@@ -5,57 +5,57 @@ use crate::internal::{
 
 pub struct InternalChoice<Row>
 where
-  Row : RowCon,
+  Row: RowCon,
 {
-  pub(crate) field : AppSum<Row, ReceiverF>,
+  pub(crate) field: AppSum<Row, ReceiverF>,
 }
 
 impl<Row> Protocol for InternalChoice<Row>
 where
-  Row : Send + 'static,
-  Row : RowCon,
+  Row: Send + 'static,
+  Row: RowCon,
 {
 }
 
 impl<Row, A> RecApp<A> for InternalChoice<Row>
 where
-  Row : RowCon,
-  Row : RecApp<A>,
-  Row::Applied : RowCon,
+  Row: RowCon,
+  Row: RecApp<A>,
+  Row::Applied: RowCon,
 {
   type Applied = InternalChoice<Row::Applied>;
 }
 
 impl<Row, A> SharedRecApp<A> for InternalChoice<Row>
 where
-  Row : SumApp<ReceiverF>,
-  Row : SharedRecApp<A>,
-  <Row as SharedRecApp<A>>::Applied : SumApp<ReceiverF>,
+  Row: SumApp<ReceiverF>,
+  Row: SharedRecApp<A>,
+  <Row as SharedRecApp<A>>::Applied: SumApp<ReceiverF>,
 {
   type Applied = InternalChoice<<Row as SharedRecApp<A>>::Applied>;
 }
 
 impl<Row> ForwardChannel for InternalChoice<Row>
 where
-  Row : RowCon,
-  AppSum<Row, ReceiverF> : ForwardChannel,
+  Row: RowCon,
+  AppSum<Row, ReceiverF>: ForwardChannel,
 {
   fn forward_to(
     self,
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     self.field.forward_to(sender, receiver)
   }
 
   fn forward_from(
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     InternalChoice {
-      field : <AppSum<Row, ReceiverF>>::forward_from(sender, receiver),
+      field: <AppSum<Row, ReceiverF>>::forward_from(sender, receiver),
     }
   }
 }

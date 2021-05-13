@@ -26,14 +26,14 @@ pub enum AllRight {}
 
 pub trait SplitContext<C>
 where
-  C : Context,
+  C: Context,
 {
   type Left: Context;
 
   type Right: Context;
 
   fn split_endpoints(
-    ctx : C::Endpoints
+    ctx: C::Endpoints
   ) -> (
     <Self::Left as Context>::Endpoints,
     <Self::Right as Context>::Endpoints,
@@ -43,10 +43,9 @@ where
 impl SplitContext<()> for ()
 {
   type Left = ();
-
   type Right = ();
 
-  fn split_endpoints(_ : ()) -> ((), ())
+  fn split_endpoints(_: ()) -> ((), ())
   {
     ((), ())
   }
@@ -54,13 +53,12 @@ impl SplitContext<()> for ()
 
 impl<C> SplitContext<C> for AllLeft
 where
-  C : Context,
+  C: Context,
 {
   type Left = C;
-
   type Right = ();
 
-  fn split_endpoints(ctx : C::Endpoints) -> (C::Endpoints, ())
+  fn split_endpoints(ctx: C::Endpoints) -> (C::Endpoints, ())
   {
     (ctx, ())
   }
@@ -68,13 +66,12 @@ where
 
 impl<C> SplitContext<C> for AllRight
 where
-  C : Context,
+  C: Context,
 {
   type Left = ();
-
   type Right = C;
 
-  fn split_endpoints(ctx : C::Endpoints) -> ((), C::Endpoints)
+  fn split_endpoints(ctx: C::Endpoints) -> ((), C::Endpoints)
   {
     ((), ctx)
   }
@@ -82,17 +79,16 @@ where
 
 impl<X, C, C1, C2> SplitContext<(Empty, C)> for (Empty, X)
 where
-  C : Context,
-  C1 : Context,
-  C2 : Context,
-  X : SplitContext<C, Left = C1, Right = C2>,
+  C: Context,
+  C1: Context,
+  C2: Context,
+  X: SplitContext<C, Left = C1, Right = C2>,
 {
   type Left = (Empty, C1);
-
   type Right = (Empty, C2);
 
   fn split_endpoints(
-    (a, ctx) : ((), C::Endpoints)
+    (a, ctx): ((), C::Endpoints)
   ) -> (((), C1::Endpoints), ((), C2::Endpoints))
   {
     let (ctx1, ctx2) = X::split_endpoints(ctx);
@@ -103,18 +99,17 @@ where
 
 impl<X, A, C, C1, C2> SplitContext<(A, C)> for (L, X)
 where
-  A : Slot,
-  C : Context,
-  C1 : Context,
-  C2 : Context,
-  X : SplitContext<C, Left = C1, Right = C2>,
+  A: Slot,
+  C: Context,
+  C1: Context,
+  C2: Context,
+  X: SplitContext<C, Left = C1, Right = C2>,
 {
   type Left = (A, C1);
-
   type Right = (Empty, C2);
 
   fn split_endpoints(
-    (a, ctx) : (A::Endpoint, C::Endpoints)
+    (a, ctx): (A::Endpoint, C::Endpoints)
   ) -> ((A::Endpoint, C1::Endpoints), ((), C2::Endpoints))
   {
     let (ctx1, ctx2) = X::split_endpoints(ctx);
@@ -125,18 +120,17 @@ where
 
 impl<X, A, C, C1, C2> SplitContext<(A, C)> for (R, X)
 where
-  A : Slot,
-  C : Context,
-  C1 : Context,
-  C2 : Context,
-  X : SplitContext<C, Left = C1, Right = C2>,
+  A: Slot,
+  C: Context,
+  C1: Context,
+  C2: Context,
+  X: SplitContext<C, Left = C1, Right = C2>,
 {
   type Left = (Empty, C1);
-
   type Right = (A, C2);
 
   fn split_endpoints(
-    (a, ctx) : (A::Endpoint, C::Endpoints)
+    (a, ctx): (A::Endpoint, C::Endpoints)
   ) -> (((), C1::Endpoints), (A::Endpoint, C2::Endpoints))
   {
     let (ctx1, ctx2) = X::split_endpoints(ctx);
@@ -147,11 +141,11 @@ where
 
 pub trait Cut<C>: SplitContext<C>
 where
-  C : Context,
+  C: Context,
 {
   fn cut<A, B>(
-    cont1 : PartialSession<Self::Left, A>,
-    cont2 : impl FnOnce(
+    cont1: PartialSession<Self::Left, A>,
+    cont2: impl FnOnce(
       <Self::Right as Context>::Length,
     ) -> PartialSession<
       <Self::Right as AppendContext<(A, ())>>::Appended,
@@ -159,19 +153,19 @@ where
     >,
   ) -> PartialSession<C, B>
   where
-    A : Protocol,
-    B : Protocol,
-    Self::Right : AppendContext<(A, ())>;
+    A: Protocol,
+    B: Protocol,
+    Self::Right: AppendContext<(A, ())>;
 }
 
 impl<X, C> Cut<C> for X
 where
-  C : Context,
-  X : SplitContext<C>,
+  C: Context,
+  X: SplitContext<C>,
 {
   fn cut<A, B>(
-    cont1 : PartialSession<Self::Left, A>,
-    cont2 : impl FnOnce(
+    cont1: PartialSession<Self::Left, A>,
+    cont2: impl FnOnce(
       <Self::Right as Context>::Length,
     ) -> PartialSession<
       <Self::Right as AppendContext<(A, ())>>::Appended,
@@ -179,27 +173,27 @@ where
     >,
   ) -> PartialSession<C, B>
   where
-    A : Protocol,
-    B : Protocol,
-    Self::Right : AppendContext<(A, ())>,
+    A: Protocol,
+    B: Protocol,
+    Self::Right: AppendContext<(A, ())>,
   {
     cut::<X, _, _, _, _, _, _>(cont1, cont2)
   }
 }
 
 pub fn cut<X, C, C1, C2, A, B, Func>(
-  cont1 : PartialSession<C1, A>,
-  cont2 : Func,
+  cont1: PartialSession<C1, A>,
+  cont2: Func,
 ) -> PartialSession<C, B>
 where
-  A : Protocol,
-  B : Protocol,
-  C : Context,
-  C1 : Context,
-  C2 : Context,
-  X : SplitContext<C, Left = C1, Right = C2>,
-  C2 : AppendContext<(A, ())>,
-  Func : FnOnce(C2::Length) -> PartialSession<C2::Appended, B>,
+  A: Protocol,
+  B: Protocol,
+  C: Context,
+  C1: Context,
+  C2: Context,
+  X: SplitContext<C, Left = C1, Right = C2>,
+  C2: AppendContext<(A, ())>,
+  Func: FnOnce(C2::Length) -> PartialSession<C2::Appended, B>,
 {
   let cont3 = cont2(C2::Length::nat());
 
@@ -231,18 +225,18 @@ where
 */
 
 pub fn cut_append<C1, C2, C3, C4, A, B>(
-  cont1 : PartialSession<C3, B>,
-  cont2 : PartialSession<C2, A>,
+  cont1: PartialSession<C3, B>,
+  cont2: PartialSession<C2, A>,
 ) -> PartialSession<C4, B>
 where
-  A : Protocol,
-  B : Protocol,
-  C1 : Context,
-  C2 : Context,
-  C3 : Context,
-  C4 : Context,
-  C1 : AppendContext<(A, ()), Appended = C3>,
-  C1 : AppendContext<C2, Appended = C4>,
+  A: Protocol,
+  B: Protocol,
+  C1: Context,
+  C2: Context,
+  C3: Context,
+  C4: Context,
+  C1: AppendContext<(A, ()), Appended = C3>,
+  C1: AppendContext<C2, Appended = C4>,
 {
   unsafe_create_session(move |ctx1, b_sender| async move {
     let (ctx2, ctx3) = <C1 as AppendContext<C2>>::split_context(ctx1);

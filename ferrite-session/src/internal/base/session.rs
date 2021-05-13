@@ -13,10 +13,10 @@ pub type Session<P> = PartialSession<(), P>;
 
 pub struct PartialSession<C, A>
 where
-  A : Protocol,
-  C : Context,
+  A: Protocol,
+  C: Context,
 {
-  executor : Box<
+  executor: Box<
     dyn FnOnce(
         C::Endpoints,
         SenderOnce<A>,
@@ -26,14 +26,14 @@ where
 }
 
 pub fn unsafe_create_session<C, A, Fut>(
-  executor : impl FnOnce(C::Endpoints, SenderOnce<A>) -> Fut + Send + 'static
+  executor: impl FnOnce(C::Endpoints, SenderOnce<A>) -> Fut + Send + 'static
 ) -> PartialSession<C, A>
 where
-  A : Protocol,
-  C : Context,
-  Fut : Future<Output = ()> + Send,
+  A: Protocol,
+  C: Context,
+  Fut: Future<Output = ()> + Send,
 {
-  let executor2 : Box<
+  let executor2: Box<
     dyn FnOnce(
         C::Endpoints,
         SenderOnce<A>,
@@ -46,17 +46,17 @@ where
   });
 
   PartialSession {
-    executor : executor2,
+    executor: executor2,
   }
 }
 
 pub async fn unsafe_run_session<C, A>(
-  session : PartialSession<C, A>,
-  ctx : C::Endpoints,
-  sender : SenderOnce<A>,
+  session: PartialSession<C, A>,
+  ctx: C::Endpoints,
+  sender: SenderOnce<A>,
 ) where
-  A : Protocol,
-  C : Context,
+  A: Protocol,
+  C: Context,
 {
   (session.executor)(ctx, sender).await;
 }

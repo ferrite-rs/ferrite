@@ -11,7 +11,7 @@ pub fn pair_session() -> Session<End>
      P1 = send_value_async(cont_builder) :: · ⊢ Int ∧ End
   */
 
-  let p1 : Session<SendValue<u64, End>> = send_value!(
+  let p1: Session<SendValue<u64, End>> = send_value!(
     {
       println!("[P1] Spending 7 seconds to produce first output");
 
@@ -38,7 +38,7 @@ pub fn pair_session() -> Session<End>
      P2 = send_channel_from (cont1) :: (Int ∧ End) ⊢ (Int ∧ End) ⊗ (Str ∧ End)
   */
 
-  let p2 : Session<
+  let p2: Session<
     ReceiveChannel<
       SendValue<u64, End>,
       SendChannel<SendValue<u64, End>, SendValue<String, End>>,
@@ -77,7 +77,7 @@ pub fn pair_session() -> Session<End>
            P3 = wait_async (cont1) :: End, (Int ∧ End) ⊗ (Str ∧ End) ⊢ End
   */
 
-  let p3 : Session<
+  let p3: Session<
     ReceiveChannel<
       SendChannel<SendValue<u64, End>, SendValue<String, End>>,
       ReceiveChannel<End, End>,
@@ -119,7 +119,7 @@ pub fn pair_session() -> Session<End>
      P4 :: · ⊢ 1
   */
 
-  let p4 : Session<End> = terminate!({
+  let p4: Session<End> = terminate!({
     println!("[P4] Sleeping for 3 seconds before terminating");
 
     sleep(Duration::from_secs(2)).await;
@@ -127,10 +127,10 @@ pub fn pair_session() -> Session<End>
     println!("[P4] Terminating");
   });
 
-  let p5 : Session<SendChannel<SendValue<u64, End>, SendValue<String, End>>> =
+  let p5: Session<SendChannel<SendValue<u64, End>, SendValue<String, End>>> =
     apply_channel(p2, p1);
 
-  let p6 : Session<End> = apply_channel(apply_channel(p3, p5), p4);
+  let p6: Session<End> = apply_channel(apply_channel(p3, p5), p4);
 
   p6
 }

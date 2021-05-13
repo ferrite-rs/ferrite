@@ -12,20 +12,20 @@ use crate::internal::{
 };
 
 pub async fn run_case_cont<N, C, D, B, Row>(
-  ctx : D::Endpoints,
-  sender : SenderOnce<B>,
-  cont1 : AppSum<Row, Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>>,
+  ctx: D::Endpoints,
+  sender: SenderOnce<B>,
+  cont1: AppSum<Row, Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>>,
 ) where
-  C : Context,
-  D : Context,
-  B : Protocol,
-  Row : ElimSum,
-  N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  C: Context,
+  D: Context,
+  B: Protocol,
+  Row: ElimSum,
+  N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   let cont2 = ContRunner1::<N, C, B, Row, D> {
     ctx,
     sender,
-    phantom : PhantomData,
+    phantom: PhantomData,
   };
 
   Row::elim_sum(cont2, cont1).await;
@@ -33,32 +33,32 @@ pub async fn run_case_cont<N, C, D, B, Row>(
 
 struct ContRunner1<N, C, B, Row, D>
 where
-  B : Protocol,
-  C : Context,
-  D : Context,
-  Row : RowCon,
-  N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  B: Protocol,
+  C: Context,
+  D: Context,
+  Row: RowCon,
+  N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
-  ctx : D::Endpoints,
-  sender : SenderOnce<B>,
-  phantom : PhantomData<(N, C, Row)>,
+  ctx: D::Endpoints,
+  sender: SenderOnce<B>,
+  phantom: PhantomData<(N, C, Row)>,
 }
 
 struct ContRunner2<N, C, A, B, Row, D>
 where
-  B : Protocol,
-  C : Context,
-  D : Context,
-  Row : RowCon,
-  N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  B: Protocol,
+  C: Context,
+  D: Context,
+  Row: RowCon,
+  N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
-  ctx : D::Endpoints,
+  ctx: D::Endpoints,
 
-  sender : SenderOnce<B>,
+  sender: SenderOnce<B>,
 
-  receiver : ReceiverOnce<A>,
+  receiver: ReceiverOnce<A>,
 
-  phantom : PhantomData<(N, C, Row)>,
+  phantom: PhantomData<(N, C, Row)>,
 }
 
 impl<N, C, A, B, Row, D>
@@ -72,23 +72,23 @@ impl<N, C, A, B, Row, D>
     Pin<Box<dyn Future<Output = ()> + Send>>,
   > for ContRunner2<N, C, A, B, Row, D>
 where
-  B : Protocol,
-  C : Context,
-  D : Context,
-  Row : RowCon,
-  N : 'static,
-  N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  B: Protocol,
+  C: Context,
+  D: Context,
+  Row: RowCon,
+  N: 'static,
+  N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   fn on_internal_session(
     self: Box<Self>,
-    cont : InternalSession<N, C, A, B, Row, D>,
+    cont: InternalSession<N, C, A, B, Row, D>,
   ) -> Pin<Box<dyn Future<Output = ()> + Send>>
   where
-    A : Protocol,
-    B : Protocol,
-    C : Context,
-    Row : RowCon,
-    N : ContextLens<C, InternalChoice<Row>, A, Deleted = D>,
+    A: Protocol,
+    B: Protocol,
+    C: Context,
+    Row: RowCon,
+    N: ContextLens<C, InternalChoice<Row>, A, Deleted = D>,
   {
     let ctx1 = self.ctx;
 
@@ -112,18 +112,18 @@ impl<B, N, C, Row, D>
     Pin<Box<dyn Future<Output = ()> + Send>>,
   > for ContRunner1<N, C, B, Row, D>
 where
-  B : Protocol,
-  C : Context,
-  D : Context,
-  Row : RowCon,
-  N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  B: Protocol,
+  C: Context,
+  D: Context,
+  Row: RowCon,
+  N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   fn elim_field<A>(
     self,
-    fa : App<Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>, A>,
+    fa: App<Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>, A>,
   ) -> Pin<Box<dyn Future<Output = ()> + Send>>
   where
-    A : Send + 'static,
+    A: Send + 'static,
   {
     let (receiver1, session1) = fa.get_applied();
 
@@ -136,8 +136,8 @@ where
     let cont = ContRunner2::<N, C, A, B, Row, D> {
       ctx,
       sender,
-      receiver : receiver2,
-      phantom : PhantomData,
+      receiver: receiver2,
+      phantom: PhantomData,
     };
 
     *with_internal_session(session2, Box::new(cont))

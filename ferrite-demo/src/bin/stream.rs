@@ -5,7 +5,7 @@ use tokio::time::sleep;
 
 type IntStream = Rec<SendValue<u64, Z>>;
 
-fn producer(count : u64) -> Session<IntStream>
+fn producer(count: u64) -> Session<IntStream>
 {
   fix_session(send_value!(
     {
@@ -19,7 +19,7 @@ fn producer(count : u64) -> Session<IntStream>
   ))
 }
 
-fn consumer<A : Protocol>() -> Session<ReceiveChannel<IntStream, A>>
+fn consumer<A: Protocol>() -> Session<ReceiveChannel<IntStream, A>>
 {
   receive_channel! ( stream => {
     unfix_session_for ( stream,

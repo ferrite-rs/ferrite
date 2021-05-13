@@ -14,15 +14,15 @@ use crate::internal::{
 };
 
 pub fn receive_value<T, C, A>(
-  cont : impl FnOnce(T) -> PartialSession<C, A> + Send + 'static
+  cont: impl FnOnce(T) -> PartialSession<C, A> + Send + 'static
 ) -> PartialSession<C, ReceiveValue<T, A>>
 where
-  T : Send + 'static,
-  A : Protocol,
-  C : Context,
+  T: Send + 'static,
+  A: Protocol,
+  C: Context,
 {
   unsafe_create_session(
-    move |ctx, sender1 : SenderOnce<ReceiveValue<T, A>>| async move {
+    move |ctx, sender1: SenderOnce<ReceiveValue<T, A>>| async move {
       let (sender2, receiver2) = once_channel();
 
       sender1.send(ReceiveValue(sender2)).unwrap();
@@ -37,16 +37,16 @@ where
 }
 
 pub fn send_value_to<N, C, A, B, T>(
-  _ : N,
-  val : T,
-  cont : PartialSession<N::Target, A>,
+  _: N,
+  val: T,
+  cont: PartialSession<N::Target, A>,
 ) -> PartialSession<C, A>
 where
-  A : Protocol,
-  B : Protocol,
-  C : Context,
-  T : Send + 'static,
-  N : ContextLens<C, ReceiveValue<T, B>, B>,
+  A: Protocol,
+  B: Protocol,
+  C: Context,
+  T: Send + 'static,
+  N: ContextLens<C, ReceiveValue<T, B>, B>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);

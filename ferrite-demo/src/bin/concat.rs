@@ -8,7 +8,7 @@ use tokio::time::sleep;
 
 pub fn concat_session() -> Session<End>
 {
-  let p1 : Session<
+  let p1: Session<
     ReceiveValue<
       Vec<String>,
       ReceiveValue<Vec<String>, SendValue<String, End>>,
@@ -42,7 +42,7 @@ pub fn concat_session() -> Session<End>
     })
   });
 
-  let p2 : Session<
+  let p2: Session<
     ReceiveChannel<
       ReceiveValue<
         Vec<String>,
@@ -89,7 +89,7 @@ pub fn concat_session() -> Session<End>
       )
   });
 
-  let p3 : Session<End> = apply_channel(p2, p1);
+  let p3: Session<End> = apply_channel(p2, p1);
 
   return p3;
 }

@@ -8,10 +8,10 @@ pub type Either<A, B> = (A, (B, ()));
 pub type EitherRow<A, B> = Sum<A, Sum<B, Bottom>>;
 
 #[allow(non_upper_case_globals)]
-pub const LeftLabel : ChoiceSelector<Z> = <ChoiceSelector<Z>>::new();
+pub const LeftLabel: ChoiceSelector<Z> = <ChoiceSelector<Z>>::new();
 
 #[allow(non_upper_case_globals)]
-pub const RightLabel : ChoiceSelector<S<Z>> = <ChoiceSelector<S<Z>>>::new();
+pub const RightLabel: ChoiceSelector<S<Z>> = <ChoiceSelector<S<Z>>>::new();
 
 pub enum EitherChoice<A, B>
 {
@@ -26,7 +26,7 @@ pub use EitherChoice::{
 
 impl<A, B> From<Sum<A, Sum<B, Bottom>>> for EitherChoice<A, B>
 {
-  fn from(row : Sum<A, Sum<B, Bottom>>) -> EitherChoice<A, B>
+  fn from(row: Sum<A, Sum<B, Bottom>>) -> EitherChoice<A, B>
   {
     match row {
       Sum::Inl(a) => Left(a),

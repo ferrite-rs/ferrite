@@ -7,17 +7,17 @@ use super::{
 
 impl<F, X, T> serde::Serialize for App<F, X>
 where
-  X : 'static,
-  T : Send + 'static,
-  F : TypeApp<X, Applied = T>,
-  T : serde::Serialize + for<'de> serde::Deserialize<'de>,
+  X: 'static,
+  T: Send + 'static,
+  F: TypeApp<X, Applied = T>,
+  T: serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
   fn serialize<S>(
     &self,
-    serializer : S,
+    serializer: S,
   ) -> Result<S::Ok, S::Error>
   where
-    S : serde::Serializer,
+    S: serde::Serializer,
   {
     self
       .applied
@@ -29,14 +29,14 @@ where
 
 impl<'a, F, X, T> serde::Deserialize<'a> for App<F, X>
 where
-  X : 'static,
-  T : Send + 'static,
-  F : TypeApp<X, Applied = T>,
-  T : serde::Serialize + for<'de> serde::Deserialize<'de>,
+  X: 'static,
+  T: Send + 'static,
+  F: TypeApp<X, Applied = T>,
+  T: serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
-  fn deserialize<D>(deserializer : D) -> Result<Self, D::Error>
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
-    D : serde::Deserializer<'a>,
+    D: serde::Deserializer<'a>,
   {
     let applied = T::deserialize(deserializer)?;
 
@@ -46,10 +46,10 @@ where
 
 impl<T, F, A> HasTypeApp<F, A> for T
 where
-  F : 'static,
-  A : 'static,
-  T : Send + 'static,
-  F : TypeApp<A, Applied = T>,
+  F: 'static,
+  A: 'static,
+  T: Send + 'static,
+  F: TypeApp<A, Applied = T>,
 {
   fn get_applied(self: Box<T>) -> Box<T>
   {
@@ -58,7 +58,7 @@ where
 
   fn get_applied_borrow<'a>(&'a self) -> &'a F::Applied
   where
-    F : TypeApp<A>,
+    F: TypeApp<A>,
   {
     self
   }
@@ -66,19 +66,19 @@ where
 
 impl TyCon for () {}
 
-impl<X> TyCon for Const<X> where X : 'static {}
+impl<X> TyCon for Const<X> where X: 'static {}
 
 impl<A> TypeApp<A> for ()
 where
-  A : 'static,
+  A: 'static,
 {
   type Applied = ();
 }
 
 impl<X, A> TypeApp<A> for Const<X>
 where
-  A : 'static,
-  X : Send + 'static,
+  A: 'static,
+  X: Send + 'static,
 {
   type Applied = X;
 }

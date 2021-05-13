@@ -17,17 +17,17 @@ use crate::internal::{
   },
 };
 
-pub fn new_session<A>(cont : Session<A>) -> Session<A>
+pub fn new_session<A>(cont: Session<A>) -> Session<A>
 where
-  A : Protocol,
+  A: Protocol,
 {
   cont
 }
 
-pub fn session<C, A>(cont : PartialSession<C, A>) -> Session<A>
+pub fn session<C, A>(cont: PartialSession<C, A>) -> Session<A>
 where
-  C : EmptyContext,
-  A : Protocol,
+  C: EmptyContext,
+  A: Protocol,
 {
   unsafe_create_session(move |(), sender| async move {
     let ctx = <C as EmptyContext>::empty_values();
@@ -36,10 +36,10 @@ where
   })
 }
 
-pub fn partial_session<C, A>(cont : Session<A>) -> PartialSession<C, A>
+pub fn partial_session<C, A>(cont: Session<A>) -> PartialSession<C, A>
 where
-  C : EmptyContext,
-  A : Protocol,
+  C: EmptyContext,
+  A: Protocol,
 {
   unsafe_create_session(move |_, sender| async move {
     unsafe_run_session(cont, (), sender).await
@@ -47,11 +47,11 @@ where
 }
 
 pub fn append_emtpy_slot<C, A>(
-  cont : PartialSession<C, A>
+  cont: PartialSession<C, A>
 ) -> PartialSession<C::Appended, A>
 where
-  A : Protocol,
-  C : AppendContext<(Empty, ())>,
+  A: Protocol,
+  C: AppendContext<(Empty, ())>,
 {
   unsafe_create_session(move |ctx1, sender| async move {
     let (ctx2, _) = C::split_context(ctx1);
@@ -60,40 +60,40 @@ where
 }
 
 pub fn session_1<A>(
-  cont : impl FnOnce(Z) -> PartialSession<(Empty, ()), A>
+  cont: impl FnOnce(Z) -> PartialSession<(Empty, ()), A>
 ) -> Session<A>
 where
-  A : Protocol,
+  A: Protocol,
 {
   session(cont(Z::Value))
 }
 
 pub fn session_2<A>(
-  cont : impl FnOnce(Z, S<Z>) -> PartialSession<(Empty, (Empty, ())), A>
+  cont: impl FnOnce(Z, S<Z>) -> PartialSession<(Empty, (Empty, ())), A>
 ) -> Session<A>
 where
-  A : Protocol,
+  A: Protocol,
 {
   session(cont(Z::Value, <S<Z>>::Value))
 }
 
 pub fn partial_session_1<A, B>(
-  cont : impl FnOnce(Z) -> PartialSession<(A, ()), B>
+  cont: impl FnOnce(Z) -> PartialSession<(A, ()), B>
 ) -> PartialSession<(A, ()), B>
 where
-  A : Slot,
-  B : Protocol,
+  A: Slot,
+  B: Protocol,
 {
   cont(Z::Value)
 }
 
 pub fn partial_session_2<A1, A2, B, F>(
-  cont : impl FnOnce(Z, S<Z>) -> PartialSession<(A1, (A2, ())), B>
+  cont: impl FnOnce(Z, S<Z>) -> PartialSession<(A1, (A2, ())), B>
 ) -> PartialSession<(A1, (A2, ())), B>
 where
-  A1 : Slot,
-  A2 : Slot,
-  B : Protocol,
+  A1: Slot,
+  A2: Slot,
+  B: Protocol,
 {
   cont(Z::Value, <S<Z>>::Value)
 }

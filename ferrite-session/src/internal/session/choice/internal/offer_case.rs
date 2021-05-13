@@ -20,14 +20,14 @@ use crate::internal::{
 };
 
 pub fn offer_case<N, C, A, Row>(
-  _ : N,
-  cont : PartialSession<C, A>,
+  _: N,
+  cont: PartialSession<C, A>,
 ) -> PartialSession<C, InternalChoice<Row>>
 where
-  C : Context,
-  A : Protocol,
-  Row : SumApp<ReceiverF>,
-  N : Prism<Row, Elem = A>,
+  C: Context,
+  A: Protocol,
+  Row: SumApp<ReceiverF>,
+  N: Prism<Row, Elem = A>,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver2) = once_channel();
@@ -39,7 +39,7 @@ where
     let child2 = task::spawn(async move {
       sender1
         .send(InternalChoice {
-          field : N::inject_elem(wrap_type_app(receiver2)),
+          field: N::inject_elem(wrap_type_app(receiver2)),
         })
         .unwrap();
     });

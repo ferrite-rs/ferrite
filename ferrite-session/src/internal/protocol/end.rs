@@ -13,16 +13,16 @@ impl ForwardChannel for End
 {
   fn forward_to(
     self,
-    sender : OpaqueSender,
-    _ : OpaqueReceiver,
+    sender: OpaqueSender,
+    _: OpaqueReceiver,
   )
   {
     sender.send(())
   }
 
   fn forward_from(
-    _ : OpaqueSender,
-    receiver : OpaqueReceiver,
+    _: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     let () = receiver.recv().unwrap();

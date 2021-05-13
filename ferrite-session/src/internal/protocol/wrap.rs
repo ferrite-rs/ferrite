@@ -9,14 +9,14 @@ pub trait Wrapper
 
 pub struct Wrap<T>
 where
-  T : Wrapper,
+  T: Wrapper,
 {
-  pub(crate) unwrap : Box<T::Unwrap>,
+  pub(crate) unwrap: Box<T::Unwrap>,
 }
 
 impl<T> Protocol for Wrap<T>
 where
-  T : Wrapper,
-  T : Send + 'static,
+  T: Wrapper,
+  T: Send + 'static,
 {
 }

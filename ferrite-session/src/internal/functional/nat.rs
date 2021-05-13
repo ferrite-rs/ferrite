@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 pub trait Nat: Send + Copy + 'static
 {
   #[allow(non_upper_case_globals)]
-  const Value : Self;
+  const Value: Self;
 
   fn nat() -> Self;
 }
@@ -18,7 +18,7 @@ impl Nat for Z
 {
   #[allow(non_upper_case_globals)]
 
-  const Value : Z = Z;
+  const Value: Z = Z;
 
   fn nat() -> Z
   {
@@ -28,11 +28,11 @@ impl Nat for Z
 
 impl<N> Nat for S<N>
 where
-  N : Nat,
+  N: Nat,
 {
   #[allow(non_upper_case_globals)]
 
-  const Value : S<N> = S(PhantomData);
+  const Value: S<N> = S(PhantomData);
 
   fn nat() -> S<N>
   {
@@ -40,7 +40,7 @@ where
   }
 }
 
-pub fn succ<N>(_ : N) -> S<N>
+pub fn succ<N>(_: N) -> S<N>
 {
   S(PhantomData)
 }

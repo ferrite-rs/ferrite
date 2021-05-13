@@ -13,7 +13,7 @@ type SharedCounter = LinearToShared<SendValue<u64, Release>>;
 //   sleep( Duration::from_millis ( sleep_time ) ).await;
 // }
 
-pub fn make_counter_session(count : u64) -> SharedSession<SharedCounter>
+pub fn make_counter_session(count: u64) -> SharedSession<SharedCounter>
 {
   accept_shared_session(move || {
     send_value!(
@@ -31,9 +31,9 @@ pub fn make_counter_session(count : u64) -> SharedSession<SharedCounter>
 }
 
 pub fn read_counter_session(
-  name : String,
-  stop_at : u64,
-  shared : SharedChannel<SharedCounter>,
+  name: String,
+  stop_at: u64,
+  shared: SharedChannel<SharedCounter>,
 ) -> Session<End>
 {
   let shared2 = shared.clone();
@@ -60,7 +60,7 @@ pub fn read_counter_session(
 }
 
 pub fn read_counter_session_2(
-  shared_counter : &SharedChannel<SharedCounter>
+  shared_counter: &SharedChannel<SharedCounter>
 ) -> Session<End>
 {
   acquire_shared_session! ( shared_counter, linear_counter => {

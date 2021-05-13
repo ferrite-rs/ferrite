@@ -7,7 +7,7 @@ type Producer = SendValue<String, End>;
 
 fn cut_session() -> Session<End>
 {
-  let client : Session<
+  let client: Session<
     ReceiveChannel<
       Producer,
       ReceiveChannel<Producer, ReceiveChannel<Producer, End>>,
@@ -41,11 +41,11 @@ fn cut_session() -> Session<End>
     }
   });
 
-  let p1 : Session<Producer> = send_value("foo".to_string(), terminate());
+  let p1: Session<Producer> = send_value("foo".to_string(), terminate());
 
-  let p2 : Session<Producer> = send_value("bar".to_string(), terminate());
+  let p2: Session<Producer> = send_value("bar".to_string(), terminate());
 
-  let p3 : Session<Producer> = send_value("baz".to_string(), terminate());
+  let p3: Session<Producer> = send_value("baz".to_string(), terminate());
 
   apply_channel(apply_channel(apply_channel(client, p1), p2), p3)
 }

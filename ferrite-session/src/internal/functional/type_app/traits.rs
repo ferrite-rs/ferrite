@@ -4,21 +4,21 @@ pub trait TyCon: Sized + 'static
 
 pub trait TypeApp<A>: TyCon
 where
-  A : 'static,
+  A: 'static,
 {
   type Applied: Send + 'static;
 }
 
 pub trait HasTypeApp<F, A>: Send
 where
-  F : 'static,
-  A : 'static,
+  F: 'static,
+  A: 'static,
 {
   fn get_applied(self: Box<Self>) -> Box<F::Applied>
   where
-    F : TypeApp<A>;
+    F: TypeApp<A>;
 
   fn get_applied_borrow<'a>(&'a self) -> &'a F::Applied
   where
-    F : TypeApp<A>;
+    F: TypeApp<A>;
 }

@@ -25,7 +25,7 @@ define_choice! {
 
 pub fn restaurant_session() -> Session<End>
 {
-  let soup_of_the_day : Session<InternalChoice<SoupMenu>> = offer_case(
+  let soup_of_the_day: Session<InternalChoice<SoupMenu>> = offer_case(
     MushroomMenuLabel,
     send_value!(
       {
@@ -43,7 +43,7 @@ pub fn restaurant_session() -> Session<End>
     ),
   );
 
-  let main_dish : Session<ExternalChoice<MainMenu>> = offer_choice! {
+  let main_dish: Session<ExternalChoice<MainMenu>> = offer_choice! {
     BeefMenu => {
       println!("[MainCourse] Customer chose to eat beef steak");
 
@@ -75,14 +75,14 @@ pub fn restaurant_session() -> Session<End>
     }
   };
 
-  let menu : Session<
+  let menu: Session<
     SendChannel<InternalChoice<SoupMenu>, ExternalChoice<MainMenu>>,
   > = include_session! ( soup_of_the_day, chan => {
     send_channel_from ( chan,
       partial_session( main_dish ) )
   });
 
-  let diner : Session<
+  let diner: Session<
     ReceiveChannel<
       SendChannel<InternalChoice<SoupMenu>, ExternalChoice<MainMenu>>,
       End,

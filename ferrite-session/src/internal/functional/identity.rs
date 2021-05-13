@@ -11,7 +11,7 @@ impl TyCon for IdentityF {}
 
 impl<A> TypeApp<A> for IdentityF
 where
-  A : Send + 'static,
+  A: Send + 'static,
 {
   type Applied = Identity<A>;
 }
@@ -19,12 +19,12 @@ where
 impl Functor for IdentityF
 {
   fn fmap<A, B>(
-    fa : App<IdentityF, A>,
-    mapper : impl Fn(A) -> B,
+    fa: App<IdentityF, A>,
+    mapper: impl Fn(A) -> B,
   ) -> App<IdentityF, B>
   where
-    A : Send + 'static,
-    B : Send + 'static,
+    A: Send + 'static,
+    B: Send + 'static,
   {
     let Identity(a) = fa.get_applied();
 

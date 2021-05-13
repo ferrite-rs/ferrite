@@ -48,15 +48,15 @@ pub struct OpaqueSender(Arc<Mutex<Option<ipc::OpaqueIpcSender>>>);
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct IpcSender<T>
 {
-  sender : OpaqueSender,
-  phantom : PhantomData<T>,
+  sender: OpaqueSender,
+  phantom: PhantomData<T>,
 }
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct IpcReceiver<T>
 {
-  receiver : OpaqueReceiver,
-  phantom : PhantomData<T>,
+  receiver: OpaqueReceiver,
+  phantom: PhantomData<T>,
 }
 
 // TODO: Define proper error type
@@ -67,13 +67,13 @@ pub trait ForwardChannel: Send + 'static
 {
   fn forward_to(
     self,
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   );
 
   fn forward_from(
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self;
 }
 
@@ -98,9 +98,9 @@ impl OpaqueSender
 {
   pub fn send<T>(
     &self,
-    val : T,
+    val: T,
   ) where
-    T : for<'de> Deserialize<'de> + Serialize,
+    T: for<'de> Deserialize<'de> + Serialize,
   {
     let mut cell = self.0.lock().unwrap();
 
@@ -118,7 +118,7 @@ impl OpaqueReceiver
 {
   pub fn recv<T>(&self) -> Option<T>
   where
-    T : for<'de> Deserialize<'de> + Serialize,
+    T: for<'de> Deserialize<'de> + Serialize,
   {
     let mut cell = self.0.lock().unwrap();
 
@@ -140,25 +140,25 @@ impl TyCon for SenderF {}
 
 impl<P> TypeApp<P> for ReceiverF
 where
-  P : Send + 'static,
+  P: Send + 'static,
 {
   type Applied = ReceiverOnce<P>;
 }
 
 impl<P> TypeApp<P> for SenderF
 where
-  P : Send + 'static,
+  P: Send + 'static,
 {
   type Applied = SenderOnce<P>;
 }
 
 impl<T> IpcSender<T>
 where
-  T : for<'de> Deserialize<'de> + Serialize,
+  T: for<'de> Deserialize<'de> + Serialize,
 {
   pub fn send(
     &self,
-    data : T,
+    data: T,
   )
   {
     self.sender.send(data)
@@ -167,7 +167,7 @@ where
 
 impl<T> IpcReceiver<T>
 where
-  T : for<'de> Deserialize<'de> + Serialize,
+  T: for<'de> Deserialize<'de> + Serialize,
 {
   pub fn recv(&self) -> Option<T>
   {
@@ -177,18 +177,18 @@ where
 
 pub fn ipc_channel<T>() -> (IpcSender<T>, IpcReceiver<T>)
 where
-  IpcReceiver<T> : Send,
+  IpcReceiver<T>: Send,
 {
   let (sender, receiver) = opaque_channel();
 
   (
     IpcSender {
       sender,
-      phantom : PhantomData,
+      phantom: PhantomData,
     },
     IpcReceiver {
       receiver,
-      phantom : PhantomData,
+      phantom: PhantomData,
     },
   )
 }
@@ -223,7 +223,7 @@ impl<T> Sender<T>
 {
   pub fn send(
     &self,
-    msg : T,
+    msg: T,
   ) -> Result<(), SendError>
   {
     self
@@ -245,7 +245,7 @@ impl<T> SenderOnce<T>
 {
   pub fn send(
     self,
-    msg : T,
+    msg: T,
   ) -> Result<(), SendError>
   {
     self
@@ -277,15 +277,15 @@ impl ForwardChannel for ()
 {
   fn forward_to(
     self,
-    _ : OpaqueSender,
-    _ : OpaqueReceiver,
+    _: OpaqueSender,
+    _: OpaqueReceiver,
   )
   {
   }
 
   fn forward_from(
-    _ : OpaqueSender,
-    _ : OpaqueReceiver,
+    _: OpaqueSender,
+    _: OpaqueReceiver,
   ) -> Self
   {
   }
@@ -293,12 +293,12 @@ impl ForwardChannel for ()
 
 impl<T> ForwardChannel for SenderOnce<T>
 where
-  T : ForwardChannel,
+  T: ForwardChannel,
 {
   fn forward_to(
     self,
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     task::spawn_blocking(move || {
@@ -311,14 +311,14 @@ where
   }
 
   fn forward_from(
-    sender1 : OpaqueSender,
-    receiver1 : OpaqueReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
     let (sender2, receiver2) = once_channel();
 
     task::spawn(async move {
-      let payload : T = receiver2.recv().await.unwrap();
+      let payload: T = receiver2.recv().await.unwrap();
 
       task::spawn_blocking(move || {
         sender1.send(());
@@ -333,12 +333,12 @@ where
 
 impl<T> ForwardChannel for ReceiverOnce<T>
 where
-  T : ForwardChannel,
+  T: ForwardChannel,
 {
   fn forward_to(
     self,
-    sender1 : OpaqueSender,
-    receiver1 : OpaqueReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   )
   {
     task::spawn(async move {
@@ -353,8 +353,8 @@ where
   }
 
   fn forward_from(
-    sender1 : OpaqueSender,
-    receiver1 : OpaqueReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
     let (sender2, receiver2) = once_channel();
@@ -373,14 +373,14 @@ where
 
 impl<T, C> ForwardChannel for (Value<T>, C)
 where
-  T : Send + 'static,
-  T : Serialize + for<'de> Deserialize<'de>,
-  C : ForwardChannel,
+  T: Send + 'static,
+  T: Serialize + for<'de> Deserialize<'de>,
+  C: ForwardChannel,
 {
   fn forward_to(
     self,
-    sender1 : OpaqueSender,
-    receiver1 : OpaqueReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   )
   {
     let (Value(payload), channel) = self;
@@ -393,8 +393,8 @@ where
   }
 
   fn forward_from(
-    sender1 : OpaqueSender,
-    receiver1 : OpaqueReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
     let payload = receiver1.recv().unwrap();
@@ -407,22 +407,22 @@ where
 
 impl<F, X, T> ForwardChannel for App<F, X>
 where
-  X : Send + 'static,
-  F : TypeApp<X, Applied = T>,
-  T : ForwardChannel,
+  X: Send + 'static,
+  F: TypeApp<X, Applied = T>,
+  T: ForwardChannel,
 {
   fn forward_to(
     self,
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     self.get_applied().forward_to(sender, receiver)
   }
 
   fn forward_from(
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     wrap_type_app(T::forward_from(sender, receiver))
@@ -431,23 +431,23 @@ where
 
 impl<Row, F, T> ForwardChannel for AppSum<Row, F>
 where
-  F : TyCon,
-  F : Send + 'static,
-  Row : SumApp<F, Applied = T>,
-  T : ForwardChannel,
+  F: TyCon,
+  F: Send + 'static,
+  Row: SumApp<F, Applied = T>,
+  T: ForwardChannel,
 {
   fn forward_to(
     self,
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   )
   {
     self.get_sum().forward_to(sender, receiver)
   }
 
   fn forward_from(
-    sender : OpaqueSender,
-    receiver : OpaqueReceiver,
+    sender: OpaqueSender,
+    receiver: OpaqueReceiver,
   ) -> Self
   {
     wrap_sum_app(T::forward_from(sender, receiver))
@@ -456,13 +456,13 @@ where
 
 impl<A, B> ForwardChannel for Sum<A, B>
 where
-  A : ForwardChannel,
-  B : ForwardChannel,
+  A: ForwardChannel,
+  B: ForwardChannel,
 {
   fn forward_to(
     self,
-    sender1 : OpaqueSender,
-    receiver1 : OpaqueReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   )
   {
     match self {
@@ -480,8 +480,8 @@ where
   }
 
   fn forward_from(
-    sender1 : OpaqueSender,
-    receiver1 : OpaqueReceiver,
+    sender1: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
     if receiver1.recv().unwrap() {
@@ -496,16 +496,16 @@ impl ForwardChannel for Bottom
 {
   fn forward_to(
     self,
-    _ : OpaqueSender,
-    _ : OpaqueReceiver,
+    _: OpaqueSender,
+    _: OpaqueReceiver,
   )
   {
     match self {}
   }
 
   fn forward_from(
-    _ : OpaqueSender,
-    receiver1 : OpaqueReceiver,
+    _: OpaqueSender,
+    receiver1: OpaqueReceiver,
   ) -> Self
   {
     receiver1.recv().unwrap()

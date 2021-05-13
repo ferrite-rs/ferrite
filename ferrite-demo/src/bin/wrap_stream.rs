@@ -12,7 +12,7 @@ impl Wrapper for WrapIntStream
 
 type IntStream = SendValue<u64, Wrap<WrapIntStream>>;
 
-fn producer(count : u64) -> Session<IntStream>
+fn producer(count: u64) -> Session<IntStream>
 {
   send_value!(
     {

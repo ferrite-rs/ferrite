@@ -9,7 +9,7 @@ define_choice! { CounterCommand;
 
 type CounterSession = LinearToShared<ExternalChoice<CounterCommand>>;
 
-fn make_counter_session(count : u64) -> SharedSession<CounterSession>
+fn make_counter_session(count: u64) -> SharedSession<CounterSession>
 {
   accept_shared_session(move || {
     offer_choice! {
@@ -26,8 +26,8 @@ fn make_counter_session(count : u64) -> SharedSession<CounterSession>
 }
 
 async fn use_counter(
-  counter : SharedChannel<CounterSession>,
-  count : u64,
+  counter: SharedChannel<CounterSession>,
+  count: u64,
 ) -> u64
 {
   let mut futures = vec![];

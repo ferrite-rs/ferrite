@@ -29,10 +29,10 @@ pub type Receiver<T> = Rec<ExternalChoice<ReceiverOption<T>>>;
 pub type Channel<T> = LinearToShared<ExternalChoice<ChannelOption<T>>>;
 
 pub fn make_receiver<T>(
-  source : SharedChannel<Channel<T>>
+  source: SharedChannel<Channel<T>>
 ) -> Session<Receiver<T>>
 where
-  T : Send + 'static,
+  T: Send + 'static,
 {
   acquire_shared_session! ( source, chan => {
     choose! ( chan, SendNext,
@@ -68,12 +68,12 @@ where
 }
 
 pub fn sender_session<T, Fut>(
-  source : SharedChannel<Channel<T>>,
-  make_val : impl FnOnce() -> Fut + Send + 'static,
+  source: SharedChannel<Channel<T>>,
+  make_val: impl FnOnce() -> Fut + Send + 'static,
 ) -> Session<End>
 where
-  T : Send + 'static,
-  Fut : Future<Output = T> + Send,
+  T: Send + 'static,
+  Fut: Future<Output = T> + Send,
 {
   acquire_shared_session! ( source, chan => {
     choose! ( chan, ReceiveNext,
@@ -86,9 +86,9 @@ where
   })
 }
 
-fn do_create_channel<T>(mut queue : VecDeque<T>) -> SharedSession<Channel<T>>
+fn do_create_channel<T>(mut queue: VecDeque<T>) -> SharedSession<Channel<T>>
 where
-  T : Send + 'static,
+  T: Send + 'static,
 {
   accept_shared_session(move || {
     offer_choice! {
@@ -113,7 +113,7 @@ where
 
 pub fn create_channel<T>() -> SharedChannel<Channel<T>>
 where
-  T : Send + 'static,
+  T: Send + 'static,
 {
   let session = run_shared_session(do_create_channel(VecDeque::new()));
 
@@ -122,9 +122,9 @@ where
 
 pub fn channel_session() -> Session<End>
 {
-  let channel : SharedChannel<Channel<String>> = create_channel();
+  let channel: SharedChannel<Channel<String>> = create_channel();
 
-  let consumer1 : Session<End> = include_session! (
+  let consumer1: Session<End> = include_session! (
   make_receiver ( channel.clone() ),
   receiver => {
     unfix_session_for ( receiver,
@@ -148,14 +148,14 @@ pub fn channel_session() -> Session<End>
     )
   });
 
-  let producer1 : Session<End> =
+  let producer1: Session<End> =
     sender_session(channel.clone(), move || async move {
       sleep(Duration::from_secs(2)).await;
 
       "hello".to_string()
     });
 
-  let producer2 : Session<End> = sender_session(channel.clone(), || {
+  let producer2: Session<End> = sender_session(channel.clone(), || {
     Box::pin(async {
       sleep(Duration::from_secs(1)).await;
 
@@ -163,7 +163,7 @@ pub fn channel_session() -> Session<End>
     })
   });
 
-  let producer3 : Session<End> = sender_session(channel.clone(), || {
+  let producer3: Session<End> = sender_session(channel.clone(), || {
     Box::pin(async {
       sleep(Duration::from_secs(3)).await;
 

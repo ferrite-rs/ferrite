@@ -9,7 +9,7 @@ define_choice! { FooBarBaz;
 
 pub fn external_choice_session() -> Session<End>
 {
-  let provider : Session<ExternalChoice<FooBarBaz>> = offer_choice! {
+  let provider: Session<ExternalChoice<FooBarBaz>> = offer_choice! {
     Foo => {
       send_value! (
         "provider_foo".to_string(),
@@ -31,7 +31,7 @@ pub fn external_choice_session() -> Session<End>
     }
   };
 
-  let client_bar : Session<ReceiveChannel<ExternalChoice<FooBarBaz>, End>> = receive_channel! ( chan => {
+  let client_bar: Session<ReceiveChannel<ExternalChoice<FooBarBaz>, End>> = receive_channel! ( chan => {
     choose! ( chan, Bar,
       send_value_to (chan, 42,
         wait ( chan, terminate () ) )

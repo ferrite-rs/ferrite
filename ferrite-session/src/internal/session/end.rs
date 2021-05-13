@@ -24,11 +24,11 @@ use crate::internal::{
    Create a unit protocol (1) out of nothing.
 */
 
-pub fn terminate_async<C, Func, Fut>(cleaner : Func) -> PartialSession<C, End>
+pub fn terminate_async<C, Func, Fut>(cleaner: Func) -> PartialSession<C, End>
 where
-  C : EmptyContext,
-  Func : FnOnce() -> Fut + Send + 'static,
-  Fut : Future<Output = ()> + Send,
+  C: EmptyContext,
+  Func: FnOnce() -> Fut + Send + 'static,
+  Fut: Future<Output = ()> + Send,
 {
   unsafe_create_session(move |_, sender| async move {
     cleaner().await;
@@ -39,7 +39,7 @@ where
 
 pub fn terminate<C>() -> PartialSession<C, End>
 where
-  C : EmptyContext,
+  C: EmptyContext,
 {
   terminate_async(|| async {})
 }
@@ -58,13 +58,13 @@ pub fn terminate_nil() -> Session<End>
 */
 
 pub fn wait<N, C, A>(
-  _ : N,
-  cont : PartialSession<N::Target, A>,
+  _: N,
+  cont: PartialSession<N::Target, A>,
 ) -> PartialSession<C, A>
 where
-  C : Context,
-  A : Protocol,
-  N : ContextLens<C, End, Empty>,
+  C: Context,
+  A: Protocol,
+  N: ContextLens<C, End, Empty>,
 {
   unsafe_create_session(move |ctx1, sender| async move {
     let (receiver, ctx2) = N::extract_source(ctx1);

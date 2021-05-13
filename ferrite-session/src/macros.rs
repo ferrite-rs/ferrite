@@ -257,7 +257,7 @@ macro_rules! define_choice {
 
 #[macro_export]
 macro_rules! send_value {
-  ( $val:expr, $cont:expr ) => {
+  ($val:expr, $cont:expr) => {
     $crate::prelude::step(
       async move { $crate::prelude::send_value($val, $cont) },
     )
@@ -266,7 +266,7 @@ macro_rules! send_value {
 
 #[macro_export]
 macro_rules! send_value_to {
-  ( $chan:expr, $val:expr, $cont:expr ) => {
+  ($chan:expr, $val:expr, $cont:expr) => {
     $crate::prelude::step(async move {
       $crate::prelude::send_value_to($chan, $val, $cont)
     })
@@ -325,10 +325,7 @@ macro_rules! receive_value_from {
 
 #[macro_export]
 macro_rules! choose {
-  ( $chan:expr,
-    $label:ident,
-    $cont:expr
-  ) => {
+  ($chan:expr, $label:ident, $cont:expr) => {
     $crate::macros::paste! {
       $crate::prelude::choose (
         $chan,
@@ -341,9 +338,7 @@ macro_rules! choose {
 
 #[macro_export]
 macro_rules! offer_case {
-  ( $label:ident,
-    $cont:expr
-  ) => {
+  ($label:ident, $cont:expr) => {
     $crate::macros::paste! {
       $crate::prelude::offer_case (
         [< $label Label >],
@@ -355,9 +350,7 @@ macro_rules! offer_case {
 
 #[macro_export]
 macro_rules! acquire_shared_session {
-  ( $chan:expr,
-    $var:ident => $body:expr
-  ) => {
+  ($chan:expr, $var:ident => $body:expr) => {
     $crate::prelude::acquire_shared_session($chan.clone(), move |$var| {
       step(async move { $body })
     })
@@ -366,7 +359,7 @@ macro_rules! acquire_shared_session {
 
 #[macro_export]
 macro_rules! receive_channel {
-  ( $var:ident => $body:expr ) => {
+  ($var:ident => $body:expr) => {
     $crate::prelude::receive_channel(move |$var| step(async move { $body }))
   };
 }
@@ -390,16 +383,14 @@ macro_rules! receive_channels {
 
 #[macro_export]
 macro_rules! receive_channel_from {
-  ( $chan:expr, $var:ident => $body:expr ) => {
+  ($chan:expr, $var:ident => $body:expr) => {
     $crate::prelude::receive_channel_from($chan, move |$var| $body)
   };
 }
 
 #[macro_export]
 macro_rules! include_session {
-  ( $session:expr,
-    $var:ident => $body:expr
-  ) => {
+  ($session:expr, $var:ident => $body:expr) => {
     $crate::prelude::include_session($session, move |$var| {
       step(async move { $body })
     })
@@ -411,14 +402,14 @@ macro_rules! terminate {
   () => {
     $crate::prelude::terminate()
   };
-  ( $cont:expr ) => {
+  ($cont:expr) => {
     $crate::prelude::terminate_async(move || async move { $cont })
   };
 }
 
 #[macro_export]
 macro_rules! wait {
-  ( $chan:expr, $cont:expr ) => {
+  ($chan:expr, $cont:expr) => {
     $crate::prelude::wait($chan, step(async move { $cont }))
   };
 }

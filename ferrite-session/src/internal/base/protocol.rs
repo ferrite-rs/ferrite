@@ -10,4 +10,4 @@ pub trait SharedProtocol: Send + 'static
 
 impl Protocol for Z {}
 
-impl<N> Protocol for S<N> where N : Protocol {}
+impl<N> Protocol for S<N> where N: Protocol {}

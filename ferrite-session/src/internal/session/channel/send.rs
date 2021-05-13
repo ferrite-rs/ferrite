@@ -18,14 +18,14 @@ use crate::internal::{
 };
 
 pub fn send_channel_from<C, A, B, N>(
-  _ : N,
-  cont : PartialSession<N::Target, B>,
+  _: N,
+  cont: PartialSession<N::Target, B>,
 ) -> PartialSession<C, SendChannel<A, B>>
 where
-  A : Protocol,
-  B : Protocol,
-  C : Context,
-  N : ContextLens<C, A, Empty>,
+  A: Protocol,
+  B: Protocol,
+  C: Context,
+  N: ContextLens<C, A, Empty>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (p_chan, ctx2) = N::extract_source(ctx1);
@@ -55,16 +55,16 @@ where
 }
 
 pub fn receive_channel_from<C1, C2, A1, A2, B, N>(
-  _ : N,
-  cont_builder : impl FnOnce(C2::Length) -> PartialSession<C2::Appended, B>,
+  _: N,
+  cont_builder: impl FnOnce(C2::Length) -> PartialSession<C2::Appended, B>,
 ) -> PartialSession<C1, B>
 where
-  A1 : Protocol,
-  A2 : Protocol,
-  B : Protocol,
-  C1 : Context,
-  C2 : AppendContext<(A1, ())>,
-  N : ContextLens<C1, SendChannel<A1, A2>, A2, Target = C2>,
+  A1: Protocol,
+  A2: Protocol,
+  B: Protocol,
+  C1: Context,
+  C2: AppendContext<(A1, ())>,
+  N: ContextLens<C1, SendChannel<A1, A2>, A2, Target = C2>,
 {
   let cont = cont_builder(C2::Length::nat());
 
@@ -97,19 +97,19 @@ where
 */
 
 pub fn fork<P, Q, CP, CQ>(
-  cont1 : PartialSession<CP, P>,
-  cont2 : PartialSession<CQ, Q>,
+  cont1: PartialSession<CP, P>,
+  cont2: PartialSession<CQ, Q>,
 ) -> PartialSession<<CP as AppendContext<CQ>>::Appended, SendChannel<P, Q>>
 where
-  P : Protocol,
-  Q : Protocol,
-  CP : Context,
-  CQ : Context,
-  CP : AppendContext<CQ>,
-  P : 'static,
-  Q : 'static,
-  CP : 'static,
-  CQ : 'static,
+  P: Protocol,
+  Q: Protocol,
+  CP: Context,
+  CQ: Context,
+  CP: AppendContext<CQ>,
+  P: 'static,
+  Q: 'static,
+  CP: 'static,
+  CQ: 'static,
 {
   unsafe_create_session(move |ctx, sender| async move {
     let (ctx1, ctx2) = CP::split_context(ctx);
@@ -141,17 +141,17 @@ where
 }
 
 pub fn receive_channel_from_slot<I, P1, P2, Q, TargetLens, SourceLens>(
-  _ : SourceLens,
-  _ : TargetLens,
-  cont : PartialSession<TargetLens::Target, Q>,
+  _: SourceLens,
+  _: TargetLens,
+  cont: PartialSession<TargetLens::Target, Q>,
 ) -> PartialSession<I, Q>
 where
-  P1 : Protocol,
-  P2 : Protocol,
-  Q : Protocol,
-  I : Context,
-  SourceLens : ContextLens<I, SendChannel<P1, P2>, P2>,
-  TargetLens : ContextLens<SourceLens::Target, Empty, P1>,
+  P1: Protocol,
+  P2: Protocol,
+  Q: Protocol,
+  I: Context,
+  SourceLens: ContextLens<I, SendChannel<P1, P2>, P2>,
+  TargetLens: ContextLens<SourceLens::Target, Empty, P1>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (pair_chan, ctx2) = SourceLens::extract_source(ctx1);

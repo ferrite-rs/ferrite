@@ -7,17 +7,17 @@ use crate::internal::{
 };
 
 pub fn fix_session<R, F, A, C>(
-  cont : PartialSession<C, A>
+  cont: PartialSession<C, A>
 ) -> PartialSession<C, RecX<R, F>>
 where
-  C : Context,
-  R : Context,
-  F : Protocol,
-  A : Protocol,
-  F : RecApp<(RecX<R, F>, R), Applied = A>,
+  C: Context,
+  R: Context,
+  F: Protocol,
+  A: Protocol,
+  F: RecApp<(RecX<R, F>, R), Applied = A>,
 {
   unsafe_create_session(move |ctx, sender1| async move {
-    let (sender2, receiver) : (SenderOnce<A>, _) = once_channel();
+    let (sender2, receiver): (SenderOnce<A>, _) = once_channel();
 
     let child1 = task::spawn(async move {
       let val = receiver.recv().await.unwrap();
@@ -32,14 +32,14 @@ where
 }
 
 pub fn unfix_session<R, F, C, A>(
-  cont : PartialSession<C, RecX<R, F>>
+  cont: PartialSession<C, RecX<R, F>>
 ) -> PartialSession<C, A>
 where
-  C : Context,
-  R : Context,
-  F : Protocol,
-  A : Protocol,
-  F : RecApp<(RecX<R, F>, R), Applied = A>,
+  C: Context,
+  R: Context,
+  F: Protocol,
+  A: Protocol,
+  F: RecApp<(RecX<R, F>, R), Applied = A>,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver) = once_channel();
@@ -56,12 +56,10 @@ where
   })
 }
 
-pub fn succ_session<I, P>(
-  cont : PartialSession<I, P>
-) -> PartialSession<I, S<P>>
+pub fn succ_session<I, P>(cont: PartialSession<I, P>) -> PartialSession<I, S<P>>
 where
-  P : Protocol,
-  I : Context,
+  P: Protocol,
+  I: Context,
 {
   unsafe_create_session(move |ctx, sender| async move {
     let (sender2, receiver) = once_channel();
@@ -79,17 +77,17 @@ where
 }
 
 pub fn unfix_session_for<N, C, A, B, R, F>(
-  _ : N,
-  cont : PartialSession<N::Target, B>,
+  _: N,
+  cont: PartialSession<N::Target, B>,
 ) -> PartialSession<C, B>
 where
-  B : Protocol,
-  C : Context,
-  F : Protocol,
-  R : Context,
-  F : RecApp<(RecX<R, F>, R), Applied = A>,
-  A : Protocol,
-  N : ContextLens<C, RecX<R, F>, A>,
+  B: Protocol,
+  C: Context,
+  F: Protocol,
+  R: Context,
+  F: RecApp<(RecX<R, F>, R), Applied = A>,
+  A: Protocol,
+  N: ContextLens<C, RecX<R, F>, A>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);

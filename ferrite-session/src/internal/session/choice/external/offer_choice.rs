@@ -28,25 +28,24 @@ use crate::internal::{
 };
 
 pub fn offer_choice<C, Row, SessionSum, InjectSessionSum>(
-  cont1 : impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static
+  cont1: impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static
 ) -> PartialSession<C, ExternalChoice<Row>>
 where
-  C : Context,
-  Row : RowCon,
-  Row : ElimSum,
-  Row : SplitRow,
-  Row : SumFunctor,
-  Row : SumFunctorInject,
-  Row : SumApp<SessionF<C>, Applied = SessionSum>,
-  Row :
-    FlattenSumApp<InjectSessionF<Row, C>, FlattenApplied = InjectSessionSum>,
-  SessionSum : Send + 'static,
-  InjectSessionSum : Send + 'static,
+  C: Context,
+  Row: RowCon,
+  Row: ElimSum,
+  Row: SplitRow,
+  Row: SumFunctor,
+  Row: SumFunctorInject,
+  Row: SumApp<SessionF<C>, Applied = SessionSum>,
+  Row: FlattenSumApp<InjectSessionF<Row, C>, FlattenApplied = InjectSessionSum>,
+  SessionSum: Send + 'static,
+  InjectSessionSum: Send + 'static,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver2) = once_channel();
 
-    let payload = ExternalChoice::<Row> { sender : sender2 };
+    let payload = ExternalChoice::<Row> { sender: sender2 };
 
     sender1.send(payload).unwrap();
 

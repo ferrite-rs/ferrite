@@ -8,13 +8,13 @@ use crate::internal::base::*;
 
 pub struct SessionF<C>
 {
-  phantom : PhantomData<C>,
+  phantom: PhantomData<C>,
 }
 
 impl<C, A> CloakedSession<C, A>
 where
-  C : Context,
-  A : Protocol,
+  C: Context,
+  A: Protocol,
 {
   pub fn get_session(self) -> PartialSession<C, A>
   {
@@ -24,17 +24,17 @@ where
 
 pub struct CloakedSession<C, A>
 {
-  pub session : Box<dyn PartialSessionWitness<C, A, Box<dyn Any>>>,
+  pub session: Box<dyn PartialSessionWitness<C, A, Box<dyn Any>>>,
 }
 
 pub fn cloak_session<C, A>(
-  session : PartialSession<C, A>
+  session: PartialSession<C, A>
 ) -> CloakedSession<C, A>
 where
-  C : Context,
-  A : Protocol,
+  C: Context,
+  A: Protocol,
 {
   CloakedSession {
-    session : Box::new(session),
+    session: Box::new(session),
   }
 }

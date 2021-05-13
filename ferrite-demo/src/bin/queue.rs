@@ -15,19 +15,19 @@ type StringQueue = Queue<String>;
 
 fn nil_queue<A>() -> Session<Queue<A>>
 where
-  A : Send + 'static,
+  A: Send + 'static,
 {
   fix_session(offer_case(LeftLabel, terminate()))
 }
 
 fn append_queue<A, Func, Fut>(
-  builder : Func,
-  rest : Session<Queue<A>>,
+  builder: Func,
+  rest: Session<Queue<A>>,
 ) -> Session<Queue<A>>
 where
-  A : Send + 'static,
-  Func : FnOnce() -> Fut + Send + 'static,
-  Fut : Future<Output = A> + Send + 'static,
+  A: Send + 'static,
+  Func: FnOnce() -> Fut + Send + 'static,
+  Fut: Future<Output = A> + Send + 'static,
 {
   fix_session(offer_case(RightLabel, send_value!(builder().await, rest)))
 }
@@ -62,9 +62,9 @@ fn read_queue() -> Session<ReceiveChannel<StringQueue, End>>
 
 pub fn queue_session() -> Session<End>
 {
-  let p11 : Session<StringQueue> = nil_queue();
+  let p11: Session<StringQueue> = nil_queue();
 
-  let p12 : Session<StringQueue> = append_queue(
+  let p12: Session<StringQueue> = append_queue(
     || async {
       println!("producing world..");
 
@@ -75,7 +75,7 @@ pub fn queue_session() -> Session<End>
     p11,
   );
 
-  let p13 : Session<StringQueue> = append_queue(
+  let p13: Session<StringQueue> = append_queue(
     || async {
       println!("producing hello..");
 

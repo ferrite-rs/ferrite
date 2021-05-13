@@ -11,9 +11,9 @@ use crate::internal::base::*;
 
 pub struct SharedSession<S>
 where
-  S : SharedProtocol,
+  S: SharedProtocol,
 {
-  executor : Box<
+  executor: Box<
     dyn FnOnce(
         Receiver<(SenderOnce<()>, SenderOnce<S>)>,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
@@ -23,71 +23,71 @@ where
 
 pub struct SharedChannel<S>
 where
-  S : SharedProtocol,
+  S: SharedProtocol,
 {
-  endpoint : Sender<(SenderOnce<()>, SenderOnce<S>)>,
+  endpoint: Sender<(SenderOnce<()>, SenderOnce<S>)>,
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
 
 pub struct SerializedSharedChannel<S>
 where
-  S : SharedProtocol,
+  S: SharedProtocol,
 {
-  acquire_sender : IpcSender<()>,
-  acquire_receiver : IpcReceiver<()>,
-  linear_sender : OpaqueSender,
-  linear_receiver : OpaqueReceiver,
-  phantom : PhantomData<S>,
+  acquire_sender: IpcSender<()>,
+  acquire_receiver: IpcReceiver<()>,
+  linear_sender: OpaqueSender,
+  linear_receiver: OpaqueReceiver,
+  phantom: PhantomData<S>,
 }
 
 impl<S> Clone for SerializedSharedChannel<S>
 where
-  S : SharedProtocol,
+  S: SharedProtocol,
 {
   fn clone(&self) -> Self
   {
     SerializedSharedChannel {
-      acquire_sender : self.acquire_sender.clone(),
-      acquire_receiver : self.acquire_receiver.clone(),
-      linear_sender : self.linear_sender.clone(),
-      linear_receiver : self.linear_receiver.clone(),
-      phantom : PhantomData,
+      acquire_sender: self.acquire_sender.clone(),
+      acquire_receiver: self.acquire_receiver.clone(),
+      linear_sender: self.linear_sender.clone(),
+      linear_receiver: self.linear_receiver.clone(),
+      phantom: PhantomData,
     }
   }
 }
 
 impl<S> Clone for SharedChannel<S>
 where
-  S : SharedProtocol,
+  S: SharedProtocol,
 {
   fn clone(&self) -> Self
   {
     SharedChannel {
-      endpoint : self.endpoint.clone(),
+      endpoint: self.endpoint.clone(),
     }
   }
 }
 
 pub async fn unsafe_run_shared_session<S>(
-  session : SharedSession<S>,
-  receiver : Receiver<(SenderOnce<()>, SenderOnce<S>)>,
+  session: SharedSession<S>,
+  receiver: Receiver<(SenderOnce<()>, SenderOnce<S>)>,
 ) where
-  S : SharedProtocol,
+  S: SharedProtocol,
 {
   (session.executor)(receiver).await;
 }
 
 pub fn unsafe_create_shared_session<S, Fut>(
-  executor1 : impl FnOnce(Receiver<(SenderOnce<()>, SenderOnce<S>)>) -> Fut
+  executor1: impl FnOnce(Receiver<(SenderOnce<()>, SenderOnce<S>)>) -> Fut
     + Send
     + 'static
 ) -> SharedSession<S>
 where
-  S : SharedProtocol,
-  Fut : Future<Output = ()> + Send,
+  S: SharedProtocol,
+  Fut: Future<Output = ()> + Send,
 {
-  let executor : Box<
+  let executor: Box<
     dyn FnOnce(
         Receiver<(SenderOnce<()>, SenderOnce<S>)>,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
@@ -104,18 +104,18 @@ where
 pub fn unsafe_create_shared_channel<S>(
 ) -> (SharedChannel<S>, Receiver<(SenderOnce<()>, SenderOnce<S>)>)
 where
-  S : SharedProtocol,
+  S: SharedProtocol,
 {
   let (sender, receiver) = unbounded();
 
-  (SharedChannel { endpoint : sender }, receiver)
+  (SharedChannel { endpoint: sender }, receiver)
 }
 
 pub fn unsafe_receive_shared_channel<S>(
-  session : SharedChannel<S>
+  session: SharedChannel<S>
 ) -> (ReceiverOnce<()>, ReceiverOnce<S>)
 where
-  S : SharedProtocol,
+  S: SharedProtocol,
 {
   let (sender1, receiver1) = once_channel::<()>();
 
@@ -128,14 +128,14 @@ where
 
 impl<A> serde::Serialize for SharedChannel<A>
 where
-  A : SharedProtocol + ForwardChannel,
+  A: SharedProtocol + ForwardChannel,
 {
   fn serialize<S>(
     &self,
-    serializer : S,
+    serializer: S,
   ) -> Result<S::Ok, S::Error>
   where
-    S : serde::Serializer,
+    S: serde::Serializer,
   {
     serialize_shared_channel(self.clone()).serialize(serializer)
   }
@@ -143,11 +143,11 @@ where
 
 impl<'a, A> serde::Deserialize<'a> for SharedChannel<A>
 where
-  A : SharedProtocol + ForwardChannel,
+  A: SharedProtocol + ForwardChannel,
 {
-  fn deserialize<D>(deserializer : D) -> Result<Self, D::Error>
+  fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
   where
-    D : serde::Deserializer<'a>,
+    D: serde::Deserializer<'a>,
   {
     let channel = <SerializedSharedChannel<A>>::deserialize(deserializer)?;
 
@@ -156,10 +156,10 @@ where
 }
 
 fn serialize_shared_channel<S>(
-  channel : SharedChannel<S>
+  channel: SharedChannel<S>
 ) -> SerializedSharedChannel<S>
 where
-  S : SharedProtocol + ForwardChannel,
+  S: SharedProtocol + ForwardChannel,
 {
   let (sender1, receiver1) = ipc_channel::<()>();
 
@@ -211,19 +211,19 @@ where
   });
 
   SerializedSharedChannel {
-    acquire_sender : sender1,
-    acquire_receiver : receiver2,
-    linear_sender : sender3,
-    linear_receiver : receiver4,
-    phantom : PhantomData,
+    acquire_sender: sender1,
+    acquire_receiver: receiver2,
+    linear_sender: sender3,
+    linear_receiver: receiver4,
+    phantom: PhantomData,
   }
 }
 
 fn deserialize_shared_channel<S>(
-  channel : SerializedSharedChannel<S>
+  channel: SerializedSharedChannel<S>
 ) -> SharedChannel<S>
 where
-  S : SharedProtocol + ForwardChannel + Send,
+  S: SharedProtocol + ForwardChannel + Send,
 {
   let (sender1, receiver1) = unbounded::<(SenderOnce<()>, SenderOnce<S>)>();
 
@@ -258,5 +258,5 @@ where
     }
   });
 
-  SharedChannel { endpoint : sender1 }
+  SharedChannel { endpoint: sender1 }
 }

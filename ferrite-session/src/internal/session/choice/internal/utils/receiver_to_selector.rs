@@ -12,11 +12,11 @@ use crate::internal::{
 };
 
 pub fn receiver_to_selector<Row>(
-  row1 : AppSum<Row, ReceiverF>
+  row1: AppSum<Row, ReceiverF>
 ) -> (AppSum<Row, ReceiverF>, AppSum<Row, ()>)
 where
-  Row : SplitRow,
-  Row : SumFunctor,
+  Row: SplitRow,
+  Row: SumFunctor,
 {
   let row2 = lift_sum(
     crate::natural_transformation! {

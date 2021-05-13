@@ -27,27 +27,27 @@ use crate::internal::{
 };
 
 pub fn case<N, C, D, B, Row, SessionSum, InjectSessionSum>(
-  _ : N,
-  cont1 : impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static,
+  _: N,
+  cont1: impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static,
 ) -> PartialSession<C, B>
 where
-  B : Protocol,
-  C : Context,
-  D : Context,
-  Row : RowCon,
-  Row : ElimSum,
-  Row : SplitRow,
-  Row : SumFunctor,
-  Row : IntersectSum,
-  Row : SumFunctorInject,
-  Row : SumApp<InternalSessionF<N, C, B, Row, D>, Applied = SessionSum>,
-  Row : FlattenSumApp<
+  B: Protocol,
+  C: Context,
+  D: Context,
+  Row: RowCon,
+  Row: ElimSum,
+  Row: SplitRow,
+  Row: SumFunctor,
+  Row: IntersectSum,
+  Row: SumFunctorInject,
+  Row: SumApp<InternalSessionF<N, C, B, Row, D>, Applied = SessionSum>,
+  Row: FlattenSumApp<
     InjectSessionF<N, C, B, Row, D>,
     FlattenApplied = InjectSessionSum,
   >,
-  N : ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
-  SessionSum : Send + 'static,
-  InjectSessionSum : Send + 'static,
+  N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  SessionSum: Send + 'static,
+  InjectSessionSum: Send + 'static,
 {
   unsafe_create_session(move |ctx1, sender| async move {
     let (sum_chan, ctx2) = N::extract_source(ctx1);

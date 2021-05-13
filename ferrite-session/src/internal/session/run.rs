@@ -20,7 +20,7 @@ use crate::internal::{
   },
 };
 
-pub async fn run_session(session : Session<End>)
+pub async fn run_session(session: Session<End>)
 {
   let (sender, receiver) = once_channel();
 
@@ -36,10 +36,10 @@ pub async fn run_session(session : Session<End>)
 }
 
 pub async fn run_session_with_result<T>(
-  session : Session<SendValue<T, End>>
+  session: Session<SendValue<T, End>>
 ) -> T
 where
-  T : Send + 'static,
+  T: Send + 'static,
 {
   let (sender, receiver1) = once_channel();
 
@@ -56,9 +56,9 @@ where
   val
 }
 
-pub fn run_shared_session<A>(session : SharedSession<A>) -> SharedChannel<A>
+pub fn run_shared_session<A>(session: SharedSession<A>) -> SharedChannel<A>
 where
-  A : SharedProtocol,
+  A: SharedProtocol,
 {
   let (chan, _) = run_shared_session_with_join_handle(session);
 
@@ -66,10 +66,10 @@ where
 }
 
 pub fn run_shared_session_with_join_handle<A>(
-  session : SharedSession<A>
+  session: SharedSession<A>
 ) -> (SharedChannel<A>, task::JoinHandle<()>)
 where
-  A : SharedProtocol,
+  A: SharedProtocol,
 {
   let (sender1, receiver1) = unbounded();
 
