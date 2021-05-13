@@ -21,6 +21,10 @@ pub trait SharedRecApp<X>
   type Applied;
 }
 
+pub enum Release {}
+
+impl Protocol for Release {}
+
 impl<T, F, A> HasRecApp<F, A> for T
 where
   F : 'static,
@@ -114,7 +118,7 @@ where
   type Applied = (X::Applied, Y::Applied);
 }
 
-impl<X> SharedRecApp<X> for Z
+impl<X> SharedRecApp<X> for Release
 {
   type Applied = X;
 }
@@ -130,4 +134,11 @@ where
   Q : SharedRecApp<R>,
 {
   type Applied = (P::Applied, Q::Applied);
+}
+
+impl<X, F> SharedRecApp<X> for RecX<(), F>
+where
+  F : SharedRecApp<X>,
+{
+  type Applied = RecX<(), F::Applied>;
 }

@@ -6,7 +6,7 @@ use log::debug;
 // use std::time::Duration;
 // use tokio::time::sleep;
 
-type SharedCounter = LinearToShared<SendValue<u64, Z>>;
+type SharedCounter = LinearToShared<SendValue<u64, Release>>;
 
 // async fn random_sleep(start: u64, end: u64) {
 //   let sleep_time = thread_rng().gen_range(start, end);

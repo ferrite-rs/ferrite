@@ -3,8 +3,8 @@ use futures::future::join_all;
 use ipc_channel::ipc;
 
 define_choice! { CounterCommand;
-  Increment: Z,
-  GetCount: SendValue < u64, Z >,
+  Increment: Release,
+  GetCount: SendValue < u64, Release >,
 }
 
 type CounterSession = LinearToShared<ExternalChoice<CounterCommand>>;

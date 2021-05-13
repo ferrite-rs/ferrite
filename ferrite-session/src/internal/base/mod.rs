@@ -46,6 +46,7 @@ pub use self::{
     Rec,
     RecApp,
     RecX,
+    Release,
     SharedRecApp,
   },
   session::{

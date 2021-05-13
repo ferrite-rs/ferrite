@@ -4,6 +4,7 @@ pub use super::{
   PartialSession,
   Rec,
   RecX,
+  Release,
   Session,
   SharedChannel,
   SharedSession,

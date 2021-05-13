@@ -17,10 +17,10 @@ define_choice! {
 
 define_choice! {
   ChannelOption < T > ;
-  ReceiveNext: ReceiveValue < T, Z >,
+  ReceiveNext: ReceiveValue < T, Release >,
   SendNext: SendValue <
     Option < T >,
-    Z
+    Release
   >,
 }
 
