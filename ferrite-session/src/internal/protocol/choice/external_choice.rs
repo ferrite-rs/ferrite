@@ -32,12 +32,10 @@ where
 impl<Row, A> SharedRecApp<A> for ExternalChoice<Row>
 where
   Row: SharedRecApp<A>,
-  Row: SumApp<()>,
-  Row: SumApp<ReceiverF>,
-  <Row as SharedRecApp<A>>::Applied: SumApp<()>,
-  <Row as SharedRecApp<A>>::Applied: SumApp<ReceiverF>,
+  Row: RowCon,
+  Row::Applied: RowCon,
 {
-  type Applied = ExternalChoice<<Row as SharedRecApp<A>>::Applied>;
+  type Applied = ExternalChoice<Row::Applied>;
 }
 
 impl<Row> ForwardChannel for ExternalChoice<Row>
