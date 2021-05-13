@@ -34,46 +34,46 @@ where
   }
 }
 
-pub struct Rec<C, F>
+pub struct RecX<C, F>
 {
-  unfix : Box<dyn HasRecApp<F, (Rec<C, F>, C)>>,
+  unfix : Box<dyn HasRecApp<F, (RecX<C, F>, C)>>,
 }
 
-pub type Rec1<F> = Rec<(), F>;
+pub type Rec<F> = RecX<(), F>;
 
-pub fn fix<C, F>(x : F::Applied) -> Rec<C, F>
+pub fn fix<C, F>(x : F::Applied) -> RecX<C, F>
 where
   C : Send + 'static,
   F : Send + 'static,
-  F : RecApp<(Rec<C, F>, C)>,
+  F : RecApp<(RecX<C, F>, C)>,
 {
-  Rec {
+  RecX {
     unfix : Box::new(x),
   }
 }
 
-pub fn unfix<C, F>(x : Rec<C, F>) -> F::Applied
+pub fn unfix<C, F>(x : RecX<C, F>) -> F::Applied
 where
   C : Send + 'static,
   F : Send + 'static,
-  F : RecApp<(Rec<C, F>, C)>,
+  F : RecApp<(RecX<C, F>, C)>,
 {
   *x.unfix.get_applied()
 }
 
-impl<C, F> Protocol for Rec<C, F>
+impl<C, F> Protocol for RecX<C, F>
 where
   C : Send + 'static,
   F : Send + 'static,
 {
 }
 
-impl<C, F> RecApp<C> for Rec<(), F>
+impl<C, F> RecApp<C> for RecX<(), F>
 where
   C : Send + 'static,
-  F : RecApp<(Rec<C, F>, C)>,
+  F : RecApp<(RecX<C, F>, C)>,
 {
-  type Applied = Rec<C, F>;
+  type Applied = RecX<C, F>;
 }
 
 impl<C, A> RecApp<(A, C)> for Z

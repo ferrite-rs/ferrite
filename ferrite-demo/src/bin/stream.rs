@@ -3,7 +3,7 @@ use std::time::Duration;
 use ferrite_session::prelude::*;
 use tokio::time::sleep;
 
-type IntStream = Rec1<SendValue<u64, Z>>;
+type IntStream = Rec<SendValue<u64, Z>>;
 
 fn producer(count : u64) -> Session<IntStream>
 {

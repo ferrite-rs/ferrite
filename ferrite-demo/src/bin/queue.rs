@@ -9,7 +9,7 @@ use ferrite_session::{
 };
 use tokio::time::sleep;
 
-type Queue<A> = Rec1<InternalChoice<Either<End, SendValue<A, Z>>>>;
+type Queue<A> = Rec<InternalChoice<Either<End, SendValue<A, Z>>>>;
 
 type StringQueue = Queue<String>;
 

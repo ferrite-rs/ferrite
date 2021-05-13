@@ -44,8 +44,8 @@ pub use self::{
     unfix,
     HasRecApp,
     Rec,
-    Rec1,
     RecApp,
+    RecX,
     SharedRecApp,
   },
   session::{

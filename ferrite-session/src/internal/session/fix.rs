@@ -8,13 +8,13 @@ use crate::internal::{
 
 pub fn fix_session<R, F, A, C>(
   cont : PartialSession<C, A>
-) -> PartialSession<C, Rec<R, F>>
+) -> PartialSession<C, RecX<R, F>>
 where
   C : Context,
   R : Context,
   F : Protocol,
   A : Protocol,
-  F : RecApp<(Rec<R, F>, R), Applied = A>,
+  F : RecApp<(RecX<R, F>, R), Applied = A>,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver) : (SenderOnce<A>, _) = once_channel();
@@ -32,14 +32,14 @@ where
 }
 
 pub fn unfix_session<R, F, C, A>(
-  cont : PartialSession<C, Rec<R, F>>
+  cont : PartialSession<C, RecX<R, F>>
 ) -> PartialSession<C, A>
 where
   C : Context,
   R : Context,
   F : Protocol,
   A : Protocol,
-  F : RecApp<(Rec<R, F>, R), Applied = A>,
+  F : RecApp<(RecX<R, F>, R), Applied = A>,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver) = once_channel();
@@ -87,9 +87,9 @@ where
   C : Context,
   F : Protocol,
   R : Context,
-  F : RecApp<(Rec<R, F>, R), Applied = A>,
+  F : RecApp<(RecX<R, F>, R), Applied = A>,
   A : Protocol,
-  N : ContextLens<C, Rec<R, F>, A>,
+  N : ContextLens<C, RecX<R, F>, A>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);

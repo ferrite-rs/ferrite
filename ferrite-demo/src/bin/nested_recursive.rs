@@ -3,10 +3,10 @@ use ferrite_session::{
   prelude::*,
 };
 
-pub type Stream = Rec1<
+pub type Stream = Rec<
   InternalChoice<
     Either<
-      Rec1<InternalChoice<Either<SendValue<String, Z>, S<Z>>>>,
+      Rec<InternalChoice<Either<SendValue<String, Z>, S<Z>>>>,
       ReceiveValue<String, Z>,
     >,
   >,

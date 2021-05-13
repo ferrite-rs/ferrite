@@ -24,7 +24,7 @@ define_choice! {
   >,
 }
 
-pub type Receiver<T> = Rec1<ExternalChoice<ReceiverOption<T>>>;
+pub type Receiver<T> = Rec<ExternalChoice<ReceiverOption<T>>>;
 
 pub type Channel<T> = LinearToShared<ExternalChoice<ChannelOption<T>>>;
 

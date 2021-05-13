@@ -3,7 +3,7 @@ pub use super::{
   Empty,
   PartialSession,
   Rec,
-  Rec1,
+  RecX,
   Session,
   SharedChannel,
   SharedSession,
