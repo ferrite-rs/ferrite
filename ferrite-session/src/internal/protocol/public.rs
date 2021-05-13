@@ -2,6 +2,7 @@
 pub use super::{
   End,
   ExternalChoice,
+  ExternalChoiceX,
   InternalChoice,
   LinearToShared,
   ReceiveChannel,

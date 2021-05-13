@@ -18,6 +18,7 @@ pub use self::{
   choice::{
     either,
     ExternalChoice,
+    ExternalChoiceX,
     InternalChoice,
   },
   end::End,

@@ -28,11 +28,11 @@ where
 
 impl<Row, A> SharedRecApp<A> for InternalChoice<Row>
 where
-  Row: SumApp<ReceiverF>,
+  Row: RowCon,
   Row: SharedRecApp<A>,
-  <Row as SharedRecApp<A>>::Applied: SumApp<ReceiverF>,
+  Row::Applied: RowCon,
 {
-  type Applied = InternalChoice<<Row as SharedRecApp<A>>::Applied>;
+  type Applied = InternalChoice<Row::Applied>;
 }
 
 impl<Row> ForwardChannel for InternalChoice<Row>

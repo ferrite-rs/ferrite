@@ -5,6 +5,7 @@ use crate::internal::{
     unsafe_run_session,
     Context,
     ContextLens,
+    Fixed,
     PartialSession,
     Protocol,
     Value,
@@ -18,18 +19,20 @@ use crate::internal::{
   protocol::ExternalChoice,
 };
 
-pub fn choose<N, M, C1, C2, A, B, Row>(
+pub fn choose<N, M, C1, C2, A, B, Row, Choice>(
   _: N,
   _: M,
   cont: PartialSession<C2, A>,
 ) -> PartialSession<C1, A>
 where
+  Choice: Protocol,
+  Choice: Fixed<Unfixed = ExternalChoice<Row>>,
   C1: Context,
   C2: Context,
   A: Protocol,
   B: Protocol,
   Row: RowCon,
-  N: ContextLens<C1, ExternalChoice<Row>, B, Target = C2>,
+  N: ContextLens<C1, Choice, B, Target = C2>,
   M: Prism<Row, Elem = B>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
@@ -37,7 +40,9 @@ where
 
     let choice: AppSum<Row, ()> = M::inject_elem(wrap_type_app(()));
 
-    let ExternalChoice { sender: sender2 } = receiver1.recv().await.unwrap();
+    let payload = receiver1.recv().await.unwrap();
+
+    let ExternalChoice { sender: sender2 } = Choice::unfix(payload);
 
     let (sender3, receiver3) = once_channel();
 

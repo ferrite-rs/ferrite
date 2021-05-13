@@ -16,6 +16,14 @@ pub trait HasRecApp<F, A>: Send + 'static
     F: RecApp<A>;
 }
 
+pub trait Fixed
+{
+  type Unfixed;
+
+  fn fix(unfixed: Self::Unfixed) -> Self;
+  fn unfix(self) -> Self::Unfixed;
+}
+
 pub trait SharedRecApp<X>
 {
   type Applied;

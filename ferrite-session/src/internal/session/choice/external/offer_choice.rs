@@ -11,7 +11,9 @@ use crate::internal::{
     once_channel,
     unsafe_create_session,
     Context,
+    Fixed,
     PartialSession,
+    Protocol,
     Value,
   },
   functional::{
@@ -27,10 +29,12 @@ use crate::internal::{
   protocol::ExternalChoice,
 };
 
-pub fn offer_choice<C, Row, SessionSum, InjectSessionSum>(
+pub fn offer_choice<C, Row, Choice, SessionSum, InjectSessionSum>(
   cont1: impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static
-) -> PartialSession<C, ExternalChoice<Row>>
+) -> PartialSession<C, Choice>
 where
+  Choice: Protocol,
+  Choice: Fixed<Unfixed = ExternalChoice<Row>>,
   C: Context,
   Row: RowCon,
   Row: ElimSum,
@@ -45,9 +49,10 @@ where
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver2) = once_channel();
 
-    let payload = ExternalChoice::<Row> { sender: sender2 };
+    let payload1 = ExternalChoice::<Row> { sender: sender2 };
+    let payload2 = Choice::fix(payload1);
 
-    sender1.send(payload).unwrap();
+    sender1.send(payload2).unwrap();
 
     let (Value(choice), sender3) = receiver2.recv().await.unwrap();
 

@@ -42,6 +42,7 @@ pub use self::{
   rec::{
     fix,
     unfix,
+    Fixed,
     HasRecApp,
     Rec,
     RecApp,
