@@ -35,7 +35,7 @@ where
 fn read_queue() -> Session<ReceiveChannel<StringQueue, End>>
 {
   receive_channel! ( queue => {
-    unfix_session_for ( queue,
+    unfix_session ( queue,
       case! { queue ;
         Left => {
           wait ( queue, terminate () )

@@ -22,7 +22,7 @@ fn producer(count: u64) -> Session<IntStream>
 fn consumer<A: Protocol>() -> Session<ReceiveChannel<IntStream, A>>
 {
   receive_channel! ( stream => {
-    unfix_session_for ( stream,
+    unfix_session ( stream,
       receive_value_from! ( stream,
         count => {
           println!("[consumer] Received value: {}", count);

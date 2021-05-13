@@ -44,7 +44,7 @@ fn consume_input() -> Session<
 >
 {
   receive_channel(|chan| {
-    unfix_session_for(
+    unfix_session(
       chan,
       case! { chan;
         Left =>
@@ -55,7 +55,7 @@ fn consume_input() -> Session<
                 wait(consume, terminate())))
           }),
         Right =>
-          unfix_session_for(chan,
+          unfix_session(chan,
             choose!(chan, Right,
               send_value_to(chan,
                 "hello".to_string(),
@@ -70,7 +70,7 @@ fn consumer() -> Session<ReceiveChannel<Stream, End>>
 {
   include_session(consume_input(), |consume| {
     receive_channel(|chan| {
-      unfix_session_for(
+      unfix_session(
         chan,
         choose!(
           chan,

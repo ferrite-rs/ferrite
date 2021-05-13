@@ -127,17 +127,17 @@ pub fn channel_session() -> Session<End>
   let consumer1: Session<End> = include_session! (
   make_receiver ( channel.clone() ),
   receiver => {
-    unfix_session_for ( receiver,
+    unfix_session ( receiver,
       choose! ( receiver, Next,
         receive_value_from! ( receiver, val => {
           println!("[Consumer 1] Receive first value: {}", val);
 
-          unfix_session_for ( receiver,
+          unfix_session ( receiver,
             choose! ( receiver, Next,
               receive_value_from! ( receiver, val => {
                 println! ("[Consumer 1] Receive second value: {}", val);
 
-                unfix_session_for ( receiver,
+                unfix_session ( receiver,
                   choose! ( receiver, Close,
                     wait! ( receiver,
                       terminate! () ) )

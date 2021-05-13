@@ -1,10 +1,7 @@
 use async_macros::join;
 use tokio::task;
 
-use crate::internal::{
-  base::*,
-  functional::nat::*,
-};
+use crate::internal::base::*;
 
 pub fn fix_session<R, F, A, C>(
   cont: PartialSession<C, A>
@@ -31,52 +28,7 @@ where
   })
 }
 
-pub fn unfix_session<R, F, C, A>(
-  cont: PartialSession<C, RecX<R, F>>
-) -> PartialSession<C, A>
-where
-  C: Context,
-  R: Context,
-  F: Protocol,
-  A: Protocol,
-  F: RecApp<(RecX<R, F>, R), Applied = A>,
-{
-  unsafe_create_session(move |ctx, sender1| async move {
-    let (sender2, receiver) = once_channel();
-
-    let child1 = task::spawn(async move {
-      let val = receiver.recv().await.unwrap();
-
-      sender1.send(unfix(val)).unwrap();
-    });
-
-    let child2 = task::spawn(unsafe_run_session(cont, ctx, sender2));
-
-    let _ = join!(child1, child2).await;
-  })
-}
-
-pub fn succ_session<I, P>(cont: PartialSession<I, P>) -> PartialSession<I, S<P>>
-where
-  P: Protocol,
-  I: Context,
-{
-  unsafe_create_session(move |ctx, sender| async move {
-    let (sender2, receiver) = once_channel();
-
-    let child1 = task::spawn(async move {
-      let val = receiver.recv().await.unwrap();
-
-      sender.send(succ(val)).unwrap();
-    });
-
-    let child2 = task::spawn(unsafe_run_session(cont, ctx, sender2));
-
-    let _ = join!(child1, child2).await;
-  })
-}
-
-pub fn unfix_session_for<N, C, A, B, R, F>(
+pub fn unfix_session<N, C, A, B, R, F>(
   _: N,
   cont: PartialSession<N::Target, B>,
 ) -> PartialSession<C, B>
