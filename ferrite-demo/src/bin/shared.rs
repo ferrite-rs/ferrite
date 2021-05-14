@@ -1,15 +1,16 @@
+use std::time::Duration;
+
 use ferrite_session::prelude::*;
 use ipc_channel::ipc;
-
 use rand::prelude::*;
-use std::time::Duration;
 use tokio::time::sleep;
 
 type SharedCounter = LinearToShared<SendValue<u64, Release>>;
 
-async fn random_sleep() {
+async fn random_sleep()
+{
   let sleep_time = thread_rng().gen_range(50, 100);
-  sleep( Duration::from_millis ( sleep_time ) ).await;
+  sleep(Duration::from_millis(sleep_time)).await;
 }
 
 pub fn make_counter_session(count: u64) -> SharedSession<SharedCounter>

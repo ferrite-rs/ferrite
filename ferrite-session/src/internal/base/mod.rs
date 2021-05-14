@@ -45,6 +45,7 @@ pub use self::{
     HasRecApp,
     Rec,
     RecApp,
+    RecRow,
     RecX,
     Release,
     SharedRecApp,
