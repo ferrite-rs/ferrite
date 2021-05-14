@@ -19,11 +19,12 @@ where
 
 impl<Row, A> RecApp<A> for InternalChoice<Row>
 where
+  A: Send + 'static,
   Row: RowCon,
   Row: RecApp<A>,
   Row::Applied: RowCon,
 {
-  type Applied = InternalChoice<Row::Applied>;
+  type Applied = InternalChoice<LinearRecRow<A, Row>>;
 }
 
 impl<Row, A> SharedRecApp<A> for InternalChoice<Row>
@@ -33,7 +34,7 @@ where
   Row: SharedRecApp<A>,
   Row::Applied: RowCon,
 {
-  type Applied = InternalChoice<RecRow<A, Row>>;
+  type Applied = InternalChoice<SharedRecRow<A, Row>>;
 }
 
 impl<Row> ForwardChannel for InternalChoice<Row>

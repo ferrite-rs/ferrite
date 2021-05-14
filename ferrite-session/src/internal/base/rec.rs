@@ -168,43 +168,83 @@ where
   type Applied = RecX<(), F::Applied>;
 }
 
-pub struct RecRow<R, Row>
+pub enum LinearMode {}
+pub enum SharedMode {}
+
+pub struct RecRow<Mode, R, Row>
 {
-  phantom: PhantomData<(R, Row)>,
+  phantom: PhantomData<(Mode, R, Row)>,
 }
 
-impl<R, Row> Protocol for RecRow<R, Row>
+pub type LinearRecRow<R, Row> = RecRow<LinearMode, R, Row>;
+pub type SharedRecRow<R, Row> = RecRow<SharedMode, R, Row>;
+
+impl<Mode, R, Row> Protocol for RecRow<Mode, R, Row>
 where
   R: Send + 'static,
+  Mode: Send + 'static,
   Row: Protocol,
 {
 }
 
-impl<R, Row> RowCon for RecRow<R, Row>
+impl<Mode, R, Row> RowCon for RecRow<Mode, R, Row>
 where
   R: Send + 'static,
   Row: Send + 'static,
+  Mode: Send + 'static,
 {
 }
 
-impl<F, R, Row1, Row2> SumApp<F> for RecRow<R, Row1>
+pub trait RecRowApp<Row, R>
+{
+  type Applied;
+}
+
+impl<R, Row> RecRowApp<Row, R> for LinearMode
+where
+  Row: RecApp<R>,
+{
+  type Applied = Row::Applied;
+}
+
+impl<R, Row> RecRowApp<Row, R> for SharedMode
+where
+  Row: SharedRecApp<R>,
+{
+  type Applied = Row::Applied;
+}
+
+impl<R1, R2, Row1, Row2, Row3> RecApp<R2> for RecRow<SharedMode, R1, Row1>
+where
+  R1: Send + 'static,
+  Row1: Send + 'static,
+  Row3: Send + 'static,
+  Row1: SharedRecApp<R2, Applied = Row2>,
+  Row2: RecApp<R2, Applied = Row3>,
+{
+  type Applied = Row3;
+}
+
+impl<F, R, Row1, Row2, Mode> SumApp<F> for RecRow<Mode, R, Row1>
 where
   F: TyCon,
   R: Send + 'static,
   Row1: Send + 'static,
   Row2: Send + 'static,
-  Row1: SharedRecApp<R, Applied = Row2>,
+  Mode: Send + 'static,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
 {
   type Applied = AppSum<Row2, F>;
 }
 
-impl<F, R, Row1, Row2, Row3> FlattenSumApp<F> for RecRow<R, Row1>
+impl<F, R, Row1, Row2, Row3, Mode> FlattenSumApp<F> for RecRow<Mode, R, Row1>
 where
   F: TyCon,
   R: Send + 'static,
   Row1: Send + 'static,
   Row3: Send + 'static,
-  Row1: SharedRecApp<R, Applied = Row2>,
+  Mode: Send + 'static,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
   Row2: FlattenSumApp<F, FlattenApplied = Row3>,
 {
   type FlattenApplied = Row3;
@@ -220,12 +260,13 @@ where
   }
 }
 
-impl<R, Row1, Row2> SplitRow for RecRow<R, Row1>
+impl<R, Row1, Row2, Mode> SplitRow for RecRow<Mode, R, Row1>
 where
   R: Send + 'static,
   Row1: Send + 'static,
   Row2: Send + 'static,
-  Row1: SharedRecApp<R, Applied = Row2>,
+  Mode: Send + 'static,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
   Row2: SplitRow,
 {
   fn split_row<F1, F2>(
@@ -240,12 +281,13 @@ where
   }
 }
 
-impl<R, Row1, Row2> SumFunctor for RecRow<R, Row1>
+impl<R, Row1, Row2, Mode> SumFunctor for RecRow<Mode, R, Row1>
 where
   R: Send + 'static,
   Row1: Send + 'static,
   Row2: Send + 'static,
-  Row1: SharedRecApp<R, Applied = Row2>,
+  Mode: Send + 'static,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
   Row2: SumFunctor,
 {
   fn lift_sum<T, F1, F2>(
@@ -261,12 +303,13 @@ where
   }
 }
 
-impl<R, Row1, Row2> SumFunctorInject for RecRow<R, Row1>
+impl<R, Row1, Row2, Mode> SumFunctorInject for RecRow<Mode, R, Row1>
 where
   R: Send + 'static,
   Row1: Send + 'static,
   Row2: Send + 'static,
-  Row1: SharedRecApp<R, Applied = Row2>,
+  Mode: Send + 'static,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
   Row2: SumFunctorInject,
 {
   fn lift_sum_inject<L, Root, Inject>(
@@ -285,12 +328,13 @@ where
   }
 }
 
-impl<R, Row1, Row2> IntersectSum for RecRow<R, Row1>
+impl<R, Row1, Row2, Mode> IntersectSum for RecRow<Mode, R, Row1>
 where
   R: Send + 'static,
   Row1: Send + 'static,
   Row2: Send + 'static,
-  Row1: SharedRecApp<R, Applied = Row2>,
+  Mode: Send + 'static,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
   Row2: IntersectSum,
 {
   fn intersect_sum<F1, F2>(
@@ -306,12 +350,13 @@ where
   }
 }
 
-impl<R, Row1, Row2> ElimSum for RecRow<R, Row1>
+impl<R, Row1, Row2, Mode> ElimSum for RecRow<Mode, R, Row1>
 where
   R: Send + 'static,
   Row1: Send + 'static,
   Row2: Send + 'static,
-  Row1: SharedRecApp<R, Applied = Row2>,
+  Mode: Send + 'static,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
   Row2: ElimSum,
 {
   fn elim_sum<F, E, Res>(
@@ -326,17 +371,20 @@ where
   }
 }
 
-impl<N, R, Row1, Row2> Prism<RecRow<R, Row1>> for N
+impl<N, R, Row1, Row2, Mode> Prism<RecRow<Mode, R, Row1>> for N
 where
   R: Send + 'static,
   Row1: Send + 'static,
+  Mode: Send + 'static,
   Row2: RowCon,
-  Row1: SharedRecApp<R, Applied = Row2>,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
   N: Prism<Row2>,
 {
   type Elem = N::Elem;
 
-  fn inject_elem<F>(elem: App<F, Self::Elem>) -> AppSum<RecRow<R, Row1>, F>
+  fn inject_elem<F>(
+    elem: App<F, Self::Elem>
+  ) -> AppSum<RecRow<Mode, R, Row1>, F>
   where
     F: TyCon,
   {
@@ -344,7 +392,7 @@ where
   }
 
   fn extract_elem<F>(
-    row: AppSum<RecRow<R, Row1>, F>
+    row: AppSum<RecRow<Mode, R, Row1>, F>
   ) -> Option<App<F, Self::Elem>>
   where
     F: TyCon,
