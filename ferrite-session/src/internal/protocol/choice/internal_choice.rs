@@ -5,42 +5,40 @@ use crate::internal::{
 
 pub struct InternalChoice<Row>
 where
-  Row: RowCon,
+  Row: ToRow,
 {
-  pub(crate) field: AppSum<Row, ReceiverF>,
+  pub(crate) field: AppSum<Row::Row, ReceiverF>,
 }
 
-impl<Row> Protocol for InternalChoice<Row>
-where
-  Row: Send + 'static,
-  Row: RowCon,
-{
-}
+impl<Row1, Row2> Protocol for InternalChoice<Row1> where Row1: ToRow<Row = Row2> {}
 
-impl<Row, A> RecApp<A> for InternalChoice<Row>
+impl<Row1, Row2, Row3, A> RecApp<A> for InternalChoice<Row1>
 where
   A: Send + 'static,
-  Row: RowCon,
-  Row: RecApp<A>,
-  Row::Applied: RowCon,
+  Row1: ToRow<Row = Row2>,
+  Row2: RowCon,
+  Row2: RecApp<A, Applied = Row3>,
+  Row3: RowCon,
 {
-  type Applied = InternalChoice<LinearRecRow<A, Row>>;
+  type Applied = InternalChoice<LinearRecRow<A, Row2>>;
 }
 
-impl<Row, A> SharedRecApp<A> for InternalChoice<Row>
+impl<Row1, Row2, Row3, A> SharedRecApp<A> for InternalChoice<Row1>
 where
-  Row: RowCon,
   A: Send + 'static,
-  Row: SharedRecApp<A>,
-  Row::Applied: RowCon,
+  Row1: ToRow<Row = Row2>,
+  Row2: RowCon,
+  Row2: SharedRecApp<A, Applied = Row3>,
+  Row3: RowCon,
 {
-  type Applied = InternalChoice<SharedRecRow<A, Row>>;
+  type Applied = InternalChoice<SharedRecRow<A, Row2>>;
 }
 
-impl<Row> ForwardChannel for InternalChoice<Row>
+impl<Row1, Row2> ForwardChannel for InternalChoice<Row1>
 where
-  Row: RowCon,
-  AppSum<Row, ReceiverF>: ForwardChannel,
+  Row1: ToRow<Row = Row2>,
+  Row2: RowCon,
+  AppSum<Row2, ReceiverF>: ForwardChannel,
 {
   fn forward_to(
     self,
@@ -57,7 +55,7 @@ where
   ) -> Self
   {
     InternalChoice {
-      field: <AppSum<Row, ReceiverF>>::forward_from(sender, receiver),
+      field: <AppSum<Row2, ReceiverF>>::forward_from(sender, receiver),
     }
   }
 }

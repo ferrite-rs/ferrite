@@ -20,8 +20,8 @@ where
   A: Protocol,
   B: Protocol,
   C: Context,
+  Row: ToRow,
   Del: Context,
-  Row: RowCon,
   N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
 {
   pub session: PartialSession<N::Target, B>,

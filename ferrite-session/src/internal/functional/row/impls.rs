@@ -80,7 +80,18 @@ where
 
 impl RowCon for () {}
 
-impl RowCon for Bottom {}
+impl ToRow for ()
+{
+  type Row = ();
+}
+
+impl<A, R> ToRow for (A, R)
+where
+  A: Send + 'static,
+  R: RowCon,
+{
+  type Row = (A, R);
+}
 
 impl<F, A, R> SumApp<F> for (A, R)
 where

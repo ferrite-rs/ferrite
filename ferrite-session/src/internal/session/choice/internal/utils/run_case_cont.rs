@@ -11,24 +11,25 @@ use crate::internal::{
   protocol::*,
 };
 
-pub async fn run_case_cont<N, C, D, B, Row>(
+pub async fn run_case_cont<N, C, D, B, Row1, Row2>(
   ctx: D::Endpoints,
   sender: SenderOnce<B>,
-  cont1: AppSum<Row, Merge<ReceiverF, InternalSessionF<N, C, B, Row, D>>>,
+  cont1: AppSum<Row2, Merge<ReceiverF, InternalSessionF<N, C, B, Row1, D>>>,
 ) where
   C: Context,
   D: Context,
   B: Protocol,
-  Row: ElimSum,
-  N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
+  Row1: ToRow<Row = Row2>,
+  Row2: ElimSum,
+  N: ContextLens<C, InternalChoice<Row1>, Empty, Deleted = D>,
 {
-  let cont2 = ContRunner1::<N, C, B, Row, D> {
+  let cont2 = ContRunner1::<N, C, B, Row1, D> {
     ctx,
     sender,
     phantom: PhantomData,
   };
 
-  Row::elim_sum(cont2, cont1).await;
+  Row2::elim_sum(cont2, cont1).await;
 }
 
 struct ContRunner1<N, C, B, Row, D>
@@ -36,7 +37,7 @@ where
   B: Protocol,
   C: Context,
   D: Context,
-  Row: RowCon,
+  Row: ToRow,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   ctx: D::Endpoints,
@@ -49,7 +50,7 @@ where
   B: Protocol,
   C: Context,
   D: Context,
-  Row: RowCon,
+  Row: ToRow,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   ctx: D::Endpoints,
@@ -75,8 +76,7 @@ where
   B: Protocol,
   C: Context,
   D: Context,
-  Row: RowCon,
-  N: 'static,
+  Row: ToRow,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   fn on_internal_session(
@@ -87,7 +87,6 @@ where
     A: Protocol,
     B: Protocol,
     C: Context,
-    Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = D>,
   {
     let ctx1 = self.ctx;
@@ -115,7 +114,7 @@ where
   B: Protocol,
   C: Context,
   D: Context,
-  Row: RowCon,
+  Row: ToRow,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   fn elim_field<A>(

@@ -9,30 +9,33 @@ use crate::internal::{
   functional::*,
 };
 
-pub fn selector_to_inject_session<Row, C>(
-  selector: AppSum<Row, ()>
-) -> AppSum<Row, InjectSessionF<Row, C>>
+pub fn selector_to_inject_session<Row1, Row2, C>(
+  selector: AppSum<Row2, ()>
+) -> AppSum<Row2, InjectSessionF<Row1, C>>
 where
   C: Context,
-  Row: SumFunctorInject,
+  Row1: ToRow<Row = Row2>,
+  Row2: SumFunctorInject,
 {
-  lift_sum_inject(SelectorToCont::<Row, C>(PhantomData), selector)
+  lift_sum_inject(SelectorToCont::<Row1, C>(PhantomData), selector)
 }
 
 struct SelectorToCont<Row, C>(PhantomData<(Row, C)>);
 
-impl<Row, C> InjectLift<AppSum<Row, SessionF<C>>> for SelectorToCont<Row, C>
+impl<Row1, Row2, C> InjectLift<AppSum<Row2, SessionF<C>>>
+  for SelectorToCont<Row1, C>
 where
+  Row1: ToRow<Row = Row2>,
+  Row2: RowCon,
   C: Context,
-  Row: 'static,
 {
-  type InjectF = InjectSessionF<Row, C>;
+  type InjectF = InjectSessionF<Row1, C>;
   type SourceF = ();
   type TargetF = SessionF<C>;
 
   fn lift_field<A>(
     self,
-    inject1: impl Fn(App<Self::TargetF, A>) -> AppSum<Row, SessionF<C>>
+    inject1: impl Fn(App<Self::TargetF, A>) -> AppSum<Row2, SessionF<C>>
       + Send
       + 'static,
     _row: App<Self::SourceF, A>,
@@ -59,12 +62,15 @@ struct SessionInjectorImpl<Row, C, A>
   >,
 }
 
-impl<Row, C, A> SessionInjector<Row, C, A> for SessionInjectorImpl<Row, C, A>
+impl<Row1, Row2, C, A> SessionInjector<Row1, C, A>
+  for SessionInjectorImpl<Row2, C, A>
+where
+  Row1: ToRow<Row = Row2>,
 {
   fn inject_session(
     self: Box<Self>,
     session: PartialSession<C, A>,
-  ) -> AppSum<Row, SessionF<C>>
+  ) -> AppSum<Row2, SessionF<C>>
   where
     C: Context,
     A: Protocol,

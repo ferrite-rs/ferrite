@@ -200,6 +200,18 @@ pub trait RecRowApp<Row, R>
   type Applied;
 }
 
+impl<Mode, R, Row1, Row2> ToRow for RecRow<Mode, R, Row1>
+where
+  Row2: RowCon,
+  R: Send + 'static,
+  Row1: Send + 'static,
+  Row2: Send + 'static,
+  Mode: Send + 'static,
+  Mode: RecRowApp<Row1, R, Applied = Row2>,
+{
+  type Row = Row2;
+}
+
 impl<R, Row> RecRowApp<Row, R> for LinearMode
 where
   Row: RecApp<R>,

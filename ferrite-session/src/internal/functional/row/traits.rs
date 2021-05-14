@@ -8,6 +8,11 @@ pub trait RowCon: Sized + Send + 'static
 {
 }
 
+pub trait ToRow: Sized + Send + 'static
+{
+  type Row: RowCon;
+}
+
 pub trait SumApp<F>: RowCon
 where
   F: TyCon,

@@ -19,18 +19,19 @@ where
 {
 }
 
-impl<N, C1, C2, A, B, Row, Del, SessionSum> RunCont<C2, B>
-  for InjectSession<N, C1, A, B, Row, Del>
+impl<N, C1, C2, A, B, Row1, Row2, Del, SessionSum> RunCont<C2, B>
+  for InjectSession<N, C1, A, B, Row1, Del>
 where
   A: Protocol,
   B: Protocol,
   C1: Context,
   C2: Context,
   Del: Context,
-  Row: RowCon,
+  Row1: ToRow<Row = Row2>,
+  Row2: RowCon,
   SessionSum: Send + 'static,
-  Row: SumApp<InternalSessionF<N, C1, B, Row, Del>, Applied = SessionSum>,
-  N: ContextLens<C1, InternalChoice<Row>, A, Deleted = Del, Target = C2>,
+  Row2: SumApp<InternalSessionF<N, C1, B, Row1, Del>, Applied = SessionSum>,
+  N: ContextLens<C1, InternalChoice<Row1>, A, Deleted = Del, Target = C2>,
 {
   type Ret = SessionSum;
 

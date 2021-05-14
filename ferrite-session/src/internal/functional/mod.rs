@@ -51,6 +51,7 @@ pub use self::{
     SumApp,
     SumFunctor,
     SumFunctorInject,
+    ToRow,
   },
   type_app::{
     get_applied,

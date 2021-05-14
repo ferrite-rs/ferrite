@@ -24,11 +24,12 @@ where
   type Applied = InjectSession<Row, C, A>;
 }
 
-impl<Row, C, A, SessionSum> RunCont<C, A> for InjectSession<Row, C, A>
+impl<Row1, Row2, C, A, SessionSum> RunCont<C, A> for InjectSession<Row1, C, A>
 where
   C: Context,
   A: Protocol,
-  Row: SumApp<SessionF<C>, Applied = SessionSum>,
+  Row1: ToRow<Row = Row2>,
+  Row2: SumApp<SessionF<C>, Applied = SessionSum>,
   SessionSum: Send + 'static,
 {
   type Ret = SessionSum;

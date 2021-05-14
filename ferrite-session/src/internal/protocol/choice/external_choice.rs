@@ -7,44 +7,44 @@ use crate::internal::{
 
 pub struct ExternalChoice<Row>
 where
-  Row: RowCon,
+  Row: ToRow,
 {
-  pub(crate) sender:
-    SenderOnce<(Value<AppSum<Row, ()>>, SenderOnce<AppSum<Row, ReceiverF>>)>,
+  pub(crate) sender: SenderOnce<(
+    Value<AppSum<Row::Row, ()>>,
+    SenderOnce<AppSum<Row::Row, ReceiverF>>,
+  )>,
 }
 
-impl<Row> Protocol for ExternalChoice<Row>
+impl<Row> Protocol for ExternalChoice<Row> where Row: ToRow {}
+
+impl<R, Row1, Row2> RecApp<R> for ExternalChoice<Row1>
 where
-  Row: Send + 'static,
-  Row: RowCon,
+  R: Send + 'static,
+  Row2: RowCon,
+  Row1: ToRow<Row = Row2>,
+  Row2: RecApp<R>,
+  Row2::Applied: RowCon,
 {
+  type Applied = ExternalChoice<LinearRecRow<R, Row2>>;
 }
 
-impl<Row, A> RecApp<A> for ExternalChoice<Row>
+impl<R, Row1, Row2> SharedRecApp<R> for ExternalChoice<Row1>
 where
-  A: Send + 'static,
-  Row: RecApp<A>,
-  Row: RowCon,
-  Row::Applied: RowCon,
+  R: Send + 'static,
+  Row2: RowCon,
+  Row1: ToRow<Row = Row2>,
+  Row2: SharedRecApp<R>,
+  Row2::Applied: RowCon,
 {
-  type Applied = ExternalChoice<LinearRecRow<A, Row>>;
+  type Applied = ExternalChoice<SharedRecRow<R, Row2>>;
 }
 
-impl<Row, A> SharedRecApp<A> for ExternalChoice<Row>
+impl<Row1, Row2> ForwardChannel for ExternalChoice<Row1>
 where
-  A: Send + 'static,
-  Row: SharedRecApp<A>,
-  Row: RowCon,
-  Row::Applied: RowCon,
-{
-  type Applied = ExternalChoice<SharedRecRow<A, Row>>;
-}
-
-impl<Row> ForwardChannel for ExternalChoice<Row>
-where
-  Row: RowCon,
-  AppSum<Row, ReceiverF>: ForwardChannel,
-  AppSum<Row, ()>:
+  Row2: RowCon,
+  Row1: ToRow<Row = Row2>,
+  AppSum<Row2, ReceiverF>: ForwardChannel,
+  AppSum<Row2, ()>:
     Send + 'static + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
   fn forward_to(
@@ -63,8 +63,8 @@ where
   {
     ExternalChoice {
       sender: <SenderOnce<(
-        Value<AppSum<Row, ()>>,
-        SenderOnce<AppSum<Row, ReceiverF>>,
+        Value<AppSum<Row2, ()>>,
+        SenderOnce<AppSum<Row2, ReceiverF>>,
       )>>::forward_from(sender, receiver),
     }
   }

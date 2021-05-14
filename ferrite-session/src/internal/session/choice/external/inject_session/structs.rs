@@ -30,10 +30,11 @@ where
 pub fn run_inject_session<Row, C, A>(
   inject: InjectSession<Row, C, A>,
   session: PartialSession<C, A>,
-) -> AppSum<Row, SessionF<C>>
+) -> AppSum<Row::Row, SessionF<C>>
 where
   C: Context,
   A: Protocol,
+  Row: ToRow,
 {
   inject.injector.inject_session(session)
 }

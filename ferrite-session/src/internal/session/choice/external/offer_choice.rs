@@ -23,29 +23,32 @@ use crate::internal::{
     SumApp,
     SumFunctor,
     SumFunctorInject,
+    ToRow,
   },
   protocol::ExternalChoice,
 };
 
-pub fn offer_choice<C, Row, SessionSum, InjectSessionSum>(
+pub fn offer_choice<C, Row1, Row2, SessionSum, InjectSessionSum>(
   cont1: impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static
-) -> PartialSession<C, ExternalChoice<Row>>
+) -> PartialSession<C, ExternalChoice<Row1>>
 where
   C: Context,
-  Row: RowCon,
-  Row: ElimSum,
-  Row: SplitRow,
-  Row: SumFunctor,
-  Row: SumFunctorInject,
-  Row: SumApp<SessionF<C>, Applied = SessionSum>,
-  Row: FlattenSumApp<InjectSessionF<Row, C>, FlattenApplied = InjectSessionSum>,
+  Row1: ToRow<Row = Row2>,
+  Row2: RowCon,
+  Row2: ElimSum,
+  Row2: SplitRow,
+  Row2: SumFunctor,
+  Row2: SumFunctorInject,
+  Row2: SumApp<SessionF<C>, Applied = SessionSum>,
+  Row2:
+    FlattenSumApp<InjectSessionF<Row1, C>, FlattenApplied = InjectSessionSum>,
   SessionSum: Send + 'static,
   InjectSessionSum: Send + 'static,
 {
   unsafe_create_session(move |ctx, sender1| async move {
     let (sender2, receiver2) = once_channel();
 
-    let payload = ExternalChoice::<Row> { sender: sender2 };
+    let payload = ExternalChoice::<Row1> { sender: sender2 };
 
     sender1.send(payload).unwrap();
 
@@ -53,7 +56,7 @@ where
 
     let cont3 = selector_to_inject_session(choice);
 
-    let cont4 = Row::flatten_sum(cont3);
+    let cont4 = Row2::flatten_sum(cont3);
 
     let cont5 = wrap_sum_app(cont1(cont4));
 

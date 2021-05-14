@@ -10,19 +10,19 @@ use crate::internal::{
   protocol::*,
 };
 
-pub fn cloak_internal_session<N, C, A, B, Row, Del>(
+pub fn cloak_internal_session<N, C, A, B, Row1, Row2, Del>(
   session1: PartialSession<N::Target, B>
-) -> CloakInternalSession<N, C, A, B, Row, Del>
+) -> CloakInternalSession<N, C, A, B, Row1, Del>
 where
   A: Protocol,
   B: Protocol,
   C: Context,
   Del: Context,
-  Row: RowCon,
-  N: 'static,
-  N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
+  Row1: ToRow<Row = Row2>,
+  Row2: RowCon,
+  N: ContextLens<C, InternalChoice<Row1>, A, Deleted = Del>,
 {
-  let session2 = InternalSession::<N, C, A, B, Row, Del> { session: session1 };
+  let session2 = InternalSession::<N, C, A, B, Row1, Del> { session: session1 };
 
   CloakInternalSession {
     session: Box::new(session2),
@@ -69,7 +69,8 @@ where
     B: Protocol,
     C: Context,
     Del: Context,
-    Row: RowCon,
+    Row: ToRow,
+    Row::Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
   {
     let res = self.cont.on_internal_session(session);
