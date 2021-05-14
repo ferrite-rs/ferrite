@@ -43,7 +43,6 @@ pub use self::{
     fix,
     unfix,
     HasRecApp,
-    LinearRecRow,
     Rec,
     RecApp,
     RecRow,

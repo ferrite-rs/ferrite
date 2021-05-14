@@ -17,26 +17,26 @@ where
 
 impl<Row> Protocol for ExternalChoice<Row> where Row: ToRow {}
 
-impl<R, Row1, Row2> RecApp<R> for ExternalChoice<Row1>
+impl<R, Row1, Row2, Row3> RecApp<R> for ExternalChoice<Row1>
 where
   R: Send + 'static,
   Row2: RowCon,
   Row1: ToRow<Row = Row2>,
-  Row2: RecApp<R>,
-  Row2::Applied: RowCon,
+  Row2: RecApp<R, Applied = Row3>,
+  Row3: RowCon,
 {
-  type Applied = ExternalChoice<LinearRecRow<R, Row2>>;
+  type Applied = ExternalChoice<RecRow<R, Row1>>;
 }
 
-impl<R, Row1, Row2> SharedRecApp<R> for ExternalChoice<Row1>
+impl<R, Row1, Row2, Row3> SharedRecApp<R> for ExternalChoice<Row1>
 where
   R: Send + 'static,
   Row2: RowCon,
   Row1: ToRow<Row = Row2>,
-  Row2: SharedRecApp<R>,
-  Row2::Applied: RowCon,
+  Row2: SharedRecApp<R, Applied = Row3>,
+  Row3: RowCon,
 {
-  type Applied = ExternalChoice<SharedRecRow<R, Row2>>;
+  type Applied = ExternalChoice<SharedRecRow<R, Row1>>;
 }
 
 impl<Row1, Row2> ForwardChannel for ExternalChoice<Row1>

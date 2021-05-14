@@ -45,7 +45,6 @@ where
               send_value (
                 val,
                 release_shared_session ( chan,
-                  // terminate()
                   partial_session (
                     make_receiver ( source )
                   )
