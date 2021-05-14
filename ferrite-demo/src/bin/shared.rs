@@ -1,27 +1,26 @@
 use ferrite_session::prelude::*;
 use ipc_channel::ipc;
-use log::debug;
 
-// use rand::prelude::*;
-// use std::time::Duration;
-// use tokio::time::sleep;
+use rand::prelude::*;
+use std::time::Duration;
+use tokio::time::sleep;
 
 type SharedCounter = LinearToShared<SendValue<u64, Release>>;
 
-// async fn random_sleep(start: u64, end: u64) {
-//   let sleep_time = thread_rng().gen_range(start, end);
-//   sleep( Duration::from_millis ( sleep_time ) ).await;
-// }
+async fn random_sleep() {
+  let sleep_time = thread_rng().gen_range(50, 100);
+  sleep( Duration::from_millis ( sleep_time ) ).await;
+}
 
 pub fn make_counter_session(count: u64) -> SharedSession<SharedCounter>
 {
   accept_shared_session(move || {
     send_value!(
       {
-        debug!("[Server] Producing count {}", count);
+        println!("[Server] Producing count {}", count);
 
-        // random_sleep(10, 20).await;
-        debug!("[Server] Produced count {}", count);
+        random_sleep().await;
+        println!("[Server] Produced count {}", count);
 
         count
       },
@@ -39,15 +38,15 @@ pub fn read_counter_session(
   let shared2 = shared.clone();
 
   step(async move {
-    // random_sleep(10, 20).await;
+    random_sleep().await;
 
     acquire_shared_session! ( shared, counter => {
       receive_value_from! ( counter, count => {
-        debug!("[{}] Received count: {}", name, count);
+        println!("[{}] Received count: {}", name, count);
 
         release_shared_session ( counter, {
           if stop_at <= count {
-            debug!("[{}] terminating", name);
+            println!("[{}] terminating", name);
             terminate()
           } else {
             partial_session (
@@ -64,9 +63,9 @@ pub fn read_counter_session_2(
 ) -> Session<End>
 {
   acquire_shared_session! ( shared_counter, linear_counter => {
-    // random_sleep(10, 20).await;
+    random_sleep().await;
     receive_value_from! ( linear_counter, count => {
-      debug!("Received count: {}", count);
+      println!("Received count: {}", count);
       release_shared_session ( linear_counter,
         terminate() )
     })
@@ -77,25 +76,22 @@ pub fn shared_counter_session() -> Session<End>
 {
   let shared = run_shared_session(make_counter_session(0));
 
+  // Sending a shared channel through IPC channel causes it
+  // to be serialized and deserialized through OS socket.
   let (sender, receiver) = ipc::channel().unwrap();
-
   sender.send(shared).unwrap();
-
-  let shared2 = receiver.recv().unwrap();
-
-  // let shared2 = shared.clone();
+  let shared = receiver.recv().unwrap();
 
   let mut sessions = vec![];
 
-  for i in 0..10000 {
-    sessions.push(read_counter_session(format!("P{}", i), 10, shared2.clone()));
+  for i in 0..100 {
+    sessions.push(read_counter_session(format!("P{}", i), 10, shared.clone()));
   }
 
   wait_sessions(sessions, terminate())
 }
 
 #[tokio::main]
-
 pub async fn main()
 {
   env_logger::init();
