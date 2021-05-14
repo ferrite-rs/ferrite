@@ -8,9 +8,9 @@ pub trait RowCon: Sized + Send + 'static
 {
 }
 
-pub trait ToRow: Sized + Send + 'static
+pub trait ToRow
 {
-  type Row: RowCon;
+  type Row;
 }
 
 pub trait SumApp<F>: RowCon

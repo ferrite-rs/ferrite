@@ -15,12 +15,17 @@ where
   )>,
 }
 
-impl<Row> Protocol for ExternalChoice<Row> where Row: ToRow {}
+impl<Row> Protocol for ExternalChoice<Row>
+where
+  Row: Send + 'static,
+  Row: ToRow
+{}
 
 impl<R, Row1, Row2, Row3> RecApp<R> for ExternalChoice<Row1>
 where
   R: Send + 'static,
   Row2: RowCon,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RecApp<R, Applied = Row3>,
   Row3: RowCon,
@@ -42,6 +47,7 @@ where
 impl<Row1, Row2> ForwardChannel for ExternalChoice<Row1>
 where
   Row2: RowCon,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   AppSum<Row2, ReceiverF>: ForwardChannel,
   AppSum<Row2, ()>:

@@ -14,6 +14,7 @@ pub fn selector_to_inject_session<Row1, Row2, C>(
 ) -> AppSum<Row2, InjectSessionF<Row1, C>>
 where
   C: Context,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: SumFunctorInject,
 {
@@ -25,6 +26,7 @@ struct SelectorToCont<Row, C>(PhantomData<(Row, C)>);
 impl<Row1, Row2, C> InjectLift<AppSum<Row2, SessionF<C>>>
   for SelectorToCont<Row1, C>
 where
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   C: Context,

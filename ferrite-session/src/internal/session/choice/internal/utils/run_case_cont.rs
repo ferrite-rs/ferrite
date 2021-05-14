@@ -19,6 +19,7 @@ pub async fn run_case_cont<N, C, D, B, Row1, Row2>(
   C: Context,
   D: Context,
   B: Protocol,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: ElimSum,
   N: ContextLens<C, InternalChoice<Row1>, Empty, Deleted = D>,
@@ -38,6 +39,7 @@ where
   C: Context,
   D: Context,
   Row: ToRow,
+  Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   ctx: D::Endpoints,
@@ -51,6 +53,7 @@ where
   C: Context,
   D: Context,
   Row: ToRow,
+  Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   ctx: D::Endpoints,
@@ -77,6 +80,7 @@ where
   C: Context,
   D: Context,
   Row: ToRow,
+  Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   fn on_internal_session(
@@ -115,6 +119,7 @@ where
   C: Context,
   D: Context,
   Row: ToRow,
+  Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   fn elim_field<A>(

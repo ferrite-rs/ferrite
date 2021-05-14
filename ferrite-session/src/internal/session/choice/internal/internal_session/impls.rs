@@ -37,6 +37,7 @@ where
   B: Protocol,
   C: Context,
   Del: Context,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   N: ContextLens<C, InternalChoice<Row1>, A, Deleted = Del>,
@@ -58,6 +59,7 @@ where
   C: Context,
   Del: Context,
   Row1: ToRow<Row = Row2>,
+  Row1: Send + 'static,
   Row2: RowCon,
   N: ContextLens<C, InternalChoice<Row1>, A, Deleted = Del>,
 {

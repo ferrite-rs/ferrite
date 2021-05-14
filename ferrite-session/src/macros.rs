@@ -84,15 +84,27 @@ macro_rules! define_choice_protocol {
   ( $name:ident ;
     $( $protocols:ty ),+ $(,)?
   ) => {
-    pub type $name =
-        HList![ $( $protocols ),* ];
+    pub enum $name {}
+
+    impl ToRow for $name {
+      type Row = HList![ $( $protocols ),* ];
+    }
   };
 
-  ( $name:ident < $( $types:ident ),+ $(,)? > ;
+  ( $name:ident
+    < $( $types:ident ),+ $(,)? > ;
     $( $protocols:ty ),+ $(,)?
   ) => {
-    pub type $name < $( $types ),* > =
-        HList![ $( $protocols ),* ];
+    pub struct $name <$( $types ),*>
+    {
+      phantom: std::marker::PhantomData<($( $types ),*)>
+    }
+
+    impl < $( $types ),* >
+      ToRow for $name < $( $types ),* >
+    {
+      type Row = HList![ $( $protocols ),* ];
+    }
   };
 }
 
@@ -232,7 +244,8 @@ macro_rules! define_choice {
     ];
   };
 
-  ( $name:ident < $( $types:ident ),+ $(,)? > ;
+  ( $name:ident
+    < $( $types:ident ),+ $(,)? > ;
     $( $labels:ident : $protocols:ty ),+
     $(,)?
   ) => {

@@ -27,6 +27,7 @@ pub fn offer_case<N, C, A, Row1, Row2>(
 where
   C: Context,
   A: Protocol,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: SumApp<ReceiverF>,
   N: Prism<Row2, Elem = A>,

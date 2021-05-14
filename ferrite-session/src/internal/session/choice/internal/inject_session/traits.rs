@@ -17,5 +17,7 @@ pub trait SessionInjector<N, C, A, B, Row, Del>: Send
     C: Context,
     Del: Context,
     Row: ToRow,
+    Row: Send + 'static,
+    Row::Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>;
 }

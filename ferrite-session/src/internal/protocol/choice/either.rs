@@ -1,9 +1,17 @@
+use std::marker::PhantomData;
 use crate::internal::functional::{
   nat::*,
   row::*,
 };
 
-pub type Either<A, B> = (A, (B, ()));
+pub struct Either<A, B> {
+  phantom: PhantomData<(A, B)>
+}
+
+impl <A, B> ToRow for Either<A, B>
+{
+  type Row = (A, (B, ()));
+}
 
 pub type EitherRow<A, B> = Sum<A, Sum<B, Bottom>>;
 

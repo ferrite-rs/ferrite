@@ -27,6 +27,7 @@ where
   C1: Context,
   C2: Context,
   Del: Context,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   SessionSum: Send + 'static,

@@ -33,6 +33,7 @@ pub fn offer_choice<C, Row1, Row2, SessionSum, InjectSessionSum>(
 ) -> PartialSession<C, ExternalChoice<Row1>>
 where
   C: Context,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   Row2: ElimSum,

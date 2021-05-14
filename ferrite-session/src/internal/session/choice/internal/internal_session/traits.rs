@@ -16,6 +16,7 @@ pub trait HasInternalSession<N, C, A, B, Row, Del>: Send
     C: Context,
     Del: Context,
     Row: ToRow,
+    Row: Send + 'static,
     Row::Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>;
 }
@@ -32,6 +33,7 @@ pub trait NeedInternalSession<N, C, A, B, Row, Del, K>
     C: Context,
     Del: Context,
     Row: ToRow,
+    Row: Send + 'static,
     Row::Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>;
 }

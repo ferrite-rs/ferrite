@@ -18,6 +18,7 @@ where
   C: Context,
   D: Context,
   N: Send + 'static,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   Row2: SumFunctorInject,
@@ -34,6 +35,7 @@ where
   B: Protocol,
   C: Context,
   D: Context,
+  Row1: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   N: Send + 'static,
@@ -94,6 +96,8 @@ where
     C: Context,
     Del: Context,
     Row: ToRow,
+    Row: Send + 'static,
+    Row::Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
   {
     let session2 =
