@@ -29,25 +29,29 @@ where
   Func: FnOnce() -> Fut + Send + 'static,
   Fut: Future<Output = A> + Send + 'static,
 {
-  fix_session(offer_case(RightLabel, send_value!(builder().await, rest)))
+  fix_session(offer_case!(
+    Right,
+    step(async move { send_value(builder().await, rest) })
+  ))
 }
 
 fn read_queue() -> Session<ReceiveChannel<StringQueue, End>>
 {
-  receive_channel! ( queue => {
-    unfix_session ( queue,
+  receive_channel(|queue| {
+    unfix_session(
+      queue,
       case! { queue ;
         Left => {
           wait ( queue, terminate () )
         }
         Right => {
-          receive_value_from! ( queue,
-            val => {
+          receive_value_from( queue,
+            move |val| {
               println!("Receive value: {}", val);
 
-              include_session! (
+              include_session (
                 read_queue (),
-                next => {
+                |next| {
                   send_channel_to (
                     next,
                     queue,
@@ -55,7 +59,7 @@ fn read_queue() -> Session<ReceiveChannel<StringQueue, End>>
                   ) })
             } )
         }
-      }
+      },
     )
   })
 }

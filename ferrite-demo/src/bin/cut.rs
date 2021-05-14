@@ -15,24 +15,26 @@ fn cut_session() -> Session<End>
   > = receive_channels! ( (c1, c2, c3) => {
     cut! {
       [ R, L, R ] ;
-      receive_value_from! ( c2, x2 => {
-        println! ("[right] got x2: {}", x2);
-        sleep(Duration::from_secs(1)).await;
+      receive_value_from ( c2, move |x2| {
+        step(async move {
+          println! ("[right] got x2: {}", x2);
+          sleep(Duration::from_secs(1)).await;
 
-        wait! ( c2,
-          terminate! ({
-            println! ("[right] terminating");
-          }) )
+          wait( c2,
+            terminate_async(|| async {
+              println! ("[right] terminating");
+            }) )
+        })
       });
       c4 => {
-        receive_value_from! ( c1, x1 => {
+        receive_value_from( c1, move |x1| {
           println! ("[left] got x1: {}", x1);
 
-          receive_value_from! ( c3, x3 => {
+          receive_value_from ( c3, move |x3| {
             println! ("[left] got x3: {}", x3);
 
             wait_all! ( [ c1, c3, c4 ],
-              terminate! ({
+              terminate_async (|| async {
                 println! ("[left] terminating");
               }) )
           })
@@ -51,7 +53,6 @@ fn cut_session() -> Session<End>
 }
 
 #[tokio::main]
-
 pub async fn main()
 {
   run_session(cut_session()).await;

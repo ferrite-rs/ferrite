@@ -16,17 +16,16 @@ async fn random_sleep()
 pub fn make_counter_session(count: u64) -> SharedSession<SharedCounter>
 {
   accept_shared_session(move || {
-    send_value!(
-      {
-        println!("[Server] Producing count {}", count);
+    step(async move {
+      println!("[Server] Producing count {}", count);
+      random_sleep().await;
+      println!("[Server] Produced count {}", count);
 
-        random_sleep().await;
-        println!("[Server] Produced count {}", count);
-
-        count
-      },
-      detach_shared_session(make_counter_session(count + 1))
-    )
+      send_value(
+        count,
+        detach_shared_session(make_counter_session(count + 1)),
+      )
+    })
   })
 }
 
@@ -41,17 +40,16 @@ pub fn read_counter_session(
   step(async move {
     random_sleep().await;
 
-    acquire_shared_session! ( shared, counter => {
-      receive_value_from! ( counter, count => {
+    acquire_shared_session(shared, move |counter| {
+      receive_value_from(counter, move |count| {
         println!("[{}] Received count: {}", name, count);
 
-        release_shared_session ( counter, {
+        release_shared_session(counter, {
           if stop_at <= count {
             println!("[{}] terminating", name);
             terminate()
           } else {
-            partial_session (
-              read_counter_session ( name, stop_at, shared2 ) )
+            partial_session(read_counter_session(name, stop_at, shared2))
           }
         })
       })
@@ -63,12 +61,13 @@ pub fn read_counter_session_2(
   shared_counter: &SharedChannel<SharedCounter>
 ) -> Session<End>
 {
-  acquire_shared_session! ( shared_counter, linear_counter => {
-    random_sleep().await;
-    receive_value_from! ( linear_counter, count => {
-      println!("Received count: {}", count);
-      release_shared_session ( linear_counter,
-        terminate() )
+  acquire_shared_session(shared_counter.clone(), move |linear_counter| {
+    step(async move {
+      random_sleep().await;
+      receive_value_from(linear_counter, move |count| {
+        println!("Received count: {}", count);
+        release_shared_session(linear_counter, terminate())
+      })
     })
   })
 }

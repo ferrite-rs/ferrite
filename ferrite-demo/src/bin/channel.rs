@@ -34,36 +34,34 @@ pub fn make_receiver<T>(
 where
   T: Send + 'static,
 {
-  acquire_shared_session! ( source, chan => {
-    choose! ( chan, SendNext,
-      receive_value_from! ( chan, m_val => {
+  acquire_shared_session(source.clone(), move |chan| {
+    choose!(
+      chan,
+      SendNext,
+      receive_value_from(chan, move |m_val| {
         match m_val {
-          Some ( val ) => {
-            fix_session (
-              offer_choice! {
-                Next => {
-                  send_value! (
-                    val,
-                    release_shared_session ( chan,
-                        partial_session (
-                          make_receiver ( source ) ) )
-                      )
-                }
-                Close => {
-                  release_shared_session ( chan,
-                    terminate! () )
-                }
-              })
-          },
-          None => {
+          Some(val) => fix_session(offer_choice! {
+            Next => {
+              send_value (
+                val,
+                release_shared_session ( chan,
+                    partial_session (
+                      make_receiver ( source ) ) )
+                  )
+            }
+            Close => {
+              release_shared_session ( chan,
+                terminate () )
+            }
+          }),
+          None => step(async move {
             sleep(Duration::from_millis(100)).await;
 
-            release_shared_session ( chan,
-              partial_session (
-                make_receiver ( source ) ) )
-          }
+            release_shared_session(chan, partial_session(make_receiver(source)))
+          }),
         }
-      }) )
+      })
+    )
   })
 }
 
@@ -75,14 +73,18 @@ where
   T: Send + 'static,
   Fut: Future<Output = T> + Send,
 {
-  acquire_shared_session! ( source, chan => {
-    choose! ( chan, ReceiveNext,
-      send_value_to! (
-        chan,
-        make_val().await,
-        release_shared_session ( chan,
-          terminate! () )
-      ) )
+  acquire_shared_session(source, |chan| {
+    choose!(
+      chan,
+      ReceiveNext,
+      step(async move {
+        send_value_to(
+          chan,
+          make_val().await,
+          release_shared_session(chan, terminate()),
+        )
+      })
+    )
   })
 }
 
@@ -93,7 +95,7 @@ where
   accept_shared_session(move || {
     offer_choice! {
       ReceiveNext => {
-        receive_value! ( val => {
+        receive_value( |val| {
           queue.push_back ( val );
 
           detach_shared_session (
@@ -103,7 +105,7 @@ where
       SendNext => {
         let m_val = queue.pop_front();
 
-        send_value! ( m_val,
+        send_value ( m_val,
           detach_shared_session (
             do_create_channel ( queue ) ) )
       }
@@ -124,29 +126,35 @@ pub fn channel_session() -> Session<End>
 {
   let channel: SharedChannel<Channel<String>> = create_channel();
 
-  let consumer1: Session<End> = include_session! (
-  make_receiver ( channel.clone() ),
-  receiver => {
-    unfix_session ( receiver,
-      choose! ( receiver, Next,
-        receive_value_from! ( receiver, val => {
-          println!("[Consumer 1] Receive first value: {}", val);
+  let consumer1: Session<End> =
+    include_session(make_receiver(channel.clone()), |receiver| {
+      unfix_session(
+        receiver,
+        choose!(
+          receiver,
+          Next,
+          receive_value_from(receiver, move |val| {
+            println!("[Consumer 1] Receive first value: {}", val);
 
-          unfix_session ( receiver,
-            choose! ( receiver, Next,
-              receive_value_from! ( receiver, val => {
-                println! ("[Consumer 1] Receive second value: {}", val);
+            unfix_session(
+              receiver,
+              choose!(
+                receiver,
+                Next,
+                receive_value_from(receiver, move |val| {
+                  println!("[Consumer 1] Receive second value: {}", val);
 
-                unfix_session ( receiver,
-                  choose! ( receiver, Close,
-                    wait! ( receiver,
-                      terminate! () ) )
-                )
-              } ) )
-          )
-        } ) )
-    )
-  });
+                  unfix_session(
+                    receiver,
+                    choose!(receiver, Close, wait(receiver, terminate())),
+                  )
+                })
+              ),
+            )
+          })
+        ),
+      )
+    });
 
   let producer1: Session<End> =
     sender_session(channel.clone(), move || async move {
@@ -178,7 +186,6 @@ pub fn channel_session() -> Session<End>
 }
 
 #[tokio::main]
-
 pub async fn main()
 {
   run_session(channel_session()).await;

@@ -46,12 +46,16 @@ async fn use_counter(
 
   join_all(futures).await;
 
-  run_session_with_result(acquire_shared_session! ( counter, chan =>
-      choose! ( chan, GetCount,
-        receive_value_from! ( chan, count =>
-          release_shared_session ( chan,
-            send_value ( count ,
-              terminate() ) ) ) ) ))
+  run_session_with_result(acquire_shared_session(counter, |chan| {
+    choose!(
+      chan,
+      GetCount,
+      receive_value_from(chan, move |count| release_shared_session(
+        chan,
+        send_value(count, terminate())
+      ))
+    )
+  }))
   .await
 }
 
