@@ -18,8 +18,9 @@ where
 impl<Row> Protocol for ExternalChoice<Row>
 where
   Row: Send + 'static,
-  Row: ToRow
-{}
+  Row: ToRow,
+{
+}
 
 impl<R, Row1, Row2, Row3> RecApp<R> for ExternalChoice<Row1>
 where

@@ -20,7 +20,7 @@ where
 }
 
 impl<N, C1, C2, A, B, Row1, Row2, Del, SessionSum> RunCont<C2, B>
-  for InjectSession<N, C1, A, B, Row1, Del>
+  for InjectInternal<N, C1, A, B, Row1, Del>
 where
   A: Protocol,
   B: Protocol,
@@ -54,5 +54,5 @@ where
   Row: Send + 'static,
   Del: Send + 'static,
 {
-  type Applied = InjectSession<N, C, A, B, Row, Del>;
+  type Applied = InjectInternal<N, C, A, B, Row, Del>;
 }

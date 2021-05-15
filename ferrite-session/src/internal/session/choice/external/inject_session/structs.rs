@@ -11,24 +11,24 @@ use crate::internal::{
 
 pub struct InjectSessionF<Row, C>(PhantomData<(Row, C)>);
 
-pub struct InjectSession<Row, C, A>
+pub struct InjectExternal<Row, C, A>
 {
   injector: Box<dyn SessionInjector<Row, C, A>>,
 }
 
 pub fn create_inject_session<Row, C, A, I>(
   injector: I
-) -> InjectSession<Row, C, A>
+) -> InjectExternal<Row, C, A>
 where
   I: SessionInjector<Row, C, A> + 'static,
 {
-  InjectSession {
+  InjectExternal {
     injector: Box::new(injector),
   }
 }
 
 pub fn run_inject_session<Row, C, A>(
-  inject: InjectSession<Row, C, A>,
+  inject: InjectExternal<Row, C, A>,
   session: PartialSession<C, A>,
 ) -> AppSum<Row::Row, SessionF<C>>
 where

@@ -60,7 +60,7 @@ where
       injector: Box::new(inject1),
     };
 
-    let inject3 = InjectSession {
+    let inject3 = InjectInternal {
       injector: Box::new(inject2),
     };
 

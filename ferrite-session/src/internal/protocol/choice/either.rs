@@ -1,14 +1,16 @@
 use std::marker::PhantomData;
+
 use crate::internal::functional::{
   nat::*,
   row::*,
 };
 
-pub struct Either<A, B> {
-  phantom: PhantomData<(A, B)>
+pub struct Either<A, B>
+{
+  phantom: PhantomData<(A, B)>,
 }
 
-impl <A, B> ToRow for Either<A, B>
+impl<A, B> ToRow for Either<A, B>
 {
   type Row = (A, (B, ()));
 }

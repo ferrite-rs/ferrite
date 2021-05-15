@@ -33,6 +33,9 @@ pub use self::{
     offer_case,
     offer_choice,
     run_cont,
+    InjectExternal,
+    InjectInternal,
+    RunCont,
   },
   context::{
     append_emtpy_slot,

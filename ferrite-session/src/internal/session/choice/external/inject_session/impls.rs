@@ -21,10 +21,10 @@ where
   A: 'static,
   Row: 'static,
 {
-  type Applied = InjectSession<Row, C, A>;
+  type Applied = InjectExternal<Row, C, A>;
 }
 
-impl<Row1, Row2, C, A, SessionSum> RunCont<C, A> for InjectSession<Row1, C, A>
+impl<Row1, Row2, C, A, SessionSum> RunCont<C, A> for InjectExternal<Row1, C, A>
 where
   C: Context,
   A: Protocol,

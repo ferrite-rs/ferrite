@@ -6,10 +6,23 @@ pub mod prelude
     functional::*,
     protocol::{
       either,
-      public::*,
+      public::{
+        End,
+        ExternalChoice,
+        InternalChoice,
+        LinearToShared,
+        ReceiveChannel,
+        ReceiveValue,
+        SendChannel,
+        SendValue,
+        SharedToLinear,
+        Wrap,
+        Wrapper,
+      },
     },
     session::public::*,
   };
+  // Export macros
   #[doc(inline)]
   pub use crate::{
     acquire_shared_session,
