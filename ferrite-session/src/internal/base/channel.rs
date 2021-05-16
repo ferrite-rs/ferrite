@@ -253,11 +253,6 @@ impl<T> SenderOnce<T>
       .send(msg)
       .map_err(|_| SendError(String::from("failed to send")))
   }
-
-  pub async fn close(mut self)
-  {
-    self.0.closed().await
-  }
 }
 
 impl<T> ReceiverOnce<T>
