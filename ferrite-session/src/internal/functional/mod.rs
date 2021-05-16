@@ -1,6 +1,7 @@
 pub mod base;
 pub mod identity;
 pub mod nat;
+pub mod public;
 pub mod row;
 pub mod type_app;
 

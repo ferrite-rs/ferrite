@@ -373,8 +373,9 @@ macro_rules! acquire_shared_session {
 #[macro_export]
 macro_rules! receive_channel {
   ($var:ident => $body:expr) => {
-    $crate::prelude::receive_channel(move |$var|
-      $crate::prelude::step(async move { $body }))
+    $crate::prelude::receive_channel(move |$var| {
+      $crate::prelude::step(async move { $body })
+    })
   };
 }
 
@@ -424,8 +425,7 @@ macro_rules! terminate {
 #[macro_export]
 macro_rules! wait {
   ($chan:expr, $cont:expr) => {
-    $crate::prelude::wait($chan,
-      $crate::prelude::step(async move { $cont }))
+    $crate::prelude::wait($chan, $crate::prelude::step(async move { $cont }))
   };
 }
 

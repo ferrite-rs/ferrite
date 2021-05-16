@@ -5,4 +5,7 @@ pub mod internal;
 pub mod macros;
 
 #[doc(inline)]
-pub use internal::public::*;
+pub use internal::public::{
+  either,
+  prelude,
+};
