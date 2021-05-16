@@ -25,6 +25,7 @@ pub mod prelude
     },
     functional::public::{
       absurd,
+      extract,
       get_applied,
       get_sum,
       get_sum_borrow,
@@ -79,8 +80,6 @@ pub mod prelude
       SharedToLinear,
       Wrap,
       Wrapper,
-      extract,
-      ExtractChoice,
     },
     session::public::{
       accept_shared_session,

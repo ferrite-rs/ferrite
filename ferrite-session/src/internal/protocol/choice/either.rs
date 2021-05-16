@@ -5,8 +5,6 @@ use crate::internal::functional::{
   row::*,
 };
 
-use super::extract::ExtractChoice;
-
 pub struct Either<A, B>
 {
   phantom: PhantomData<(A, B)>,
@@ -36,9 +34,9 @@ pub use EitherChoice::{
   Right,
 };
 
-impl<A, B> ExtractChoice<Sum<A, Sum<B, Bottom>>> for EitherChoice<A, B>
+impl<A, B> From<Sum<A, Sum<B, Bottom>>> for EitherChoice<A, B>
 {
-  fn extract(row: Sum<A, Sum<B, Bottom>>) -> EitherChoice<A, B>
+  fn from(row: Sum<A, Sum<B, Bottom>>) -> EitherChoice<A, B>
   {
     match row {
       Sum::Inl(a) => Left(a),

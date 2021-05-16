@@ -5,9 +5,7 @@ use super::{
     run_choice_cont,
     selector_to_inject_session,
   },
-  super::run_cont::WrapRunCont,
 };
-
 use crate::internal::{
   base::{
     once_channel,
@@ -31,7 +29,7 @@ use crate::internal::{
 };
 
 pub fn offer_choice<C, Row1, Row2, SessionSum, InjectSessionSum>(
-  cont1: impl for <'a> FnOnce(WrapRunCont<'a, InjectSessionSum>) -> SessionSum + Send + 'static
+  cont1: impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static
 ) -> PartialSession<C, ExternalChoice<Row1>>
 where
   C: Context,
@@ -61,10 +59,8 @@ where
 
     let cont4 = Row2::flatten_sum(cont3);
 
-    let cont5 = WrapRunCont::new(cont4);
+    let cont5 = wrap_sum_app(cont1(cont4));
 
-    let cont6 = wrap_sum_app(cont1(cont5));
-
-    run_choice_cont(ctx, sender3, cont6).await;
+    run_choice_cont(ctx, sender3, cont5).await;
   })
 }

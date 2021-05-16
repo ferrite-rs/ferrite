@@ -11,6 +11,4 @@ pub use super::{
   SharedToLinear,
   Wrap,
   Wrapper,
-  extract,
-  ExtractChoice,
 };
