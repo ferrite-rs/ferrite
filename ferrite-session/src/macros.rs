@@ -201,13 +201,13 @@ macro_rules! define_extract_choice {
   ) => {
     $crate::macros::paste! {
       impl < $( [< $labels T >] ),* >
-        std::convert::From <
+        $crate::prelude::ExtractChoice <
           $crate::prelude::Sum![ $( [< $labels T >] ),* ]
         >
         for [< $name Choice >]
           < $( [< $labels T >] ),* >
       {
-        fn from
+        fn extract
           (row: $crate::prelude::Sum![ $( [< $labels T >] ),* ] )
           -> Self
         {

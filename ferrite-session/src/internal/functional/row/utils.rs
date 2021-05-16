@@ -1,5 +1,3 @@
-use std::convert::From;
-
 use super::{
   structs::*,
   traits::*,
@@ -8,13 +6,6 @@ use crate::internal::functional::{
   base::*,
   type_app::*,
 };
-
-pub fn extract<R, T>(row: R) -> T
-where
-  T: From<R>,
-{
-  T::from(row)
-}
 
 pub fn get_sum<Row, F>(row: AppSum<Row, F>) -> Row::Applied
 where

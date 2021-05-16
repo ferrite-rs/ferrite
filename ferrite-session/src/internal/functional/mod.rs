@@ -28,7 +28,6 @@ pub use self::{
   },
   row::{
     absurd,
-    extract,
     get_sum,
     get_sum_borrow,
     lift_sum,

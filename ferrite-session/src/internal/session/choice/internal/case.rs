@@ -2,6 +2,7 @@ use super::{
   inject_session::*,
   internal_session::*,
   utils::*,
+  super::run_cont::WrapRunCont,
 };
 use crate::internal::{
   base::{
@@ -29,7 +30,7 @@ use crate::internal::{
 
 pub fn case<N, C, D, B, Row1, Row2, SessionSum, InjectSessionSum>(
   _: N,
-  cont1: impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static,
+  cont1: impl for <'a> FnOnce(WrapRunCont<'a, InjectSessionSum>) -> SessionSum + Send + 'static,
 ) -> PartialSession<C, B>
 where
   B: Protocol,
@@ -63,15 +64,17 @@ where
 
     let cont3 = lift_unit_to_session(selector_sum);
 
-    let cont3a = Row2::flatten_sum(cont3);
+    let cont4 = Row2::flatten_sum(cont3);
 
-    let cont4 = wrap_sum_app(cont1(cont3a));
+    let cont5 = WrapRunCont::new(cont4);
 
-    let cont5 = Row2::intersect_sum(receiver_sum2, cont4);
+    let cont6 = wrap_sum_app(cont1(cont5));
 
-    match cont5 {
-      Some(cont6) => {
-        run_case_cont(ctx2, sender, cont6).await;
+    let cont7 = Row2::intersect_sum(receiver_sum2, cont6);
+
+    match cont7 {
+      Some(cont8) => {
+        run_case_cont(ctx2, sender, cont8).await;
       }
       None => {
         panic!("impossible happened: received mismatch choice continuation");

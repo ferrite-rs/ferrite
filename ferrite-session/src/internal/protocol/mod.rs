@@ -17,6 +17,8 @@ pub use self::{
   },
   choice::{
     either,
+    extract,
+    ExtractChoice,
     ExternalChoice,
     InternalChoice,
   },
