@@ -10,16 +10,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "async-macros"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644a5a8de80f2085a1e7e57cd1544a2a7438f6e003c0790999bd43b92a77cdb2"
-dependencies = [
- "futures-core",
- "pin-utils",
-]
-
-[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -107,7 +97,6 @@ dependencies = [
 name = "ferrite-demo"
 version = "0.1.0"
 dependencies = [
- "async-macros",
  "env_logger",
  "ferrite-session",
  "futures",
@@ -121,7 +110,6 @@ dependencies = [
 name = "ferrite-session"
 version = "0.1.4"
 dependencies = [
- "async-macros",
  "ipc-channel",
  "log",
  "paste",

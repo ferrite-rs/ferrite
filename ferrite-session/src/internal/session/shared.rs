@@ -1,7 +1,9 @@
 use std::marker::PhantomData;
 
-use async_macros::join;
-use tokio::task;
+use tokio::{
+  task,
+  try_join,
+};
 
 use crate::internal::{
   base::*,
@@ -65,7 +67,7 @@ where
           debug!("[accept_shared_session] sent sender12");
         });
 
-        let _ = join!(child1, child2, child3, child4).await;
+        let _ = try_join!(child1, child2, child3, child4).unwrap();
       } else {
         // shared session is terminated with all references to it
         // being dropped
@@ -114,7 +116,7 @@ where
         debug!("[detach_shared_session] sent sender1");
       });
 
-      let _ = join!(child1, child2).await;
+      try_join!(child1, child2).unwrap();
     },
   )
 }
@@ -163,7 +165,7 @@ where
       debug!("[async_acquire_shared_session] acquired shared session");
     });
 
-    let _ = join!(child1, child2, child3, child4).await;
+    try_join!(child1, child2, child3, child4).unwrap();
   })
 }
 
@@ -218,9 +220,9 @@ where
       );
     });
 
-    let (_, _, val, _) = join!(child1, child2, child3, child4).await;
+    let (_, _, val, _) = try_join!(child1, child2, child3, child4).unwrap();
 
-    val.unwrap()
+    val
   })
 }
 
@@ -261,7 +263,7 @@ where
       unsafe_run_session(cont2, ctx2, sender1).await;
     });
 
-    let _ = join!(child1, child2).await;
+    try_join!(child1, child2).unwrap();
 
     // debug!("[acquire_shared_session] ran cont");
   })

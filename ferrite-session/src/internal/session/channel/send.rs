@@ -1,5 +1,7 @@
-use async_macros::join;
-use tokio::task;
+use tokio::{
+  task,
+  try_join,
+};
 
 use crate::internal::{
   base::{
@@ -50,7 +52,7 @@ where
       unsafe_run_session(cont, ctx3, sender3).await;
     });
 
-    let _ = join!(child1, child2, child3).await;
+    try_join!(child1, child2, child3).unwrap();
   })
 }
 
@@ -136,7 +138,7 @@ where
       unsafe_run_session(cont2, ctx2, sender2).await;
     });
 
-    let _ = join!(child1, child2, child3).await;
+    try_join!(child1, child2, child3).unwrap();
   })
 }
 
