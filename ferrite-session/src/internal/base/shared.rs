@@ -227,13 +227,8 @@ where
   let (sender1, receiver1) = unbounded::<(SenderOnce<()>, SenderOnce<S>)>();
 
   task::spawn(async move {
-    while let
-      Some((sender2, sender3)) =
-      receiver1.recv().await
-    {
-      debug!(
-        "[deserialize_shared_channel] acquiring remote shared channel"
-      );
+    while let Some((sender2, sender3)) = receiver1.recv().await {
+      debug!("[deserialize_shared_channel] acquiring remote shared channel");
 
       channel.acquire_sender.send(());
 

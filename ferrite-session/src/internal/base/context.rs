@@ -144,7 +144,7 @@ impl Context for ()
 
 impl EmptyContext for ()
 {
-  fn empty_values() { }
+  fn empty_values() {}
 }
 
 impl<R> EmptyContext for (Empty, R)
