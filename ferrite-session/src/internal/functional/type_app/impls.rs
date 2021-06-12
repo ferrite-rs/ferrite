@@ -1,5 +1,3 @@
-use serde;
-
 use super::{
   structs::*,
   traits::*,
@@ -56,7 +54,7 @@ where
     self
   }
 
-  fn get_applied_borrow<'a>(&'a self) -> &'a F::Applied
+  fn get_applied_borrow(&self) -> &F::Applied
   where
     F: TypeApp<A>,
   {

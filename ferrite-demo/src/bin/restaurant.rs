@@ -170,9 +170,7 @@ pub fn restaurant_session() -> Session<End>
     })
   });
 
-  let restaurant = apply_channel(diner, menu);
-
-  return restaurant;
+  apply_channel(diner, menu)
 }
 
 #[tokio::main]

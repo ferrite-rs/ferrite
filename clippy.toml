@@ -1,0 +1,2 @@
+blacklisted-names = []
+type-complexity-threshold = 4096

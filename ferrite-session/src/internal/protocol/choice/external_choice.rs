@@ -1,5 +1,3 @@
-use serde;
-
 use crate::internal::{
   base::*,
   functional::*,

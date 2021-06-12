@@ -1,5 +1,3 @@
-use serde;
-
 use crate::internal::base::*;
 
 pub struct ReceiveValue<T, A>(pub(crate) SenderOnce<(Value<T>, SenderOnce<A>)>);

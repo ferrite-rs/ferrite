@@ -4,7 +4,6 @@ use std::{
   pin::Pin,
 };
 
-use serde;
 use tokio::task;
 
 use crate::internal::base::*;
@@ -228,33 +227,31 @@ where
   let (sender1, receiver1) = unbounded::<(SenderOnce<()>, SenderOnce<S>)>();
 
   task::spawn(async move {
-    loop {
-      match receiver1.recv().await {
-        Some((sender2, sender3)) => {
-          debug!(
-            "[deserialize_shared_channel] acquiring remote shared channel"
-          );
+    while let
+      Some((sender2, sender3)) =
+      receiver1.recv().await
+    {
+      debug!(
+        "[deserialize_shared_channel] acquiring remote shared channel"
+      );
 
-          channel.acquire_sender.send(());
+      channel.acquire_sender.send(());
 
-          let acquire_receiver = channel.acquire_receiver.clone();
+      let acquire_receiver = channel.acquire_receiver.clone();
 
-          task::spawn_blocking(move || {
-            acquire_receiver.recv().unwrap();
-          })
-          .await
-          .unwrap();
+      task::spawn_blocking(move || {
+        acquire_receiver.recv().unwrap();
+      })
+      .await
+      .unwrap();
 
-          debug!("[deserialize_shared_channel] acquired remote shared channel");
+      debug!("[deserialize_shared_channel] acquired remote shared channel");
 
-          sender2.send(()).unwrap();
+      sender2.send(()).unwrap();
 
-          let channel2 = channel.clone();
+      let channel2 = channel.clone();
 
-          sender3.forward_to(channel2.linear_sender, channel2.linear_receiver);
-        }
-        None => break,
-      }
+      sender3.forward_to(channel2.linear_sender, channel2.linear_receiver);
     }
   });
 

@@ -21,9 +21,7 @@ pub fn hello_session() -> Session<End>
       )
     });
 
-  let main: Session<End> = apply_channel(client, server);
-
-  return main;
+  apply_channel(client, server)
 }
 
 #[tokio::main]

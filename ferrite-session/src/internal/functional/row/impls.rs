@@ -1,4 +1,3 @@
-use serde;
 
 use super::{
   structs::*,
@@ -62,7 +61,7 @@ where
     self
   }
 
-  fn get_sum_borrow<'a>(&'a self) -> &'a Row::Applied
+  fn get_sum_borrow(&self) -> &Row::Applied
   where
     F: TyCon,
     Row: SumApp<F>,

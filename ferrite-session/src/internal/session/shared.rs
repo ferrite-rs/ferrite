@@ -36,42 +36,39 @@ where
 
       let m_sender1 = receiver1.recv().await;
 
-      match m_sender1 {
-        Some((sender5, sender6)) => {
-          let child1 = task::spawn(async move {
-            debug!("[accept_shared_session] calling cont");
+      if let Some((sender5, sender6)) = m_sender1 {
+        let child1 = task::spawn(async move {
+          debug!("[accept_shared_session] calling cont");
 
-            unsafe_run_session(cont2, (receiver2, ()), sender4).await;
+          unsafe_run_session(cont2, (receiver2, ()), sender4).await;
 
-            debug!("[accept_shared_session] returned from cont");
-          });
+          debug!("[accept_shared_session] returned from cont");
+        });
 
-          let child2 = task::spawn(async move {
-            let linear = receiver4.recv().await.unwrap();
+        let child2 = task::spawn(async move {
+          let linear = receiver4.recv().await.unwrap();
 
-            debug!("[accept_shared_session] received from receiver4");
+          debug!("[accept_shared_session] received from receiver4");
 
-            sender6.send(LinearToShared { linear }).unwrap();
-          });
+          sender6.send(LinearToShared { linear }).unwrap();
+        });
 
-          let child3 = task::spawn(async move {
-            sender5.send(()).unwrap();
-          });
+        let child3 = task::spawn(async move {
+          sender5.send(()).unwrap();
+        });
 
-          let child4 = task::spawn(async move {
-            debug!("[accept_shared_session] sending sender12");
+        let child4 = task::spawn(async move {
+          debug!("[accept_shared_session] sending sender12");
 
-            sender2.send(Lock { unlock: receiver1 }).unwrap();
+          sender2.send(Lock { unlock: receiver1 }).unwrap();
 
-            debug!("[accept_shared_session] sent sender12");
-          });
+          debug!("[accept_shared_session] sent sender12");
+        });
 
-          let _ = join!(child1, child2, child3, child4).await;
-        }
-        None => {
-          // shared session is terminated with all references to it
-          // being dropped
-        }
+        let _ = join!(child1, child2, child3, child4).await;
+      } else {
+        // shared session is terminated with all references to it
+        // being dropped
       }
     },
   )

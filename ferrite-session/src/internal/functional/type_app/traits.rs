@@ -18,7 +18,7 @@ where
   where
     F: TypeApp<A>;
 
-  fn get_applied_borrow<'a>(&'a self) -> &'a F::Applied
+  fn get_applied_borrow(&self) -> &F::Applied
   where
     F: TypeApp<A>;
 }

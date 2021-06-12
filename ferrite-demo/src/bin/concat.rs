@@ -92,9 +92,7 @@ pub fn concat_session() -> Session<End>
     })
   });
 
-  let p3: Session<End> = apply_channel(p2, p1);
-
-  return p3;
+  apply_channel(p2, p1)
 }
 
 #[tokio::main]

@@ -144,10 +144,7 @@ impl Context for ()
 
 impl EmptyContext for ()
 {
-  fn empty_values()
-  {
-    ()
-  }
+  fn empty_values() { }
 }
 
 impl<R> EmptyContext for (Empty, R)
@@ -178,14 +175,14 @@ impl<R: Context> AppendContext<R> for ()
     r: <R as Context>::Endpoints,
   ) -> <R as Context>::Endpoints
   {
-    return r;
+    r
   }
 
   fn split_context(
     r: <R as Context>::Endpoints
   ) -> ((), <R as Context>::Endpoints)
   {
-    return ((), r);
+    ((), r)
   }
 }
 
@@ -203,7 +200,7 @@ where
     s: <S as Context>::Endpoints,
   ) -> (<P as Slot>::Endpoint, <R::Appended as Context>::Endpoints)
   {
-    return (p, <R as AppendContext<S>>::append_context(r, s));
+    (p, <R as AppendContext<S>>::append_context(r, s))
   }
 
   fn split_context(
@@ -212,6 +209,6 @@ where
   {
     let (r2, s) = R::split_context(r);
 
-    return ((p, r2), s);
+    ((p, r2), s)
   }
 }

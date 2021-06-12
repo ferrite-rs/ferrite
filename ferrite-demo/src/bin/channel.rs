@@ -118,9 +118,7 @@ pub fn create_channel<T>() -> SharedChannel<Channel<T>>
 where
   T: Send + 'static,
 {
-  let session = run_shared_session(do_create_channel(VecDeque::new()));
-
-  session
+  run_shared_session(do_create_channel(VecDeque::new()))
 }
 
 pub fn channel_session() -> Session<End>
@@ -172,7 +170,7 @@ pub fn channel_session() -> Session<End>
     })
   });
 
-  let producer3: Session<End> = sender_session(channel.clone(), || {
+  let producer3: Session<End> = sender_session(channel, || {
     Box::pin(async {
       sleep(Duration::from_secs(3)).await;
 
