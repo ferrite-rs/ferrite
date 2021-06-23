@@ -68,6 +68,17 @@ where
   }
 }
 
+pub async fn unsafe_forward_shared_channel<S>(
+  channel: SharedChannel<S>,
+  receiver: Receiver<(SenderOnce<()>, SenderOnce<S>)>,
+) where
+  S: SharedProtocol,
+{
+  while let Some(senders) = receiver.recv().await {
+    channel.endpoint.send(senders).unwrap();
+  }
+}
+
 pub async fn unsafe_run_shared_session<S>(
   session: SharedSession<S>,
   receiver: Receiver<(SenderOnce<()>, SenderOnce<S>)>,

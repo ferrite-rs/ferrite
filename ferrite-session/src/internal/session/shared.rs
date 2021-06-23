@@ -296,6 +296,35 @@ where
     debug!("[release_shared_session] ran cont");
   })
 }
+pub fn shared_forward<A1, A2, C>(
+  channel: SharedChannel<LinearToShared<A1>>
+) -> PartialSession<(Lock<A1>, C), SharedToLinear<A1>>
+where
+  A1: Protocol,
+  A2: Protocol,
+  A1: SharedRecApp<SharedToLinear<A1>, Applied = A2>,
+  C: EmptyContext,
+{
+  unsafe_create_session(
+    move |(receiver1, _): (ReceiverOnce<Lock<A1>>, C::Endpoints), sender1| async move {
+      let (sender3, receiver3) = once_channel::<()>();
+
+      sender1
+        .send(SharedToLinear {
+          unlock: sender3,
+          phantom: PhantomData,
+        })
+        .unwrap();
+
+      let Lock { unlock: receiver2 } = receiver1.recv().await.unwrap();
+      receiver3.recv().await.unwrap();
+
+      task::spawn(async move {
+        unsafe_forward_shared_channel(channel, receiver2).await;
+      });
+    },
+  )
+}
 
 impl<F> SharedChannel<LinearToShared<F>>
 where

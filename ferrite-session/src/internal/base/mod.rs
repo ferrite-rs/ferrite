@@ -60,6 +60,7 @@ pub use self::{
   shared::{
     unsafe_create_shared_channel,
     unsafe_create_shared_session,
+    unsafe_forward_shared_channel,
     unsafe_receive_shared_channel,
     unsafe_run_shared_session,
     SharedChannel,

@@ -42,6 +42,7 @@ pub use super::{
   session,
   session_1,
   session_2,
+  shared_forward,
   step,
   terminate,
   terminate_async,

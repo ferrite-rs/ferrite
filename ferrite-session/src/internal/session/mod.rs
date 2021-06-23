@@ -89,6 +89,7 @@ pub use self::{
     async_acquire_shared_session_with_result,
     detach_shared_session,
     release_shared_session,
+    shared_forward,
   },
   step::step,
   value::{
