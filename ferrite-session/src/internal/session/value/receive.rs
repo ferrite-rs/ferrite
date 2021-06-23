@@ -36,17 +36,18 @@ where
   )
 }
 
-pub fn send_value_to<N, C, A, B, T>(
-  _: N,
+pub fn send_value_to<N, C1, C2, A, B, T>(
+  _n: N,
   val: T,
-  cont: PartialSession<N::Target, A>,
-) -> PartialSession<C, A>
+  cont: PartialSession<C2, A>,
+) -> PartialSession<C1, A>
 where
   A: Protocol,
   B: Protocol,
-  C: Context,
+  C1: Context,
+  C2: Context,
   T: Send + 'static,
-  N: ContextLens<C, ReceiveValue<T, B>, B>,
+  N: ContextLens<C1, ReceiveValue<T, B>, B, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);

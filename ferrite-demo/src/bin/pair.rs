@@ -5,12 +5,6 @@ use tokio::time::sleep;
 
 pub fn pair_session() -> Session<End>
 {
-  /*
-         cont_builder() :: Prim Int ; End
-   =====================================================
-     P1 = send_value_async(cont_builder) :: · ⊢ Int ∧ End
-  */
-
   let p1: Session<SendValue<u64, End>> = step(async {
     println!("[P1] Spending 7 seconds to produce first output");
     sleep(Duration::from_secs(7)).await;
@@ -25,14 +19,6 @@ pub fn pair_session() -> Session<End>
       }),
     )
   });
-
-  /*
-                       cont_builder() :: Prim Str ; End
-   ==========================================================================
-               cont1 = send_value_async(cont_builder) :: · ⊢ Str ∧ End
-   ==========================================================================
-     P2 = send_channel_from (cont1) :: (Int ∧ End) ⊢ (Int ∧ End) ⊗ (Str ∧ End)
-  */
 
   let p2: Session<
     ReceiveChannel<
@@ -58,22 +44,6 @@ pub fn pair_session() -> Session<End>
       }),
     )
   });
-
-  /*
-                       cont_builder4 = terminate_async () :: · ⊢ End
-   ===========================================================================
-               cont_builder3(Str) = wait_async (cont_builder4) :: End ⊢ End
-   ===========================================================================
-       cont_builder2() = receive_value_from(cont_builder3) :: Str ∧ End ⊢ End
-   ===========================================================================
-       cont_builder1(Int) = wait_async (cont_builder2) :: End, Str ∧ End ⊢ End
-   ===========================================================================
-      cont2 = receive_value_from(cont_builder1) :: Int ∧ End, Str ∧ End ⊢ End
-   ===========================================================================
-       cont1 = receive_channel_from(cont2) :: (Int ∧ End) ⊗ (Str ∧ End) ⊢ End
-   ===========================================================================
-           P3 = wait_async (cont1) :: End, (Int ∧ End) ⊗ (Str ∧ End) ⊢ End
-  */
 
   let p3: Session<
     ReceiveChannel<
@@ -120,11 +90,6 @@ pub fn pair_session() -> Session<End>
       )
     })
   });
-
-  /*
-   ===============
-     P4 :: · ⊢ 1
-  */
 
   let p4: Session<End> = terminate_async(|| async {
     println!("[P4] Sleeping for 3 seconds before terminating");

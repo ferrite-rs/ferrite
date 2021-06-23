@@ -41,22 +41,17 @@ where
   })
 }
 
-/*
-       cont_builder(x) :: Q, Δ ⊢ P    x :: T
-   ================================================
-     receive_value_from(cont_builder) :: T ∧ Q, Δ ⊢ P
-*/
-
-pub fn receive_value_from<N, C, T, A, B>(
-  _: N,
-  cont: impl FnOnce(T) -> PartialSession<N::Target, B> + Send + 'static,
-) -> PartialSession<C, B>
+pub fn receive_value_from<N, C1, C2, T, A, B>(
+  _n: N,
+  cont: impl FnOnce(T) -> PartialSession<C2, B> + Send + 'static,
+) -> PartialSession<C1, B>
 where
   A: Protocol,
   B: Protocol,
-  C: Context,
+  C1: Context,
+  C2: Context,
   T: Send + 'static,
-  N: ContextLens<C, SendValue<T, A>, A>,
+  N: ContextLens<C1, SendValue<T, A>, A, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);

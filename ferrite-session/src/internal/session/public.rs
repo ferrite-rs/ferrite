@@ -36,6 +36,7 @@ pub use super::{
   run_shared_session_with_join_handle,
   send_channel_from,
   send_channel_to,
+  send_channel_to_session,
   send_value,
   send_value_to,
   session,

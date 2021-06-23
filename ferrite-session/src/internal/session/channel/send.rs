@@ -19,15 +19,16 @@ use crate::internal::{
   protocol::SendChannel,
 };
 
-pub fn send_channel_from<C, A, B, N>(
-  _: N,
-  cont: PartialSession<N::Target, B>,
-) -> PartialSession<C, SendChannel<A, B>>
+pub fn send_channel_from<C1, C2, N, A, B>(
+  _n: N,
+  cont: PartialSession<C2, B>,
+) -> PartialSession<C1, SendChannel<A, B>>
 where
   A: Protocol,
   B: Protocol,
-  C: Context,
-  N: ContextLens<C, A, Empty>,
+  C1: Context,
+  C2: Context,
+  N: ContextLens<C1, A, Empty, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (p_chan, ctx2) = N::extract_source(ctx1);
@@ -56,19 +57,21 @@ where
   })
 }
 
-pub fn receive_channel_from<C1, C2, A1, A2, B, N>(
-  _: N,
-  cont_builder: impl FnOnce(C2::Length) -> PartialSession<C2::Appended, B>,
+pub fn receive_channel_from<C1, C2, C3, N, M, A1, A2, B>(
+  _n: N,
+  cont1: impl FnOnce(M) -> PartialSession<C3, B>,
 ) -> PartialSession<C1, B>
 where
   A1: Protocol,
   A2: Protocol,
   B: Protocol,
-  C1: Context,
-  C2: AppendContext<(A1, ())>,
+  C1: Context<Length = M>,
+  C2: AppendContext<(A1, ()), Appended = C3>,
+  C3: Context,
   N: ContextLens<C1, SendChannel<A1, A2>, A2, Target = C2>,
+  M: Nat,
 {
-  let cont = cont_builder(C2::Length::nat());
+  let cont2 = cont1(M::nat());
 
   unsafe_create_session(move |ctx1, sender1| async move {
     let (pair_chan, ctx2) = N::extract_source(ctx1);
@@ -82,7 +85,7 @@ where
       (p_chan, ()),
     );
 
-    unsafe_run_session(cont, ctx4, sender1).await;
+    unsafe_run_session(cont2, ctx4, sender1).await;
   })
 }
 

@@ -24,15 +24,16 @@ use crate::internal::{
   },
 };
 
-pub fn include_session<C, A, B>(
+pub fn include_session<C1, C2, N, A, B>(
   session: Session<A>,
-  cont: impl FnOnce(C::Length) -> PartialSession<C::Appended, B>,
-) -> PartialSession<C, B>
+  cont: impl FnOnce(N) -> PartialSession<C2, B>,
+) -> PartialSession<C1, B>
 where
   A: Protocol,
   B: Protocol,
-  C: Context,
-  C: AppendContext<(A, ())>,
+  C1: Context<Length = N>,
+  C2: Context,
+  C1: AppendContext<(A, ()), Appended = C2>,
 {
   AllRight::cut(session, cont)
 }

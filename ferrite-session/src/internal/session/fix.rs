@@ -30,18 +30,19 @@ where
   })
 }
 
-pub fn unfix_session<N, C, A, B, R, F>(
-  _: N,
-  cont: PartialSession<N::Target, B>,
-) -> PartialSession<C, B>
+pub fn unfix_session<N, C1, C2, A, B, R, F>(
+  _n: N,
+  cont: PartialSession<C2, B>,
+) -> PartialSession<C1, B>
 where
   B: Protocol,
-  C: Context,
+  C1: Context,
+  C2: Context,
   F: Protocol,
   R: Context,
   F: RecApp<(RecX<R, F>, R), Applied = A>,
   A: Protocol,
-  N: ContextLens<C, RecX<R, F>, A>,
+  N: ContextLens<C1, RecX<R, F>, A, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver1, ctx2) = N::extract_source(ctx1);

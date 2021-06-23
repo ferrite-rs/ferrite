@@ -123,9 +123,7 @@ where
 
 pub fn async_acquire_shared_session<F>(
   shared: SharedChannel<LinearToShared<F>>,
-  cont_builder: impl FnOnce(Z) -> PartialSession<(F::Applied, ()), End>
-    + Send
-    + 'static,
+  cont1: impl FnOnce(Z) -> PartialSession<(F::Applied, ()), End> + Send + 'static,
 ) -> task::JoinHandle<()>
 where
   F: Protocol,
@@ -141,7 +139,7 @@ where
 
     let (sender2, receiver2) = once_channel();
 
-    let cont = cont_builder(Z);
+    let cont2 = cont1(Z);
 
     let ctx = (receiver2, ());
 
@@ -152,7 +150,7 @@ where
     });
 
     let child2 = task::spawn(async move {
-      unsafe_run_session(cont, ctx, sender1).await;
+      unsafe_run_session(cont2, ctx, sender1).await;
     });
 
     let child3 = task::spawn(async move {
@@ -171,7 +169,7 @@ where
 
 pub fn async_acquire_shared_session_with_result<T, F>(
   shared: SharedChannel<LinearToShared<F>>,
-  cont_builder: impl FnOnce(Z) -> PartialSession<(F::Applied, ()), SendValue<T, End>>
+  cont1: impl FnOnce(Z) -> PartialSession<(F::Applied, ()), SendValue<T, End>>
     + Send
     + 'static,
 ) -> task::JoinHandle<T>
@@ -190,7 +188,7 @@ where
 
     let (sender2, receiver2) = once_channel();
 
-    let cont = cont_builder(Z);
+    let cont2 = cont1(Z);
 
     let ctx = (receiver2, ());
 
@@ -201,7 +199,7 @@ where
     });
 
     let child2 = task::spawn(async move {
-      unsafe_run_session(cont, ctx, sender1).await;
+      unsafe_run_session(cont2, ctx, sender1).await;
     });
 
     let child3 = task::spawn(async move {
@@ -226,20 +224,22 @@ where
   })
 }
 
-pub fn acquire_shared_session<F, C, A>(
-  shared: SharedChannel<LinearToShared<F>>,
-  cont1: impl FnOnce(C::Length) -> PartialSession<C::Appended, A> + Send + 'static,
-) -> PartialSession<C, A>
+pub fn acquire_shared_session<N, C1, C2, A1, A2, B>(
+  shared: SharedChannel<LinearToShared<A1>>,
+  cont1: impl FnOnce(N) -> PartialSession<C2, B> + Send + 'static,
+) -> PartialSession<C1, B>
 where
-  C: Context,
-  A: Protocol,
-  F: Protocol,
-  F: SharedRecApp<SharedToLinear<F>>,
-  C: AppendContext<(F::Applied, ())>,
-  F::Applied: Protocol,
+  N: Nat,
+  C1: Context<Length = N>,
+  C2: Context,
+  A1: Protocol,
+  A2: Protocol,
+  B: Protocol,
+  A1: SharedRecApp<SharedToLinear<A1>, Applied = A2>,
+  C1: AppendContext<(A2, ()), Appended = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
-    let cont2 = cont1(<C::Length as Nat>::nat());
+    let cont2 = cont1(N::nat());
 
     let (sender2, receiver2) = once_channel();
 
@@ -251,7 +251,7 @@ where
 
     debug!("[acquire_shared_session] acquired shared endpoint");
 
-    let ctx2 = C::append_context(ctx1, (receiver2, ()));
+    let ctx2 = C1::append_context(ctx1, (receiver2, ()));
 
     let child1 = task::spawn(async move {
       let LinearToShared { linear } = receiver4.recv().await.unwrap();
@@ -269,15 +269,16 @@ where
   })
 }
 
-pub fn release_shared_session<F, C, A, N>(
-  _: N,
-  cont: PartialSession<N::Target, A>,
-) -> PartialSession<C, A>
+pub fn release_shared_session<N, C1, C2, A, B>(
+  _n: N,
+  cont: PartialSession<C2, B>,
+) -> PartialSession<C1, B>
 where
   A: Protocol,
-  C: Context,
-  F: Protocol,
-  N: ContextLens<C, SharedToLinear<F>, Empty>,
+  B: Protocol,
+  C1: Context,
+  C2: Context,
+  N: ContextLens<C1, SharedToLinear<A>, Empty, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver2, ctx2) = N::extract_source(ctx1);
@@ -286,7 +287,7 @@ where
 
     debug!("[release_shared_session] waiting receiver2");
 
-    let lock: SharedToLinear<F> = receiver2.recv().await.unwrap();
+    let lock: SharedToLinear<A> = receiver2.recv().await.unwrap();
 
     lock.unlock.send(()).unwrap();
 

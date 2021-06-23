@@ -17,7 +17,10 @@ mod wrap;
 
 #[doc(inline)]
 pub use self::{
-  apply::apply_channel,
+  apply::{
+    apply_channel,
+    send_channel_to_session,
+  },
   channel::{
     fork,
     receive_channel,
