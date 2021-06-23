@@ -18,7 +18,7 @@ use crate::internal::{
 };
 
 pub fn accept_shared_session<F>(
-  cont: impl FnOnce() -> PartialSession<(Lock<F>, ()), F::Applied> + Send + 'static
+  cont: PartialSession<(Lock<F>, ()), F::Applied>
 ) -> SharedSession<LinearToShared<F>>
 where
   F: Protocol,
@@ -30,8 +30,6 @@ where
       SenderOnce<()>,
       SenderOnce<LinearToShared<F>>,
     )>| async move {
-      let cont2 = cont();
-
       let (sender2, receiver2): (SenderOnce<Lock<F>>, _) = once_channel();
 
       let (sender4, receiver4): (SenderOnce<F::Applied>, _) = once_channel();
@@ -42,7 +40,7 @@ where
         let child1 = task::spawn(async move {
           debug!("[accept_shared_session] calling cont");
 
-          unsafe_run_session(cont2, (receiver2, ()), sender4).await;
+          unsafe_run_session(cont, (receiver2, ()), sender4).await;
 
           debug!("[accept_shared_session] returned from cont");
         });

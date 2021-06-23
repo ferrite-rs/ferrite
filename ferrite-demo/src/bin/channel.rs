@@ -93,23 +93,21 @@ fn do_create_channel<T>(mut queue: VecDeque<T>) -> SharedSession<Channel<T>>
 where
   T: Send + 'static,
 {
-  accept_shared_session(move || {
-    offer_choice! {
-      ReceiveNext => {
-        receive_value( |val| {
-          queue.push_back ( val );
+  accept_shared_session(offer_choice! {
+    ReceiveNext => {
+      receive_value( |val| {
+        queue.push_back ( val );
 
-          detach_shared_session (
-            do_create_channel ( queue ) )
-        })
-      }
-      SendNext => {
-        let m_val = queue.pop_front();
+        detach_shared_session (
+          do_create_channel ( queue ) )
+      })
+    }
+    SendNext => {
+      let m_val = queue.pop_front();
 
-        send_value ( m_val,
-          detach_shared_session (
-            do_create_channel ( queue ) ) )
-      }
+      send_value ( m_val,
+        detach_shared_session (
+          do_create_channel ( queue ) ) )
     }
   })
 }

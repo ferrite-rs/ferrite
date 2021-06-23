@@ -11,17 +11,15 @@ type CounterSession = LinearToShared<ExternalChoice<CounterCommand>>;
 
 fn make_counter_session(count: u64) -> SharedSession<CounterSession>
 {
-  accept_shared_session(move || {
-    offer_choice! {
-      Increment =>
+  accept_shared_session(offer_choice! {
+    Increment =>
+      detach_shared_session (
+        make_counter_session ( count + 1 )
+      )
+    GetCount =>
+      send_value ( count,
         detach_shared_session (
-          make_counter_session ( count + 1 )
-        )
-      GetCount =>
-        send_value ( count,
-          detach_shared_session (
-            make_counter_session ( count ) ) )
-    }
+          make_counter_session ( count ) ) )
   })
 }
 
