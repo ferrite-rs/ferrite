@@ -1,5 +1,6 @@
 use std::marker::PhantomData;
 
+use super::linear_to_shared::LinearToShared;
 use crate::internal::base::*;
 
 pub struct SharedToLinear<F>
@@ -8,7 +9,12 @@ pub struct SharedToLinear<F>
   pub(crate) phantom: PhantomData<F>,
 }
 
-impl<F> Protocol for SharedToLinear<F> where F: Send + 'static {}
+impl<F> Protocol for SharedToLinear<LinearToShared<F>>
+where
+  F: Send + 'static,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
+{
+}
 
 impl<F> ForwardChannel for SharedToLinear<F>
 where

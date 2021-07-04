@@ -280,6 +280,7 @@ where
   B: Protocol,
   C1: Context,
   C2: Context,
+  A: SharedRecApp<SharedToLinear<LinearToShared<A>>>,
   N: ContextLens<C1, SharedToLinear<LinearToShared<A>>, Empty, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
@@ -304,7 +305,7 @@ where
 
 pub fn shared_forward<A1, A2, C>(
   channel: SharedChannel<LinearToShared<A1>>
-) -> PartialSession<(Lock<A1>, C), SharedToLinear<A1>>
+) -> PartialSession<(Lock<A1>, C), SharedToLinear<LinearToShared<A1>>>
 where
   A1: Protocol,
   A2: Protocol,
