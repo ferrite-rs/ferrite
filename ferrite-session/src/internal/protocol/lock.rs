@@ -6,7 +6,7 @@ use crate::internal::base::*;
 
 pub struct Lock<F>
 where
-  F: SharedRecApp<SharedToLinear<F>>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
 {
   pub(crate) unlock: Receiver<(SenderOnce<()>, SenderOnce<LinearToShared<F>>)>,
 }
@@ -14,7 +14,7 @@ where
 impl<F> Protocol for Lock<F>
 where
   F: Protocol,
-  F: SharedRecApp<SharedToLinear<F>>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
   F::Applied: Protocol,
 {
 }

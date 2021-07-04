@@ -91,13 +91,6 @@ where
   type Applied = A;
 }
 
-impl<N> RecApp<()> for S<N>
-where
-  N: Send + 'static,
-{
-  type Applied = S<N>;
-}
-
 impl<C, A, N> RecApp<(A, C)> for S<N>
 where
   N: Send + 'static,

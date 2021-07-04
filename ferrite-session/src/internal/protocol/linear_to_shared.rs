@@ -2,23 +2,23 @@ use super::shared_to_linear::SharedToLinear;
 use crate::internal::base::*;
 
 pub struct LinearToShared<F>
-where
-  F: SharedRecApp<SharedToLinear<F>>,
 {
-  pub(crate) linear: F::Applied,
+  pub(crate) linear:
+    Box<dyn HasSharedRecApp<F, SharedToLinear<LinearToShared<F>>>>,
 }
 
 impl<F> SharedProtocol for LinearToShared<F>
 where
   F: Protocol,
-  F: SharedRecApp<SharedToLinear<F>>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
   F::Applied: Protocol,
 {
 }
 
 impl<F, T> ForwardChannel for LinearToShared<F>
 where
-  F: Send + 'static + SharedRecApp<SharedToLinear<F>, Applied = T>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>, Applied = T>,
+  F: Send + 'static,
   T: Send + 'static + ForwardChannel,
 {
   fn forward_to(
@@ -27,7 +27,7 @@ where
     receiver: OpaqueReceiver,
   )
   {
-    self.linear.forward_to(sender, receiver)
+    self.linear.get_applied().forward_to(sender, receiver)
   }
 
   fn forward_from(
@@ -36,7 +36,7 @@ where
   ) -> Self
   {
     LinearToShared {
-      linear: T::forward_from(sender, receiver),
+      linear: Box::new(T::forward_from(sender, receiver)),
     }
   }
 }

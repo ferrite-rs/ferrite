@@ -22,7 +22,7 @@ pub fn accept_shared_session<F>(
 ) -> SharedSession<LinearToShared<F>>
 where
   F: Protocol,
-  F: SharedRecApp<SharedToLinear<F>>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
   F::Applied: Protocol,
 {
   unsafe_create_shared_session(
@@ -50,7 +50,11 @@ where
 
           debug!("[accept_shared_session] received from receiver4");
 
-          sender6.send(LinearToShared { linear }).unwrap();
+          sender6
+            .send(LinearToShared {
+              linear: Box::new(linear),
+            })
+            .unwrap();
         });
 
         let child3 = task::spawn(async move {
@@ -76,10 +80,10 @@ where
 
 pub fn detach_shared_session<F, C>(
   cont: SharedSession<LinearToShared<F>>
-) -> PartialSession<(Lock<F>, C), SharedToLinear<F>>
+) -> PartialSession<(Lock<F>, C), SharedToLinear<LinearToShared<F>>>
 where
   F: Protocol,
-  F: SharedRecApp<SharedToLinear<F>>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
   F::Applied: Protocol,
   C: EmptyContext,
 {
@@ -125,7 +129,7 @@ pub fn async_acquire_shared_session<F>(
 ) -> task::JoinHandle<()>
 where
   F: Protocol,
-  F: SharedRecApp<SharedToLinear<F>>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
   F::Applied: Protocol,
 {
   debug!("[async_acquire_shared_session] acquiring shared session");
@@ -144,7 +148,7 @@ where
     let child1 = task::spawn(async move {
       let LinearToShared { linear } = receiver4.recv().await.unwrap();
 
-      sender2.send(linear).unwrap();
+      sender2.send(*linear.get_applied()).unwrap();
     });
 
     let child2 = task::spawn(async move {
@@ -174,7 +178,7 @@ pub fn async_acquire_shared_session_with_result<T, F>(
 where
   F: Protocol,
   T: Send + 'static,
-  F: SharedRecApp<SharedToLinear<F>>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
   F::Applied: Protocol,
 {
   debug!("[async_acquire_shared_session_with_result] acquiring shared session");
@@ -193,7 +197,7 @@ where
     let child1 = task::spawn(async move {
       let LinearToShared { linear } = receiver4.recv().await.unwrap();
 
-      sender2.send(linear).unwrap();
+      sender2.send(*linear.get_applied()).unwrap();
     });
 
     let child2 = task::spawn(async move {
@@ -233,7 +237,7 @@ where
   A1: Protocol,
   A2: Protocol,
   B: Protocol,
-  A1: SharedRecApp<SharedToLinear<A1>, Applied = A2>,
+  A1: SharedRecApp<SharedToLinear<LinearToShared<A1>>, Applied = A2>,
   C1: AppendContext<(A2, ()), Appended = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
@@ -254,7 +258,7 @@ where
     let child1 = task::spawn(async move {
       let LinearToShared { linear } = receiver4.recv().await.unwrap();
 
-      sender2.send(linear).unwrap();
+      sender2.send(*linear.get_applied()).unwrap();
     });
 
     let child2 = task::spawn(async move {
@@ -276,7 +280,7 @@ where
   B: Protocol,
   C1: Context,
   C2: Context,
-  N: ContextLens<C1, SharedToLinear<A>, Empty, Target = C2>,
+  N: ContextLens<C1, SharedToLinear<LinearToShared<A>>, Empty, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
     let (receiver2, ctx2) = N::extract_source(ctx1);
@@ -285,7 +289,8 @@ where
 
     debug!("[release_shared_session] waiting receiver2");
 
-    let lock: SharedToLinear<A> = receiver2.recv().await.unwrap();
+    let lock: SharedToLinear<LinearToShared<A>> =
+      receiver2.recv().await.unwrap();
 
     lock.unlock.send(()).unwrap();
 
@@ -296,13 +301,14 @@ where
     debug!("[release_shared_session] ran cont");
   })
 }
+
 pub fn shared_forward<A1, A2, C>(
   channel: SharedChannel<LinearToShared<A1>>
 ) -> PartialSession<(Lock<A1>, C), SharedToLinear<A1>>
 where
   A1: Protocol,
   A2: Protocol,
-  A1: SharedRecApp<SharedToLinear<A1>, Applied = A2>,
+  A1: SharedRecApp<SharedToLinear<LinearToShared<A1>>, Applied = A2>,
   C: EmptyContext,
 {
   unsafe_create_session(
@@ -329,7 +335,7 @@ where
 impl<F> SharedChannel<LinearToShared<F>>
 where
   F: Protocol,
-  F: SharedRecApp<SharedToLinear<F>>,
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
   F::Applied: Protocol,
 {
   pub fn acquire<C, A>(

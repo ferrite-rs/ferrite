@@ -8,7 +8,7 @@ pub struct SharedToLinear<F>
   pub(crate) phantom: PhantomData<F>,
 }
 
-impl<F> Protocol for SharedToLinear<F> where F: Protocol {}
+impl<F> Protocol for SharedToLinear<F> where F: Send + 'static {}
 
 impl<F> ForwardChannel for SharedToLinear<F>
 where
