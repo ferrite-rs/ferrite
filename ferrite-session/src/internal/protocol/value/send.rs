@@ -1,3 +1,8 @@
+use core::{
+  future::Future,
+  pin::Pin,
+};
+
 use crate::internal::base::*;
 
 pub struct SendValue<T, A>(pub(crate) (Value<T>, ReceiverOnce<A>));
@@ -13,9 +18,25 @@ where
   fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
   {
     let (val_sender, val_receiver) = once_channel();
-    let (provider, consumer) = A::create_endpoints();
+    let (provider_end, consumer_end) = A::create_endpoints();
 
-    ((val_sender, provider), (val_receiver, consumer))
+    ((val_sender, provider_end), (val_receiver, consumer_end))
+  }
+
+  fn forward(
+    consumer_end: Self::ConsumerEndpoint,
+    provider_end: Self::ProviderEndpoint,
+  ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
+  {
+    let (val_sender, provider_end_a) = provider_end;
+    let (val_receiver, consumer_end_a) = consumer_end;
+
+    Box::pin(async {
+      let payload = val_receiver.recv().await.unwrap();
+      val_sender.send(payload).unwrap();
+
+      A::forward(consumer_end_a, provider_end_a).await;
+    })
   }
 }
 

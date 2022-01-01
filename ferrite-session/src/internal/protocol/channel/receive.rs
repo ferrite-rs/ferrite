@@ -1,3 +1,8 @@
+use core::{
+  future::Future,
+  pin::Pin,
+};
+
 use crate::internal::base::*;
 
 pub struct ReceiveChannel<A, B>(
@@ -17,9 +22,25 @@ where
   fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
   {
     let (chan_sender, chan_receiver) = once_channel();
-    let (provider, consumer) = B::create_endpoints();
+    let (provider_end, consumer_end) = B::create_endpoints();
 
-    ((chan_receiver, provider), (chan_sender, consumer))
+    ((chan_receiver, provider_end), (chan_sender, consumer_end))
+  }
+
+  fn forward(
+    consumer_end: Self::ConsumerEndpoint,
+    provider_end: Self::ProviderEndpoint,
+  ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
+  {
+    let (chan_sender, consumer_end_b) = consumer_end;
+    let (chan_receiver, provider_end_b) = provider_end;
+
+    Box::pin(async {
+      let chan = chan_receiver.recv().await.unwrap();
+      chan_sender.send(chan).unwrap();
+
+      B::forward(consumer_end_b, provider_end_b).await;
+    })
   }
 }
 

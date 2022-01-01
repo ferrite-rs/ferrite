@@ -10,6 +10,7 @@ use crate::internal::{
     unsafe_create_shared_channel,
     unsafe_run_session,
     unsafe_run_shared_session,
+    Protocol,
     Session,
     SharedChannel,
     SharedProtocol,
@@ -43,15 +44,16 @@ pub async fn run_session_with_result<T>(
 where
   T: Send + 'static,
 {
-  let (sender, receiver1) = once_channel();
+  let (provider_end, (val_receiver, end_receiver)) =
+    <SendValue<T, End>>::create_endpoints();
 
   let child1 = task::spawn(async move {
-    unsafe_run_session(session, (), sender).await;
+    unsafe_run_session(session, (), provider_end).await;
   });
 
-  let SendValue((Value(val), receiver2)) = receiver1.recv().await.unwrap();
+  let Value(val) = val_receiver.recv().await.unwrap();
 
-  receiver2.recv().await.unwrap();
+  end_receiver.recv().await.unwrap();
 
   let _ = child1.await;
 

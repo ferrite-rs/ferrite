@@ -1,3 +1,8 @@
+use core::{
+  future::Future,
+  pin::Pin,
+};
+
 use super::{
   linear_to_shared::LinearToShared,
   shared_to_linear::SharedToLinear,
@@ -23,5 +28,16 @@ where
   fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
   {
     once_channel()
+  }
+
+  fn forward(
+    consumer_end: Self::ConsumerEndpoint,
+    provider_end: Self::ProviderEndpoint,
+  ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
+  {
+    Box::pin(async {
+      let payload = consumer_end.recv().await.unwrap();
+      provider_end.send(payload).unwrap();
+    })
   }
 }

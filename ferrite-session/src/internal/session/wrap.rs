@@ -1,10 +1,6 @@
-use tokio::{
-  task,
-  try_join,
-};
-
 use crate::internal::{
   base::*,
+  functional::wrap_type_app,
   protocol::*,
 };
 
@@ -17,22 +13,16 @@ where
   T: Send + 'static,
   T::Unwrap: Protocol,
 {
-  unsafe_create_session(move |ctx, sender1| async move {
-    let (sender2, receiver) = once_channel();
+  unsafe_create_session::<C, Wrap<T>, _, _>(move |ctx, sender1| async move {
+    let (provider_end, consumer_end) = T::Unwrap::create_endpoints();
 
-    let child1 = task::spawn(async move {
-      let val = receiver.recv().await.unwrap();
+    sender1
+      .send(Wrap {
+        unwrap: Box::new(consumer_end),
+      })
+      .unwrap();
 
-      sender1
-        .send(Wrap {
-          unwrap: Box::new(val),
-        })
-        .unwrap();
-    });
-
-    let child2 = task::spawn(unsafe_run_session(cont, ctx, sender2));
-
-    try_join!(child1, child2).unwrap();
+    unsafe_run_session(cont, ctx, provider_end);
   })
 }
 
@@ -46,21 +36,17 @@ where
   T: Wrapper + Send + 'static,
   N: ContextLens<C, Wrap<T>, T::Unwrap>,
 {
-  unsafe_create_session(move |ctx1, sender1| async move {
-    let (receiver1, ctx2) = N::extract_source(ctx1);
+  unsafe_create_session(move |ctx1, provider_end_a| async move {
+    let (endpoint, ctx2) = N::extract_source(ctx1);
 
-    let (sender2, receiver2) = once_channel();
+    let receiver = endpoint.get_applied();
 
-    let ctx3 = N::insert_target(receiver2, ctx2);
+    let wrapped = receiver.recv().await.unwrap();
 
-    let child1 = task::spawn(async move {
-      let wrapped = receiver1.recv().await.unwrap();
+    let unwrapped = wrapped.unwrap.unwrap();
 
-      sender2.send(*wrapped.unwrap).unwrap();
-    });
+    let ctx3 = N::insert_target(wrap_type_app(unwrapped), ctx2);
 
-    let child2 = task::spawn(unsafe_run_session(cont, ctx3, sender1));
-
-    try_join!(child1, child2).unwrap();
+    unsafe_run_session(cont, ctx3, provider_end_a).await;
   })
 }

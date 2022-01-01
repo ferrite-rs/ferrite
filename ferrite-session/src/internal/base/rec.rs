@@ -6,7 +6,6 @@ use crate::internal::functional::{
     Z,
   },
   row::*,
-  type_app::App,
 };
 
 pub trait RecApp<A>: Sized + 'static
@@ -14,11 +13,11 @@ pub trait RecApp<A>: Sized + 'static
   type Applied: Send + 'static;
 }
 
-pub trait HasRecApp<F, A>: Send + 'static
+pub trait HasRecApp<F, C>: Send + 'static
 {
   fn get_applied(self: Box<Self>) -> Box<F::Applied>
   where
-    F: RecApp<A>;
+    F: RecApp<C>;
 }
 
 pub trait SharedRecApp<X>
@@ -72,15 +71,6 @@ where
   F: RecApp<(RecX<C, F>, C)>,
 {
   type Applied = RecX<C, F>;
-}
-
-impl<C, F, X> RecApp<C> for App<F, X>
-where
-  C: Send + 'static,
-  X: Send + 'static,
-  F: RecApp<C>,
-{
-  type Applied = App<F::Applied, X>;
 }
 
 impl<C, A> RecApp<(A, C)> for Z

@@ -41,6 +41,7 @@ pub use self::{
     Protocol,
     ProviderEndpoint,
     ProviderEndpointF,
+    RecEndpoint,
     SharedProtocol,
   },
   rec::{

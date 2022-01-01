@@ -1,3 +1,8 @@
+use core::{
+  future::Future,
+  pin::Pin,
+};
+
 use crate::internal::{
   base::*,
   functional::*,
@@ -36,6 +41,23 @@ where
       (choice_receiver, endpoint_sender),
       (choice_sender, endpoint_receiver),
     )
+  }
+
+  fn forward(
+    consumer_end: Self::ConsumerEndpoint,
+    provider_end: Self::ProviderEndpoint,
+  ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
+  {
+    let (choice_sender, endpoint_receiver) = consumer_end;
+    let (choice_receiver, endpoint_sender) = provider_end;
+
+    Box::pin(async {
+      let choice = choice_receiver.recv().await.unwrap();
+      choice_sender.send(choice).unwrap();
+
+      let endpoint = endpoint_receiver.recv().await.unwrap();
+      endpoint_sender.send(endpoint).unwrap();
+    })
   }
 }
 

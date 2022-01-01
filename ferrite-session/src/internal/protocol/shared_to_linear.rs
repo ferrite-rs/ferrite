@@ -1,3 +1,7 @@
+use core::{
+  future::Future,
+  pin::Pin,
+};
 use std::marker::PhantomData;
 
 use super::linear_to_shared::LinearToShared;
@@ -21,6 +25,17 @@ where
   {
     let (sender, receiver) = once_channel();
     (receiver, sender)
+  }
+
+  fn forward(
+    consumer_end: Self::ConsumerEndpoint,
+    provider_end: Self::ProviderEndpoint,
+  ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
+  {
+    Box::pin(async {
+      let payload = provider_end.recv().await.unwrap();
+      consumer_end.send(payload).unwrap();
+    })
   }
 }
 
