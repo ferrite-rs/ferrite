@@ -4,7 +4,6 @@ use std::{
 };
 
 use crate::internal::base::{
-  channel::SenderOnce,
   context::Context,
   protocol::Protocol,
 };
@@ -19,29 +18,30 @@ where
   executor: Box<
     dyn FnOnce(
         C::Endpoints,
-        SenderOnce<A>,
+        A::ProviderEndpoint,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
       + Send,
   >,
 }
 
-pub fn unsafe_create_session<C, A, Fut>(
-  executor: impl FnOnce(C::Endpoints, SenderOnce<A>) -> Fut + Send + 'static
+pub fn unsafe_create_session<C, A, Cont, Fut>(
+  executor: Cont
 ) -> PartialSession<C, A>
 where
   A: Protocol,
   C: Context,
+  Cont: FnOnce(C::Endpoints, A::ProviderEndpoint) -> Fut + Send + 'static,
   Fut: Future<Output = ()> + Send,
 {
   let executor2: Box<
     dyn FnOnce(
         C::Endpoints,
-        SenderOnce<A>,
+        A::ProviderEndpoint,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
       + Send,
-  > = Box::new(move |ctx, sender| {
+  > = Box::new(move |ctx, provider_end| {
     Box::pin(async {
-      executor(ctx, sender).await;
+      executor(ctx, provider_end).await;
     })
   });
 
@@ -53,10 +53,10 @@ where
 pub async fn unsafe_run_session<C, A>(
   session: PartialSession<C, A>,
   ctx: C::Endpoints,
-  sender: SenderOnce<A>,
+  provider_end: A::ProviderEndpoint,
 ) where
   A: Protocol,
   C: Context,
 {
-  (session.executor)(ctx, sender).await;
+  (session.executor)(ctx, provider_end).await;
 }

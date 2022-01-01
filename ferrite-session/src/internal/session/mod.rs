@@ -25,8 +25,6 @@ pub use self::{
     fork,
     receive_channel,
     receive_channel_from,
-    receive_channel_from_slot,
-    receive_channel_slot,
     send_channel_from,
     send_channel_to,
   },

@@ -30,10 +30,10 @@ where
   Func: FnOnce() -> Fut + Send + 'static,
   Fut: Future<Output = ()> + Send,
 {
-  unsafe_create_session(move |_, sender| async move {
+  unsafe_create_session::<C, End, _, _>(move |_, sender| async move {
     cleaner().await;
 
-    sender.send(End()).unwrap();
+    sender.send(()).unwrap();
   })
 }
 

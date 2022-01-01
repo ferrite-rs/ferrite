@@ -1,13 +1,11 @@
 use crate::internal::{
   base::{
-    once_channel,
     unsafe_create_session,
     unsafe_run_session,
     Context,
     ContextLens,
     PartialSession,
     Protocol,
-    SenderOnce,
     Value,
   },
   protocol::ReceiveValue,
@@ -21,17 +19,13 @@ where
   A: Protocol,
   C: Context,
 {
-  unsafe_create_session(
-    move |ctx, sender1: SenderOnce<ReceiveValue<T, A>>| async move {
-      let (sender2, receiver2) = once_channel();
-
-      sender1.send(ReceiveValue(sender2)).unwrap();
-
-      let (Value(val), sender3) = receiver2.recv().await.unwrap();
+  unsafe_create_session::<C, ReceiveValue<T, A>, _, _>(
+    move |ctx, (val_receiver, provider_end)| async move {
+      let Value(val) = val_receiver.recv().await.unwrap();
 
       let cont2 = cont(val);
 
-      unsafe_run_session(cont2, ctx, sender3).await;
+      unsafe_run_session(cont2, ctx, provider_end).await;
     },
   )
 }
@@ -50,15 +44,11 @@ where
   N: ContextLens<C1, ReceiveValue<T, B>, B, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender1| async move {
-    let (receiver1, ctx2) = N::extract_source(ctx1);
+    let ((val_sender, consumer_end), ctx2) = N::extract_source(ctx1);
 
-    let ReceiveValue(sender2) = receiver1.recv().await.unwrap();
+    let ctx3 = N::insert_target(consumer_end, ctx2);
 
-    let (sender3, receiver3) = once_channel();
-
-    let ctx3 = N::insert_target(receiver3, ctx2);
-
-    sender2.send((Value(val), sender3)).unwrap();
+    val_sender.send(Value(val)).unwrap();
 
     unsafe_run_session(cont, ctx3, sender1).await;
   })

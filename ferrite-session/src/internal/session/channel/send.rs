@@ -5,7 +5,6 @@ use tokio::{
 
 use crate::internal::{
   base::{
-    once_channel,
     unsafe_create_session,
     unsafe_run_session,
     AppendContext,
@@ -30,31 +29,17 @@ where
   C2: Context,
   N: ContextLens<C1, A, Empty, Target = C2>,
 {
-  unsafe_create_session(move |ctx1, sender1| async move {
-    let (p_chan, ctx2) = N::extract_source(ctx1);
+  unsafe_create_session::<C1, SendChannel<A, B>, _, _>(
+    move |ctx1, (chan_sender, provider_end)| async move {
+      let (consumer_end, ctx2) = N::extract_source(ctx1);
 
-    let (sender2, receiver2) = once_channel();
+      let ctx3 = N::insert_target((), ctx2);
 
-    let (sender3, receiver3) = once_channel();
+      chan_sender.send(consumer_end).unwrap();
 
-    let ctx3 = N::insert_target((), ctx2);
-
-    let child1 = task::spawn(async move {
-      let p = p_chan.recv().await.unwrap();
-
-      sender2.send(p).unwrap();
-    });
-
-    let child2 = task::spawn(async move {
-      sender1.send(SendChannel(receiver2, receiver3)).unwrap();
-    });
-
-    let child3 = task::spawn(async {
-      unsafe_run_session(cont, ctx3, sender3).await;
-    });
-
-    try_join!(child1, child2, child3).unwrap();
-  })
+      unsafe_run_session(cont, ctx3, provider_end).await;
+    },
+  )
 }
 
 pub fn receive_channel_from<C1, C2, C3, N, M, A1, A2, B>(
@@ -73,19 +58,19 @@ where
 {
   let cont2 = cont1(M::nat());
 
-  unsafe_create_session(move |ctx1, sender1| async move {
-    let (pair_chan, ctx2) = N::extract_source(ctx1);
+  unsafe_create_session(move |ctx1, provider_end| async move {
+    let ((chan_receiver, consumer_end2), ctx2) = N::extract_source(ctx1);
 
-    let SendChannel(p_chan, y_chan) = pair_chan.recv().await.unwrap();
+    let consumer_end1 = chan_receiver.recv().await.unwrap();
 
-    let ctx3 = N::insert_target(y_chan, ctx2);
+    let ctx3 = N::insert_target(consumer_end2, ctx2);
 
     let ctx4 = <N::Target as AppendContext<(A1, ())>>::append_context(
       ctx3,
-      (p_chan, ()),
+      (consumer_end1, ()),
     );
 
-    unsafe_run_session(cont2, ctx4, sender1).await;
+    unsafe_run_session(cont2, ctx4, provider_end).await;
   })
 }
 
@@ -101,74 +86,34 @@ where
    with its inputs combined and outputs a parallel context
 */
 
-pub fn fork<P, Q, CP, CQ>(
-  cont1: PartialSession<CP, P>,
-  cont2: PartialSession<CQ, Q>,
-) -> PartialSession<<CP as AppendContext<CQ>>::Appended, SendChannel<P, Q>>
+pub fn fork<A, B, C1, C2>(
+  cont1: PartialSession<C1, A>,
+  cont2: PartialSession<C2, B>,
+) -> PartialSession<C1::Appended, SendChannel<A, B>>
 where
-  P: Protocol,
-  Q: Protocol,
-  CP: Context,
-  CQ: Context,
-  CP: AppendContext<CQ>,
-  P: 'static,
-  Q: 'static,
-  CP: 'static,
-  CQ: 'static,
+  A: Protocol,
+  B: Protocol,
+  C1: Context,
+  C2: Context,
+  C1: AppendContext<C2>,
 {
-  unsafe_create_session(move |ctx, sender| async move {
-    let (ctx1, ctx2) = CP::split_context(ctx);
+  unsafe_create_session::<C1::Appended, SendChannel<A, B>, _, _>(
+    move |ctx, (chan_sender, provider_end_b)| async move {
+      let (ctx1, ctx2) = C1::split_context(ctx);
 
-    let (sender1, receiver1) = once_channel();
+      let (provider_end_a, consumer_end_a) = A::create_endpoints();
 
-    let (sender2, receiver2) = once_channel();
+      let child1 = task::spawn(async move {
+        unsafe_run_session(cont1, ctx1, provider_end_a).await;
+      });
 
-    // the first thread task::spawns immediately
+      chan_sender.send(consumer_end_a).unwrap();
 
-    let child1 = task::spawn(async move {
-      unsafe_run_session(cont1, ctx1, sender1).await;
-    });
+      let child2 = task::spawn(async move {
+        unsafe_run_session(cont2, ctx2, provider_end_b).await;
+      });
 
-    // the sender here blocks until the inner channel pairs
-    // are received on the other side
-    let child2 = task::spawn(async move {
-      sender.send(SendChannel(receiver1, receiver2)).unwrap();
-    });
-
-    // the second thread is blocked until the first channel is being accessed
-
-    let child3 = task::spawn(async move {
-      unsafe_run_session(cont2, ctx2, sender2).await;
-    });
-
-    try_join!(child1, child2, child3).unwrap();
-  })
-}
-
-pub fn receive_channel_from_slot<I, P1, P2, Q, TargetLens, SourceLens>(
-  _: SourceLens,
-  _: TargetLens,
-  cont: PartialSession<TargetLens::Target, Q>,
-) -> PartialSession<I, Q>
-where
-  P1: Protocol,
-  P2: Protocol,
-  Q: Protocol,
-  I: Context,
-  SourceLens: ContextLens<I, SendChannel<P1, P2>, P2>,
-  TargetLens: ContextLens<SourceLens::Target, Empty, P1>,
-{
-  unsafe_create_session(move |ctx1, sender1| async move {
-    let (pair_chan, ctx2) = SourceLens::extract_source(ctx1);
-
-    let SendChannel(p_chan, y_chan) = pair_chan.recv().await.unwrap();
-
-    let ctx3 = SourceLens::insert_target(y_chan, ctx2);
-
-    let ((), ctx4) = TargetLens::extract_source(ctx3);
-
-    let ctx5 = TargetLens::insert_target(p_chan, ctx4);
-
-    unsafe_run_session(cont, ctx5, sender1).await;
-  })
+      try_join!(child1, child2).unwrap();
+    },
+  )
 }

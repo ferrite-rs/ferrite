@@ -24,8 +24,6 @@ pub use super::{
   partial_session_2,
   receive_channel,
   receive_channel_from,
-  receive_channel_from_slot,
-  receive_channel_slot,
   receive_value,
   receive_value_from,
   release_shared_session,

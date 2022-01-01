@@ -1,8 +1,5 @@
 use crate::internal::{
-  base::{
-    channel::ReceiverOnce,
-    protocol::Protocol,
-  },
+  base::protocol::Protocol,
   functional::nat::{
     Nat,
     S,
@@ -43,11 +40,11 @@ pub trait Slot: Send + 'static
   type Endpoint: Send;
 }
 
-impl<P> Slot for P
+impl<A> Slot for A
 where
-  P: Protocol,
+  A: Protocol,
 {
-  type Endpoint = ReceiverOnce<P>;
+  type Endpoint = A::ConsumerEndpoint;
 }
 
 pub struct Empty;

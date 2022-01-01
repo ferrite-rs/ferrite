@@ -1,11 +1,5 @@
-use tokio::{
-  task,
-  try_join,
-};
-
 use crate::internal::{
   base::{
-    once_channel,
     unsafe_create_session,
     unsafe_run_session,
     Context,
@@ -26,19 +20,13 @@ where
   A: Protocol,
   C: Context,
 {
-  unsafe_create_session(move |ctx, sender1| async move {
-    let (sender2, receiver2) = once_channel();
+  unsafe_create_session::<C, SendValue<T, A>, _, _>(
+    move |ctx, (val_sender, provider_end)| async move {
+      val_sender.send(Value(val)).unwrap();
 
-    let child1 = task::spawn(async move {
-      sender1.send(SendValue((Value(val), receiver2))).unwrap();
-    });
-
-    let child2 = task::spawn(async move {
-      unsafe_run_session(cont, ctx, sender2).await;
-    });
-
-    try_join!(child1, child2).unwrap();
-  })
+      unsafe_run_session(cont, ctx, provider_end).await;
+    },
+  )
 }
 
 pub fn receive_value_from<N, C1, C2, T, A, B>(
@@ -54,11 +42,11 @@ where
   N: ContextLens<C1, SendValue<T, A>, A, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender| async move {
-    let (receiver1, ctx2) = N::extract_source(ctx1);
+    let ((val_receiver, consumer_end), ctx2) = N::extract_source(ctx1);
 
-    let SendValue((Value(val), receiver2)) = receiver1.recv().await.unwrap();
+    let Value(val) = val_receiver.recv().await.unwrap();
 
-    let ctx3 = N::insert_target(receiver2, ctx2);
+    let ctx3 = N::insert_target(consumer_end, ctx2);
 
     let cont2 = cont(val);
 
