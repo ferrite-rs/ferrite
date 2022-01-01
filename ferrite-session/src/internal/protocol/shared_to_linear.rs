@@ -16,6 +16,12 @@ where
 {
   type ConsumerEndpoint = SenderOnce<()>;
   type ProviderEndpoint = ReceiverOnce<()>;
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    let (sender, receiver) = once_channel();
+    (receiver, sender)
+  }
 }
 
 impl<F> ForwardChannel for SharedToLinear<F>

@@ -19,4 +19,9 @@ where
 {
   type ConsumerEndpoint = ReceiverOnce<Wrap<T>>;
   type ProviderEndpoint = SenderOnce<Wrap<T>>;
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    once_channel()
+  }
 }

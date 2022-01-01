@@ -14,6 +14,14 @@ where
     (ReceiverOnce<A::ConsumerEndpoint>, B::ConsumerEndpoint);
   type ProviderEndpoint =
     (SenderOnce<A::ConsumerEndpoint>, B::ProviderEndpoint);
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    let (chan_sender, chan_receiver) = once_channel();
+    let (provider, consumer) = B::create_endpoints();
+
+    ((chan_sender, provider), (chan_receiver, consumer))
+  }
 }
 
 impl<A, P, Q> RecApp<A> for SendChannel<P, Q>

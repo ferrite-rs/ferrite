@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 
-use super::protocol::Protocol;
 use crate::internal::functional::{
   nat::{
     S,
@@ -27,12 +26,6 @@ pub trait SharedRecApp<X>
 }
 
 pub enum Release {}
-
-impl Protocol for Release
-{
-  type ConsumerEndpoint = ();
-  type ProviderEndpoint = ();
-}
 
 impl<T, F, A> HasRecApp<F, A> for T
 where

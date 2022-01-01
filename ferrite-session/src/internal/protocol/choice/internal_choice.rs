@@ -16,8 +16,14 @@ where
   Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
 {
-  type ConsumerEndpoint = AppSum<Row2, ConsumerEndpointF>;
-  type ProviderEndpoint = AppSum<Row2, ProviderEndpointF>;
+  type ConsumerEndpoint = SenderOnce<AppSum<Row2, ProviderEndpointF>>;
+  type ProviderEndpoint = ReceiverOnce<AppSum<Row2, ProviderEndpointF>>;
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    let (sender, receiver) = once_channel();
+    (receiver, sender)
+  }
 }
 
 impl<Row1, Row2, Row3, A> RecApp<A> for InternalChoice<Row1>

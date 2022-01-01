@@ -20,12 +20,23 @@ where
 {
   type ConsumerEndpoint = (
     SenderOnce<Value<AppSum<Row::Row, ()>>>,
-    AppSum<Row::Row, ConsumerEndpointF>,
+    ReceiverOnce<AppSum<Row::Row, ConsumerEndpointF>>,
   );
   type ProviderEndpoint = (
     ReceiverOnce<Value<AppSum<Row::Row, ()>>>,
-    AppSum<Row::Row, ProviderEndpointF>,
+    SenderOnce<AppSum<Row::Row, ConsumerEndpointF>>,
   );
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    let (choice_sender, choice_receiver) = once_channel();
+    let (endpoint_sender, endpoint_receiver) = once_channel();
+
+    (
+      (choice_receiver, endpoint_sender),
+      (choice_sender, endpoint_receiver),
+    )
+  }
 }
 
 impl<R, Row1, Row2, Row3> RecApp<R> for ExternalChoice<Row1>

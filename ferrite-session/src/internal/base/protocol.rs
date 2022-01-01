@@ -1,13 +1,18 @@
 use crate::internal::{
   base::{
     channel::{
+      once_channel,
       ReceiverOnce,
       SenderOnce,
     },
-    rec::RecX,
+    rec::{
+      RecX,
+      Release,
+    },
   },
   functional::{
     nat::*,
+    row::*,
     type_app::{
       TyCon,
       TypeApp,
@@ -19,9 +24,19 @@ pub trait Protocol: Send + 'static
 {
   type ProviderEndpoint: Send + 'static;
   type ConsumerEndpoint: Send + 'static;
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint);
 }
 
 pub trait SharedProtocol: Send + 'static {}
+
+pub trait ProtocolRow: RowCon
+{
+  fn create_row_endpoints() -> (
+    AppSum<Self, ProviderEndpointF>,
+    AppSum<Self, ConsumerEndpointF>,
+  );
+}
 
 pub struct ProviderEndpointF;
 
@@ -47,12 +62,33 @@ where
 {
   type ConsumerEndpoint = ReceiverOnce<RecX<C, F>>;
   type ProviderEndpoint = SenderOnce<RecX<C, F>>;
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    once_channel()
+  }
+}
+
+impl Protocol for Release
+{
+  type ConsumerEndpoint = ();
+  type ProviderEndpoint = ();
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    ((), ())
+  }
 }
 
 impl Protocol for Z
 {
   type ConsumerEndpoint = ();
   type ProviderEndpoint = ();
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    ((), ())
+  }
 }
 
 impl<N> Protocol for S<N>
@@ -61,4 +97,9 @@ where
 {
   type ConsumerEndpoint = ();
   type ProviderEndpoint = ();
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    ((), ())
+  }
 }

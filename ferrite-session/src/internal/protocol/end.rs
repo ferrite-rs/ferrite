@@ -4,8 +4,13 @@ pub struct End();
 
 impl Protocol for End
 {
-  type ConsumerEndpoint = ();
-  type ProviderEndpoint = ();
+  type ConsumerEndpoint = ReceiverOnce<()>;
+  type ProviderEndpoint = SenderOnce<()>;
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    once_channel()
+  }
 }
 
 impl<A> RecApp<A> for End

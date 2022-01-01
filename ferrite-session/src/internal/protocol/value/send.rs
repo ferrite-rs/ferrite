@@ -7,8 +7,16 @@ where
   T: Send + 'static,
   A: Protocol,
 {
-  type ConsumerEndpoint = ReceiverOnce<(Value<T>, A::ConsumerEndpoint)>;
-  type ProviderEndpoint = SenderOnce<(Value<T>, A::ConsumerEndpoint)>;
+  type ConsumerEndpoint = (ReceiverOnce<Value<T>>, A::ConsumerEndpoint);
+  type ProviderEndpoint = (SenderOnce<Value<T>>, A::ProviderEndpoint);
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  {
+    let (val_sender, val_receiver) = once_channel();
+    let (provider, consumer) = A::create_endpoints();
+
+    ((val_sender, provider), (val_receiver, consumer))
+  }
 }
 
 impl<X, T, A> RecApp<X> for SendValue<T, A>
