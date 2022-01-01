@@ -21,7 +21,7 @@ where
     };
     sender1.send(rec_end).unwrap();
 
-    unsafe_run_session(cont, ctx, provider_end_a);
+    unsafe_run_session(cont, ctx, provider_end_a).await;
   })
 }
 

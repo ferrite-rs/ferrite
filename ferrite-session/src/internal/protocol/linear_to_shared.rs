@@ -1,6 +1,29 @@
 use super::shared_to_linear::SharedToLinear;
 use crate::internal::base::*;
 
+pub trait HasSharedRecApp<F, A>: Send + 'static
+{
+  fn get_applied(self: Box<Self>) -> <F::Applied as Protocol>::ConsumerEndpoint
+  where
+    F: SharedRecApp<A>,
+    F::Applied: Protocol;
+}
+
+impl<F, A, FA, E> HasSharedRecApp<F, A> for E
+where
+  F: 'static,
+  A: 'static,
+  E: Send + 'static,
+  FA: Protocol<ConsumerEndpoint = E>,
+  F: SharedRecApp<A, Applied = FA>,
+{
+  fn get_applied(self: Box<Self>)
+    -> <F::Applied as Protocol>::ConsumerEndpoint
+  {
+    *self
+  }
+}
+
 pub struct LinearToShared<F>
 {
   pub(crate) linear:
@@ -15,11 +38,12 @@ where
 {
 }
 
-impl<F, T> ForwardChannel for LinearToShared<F>
+impl<F, T, E> ForwardChannel for LinearToShared<F>
 where
   F: SharedRecApp<SharedToLinear<LinearToShared<F>>, Applied = T>,
   F: Send + 'static,
-  T: Send + 'static + ForwardChannel,
+  T: Protocol<ConsumerEndpoint = E>,
+  E: ForwardChannel,
 {
   fn forward_to(
     self,
@@ -36,7 +60,7 @@ where
   ) -> Self
   {
     LinearToShared {
-      linear: Box::new(T::forward_from(sender, receiver)),
+      linear: Box::new(E::forward_from(sender, receiver)),
     }
   }
 }

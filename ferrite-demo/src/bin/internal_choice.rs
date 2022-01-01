@@ -15,7 +15,7 @@ pub fn internal_choice_session() -> Session<End>
       Left => {
         receive_value_from ( chan,
           move |val: String| {
-            println! ("receied string: {}", val);
+            println! ("received string: {}", val);
             wait ( chan,
               terminate () )
           })

@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use ferrite_session::prelude::*;
-use ipc_channel::ipc;
+// use ipc_channel::ipc;
 use rand::prelude::*;
 use tokio::time::sleep;
 
@@ -76,9 +76,9 @@ pub fn shared_counter_session() -> Session<End>
 
   // Sending a shared channel through IPC channel causes it
   // to be serialized and deserialized through OS socket.
-  let (sender, receiver) = ipc::channel().unwrap();
-  sender.send(shared).unwrap();
-  let shared = receiver.recv().unwrap();
+  // let (sender, receiver) = ipc::channel().unwrap();
+  // sender.send(shared).unwrap();
+  // let shared = receiver.recv().unwrap();
 
   let mut sessions = vec![];
 

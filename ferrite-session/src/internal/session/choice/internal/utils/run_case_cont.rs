@@ -99,14 +99,14 @@ where
     C: Context,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = D>,
   {
-    let ctx1 = self.ctx;
-
-    let ctx2 = <N as ContextLens<C, InternalChoice<Row>, A>>::insert_target(
-      self.consumer_end_a,
-      ctx1,
-    );
-
     Box::pin(async move {
+      let ctx1 = self.ctx;
+
+      let ctx2 = <N as ContextLens<C, InternalChoice<Row>, A>>::insert_target(
+        self.consumer_end_a,
+        ctx1,
+      );
+
       unsafe_run_session(cont.session, ctx2, self.provider_end_b.get_applied())
         .await;
     })

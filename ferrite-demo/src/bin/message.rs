@@ -1,6 +1,6 @@
 use ferrite_session::prelude::*;
 use futures::future::join_all;
-use ipc_channel::ipc;
+// use ipc_channel::ipc;
 
 define_choice! { CounterCommand;
   Increment: Release,
@@ -65,13 +65,13 @@ pub async fn main()
 
   let counter = run_shared_session(make_counter_session(0));
 
-  let (sender, receiver) = ipc::channel().unwrap();
+  // let (sender, receiver) = ipc::channel().unwrap();
 
-  sender.send(counter).unwrap();
+  // sender.send(counter).unwrap();
 
-  let shared = receiver.recv().unwrap();
+  // let shared = receiver.recv().unwrap();
 
-  // let shared = counter.clone();
+  let shared = counter.clone();
 
   let count = use_counter(shared, 10000).await;
 

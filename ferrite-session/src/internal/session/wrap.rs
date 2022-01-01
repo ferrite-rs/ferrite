@@ -22,7 +22,7 @@ where
       })
       .unwrap();
 
-    unsafe_run_session(cont, ctx, provider_end);
+    unsafe_run_session(cont, ctx, provider_end).await;
   })
 }
 

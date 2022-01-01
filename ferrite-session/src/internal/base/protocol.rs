@@ -135,8 +135,8 @@ impl Protocol for Release
   }
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
-    provider_end: Self::ProviderEndpoint,
+    _consumer_end: Self::ConsumerEndpoint,
+    _provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
     Box::pin(async {})
@@ -154,8 +154,8 @@ impl Protocol for Z
   }
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
-    provider_end: Self::ProviderEndpoint,
+    _consumer_end: Self::ConsumerEndpoint,
+    _provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
     Box::pin(async {})
@@ -175,8 +175,8 @@ where
   }
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
-    provider_end: Self::ProviderEndpoint,
+    _consumer_end: Self::ConsumerEndpoint,
+    _provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
     Box::pin(async {})
