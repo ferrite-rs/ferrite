@@ -40,6 +40,7 @@ where
   D: Context,
   Row: ToRow,
   Row: Send + 'static,
+  Row::Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   ctx: D::Endpoints,
@@ -54,6 +55,7 @@ where
   D: Context,
   Row: ToRow,
   Row: Send + 'static,
+  Row::Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   ctx: D::Endpoints,
@@ -81,6 +83,7 @@ where
   D: Context,
   Row: ToRow,
   Row: Send + 'static,
+  Row::Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   fn on_internal_session(
@@ -120,6 +123,7 @@ where
   D: Context,
   Row: ToRow,
   Row: Send + 'static,
+  Row::Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
   fn elim_field<A>(

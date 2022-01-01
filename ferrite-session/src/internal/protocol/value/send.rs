@@ -2,11 +2,13 @@ use crate::internal::base::*;
 
 pub struct SendValue<T, A>(pub(crate) (Value<T>, ReceiverOnce<A>));
 
-impl<T, P> Protocol for SendValue<T, P>
+impl<T, A> Protocol for SendValue<T, A>
 where
   T: Send + 'static,
-  P: Protocol,
+  A: Protocol,
 {
+  type ConsumerEndpoint = ReceiverOnce<(Value<T>, A::ConsumerEndpoint)>;
+  type ProviderEndpoint = SenderOnce<(Value<T>, A::ConsumerEndpoint)>;
 }
 
 impl<X, T, A> RecApp<X> for SendValue<T, A>

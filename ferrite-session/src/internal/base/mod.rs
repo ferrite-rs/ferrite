@@ -36,7 +36,9 @@ pub use self::{
     Slot,
   },
   protocol::{
+    ConsumerEndpointF,
     Protocol,
+    ProviderEndpointF,
     SharedProtocol,
   },
   rec::{

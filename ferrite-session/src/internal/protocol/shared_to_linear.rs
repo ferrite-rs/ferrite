@@ -14,6 +14,8 @@ where
   F: Send + 'static,
   F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
 {
+  type ConsumerEndpoint = SenderOnce<()>;
+  type ProviderEndpoint = ReceiverOnce<()>;
 }
 
 impl<F> ForwardChannel for SharedToLinear<F>

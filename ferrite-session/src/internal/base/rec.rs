@@ -28,7 +28,11 @@ pub trait SharedRecApp<X>
 
 pub enum Release {}
 
-impl Protocol for Release {}
+impl Protocol for Release
+{
+  type ConsumerEndpoint = ();
+  type ProviderEndpoint = ();
+}
 
 impl<T, F, A> HasRecApp<F, A> for T
 where
@@ -66,13 +70,6 @@ where
   F: RecApp<(RecX<C, F>, C)>,
 {
   *x.unfix.get_applied()
-}
-
-impl<C, F> Protocol for RecX<C, F>
-where
-  C: Send + 'static,
-  F: Send + 'static,
-{
 }
 
 impl<C, F> RecApp<C> for RecX<(), F>

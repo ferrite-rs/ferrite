@@ -17,4 +17,6 @@ where
   F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
   F::Applied: Protocol,
 {
+  type ConsumerEndpoint = ReceiverOnce<Lock<F>>;
+  type ProviderEndpoint = SenderOnce<Lock<F>>;
 }

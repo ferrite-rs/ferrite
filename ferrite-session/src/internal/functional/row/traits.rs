@@ -4,9 +4,7 @@ use crate::internal::functional::{
   type_app::*,
 };
 
-pub trait RowCon: Sized + Send + 'static
-{
-}
+pub trait RowCon: Sized + Send + 'static {}
 
 pub trait ToRow
 {

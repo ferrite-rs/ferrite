@@ -18,6 +18,14 @@ where
   Row: Send + 'static,
   Row: ToRow,
 {
+  type ConsumerEndpoint = (
+    SenderOnce<Value<AppSum<Row::Row, ()>>>,
+    AppSum<Row::Row, ConsumerEndpointF>,
+  );
+  type ProviderEndpoint = (
+    ReceiverOnce<Value<AppSum<Row::Row, ()>>>,
+    AppSum<Row::Row, ProviderEndpointF>,
+  );
 }
 
 impl<R, Row1, Row2, Row3> RecApp<R> for ExternalChoice<Row1>

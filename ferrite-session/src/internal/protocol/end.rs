@@ -2,7 +2,11 @@ use crate::internal::base::*;
 
 pub struct End();
 
-impl Protocol for End {}
+impl Protocol for End
+{
+  type ConsumerEndpoint = ();
+  type ProviderEndpoint = ();
+}
 
 impl<A> RecApp<A> for End
 {

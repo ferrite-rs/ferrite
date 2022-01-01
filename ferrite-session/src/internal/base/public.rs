@@ -10,31 +10,21 @@ pub use super::{
   SharedSession,
 };
 
-pub trait Protocol: super::Protocol
-{
-}
+pub trait Protocol: super::Protocol {}
 
 impl<A> Protocol for A where A: super::Protocol {}
 
-pub trait SharedProtocol: super::SharedProtocol
-{
-}
+pub trait SharedProtocol: super::SharedProtocol {}
 
 impl<A> SharedProtocol for A where A: super::SharedProtocol {}
 
-pub trait Context: super::Context
-{
-}
+pub trait Context: super::Context {}
 
 impl<C> Context for C where C: super::Context {}
 
-pub trait EmptyContext: super::EmptyContext
-{
-}
+pub trait EmptyContext: super::EmptyContext {}
 
-pub trait Slot: super::Slot
-{
-}
+pub trait Slot: super::Slot {}
 
 impl<C> Slot for C where C: super::Slot {}
 
@@ -70,26 +60,18 @@ where
 {
 }
 
-pub trait RecApp<A>: super::RecApp<A>
-{
-}
+pub trait RecApp<A>: super::RecApp<A> {}
 
 impl<A, X> RecApp<A> for X where X: super::RecApp<A> {}
 
-pub trait SharedRecApp<X>: super::SharedRecApp<X>
-{
-}
+pub trait SharedRecApp<X>: super::SharedRecApp<X> {}
 
 impl<X, S> SharedRecApp<X> for S where S: super::SharedRecApp<X> {}
 
-pub trait HasRecApp<F, A>: super::HasRecApp<F, A>
-{
-}
+pub trait HasRecApp<F, A>: super::HasRecApp<F, A> {}
 
 impl<F, A, X> HasRecApp<F, A> for X where X: super::HasRecApp<F, A> {}
 
-pub trait ForwardChannel: super::ForwardChannel
-{
-}
+pub trait ForwardChannel: super::ForwardChannel {}
 
 impl<A> ForwardChannel for A where A: super::ForwardChannel {}

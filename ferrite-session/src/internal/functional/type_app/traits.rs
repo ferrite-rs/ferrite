@@ -1,6 +1,4 @@
-pub trait TyCon: Sized + 'static
-{
-}
+pub trait TyCon: Sized + 'static {}
 
 pub trait TypeApp<A>: TyCon
 where

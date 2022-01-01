@@ -1,6 +1,4 @@
-use base::Protocol;
-
-use crate::internal::base;
+use crate::internal::base::*;
 
 pub trait Wrapper
 {
@@ -19,4 +17,6 @@ where
   T: Wrapper,
   T: Send + 'static,
 {
+  type ConsumerEndpoint = ReceiverOnce<Wrap<T>>;
+  type ProviderEndpoint = SenderOnce<Wrap<T>>;
 }

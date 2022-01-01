@@ -1,14 +1,18 @@
 use crate::internal::base::*;
 
-pub struct ReceiveChannel<P, Q>(
-  pub(crate) SenderOnce<(ReceiverOnce<P>, SenderOnce<Q>)>,
+pub struct ReceiveChannel<A, B>(
+  pub(crate) SenderOnce<(ReceiverOnce<A>, SenderOnce<B>)>,
 );
 
-impl<P, Q> Protocol for ReceiveChannel<P, Q>
+impl<A, B> Protocol for ReceiveChannel<A, B>
 where
-  P: Protocol,
-  Q: Protocol,
+  A: Protocol,
+  B: Protocol,
 {
+  type ConsumerEndpoint =
+    (SenderOnce<A::ConsumerEndpoint>, B::ConsumerEndpoint);
+  type ProviderEndpoint =
+    (ReceiverOnce<A::ConsumerEndpoint>, B::ProviderEndpoint);
 }
 
 impl<A, P, Q> RecApp<A> for ReceiveChannel<P, Q>

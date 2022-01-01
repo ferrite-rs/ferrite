@@ -7,6 +7,8 @@ where
   T: Send + 'static,
   A: Protocol,
 {
+  type ConsumerEndpoint = SenderOnce<(Value<T>, A::ProviderEndpoint)>;
+  type ProviderEndpoint = ReceiverOnce<(Value<T>, A::ProviderEndpoint)>;
 }
 
 impl<X, T, A> RecApp<X> for ReceiveValue<T, A>

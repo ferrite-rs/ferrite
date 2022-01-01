@@ -13,8 +13,11 @@ where
 impl<Row1, Row2> Protocol for InternalChoice<Row1>
 where
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
 {
+  type ConsumerEndpoint = AppSum<Row2, ConsumerEndpointF>;
+  type ProviderEndpoint = AppSum<Row2, ProviderEndpointF>;
 }
 
 impl<Row1, Row2, Row3, A> RecApp<A> for InternalChoice<Row1>

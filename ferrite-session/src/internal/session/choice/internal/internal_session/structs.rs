@@ -22,6 +22,7 @@ where
   C: Context,
   Row: ToRow,
   Row: Send + 'static,
+  Row::Row: Send + 'static,
   Del: Context,
   N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
 {

@@ -5,11 +5,15 @@ pub struct SendChannel<A, B>(
   pub(crate) ReceiverOnce<B>,
 );
 
-impl<P, Q> Protocol for SendChannel<P, Q>
+impl<A, B> Protocol for SendChannel<A, B>
 where
-  P: Protocol,
-  Q: Protocol,
+  A: Protocol,
+  B: Protocol,
 {
+  type ConsumerEndpoint =
+    (ReceiverOnce<A::ConsumerEndpoint>, B::ConsumerEndpoint);
+  type ProviderEndpoint =
+    (SenderOnce<A::ConsumerEndpoint>, B::ProviderEndpoint);
 }
 
 impl<A, P, Q> RecApp<A> for SendChannel<P, Q>
