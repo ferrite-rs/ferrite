@@ -16,13 +16,12 @@ where
   Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
 {
-  type ConsumerEndpoint = SenderOnce<AppSum<Row2, ProviderEndpointF>>;
-  type ProviderEndpoint = ReceiverOnce<AppSum<Row2, ProviderEndpointF>>;
+  type ConsumerEndpoint = ReceiverOnce<AppSum<Row2, ConsumerEndpointF>>;
+  type ProviderEndpoint = SenderOnce<AppSum<Row2, ConsumerEndpointF>>;
 
   fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
   {
-    let (sender, receiver) = once_channel();
-    (receiver, sender)
+    once_channel()
   }
 }
 

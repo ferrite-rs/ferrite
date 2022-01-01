@@ -8,7 +8,6 @@ use super::{
 };
 use crate::internal::{
   base::{
-    once_channel,
     unsafe_create_session,
     Context,
     PartialSession,
@@ -46,21 +45,17 @@ where
   SessionSum: Send + 'static,
   InjectSessionSum: Send + 'static,
 {
-  unsafe_create_session(move |ctx, sender1| async move {
-    let (sender2, receiver2) = once_channel();
+  unsafe_create_session::<C, ExternalChoice<Row1>, _, _>(
+    move |ctx, (choice_receiver, consumer_end_sender)| async move {
+      let Value(choice) = choice_receiver.recv().await.unwrap();
 
-    let payload = ExternalChoice::<Row1> { sender: sender2 };
+      let cont3 = selector_to_inject_session(choice);
 
-    sender1.send(payload).unwrap();
+      let cont4 = Row2::flatten_sum(cont3);
 
-    let (Value(choice), sender3) = receiver2.recv().await.unwrap();
+      let cont5 = wrap_sum_app(cont1(cont4));
 
-    let cont3 = selector_to_inject_session(choice);
-
-    let cont4 = Row2::flatten_sum(cont3);
-
-    let cont5 = wrap_sum_app(cont1(cont4));
-
-    run_choice_cont(ctx, sender3, cont5).await;
-  })
+      run_choice_cont(ctx, consumer_end_sender, cont5).await;
+    },
+  )
 }

@@ -14,6 +14,7 @@ use crate::internal::{
     nat::*,
     row::*,
     type_app::{
+      App,
       TyCon,
       TypeApp,
     },
@@ -42,7 +43,12 @@ pub struct ProviderEndpointF;
 
 pub struct ConsumerEndpointF;
 
+pub type ProviderEndpoint<A> = App<ProviderEndpointF, A>;
+
+pub type ConsumerEndpoint<A> = App<ConsumerEndpointF, A>;
+
 impl TyCon for ProviderEndpointF {}
+
 impl TyCon for ConsumerEndpointF {}
 
 impl<A: Protocol> TypeApp<A> for ProviderEndpointF
@@ -58,10 +64,10 @@ impl<A: Protocol> TypeApp<A> for ConsumerEndpointF
 impl<C, F> Protocol for RecX<C, F>
 where
   C: Send + 'static,
-  F: Send + 'static,
+  F: Protocol,
 {
-  type ConsumerEndpoint = ReceiverOnce<RecX<C, F>>;
-  type ProviderEndpoint = SenderOnce<RecX<C, F>>;
+  type ConsumerEndpoint = RecX<C, ConsumerEndpoint<F>>;
+  type ProviderEndpoint = RecX<C, ProviderEndpoint<F>>;
 
   fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
   {

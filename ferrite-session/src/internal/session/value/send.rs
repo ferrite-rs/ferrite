@@ -8,6 +8,7 @@ use crate::internal::{
     Protocol,
     Value,
   },
+  functional::wrap_type_app,
   protocol::SendValue,
 };
 
@@ -42,11 +43,13 @@ where
   N: ContextLens<C1, SendValue<T, A>, A, Target = C2>,
 {
   unsafe_create_session(move |ctx1, sender| async move {
-    let ((val_receiver, consumer_end), ctx2) = N::extract_source(ctx1);
+    let (endpoint, ctx2) = N::extract_source(ctx1);
+
+    let (val_receiver, consumer_end) = endpoint.get_applied();
 
     let Value(val) = val_receiver.recv().await.unwrap();
 
-    let ctx3 = N::insert_target(consumer_end, ctx2);
+    let ctx3 = N::insert_target(wrap_type_app(consumer_end), ctx2);
 
     let cont2 = cont(val);
 

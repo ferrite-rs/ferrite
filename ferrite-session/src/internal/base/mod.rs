@@ -36,8 +36,10 @@ pub use self::{
     Slot,
   },
   protocol::{
+    ConsumerEndpoint,
     ConsumerEndpointF,
     Protocol,
+    ProviderEndpoint,
     ProviderEndpointF,
     SharedProtocol,
   },

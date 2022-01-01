@@ -14,7 +14,10 @@ use crate::internal::{
     PartialSession,
     Protocol,
   },
-  functional::Nat,
+  functional::{
+    wrap_type_app,
+    Nat,
+  },
   protocol::SendChannel,
 };
 
@@ -31,7 +34,9 @@ where
 {
   unsafe_create_session::<C1, SendChannel<A, B>, _, _>(
     move |ctx1, (chan_sender, provider_end)| async move {
-      let (consumer_end, ctx2) = N::extract_source(ctx1);
+      let (endpoint, ctx2) = N::extract_source(ctx1);
+
+      let consumer_end = endpoint.get_applied();
 
       let ctx3 = N::insert_target((), ctx2);
 
@@ -59,15 +64,17 @@ where
   let cont2 = cont1(M::nat());
 
   unsafe_create_session(move |ctx1, provider_end| async move {
-    let ((chan_receiver, consumer_end2), ctx2) = N::extract_source(ctx1);
+    let (endpoint, ctx2) = N::extract_source(ctx1);
+
+    let (chan_receiver, consumer_end2) = endpoint.get_applied();
 
     let consumer_end1 = chan_receiver.recv().await.unwrap();
 
-    let ctx3 = N::insert_target(consumer_end2, ctx2);
+    let ctx3 = N::insert_target(wrap_type_app(consumer_end2), ctx2);
 
     let ctx4 = <N::Target as AppendContext<(A1, ())>>::append_context(
       ctx3,
-      (consumer_end1, ()),
+      (wrap_type_app(consumer_end1), ()),
     );
 
     unsafe_run_session(cont2, ctx4, provider_end).await;

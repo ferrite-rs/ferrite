@@ -1,13 +1,8 @@
-use tokio::{
-  task,
-  try_join,
-};
-
 use crate::internal::{
   base::{
-    once_channel,
     unsafe_create_session,
     unsafe_run_session,
+    ConsumerEndpointF,
     Context,
     PartialSession,
     Protocol,
@@ -34,21 +29,16 @@ where
   Row2: SumApp<ReceiverF>,
   N: Prism<Row2, Elem = A>,
 {
-  unsafe_create_session(move |ctx, sender1| async move {
-    let (sender2, receiver2) = once_channel();
+  unsafe_create_session::<C, InternalChoice<Row1>, _, _>(
+    move |ctx, consumer_end_sum_sender| async move {
+      let (provider_end, consumer_end) = A::create_endpoints();
 
-    let child1 = task::spawn(async move {
-      unsafe_run_session(cont, ctx, sender2).await;
-    });
+      let consumer_end_sum =
+        N::inject_elem(wrap_type_app::<ConsumerEndpointF, A>(consumer_end));
 
-    let child2 = task::spawn(async move {
-      sender1
-        .send(InternalChoice {
-          field: N::inject_elem(wrap_type_app(receiver2)),
-        })
-        .unwrap();
-    });
+      consumer_end_sum_sender.send(consumer_end_sum).unwrap();
 
-    try_join!(child1, child2).unwrap();
-  })
+      unsafe_run_session(cont, ctx, provider_end).await;
+    },
+  )
 }

@@ -14,6 +14,7 @@ use crate::internal::{
   },
   functional::{
     wrap_sum_app,
+    wrap_type_app,
     ElimSum,
     FlattenSumApp,
     IntersectSum,
@@ -52,14 +53,14 @@ where
   SessionSum: Send + 'static,
   InjectSessionSum: Send + 'static,
 {
-  unsafe_create_session(move |ctx1, sender| async move {
-    let (sum_chan, ctx2) = N::extract_source(ctx1);
+  unsafe_create_session::<C, B, _, _>(move |ctx1, provider_end_b| async move {
+    let (endpoint, ctx2) = N::extract_source(ctx1);
 
-    let InternalChoice {
-      field: receiver_sum1,
-    } = sum_chan.recv().await.unwrap();
+    let consumer_end_sum_receiver = endpoint.get_applied();
 
-    let (receiver_sum2, selector_sum) = receiver_to_selector(receiver_sum1);
+    let consumer_end_sum = consumer_end_sum_receiver.recv().await.unwrap();
+
+    let (receiver_sum2, selector_sum) = receiver_to_selector(consumer_end_sum);
 
     let cont3 = lift_unit_to_session(selector_sum);
 
@@ -71,7 +72,7 @@ where
 
     match cont5 {
       Some(cont6) => {
-        run_case_cont(ctx2, sender, cont6).await;
+        run_case_cont(ctx2, wrap_type_app(provider_end_b), cont6).await;
       }
       None => {
         panic!("impossible happened: received mismatch choice continuation");

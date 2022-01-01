@@ -5,7 +5,6 @@ use tokio::{
 
 use crate::internal::{
   base::{
-    once_channel,
     unsafe_create_session,
     unsafe_run_session,
     AppendContext,
@@ -15,7 +14,10 @@ use crate::internal::{
     Protocol,
     Slot,
   },
-  functional::nat::Nat,
+  functional::{
+    wrap_type_app,
+    Nat,
+  },
 };
 
 pub enum L {}
@@ -202,16 +204,16 @@ where
   unsafe_create_session(move |ctx, sender1| async move {
     let (ctx1, ctx2) = X::split_endpoints(ctx);
 
-    let (sender2, receiver2) = once_channel();
+    let (provider_end_a, consumer_end_a) = A::create_endpoints();
 
-    let ctx3 = C2::append_context(ctx2, (receiver2, ()));
+    let ctx3 = C2::append_context(ctx2, (wrap_type_app(consumer_end_a), ()));
 
     let child1 = task::spawn(async move {
       unsafe_run_session(cont3, ctx3, sender1).await;
     });
 
     let child2 = task::spawn(async {
-      unsafe_run_session(cont1, ctx1, sender2).await;
+      unsafe_run_session(cont1, ctx1, provider_end_a).await;
     });
 
     try_join!(child1, child2).unwrap();
@@ -243,17 +245,19 @@ where
   unsafe_create_session(move |ctx1, b_sender| async move {
     let (ctx2, ctx3) = <C1 as AppendContext<C2>>::split_context(ctx1);
 
-    let (a_sender, a_receiver) = once_channel();
+    let (provider_end_a, consumer_end_a) = A::create_endpoints();
 
-    let ctx4 =
-      <C1 as AppendContext<(A, ())>>::append_context(ctx2, (a_receiver, ()));
+    let ctx4 = <C1 as AppendContext<(A, ())>>::append_context(
+      ctx2,
+      (wrap_type_app(consumer_end_a), ()),
+    );
 
     let child1 = task::spawn(async {
       unsafe_run_session(cont1, ctx4, b_sender).await;
     });
 
     let child2 = task::spawn(async {
-      unsafe_run_session(cont2, ctx3, a_sender).await;
+      unsafe_run_session(cont2, ctx3, provider_end_a).await;
     });
 
     try_join!(child1, child2).unwrap();

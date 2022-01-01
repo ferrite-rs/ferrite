@@ -6,6 +6,7 @@ use crate::internal::functional::{
     Z,
   },
   row::*,
+  type_app::App,
 };
 
 pub trait RecApp<A>: Sized + 'static
@@ -71,6 +72,15 @@ where
   F: RecApp<(RecX<C, F>, C)>,
 {
   type Applied = RecX<C, F>;
+}
+
+impl<C, F, X> RecApp<C> for App<F, X>
+where
+  C: Send + 'static,
+  X: Send + 'static,
+  F: RecApp<C>,
+{
+  type Applied = App<F::Applied, X>;
 }
 
 impl<C, A> RecApp<(A, C)> for Z

@@ -15,8 +15,8 @@ where
   A: Protocol,
   F: RecApp<(RecX<R, F>, R), Applied = A>,
 {
-  unsafe_create_session(move |ctx, sender1| async move {
-    let (sender2, receiver): (SenderOnce<A>, _) = once_channel();
+  unsafe_create_session::<C, RecX<R, F>, _, _>(move |ctx, sender1| async move {
+    let (provider_end_a, consumer_end_a) = A::create_endpoints();
 
     let child1 = task::spawn(async move {
       let val = receiver.recv().await.unwrap();
@@ -24,7 +24,7 @@ where
       sender1.send(fix(val)).unwrap();
     });
 
-    let child2 = task::spawn(unsafe_run_session(cont, ctx, sender2));
+    unsafe_run_session(cont, ctx, provider_end_a);
 
     try_join!(child1, child2).unwrap();
   })

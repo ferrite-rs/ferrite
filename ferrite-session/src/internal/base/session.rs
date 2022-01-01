@@ -3,9 +3,15 @@ use std::{
   pin::Pin,
 };
 
-use crate::internal::base::{
-  context::Context,
-  protocol::Protocol,
+use crate::internal::{
+  base::{
+    context::Context,
+    protocol::{
+      Protocol,
+      ProviderEndpoint,
+    },
+  },
+  functional::type_app::wrap_type_app,
 };
 
 pub type Session<P> = PartialSession<(), P>;
@@ -18,7 +24,7 @@ where
   executor: Box<
     dyn FnOnce(
         C::Endpoints,
-        A::ProviderEndpoint,
+        ProviderEndpoint<A>,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
       + Send,
   >,
@@ -36,12 +42,12 @@ where
   let executor2: Box<
     dyn FnOnce(
         C::Endpoints,
-        A::ProviderEndpoint,
+        ProviderEndpoint<A>,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
       + Send,
   > = Box::new(move |ctx, provider_end| {
     Box::pin(async {
-      executor(ctx, provider_end).await;
+      executor(ctx, provider_end.get_applied()).await;
     })
   });
 
@@ -58,5 +64,5 @@ pub async fn unsafe_run_session<C, A>(
   A: Protocol,
   C: Context,
 {
-  (session.executor)(ctx, provider_end).await;
+  (session.executor)(ctx, wrap_type_app(provider_end)).await;
 }

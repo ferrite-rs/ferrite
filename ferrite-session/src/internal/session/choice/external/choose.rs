@@ -1,6 +1,5 @@
 use crate::internal::{
   base::{
-    once_channel,
     unsafe_create_session,
     unsafe_run_session,
     Context,
@@ -35,26 +34,24 @@ where
   N: ContextLens<C1, ExternalChoice<Row1>, B, Target = C2>,
   M: Prism<Row2, Elem = B>,
 {
-  unsafe_create_session(move |ctx1, sender1| async move {
-    let (receiver1, ctx2) = N::extract_source(ctx1);
+  unsafe_create_session(move |ctx1, provider_end| async move {
+    let (endpoint, ctx2) = N::extract_source(ctx1);
+
+    let (choice_sender, sum_receiver) = endpoint.get_applied();
 
     let choice: AppSum<Row2, ()> = M::inject_elem(wrap_type_app(()));
 
-    let ExternalChoice { sender: sender2 } = receiver1.recv().await.unwrap();
+    choice_sender.send(Value(choice)).unwrap();
 
-    let (sender3, receiver3) = once_channel();
+    let consumer_end_sum = sum_receiver.recv().await.unwrap();
 
-    sender2.send((Value(choice), sender3)).unwrap();
+    let m_consumer_end = M::extract_elem(consumer_end_sum);
 
-    let receiver_sum = receiver3.recv().await.unwrap();
+    match m_consumer_end {
+      Some(consumer_end) => {
+        let ctx3 = N::insert_target(consumer_end, ctx2);
 
-    let m_receiver = M::extract_elem(receiver_sum);
-
-    match m_receiver {
-      Some(receiver4) => {
-        let ctx3 = N::insert_target(receiver4.get_applied(), ctx2);
-
-        unsafe_run_session(cont, ctx3, sender1).await;
+        unsafe_run_session(cont, ctx3, provider_end).await;
       }
       None => {
         panic!("impossible happened: received mismatch choice from provider");

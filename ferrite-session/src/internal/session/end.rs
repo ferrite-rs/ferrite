@@ -67,7 +67,9 @@ where
   N: ContextLens<C, End, Empty>,
 {
   unsafe_create_session(move |ctx1, sender| async move {
-    let (receiver, ctx2) = N::extract_source(ctx1);
+    let (endpoint, ctx2) = N::extract_source(ctx1);
+
+    let receiver = endpoint.get_applied();
 
     let ctx3 = N::insert_target((), ctx2);
 

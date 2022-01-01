@@ -1,5 +1,5 @@
 use crate::internal::{
-  base::ReceiverF,
+  base::ConsumerEndpointF,
   functional::{
     lift_sum,
     wrap_type_app,
@@ -12,8 +12,8 @@ use crate::internal::{
 };
 
 pub fn receiver_to_selector<Row>(
-  row1: AppSum<Row, ReceiverF>
-) -> (AppSum<Row, ReceiverF>, AppSum<Row, ()>)
+  row1: AppSum<Row, ConsumerEndpointF>
+) -> (AppSum<Row, ConsumerEndpointF>, AppSum<Row, ()>)
 where
   Row: SplitRow,
   Row: SumFunctor,
@@ -23,8 +23,8 @@ where
       { } ;
       ReceiverOnceToSelector :
         forall x .
-          ReceiverF [@x] ->
-          Merge < ReceiverF, () > [@x]
+          ConsumerEndpointF [@x] ->
+          Merge < ConsumerEndpointF, () > [@x]
         ;
       (receiver) => {
         wrap_type_app ( (

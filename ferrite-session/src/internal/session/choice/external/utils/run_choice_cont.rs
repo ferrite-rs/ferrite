@@ -12,7 +12,7 @@ use crate::internal::{
 
 pub async fn run_choice_cont<Row, C>(
   ctx: C::Endpoints,
-  sender: SenderOnce<AppSum<Row, ReceiverF>>,
+  sender: SenderOnce<AppSum<Row, ConsumerEndpointF>>,
   cont1: AppSum<Row, SessionF<C>>,
 ) where
   C: Context,
@@ -49,7 +49,7 @@ impl<C, A>
     C,
     A,
     (
-      ReceiverOnce<A>,
+      App<ConsumerEndpointF, A>,
       Pin<Box<dyn Future<Output = ()> + Send + 'static>>,
     ),
   > for SessionRunner<C, A>
@@ -60,20 +60,20 @@ where
     self: Box<Self>,
     cont: PartialSession<C, A>,
   ) -> (
-    ReceiverOnce<A>,
+    App<ConsumerEndpointF, A>,
     Pin<Box<dyn Future<Output = ()> + Send + 'static>>,
   )
   where
     C: Context,
     A: Protocol,
   {
-    let (sender, receiver) = once_channel();
+    let (provider_end, consumer_end) = A::create_endpoints();
 
     let future = Box::pin(async move {
-      unsafe_run_session(cont, self.ctx, sender).await;
+      unsafe_run_session(cont, self.ctx, provider_end).await;
     });
 
-    (receiver, future)
+    (wrap_type_app(consumer_end), future)
   }
 }
 
@@ -81,8 +81,10 @@ impl<Root, C> InjectLift<Root> for RunSession<C>
 where
   C: Context,
 {
-  type InjectF =
-    Merge<ReceiverF, Const<Pin<Box<dyn Future<Output = ()> + Send + 'static>>>>;
+  type InjectF = Merge<
+    ConsumerEndpointF,
+    Const<Pin<Box<dyn Future<Output = ()> + Send + 'static>>>,
+  >;
   type SourceF = SessionF<C>;
   type TargetF = ();
 
@@ -101,8 +103,8 @@ where
       phantom: PhantomData,
     };
 
-    let (receiver, future) = *with_session(cont2, Box::new(runner));
+    let (consumer_end, future) = *with_session(cont2, Box::new(runner));
 
-    wrap_type_app((wrap_type_app(receiver), wrap_type_app(future)))
+    wrap_type_app((consumer_end, wrap_type_app(future)))
   }
 }

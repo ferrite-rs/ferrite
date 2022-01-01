@@ -1,5 +1,8 @@
 use crate::internal::{
-  base::protocol::Protocol,
+  base::protocol::{
+    ConsumerEndpoint,
+    Protocol,
+  },
   functional::nat::{
     Nat,
     S,
@@ -44,7 +47,7 @@ impl<A> Slot for A
 where
   A: Protocol,
 {
-  type Endpoint = A::ConsumerEndpoint;
+  type Endpoint = ConsumerEndpoint<A>;
 }
 
 pub struct Empty;
