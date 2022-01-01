@@ -32,6 +32,7 @@ where
   row.row.as_ref().get_sum_borrow()
 }
 
+#[allow(unreachable_code)]
 pub fn absurd<F, A>(row1: AppSum<(), F>) -> A
 where
   F: TyCon,
