@@ -16,24 +16,20 @@ where
   Row: Send + 'static,
   Row: ToRow,
 {
-  type ConsumerEndpoint = (
-    SenderOnce<Value<AppSum<Row::Row, ()>>>,
-    ReceiverOnce<AppSum<Row::Row, ConsumerEndpointF>>,
-  );
-  type ProviderEndpoint = (
-    ReceiverOnce<Value<AppSum<Row::Row, ()>>>,
+  type ConsumerEndpoint = SenderOnce<(
+    Value<AppSum<Row::Row, ()>>,
     SenderOnce<AppSum<Row::Row, ConsumerEndpointF>>,
-  );
+  )>;
+  type ProviderEndpoint = ReceiverOnce<(
+    Value<AppSum<Row::Row, ()>>,
+    SenderOnce<AppSum<Row::Row, ConsumerEndpointF>>,
+  )>;
 
   fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
   {
-    let (choice_sender, choice_receiver) = once_channel();
-    let (endpoint_sender, endpoint_receiver) = once_channel();
+    let (sender, receiver) = once_channel();
 
-    (
-      (choice_receiver, endpoint_sender),
-      (choice_sender, endpoint_receiver),
-    )
+    (receiver, sender)
   }
 
   fn forward(
@@ -41,15 +37,9 @@ where
     provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
-    let (choice_sender, endpoint_receiver) = consumer_end;
-    let (choice_receiver, endpoint_sender) = provider_end;
-
     Box::pin(async {
-      let choice = choice_receiver.recv().await.unwrap();
-      choice_sender.send(choice).unwrap();
-
-      let endpoint = endpoint_receiver.recv().await.unwrap();
-      endpoint_sender.send(endpoint).unwrap();
+      let payload = provider_end.recv().await.unwrap();
+      consumer_end.send(payload).unwrap();
     })
   }
 }

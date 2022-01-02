@@ -1,5 +1,6 @@
 use crate::internal::{
   base::{
+    once_channel,
     unsafe_create_session,
     unsafe_run_session,
     Context,
@@ -37,11 +38,13 @@ where
   unsafe_create_session(move |ctx1, provider_end| async move {
     let (endpoint, ctx2) = N::extract_source(ctx1);
 
-    let (choice_sender, sum_receiver) = endpoint.get_applied();
+    let choice_sender = endpoint.get_applied();
+
+    let (sum_sender, sum_receiver) = once_channel();
 
     let choice: AppSum<Row2, ()> = M::inject_elem(wrap_type_app(()));
 
-    choice_sender.send(Value(choice)).unwrap();
+    choice_sender.send((Value(choice), sum_sender)).unwrap();
 
     let consumer_end_sum = sum_receiver.recv().await.unwrap();
 

@@ -46,8 +46,8 @@ where
   InjectSessionSum: Send + 'static,
 {
   unsafe_create_session::<C, ExternalChoice<Row1>, _, _>(
-    move |ctx, (choice_receiver, consumer_end_sender)| async move {
-      let Value(choice) = choice_receiver.recv().await.unwrap();
+    move |ctx, choice_receiver| async move {
+      let (Value(choice), sum_sender) = choice_receiver.recv().await.unwrap();
 
       let cont3 = selector_to_inject_session(choice);
 
@@ -55,7 +55,7 @@ where
 
       let cont5 = wrap_sum_app(cont1(cont4));
 
-      run_choice_cont(ctx, consumer_end_sender, cont5).await;
+      run_choice_cont(ctx, sum_sender, cont5).await;
     },
   )
 }
