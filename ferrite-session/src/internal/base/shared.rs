@@ -102,9 +102,13 @@ where
         Receiver<(SenderOnce<()>, SenderOnce<S>)>,
       ) -> Pin<Box<dyn Future<Output = ()> + Send>>
       + Send,
-  > = Box::new(move |sender| {
+  > = Box::new(move |receiver| {
     Box::pin(async {
-      executor1(sender).await;
+      task::spawn(async move {
+        executor1(receiver).await;
+      })
+      .await
+      .unwrap();
     })
   });
 

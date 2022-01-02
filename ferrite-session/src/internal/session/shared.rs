@@ -82,7 +82,11 @@ where
 
       debug!("[detach_shared_session] received sender2");
 
-      unsafe_run_shared_session(cont, receiver2).await;
+      // Run the continuation as a separate task *without* awaiting to
+      // avoice stack overflow in the async worker thread.
+      task::spawn(async move {
+        unsafe_run_shared_session(cont, receiver2).await;
+      });
 
       debug!("[detach_shared_session] ran cont");
     },

@@ -3,6 +3,8 @@ use std::{
   pin::Pin,
 };
 
+use tokio::task;
+
 use crate::internal::{
   base::{
     context::Context,
@@ -47,7 +49,13 @@ where
       + Send,
   > = Box::new(move |ctx, provider_end| {
     Box::pin(async {
-      executor(ctx, provider_end.get_applied()).await;
+      // run the executor as a separate async task to avoid stack overflow
+      // due to overly deeply nested futures.
+      task::spawn(async move {
+        executor(ctx, provider_end.get_applied()).await;
+      })
+      .await
+      .unwrap();
     })
   });
 
@@ -64,5 +72,9 @@ pub async fn unsafe_run_session<C, A>(
   A: Protocol,
   C: Context,
 {
-  (session.executor)(ctx, wrap_type_app(provider_end)).await;
+  task::spawn(async move {
+    (session.executor)(ctx, wrap_type_app(provider_end)).await;
+  })
+  .await
+  .unwrap();
 }

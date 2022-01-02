@@ -1,6 +1,6 @@
 use ferrite_session::prelude::*;
 use futures::future::join_all;
-// use ipc_channel::ipc;
+use ipc_channel::ipc;
 
 define_choice! { CounterCommand;
   Increment: Release,
@@ -11,16 +11,23 @@ type CounterSession = LinearToShared<ExternalChoice<CounterCommand>>;
 
 fn make_counter_session(count: u64) -> SharedSession<CounterSession>
 {
-  accept_shared_session(offer_choice! {
-    Increment =>
-      detach_shared_session (
-        make_counter_session ( count + 1 )
-      )
-    GetCount =>
-      send_value ( count,
-        detach_shared_session (
-          make_counter_session ( count ) ) )
-  })
+  accept_shared_session(step(async move {
+    offer_choice! {
+      Increment => {
+        println!("provider incrementing count {}", count);
+
+          detach_shared_session (
+            make_counter_session ( count + 1 )
+          )
+      }
+      GetCount => {
+        println!("provider sending back count {}", count);
+        send_value ( count,
+            detach_shared_session (
+              make_counter_session ( count ) ) )
+      }
+    }
+  }))
 }
 
 async fn use_counter(
@@ -32,7 +39,14 @@ async fn use_counter(
 
   for i in 0..count {
     let future = async_acquire_shared_session(counter.clone(), move |chan| {
-      choose!(chan, Increment, release_shared_session(chan, terminate()))
+      choose!(
+        chan,
+        Increment,
+        step(async move {
+          println!("client incremented counter");
+          release_shared_session(chan, terminate())
+        })
+      )
     });
 
     futures.push(future);
@@ -65,13 +79,13 @@ pub async fn main()
 
   let counter = run_shared_session(make_counter_session(0));
 
-  // let (sender, receiver) = ipc::channel().unwrap();
+  let (sender, receiver) = ipc::channel().unwrap();
 
-  // sender.send(counter).unwrap();
+  sender.send(counter).unwrap();
 
-  // let shared = receiver.recv().unwrap();
+  let shared = receiver.recv().unwrap();
 
-  let shared = counter.clone();
+  // let shared = counter.clone();
 
   let count = use_counter(shared, 10000).await;
 
