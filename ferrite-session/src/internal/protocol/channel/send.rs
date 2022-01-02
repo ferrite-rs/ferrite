@@ -1,14 +1,12 @@
 use core::{
   future::Future,
+  marker::PhantomData,
   pin::Pin,
 };
 
 use crate::internal::base::*;
 
-pub struct SendChannel<A, B>(
-  pub(crate) ReceiverOnce<A>,
-  pub(crate) ReceiverOnce<B>,
-);
+pub struct SendChannel<A, B>(PhantomData<(A, B)>);
 
 impl<A, B> Protocol for SendChannel<A, B>
 where

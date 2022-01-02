@@ -1,5 +1,6 @@
 use core::{
   future::Future,
+  marker::PhantomData,
   pin::Pin,
 };
 
@@ -8,12 +9,7 @@ use crate::internal::{
   functional::*,
 };
 
-pub struct InternalChoice<Row>
-where
-  Row: ToRow,
-{
-  pub(crate) field: AppSum<Row::Row, ReceiverF>,
-}
+pub struct InternalChoice<Row>(PhantomData<Row>);
 
 impl<Row1, Row2> Protocol for InternalChoice<Row1>
 where
@@ -62,31 +58,4 @@ where
   Row3: RowCon,
 {
   type Applied = InternalChoice<SharedRecRow<A, Row1>>;
-}
-
-impl<Row1, Row2> ForwardChannel for InternalChoice<Row1>
-where
-  Row1: Send + 'static,
-  Row1: ToRow<Row = Row2>,
-  Row2: RowCon,
-  AppSum<Row2, ReceiverF>: ForwardChannel,
-{
-  fn forward_to(
-    self,
-    sender: OpaqueSender,
-    receiver: OpaqueReceiver,
-  )
-  {
-    self.field.forward_to(sender, receiver)
-  }
-
-  fn forward_from(
-    sender: OpaqueSender,
-    receiver: OpaqueReceiver,
-  ) -> Self
-  {
-    InternalChoice {
-      field: <AppSum<Row2, ReceiverF>>::forward_from(sender, receiver),
-    }
-  }
 }
