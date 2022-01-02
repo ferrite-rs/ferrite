@@ -12,7 +12,7 @@ readme = "../README.md"
 
 [dependencies]
 log = "0.4.14"
-paste = "1.0.5"
+paste = "1.0.6"
 ipc-channel = "0.15.0"
-tokio = { version = "1.7.0", features = [ "full" ] }
-serde = { version = "1.0.126", features = [ "derive" ] }
+tokio = { version = "1.15.0", features = [ "full" ] }
+serde = { version = "1.0.133", features = [ "derive" ] }
