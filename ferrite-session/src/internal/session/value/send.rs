@@ -22,8 +22,9 @@ where
   C: Context,
 {
   unsafe_create_session::<C, SendValue<T, A>, _, _>(
-    move |ctx, (val_sender, provider_end)| async move {
-      val_sender.send(Value(val)).unwrap();
+    move |ctx, sender1| async move {
+      let (provider_end, consumer_end) = A::create_endpoints();
+      sender1.send((Value(val), consumer_end)).unwrap();
 
       unsafe_run_session(cont, ctx, provider_end).await;
     },
@@ -45,9 +46,9 @@ where
   unsafe_create_session(move |ctx1, sender| async move {
     let (endpoint, ctx2) = N::extract_source(ctx1);
 
-    let (val_receiver, consumer_end) = endpoint.get_applied();
+    let receiver = endpoint.get_applied();
 
-    let Value(val) = val_receiver.recv().await.unwrap();
+    let (Value(val), consumer_end) = receiver.recv().await.unwrap();
 
     let ctx3 = N::insert_target(wrap_type_app(consumer_end), ctx2);
 

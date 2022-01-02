@@ -44,14 +44,13 @@ pub async fn run_session_with_result<T>(
 where
   T: Send + 'static,
 {
-  let (provider_end, (val_receiver, end_receiver)) =
-    <SendValue<T, End>>::create_endpoints();
+  let (provider_end, val_receiver) = <SendValue<T, End>>::create_endpoints();
 
   let child1 = task::spawn(async move {
     unsafe_run_session(session, (), provider_end).await;
   });
 
-  let Value(val) = val_receiver.recv().await.unwrap();
+  let (Value(val), end_receiver) = val_receiver.recv().await.unwrap();
 
   end_receiver.recv().await.unwrap();
 

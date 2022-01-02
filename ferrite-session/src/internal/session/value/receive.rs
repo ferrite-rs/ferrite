@@ -21,8 +21,8 @@ where
   C: Context,
 {
   unsafe_create_session::<C, ReceiveValue<T, A>, _, _>(
-    move |ctx, (val_receiver, provider_end)| async move {
-      let Value(val) = val_receiver.recv().await.unwrap();
+    move |ctx, receiver1| async move {
+      let (Value(val), provider_end) = receiver1.recv().await.unwrap();
 
       let cont2 = cont(val);
 
@@ -44,15 +44,17 @@ where
   T: Send + 'static,
   N: ContextLens<C1, ReceiveValue<T, B>, B, Target = C2>,
 {
-  unsafe_create_session(move |ctx1, sender1| async move {
+  unsafe_create_session(move |ctx1, provider_end_a| async move {
     let (endpoint, ctx2) = N::extract_source(ctx1);
 
-    let (val_sender, consumer_end) = endpoint.get_applied();
+    let (provider_end_b, consumer_end_b) = B::create_endpoints();
 
-    let ctx3 = N::insert_target(wrap_type_app(consumer_end), ctx2);
+    let sender1 = endpoint.get_applied();
 
-    val_sender.send(Value(val)).unwrap();
+    let ctx3 = N::insert_target(wrap_type_app(consumer_end_b), ctx2);
 
-    unsafe_run_session(cont, ctx3, sender1).await;
+    sender1.send((Value(val), provider_end_b)).unwrap();
+
+    unsafe_run_session(cont, ctx3, provider_end_a).await;
   })
 }

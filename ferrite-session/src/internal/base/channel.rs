@@ -393,10 +393,11 @@ where
   }
 }
 
-impl<A, B> ForwardChannel for (A, B)
+impl<T, C> ForwardChannel for (Value<T>, C)
 where
-  A: ForwardChannel,
-  B: ForwardChannel,
+  T: Send + 'static,
+  T: Serialize + for<'de> Deserialize<'de>,
+  C: ForwardChannel,
 {
   fn forward_to(
     self,
@@ -404,8 +405,13 @@ where
     receiver1: OpaqueReceiver,
   )
   {
-    self.0.forward_to(sender1.clone(), receiver1.clone());
-    self.1.forward_to(sender1, receiver1);
+    let (Value(payload), channel) = self;
+
+    task::spawn_blocking(move || {
+      sender1.send(payload);
+
+      channel.forward_to(sender1, receiver1)
+    });
   }
 
   fn forward_from(
@@ -413,10 +419,11 @@ where
     receiver1: OpaqueReceiver,
   ) -> Self
   {
-    let first = A::forward_from(sender1.clone(), receiver1.clone());
-    let second = B::forward_from(sender1, receiver1);
+    let payload = receiver1.recv().unwrap();
 
-    (first, second)
+    let channel = C::forward_from(sender1, receiver1);
+
+    (Value(payload), channel)
   }
 }
 

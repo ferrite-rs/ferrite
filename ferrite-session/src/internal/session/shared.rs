@@ -153,9 +153,7 @@ where
 
     receiver3.recv().await.unwrap();
 
-    let (val_receiver, end_receiver) = consumer_end_1;
-
-    let Value(val) = val_receiver.recv().await.unwrap();
+    let (Value(val), end_receiver) = consumer_end_1.recv().await.unwrap();
 
     end_receiver.recv().await.unwrap();
 
