@@ -16,14 +16,8 @@ where
   Row: Send + 'static,
   Row: ToRow,
 {
-  type ConsumerEndpoint = SenderOnce<(
-    Value<AppSum<Row::Row, ()>>,
-    SenderOnce<AppSum<Row::Row, ConsumerEndpointF>>,
-  )>;
-  type ProviderEndpoint = ReceiverOnce<(
-    Value<AppSum<Row::Row, ()>>,
-    SenderOnce<AppSum<Row::Row, ConsumerEndpointF>>,
-  )>;
+  type ConsumerEndpoint = SenderOnce<AppSum<Row::Row, ProviderEndpointF>>;
+  type ProviderEndpoint = ReceiverOnce<AppSum<Row::Row, ProviderEndpointF>>;
 
   fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
   {

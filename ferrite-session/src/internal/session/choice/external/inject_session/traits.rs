@@ -1,17 +1,17 @@
-use super::super::cloak_session::*;
+use core::future::Future;
+
 use crate::internal::{
   base::*,
-  functional::*,
 };
 
-pub trait SessionInjector<Row, C, A>: Send
+pub trait SessionInjector<C, A>: Send
 {
   fn inject_session(
     self: Box<Self>,
     session: PartialSession<C, A>,
-  ) -> AppSum<Row::Row, SessionF<C>>
+  ) -> Box<dyn Future<Output=()> + Send>
   where
     C: Context,
     A: Protocol,
-    Row: ToRow;
+  ;
 }

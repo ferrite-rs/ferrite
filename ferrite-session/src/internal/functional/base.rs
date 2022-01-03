@@ -44,7 +44,7 @@ where
   F2: TyCon,
 {
   fn lift<A>(
-    &self,
+    self,
     fa: App<F1, A>,
   ) -> App<F2, A>
   where

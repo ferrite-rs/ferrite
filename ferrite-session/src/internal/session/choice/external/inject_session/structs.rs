@@ -9,11 +9,11 @@ use crate::internal::{
   functional::*,
 };
 
-pub struct InjectSessionF<Row, C>(PhantomData<(Row, C)>);
+pub struct InjectSessionF<C>(PhantomData<C>);
 
-pub struct InjectExternal<Row, C, A>
+pub struct InjectExternal<C, A>
 {
-  injector: Box<dyn SessionInjector<Row, C, A>>,
+  injector: Box<dyn SessionInjector<C, A>>,
 }
 
 pub fn create_inject_session<Row, C, A, I>(

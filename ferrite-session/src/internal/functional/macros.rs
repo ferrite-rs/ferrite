@@ -16,7 +16,7 @@ macro_rules! natural_transformation {
       for $name<'a>
       {
         fn lift < A >
-          ( &self,
+          ( self,
             $arg: App < $f1, A >
           )
           -> App < $f2, A >
@@ -26,7 +26,8 @@ macro_rules! natural_transformation {
           $body
         }
       }
-      &$name{
+
+      $name{
         $( $field : &$field ),*
         _phantom: &()
       }

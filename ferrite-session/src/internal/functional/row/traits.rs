@@ -56,7 +56,7 @@ pub trait SplitRow: Sized + RowCon
 pub trait SumFunctor: RowCon
 {
   fn lift_sum<T, F1, F2>(
-    lift: &T,
+    lift: T,
     sum: AppSum<Self, F1>,
   ) -> AppSum<Self, F2>
   where

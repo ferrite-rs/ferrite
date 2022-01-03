@@ -86,7 +86,9 @@ where
       // avoice stack overflow in the async worker thread.
       task::spawn(async move {
         unsafe_run_shared_session(cont, receiver2).await;
-      });
+      })
+      .await
+      .unwrap();
 
       debug!("[detach_shared_session] ran cont");
     },

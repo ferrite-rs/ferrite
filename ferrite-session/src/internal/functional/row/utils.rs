@@ -45,7 +45,7 @@ where
 //   -> row f
 //   -> row g
 pub fn lift_sum<Row, F1, F2, Lift>(
-  lift: &Lift,
+  lift: Lift,
   sum: AppSum<Row, F1>,
 ) -> AppSum<Row, F2>
 where

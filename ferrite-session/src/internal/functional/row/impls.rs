@@ -280,7 +280,7 @@ where
 impl SumFunctor for ()
 {
   fn lift_sum<T, F1, F2>(
-    _lift: &T,
+    _lift: T,
     row1: AppSum<Self, F1>,
   ) -> AppSum<Self, F2>
   where
@@ -298,7 +298,7 @@ where
   R: SumFunctor,
 {
   fn lift_sum<T, F1, F2>(
-    lift: &T,
+    lift: T,
     row1: AppSum<Self, F1>,
   ) -> AppSum<Self, F2>
   where

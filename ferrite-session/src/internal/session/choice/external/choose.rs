@@ -1,17 +1,14 @@
 use crate::internal::{
   base::{
-    once_channel,
     unsafe_create_session,
     unsafe_run_session,
     Context,
     ContextLens,
     PartialSession,
     Protocol,
-    Value,
   },
   functional::{
     wrap_type_app,
-    AppSum,
     Prism,
     RowCon,
     ToRow,
@@ -40,25 +37,14 @@ where
 
     let choice_sender = endpoint.get_applied();
 
-    let (sum_sender, sum_receiver) = once_channel();
+    let (provider_end_b, consumer_end_b) = B::create_endpoints();
 
-    let choice: AppSum<Row2, ()> = M::inject_elem(wrap_type_app(()));
+    let provider_end_sum = M::inject_elem(wrap_type_app(provider_end_b));
 
-    choice_sender.send((Value(choice), sum_sender)).unwrap();
+    choice_sender.send(provider_end_sum).unwrap();
 
-    let consumer_end_sum = sum_receiver.recv().await.unwrap();
+    let ctx3 = N::insert_target(wrap_type_app(consumer_end_b), ctx2);
 
-    let m_consumer_end = M::extract_elem(consumer_end_sum);
-
-    match m_consumer_end {
-      Some(consumer_end) => {
-        let ctx3 = N::insert_target(consumer_end, ctx2);
-
-        unsafe_run_session(cont, ctx3, provider_end).await;
-      }
-      None => {
-        panic!("impossible happened: received mismatch choice from provider");
-      }
-    }
+    unsafe_run_session(cont, ctx3, provider_end).await;
   })
 }

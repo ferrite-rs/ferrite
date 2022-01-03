@@ -103,6 +103,7 @@ impl<C, F> Protocol for RecX<C, F>
 where
   C: Send + 'static,
   F: Protocol,
+  F: RecApp<(RecX<C, F>, C)>,
 {
   type ConsumerEndpoint = ReceiverOnce<RecEndpoint<F, (RecX<C, F>, C)>>;
   type ProviderEndpoint = SenderOnce<RecEndpoint<F, (RecX<C, F>, C)>>;

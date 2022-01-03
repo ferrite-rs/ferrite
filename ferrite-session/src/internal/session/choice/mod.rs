@@ -6,7 +6,6 @@ pub use self::{
   external::{
     choose,
     offer_choice,
-    InjectExternal,
   },
   internal::{
     case,
