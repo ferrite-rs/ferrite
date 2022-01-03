@@ -4,68 +4,70 @@ use crate::internal::functional::{
   type_app::*,
 };
 
-pub trait RowCon: Sized + Send + 'static {}
+pub trait RowCon: Sized {}
 
 pub trait ToRow
 {
   type Row;
 }
 
-pub trait SumApp<F>: RowCon
+pub trait SumApp<'a, F>: RowCon
 where
   F: TyCon,
 {
-  type Applied: Send + 'static;
+  type Applied: Sized + Send + 'a;
 }
 
 // Flatten the App wrappers in SumApp
-pub trait FlattenSumApp<F>: SumApp<F>
+pub trait FlattenSumApp<'a, F>: SumApp<'a, F>
 where
   F: TyCon,
 {
-  type FlattenApplied: Send + 'static;
+  type FlattenApplied;
 
   fn unflatten_sum(row: Self::FlattenApplied) -> Self::Applied;
 
-  fn flatten_sum(row: AppSum<Self, F>) -> Self::FlattenApplied;
+  fn flatten_sum(row: AppSum<'a, Self, F>) -> Self::FlattenApplied;
 }
 
-pub trait HasSumApp<Row, F>: Send
+pub trait HasSumApp<'a, Row, F>: Send
 {
   fn get_sum(self: Box<Self>) -> Box<Row::Applied>
   where
     F: TyCon,
-    Row: SumApp<F>;
+    Row: SumApp<'a, F>;
 
-  fn get_sum_borrow(&self) -> &Row::Applied
+  fn get_sum_borrow<'b>(&'b self) -> &'b Row::Applied
   where
     F: TyCon,
-    Row: SumApp<F>;
+    Row: SumApp<'a, F>;
 }
 
 pub trait SplitRow: Sized + RowCon
 {
-  fn split_row<F1, F2>(
-    row: AppSum<Self, Merge<F1, F2>>
-  ) -> (AppSum<Self, F1>, AppSum<Self, F2>)
+  fn split_row<'a, F1: 'a, F2: 'a>(
+    row: AppSum<'a, Self, Merge<F1, F2>>
+  ) -> (AppSum<'a, Self, F1>, AppSum<'a, Self, F2>)
   where
     F1: TyCon,
-    F2: TyCon;
+    F2: TyCon,
+    Self: 'a;
 }
 
 pub trait SumFunctor: RowCon
 {
-  fn lift_sum<T, F1, F2>(
+  fn lift_sum<'a, T: 'a, F1: 'a, F2: 'a>(
     lift: T,
-    sum: AppSum<Self, F1>,
-  ) -> AppSum<Self, F2>
+    sum: AppSum<'a, Self, F1>,
+  ) -> AppSum<'a, Self, F2>
   where
     F1: TyCon,
     F2: TyCon,
-    T: NaturalTransformation<F1, F2>;
+    T: NaturalTransformation<'a, F1, F2>,
+    Self: 'a;
 }
 
-pub trait InjectLift<Root>
+pub trait InjectLift<'a, Root>
 {
   type SourceF: TyCon;
 
@@ -75,57 +77,62 @@ pub trait InjectLift<Root>
 
   fn lift_field<A>(
     self,
-    inject: impl Fn(App<Self::TargetF, A>) -> Root + Send + 'static,
-    row: App<Self::SourceF, A>,
-  ) -> App<Self::InjectF, A>
+    inject: impl Fn(App<'a, Self::TargetF, A>) -> Root + Send + 'a,
+    row: App<'a, Self::SourceF, A>,
+  ) -> App<'a, Self::InjectF, A>
   where
-    A: Send + 'static;
+    A: Send + 'a;
 }
 
 pub trait SumFunctorInject: RowCon
 {
-  fn lift_sum_inject<L, Root, Inject>(
+  fn lift_sum_inject<'a, L, Root, Inject>(
     ctx: L,
     inject: Inject,
-    sum: AppSum<Self, L::SourceF>,
-  ) -> AppSum<Self, L::InjectF>
+    sum: AppSum<'a, Self, L::SourceF>,
+  ) -> AppSum<'a, Self, L::InjectF>
   where
-    L: InjectLift<Root>,
-    Inject: Fn(AppSum<Self, L::TargetF>) -> Root + Send + 'static;
+    L: InjectLift<'a, Root> + Send,
+    Inject: Fn(AppSum<'a, Self, L::TargetF>) -> Root + Send + 'a,
+    Root: Send,
+    Self: 'a,
+    L::SourceF: 'a,
+    L::InjectF: 'a,
+    L::TargetF: 'a;
 }
 
 pub trait IntersectSum: RowCon
 {
-  fn intersect_sum<F1, F2>(
-    row1: AppSum<Self, F1>,
-    row2: AppSum<Self, F2>,
-  ) -> Option<AppSum<Self, Merge<F1, F2>>>
+  fn intersect_sum<'a, F1: 'a, F2: 'a>(
+    row1: AppSum<'a, Self, F1>,
+    row2: AppSum<'a, Self, F2>,
+  ) -> Option<AppSum<'a, Self, Merge<F1, F2>>>
   where
     F1: TyCon,
-    F2: TyCon;
+    F2: TyCon,
+    Self: 'a;
 }
 
-pub trait ElimField<F, R>
+pub trait ElimField<'a, F, R>
 where
   F: TyCon,
 {
-  fn elim_field<A>(
+  fn elim_field<A: 'a>(
     self,
-    a: App<F, A>,
-  ) -> R
-  where
-    A: Send + 'static;
+    a: App<'a, F, A>,
+  ) -> R;
 }
 
 pub trait ElimSum: RowCon
 {
-  fn elim_sum<F, E, R>(
+  fn elim_sum<'a, F: 'a, E, R>(
     elim_field: E,
-    row: AppSum<Self, F>,
+    row: AppSum<'a, Self, F>,
   ) -> R
   where
+    Self: 'a,
     F: TyCon,
-    E: ElimField<F, R>;
+    E: ElimField<'a, F, R>;
 }
 
 pub trait Prism<Row>
@@ -134,11 +141,17 @@ where
 {
   type Elem;
 
-  fn inject_elem<F>(elem: App<F, Self::Elem>) -> AppSum<Row, F>
+  fn inject_elem<'a, F: 'a + Send>(
+    elem: App<'a, F, Self::Elem>
+  ) -> AppSum<'a, Row, F>
   where
-    F: TyCon;
+    F: TyCon,
+    Row: 'a;
 
-  fn extract_elem<F>(row: AppSum<Row, F>) -> Option<App<F, Self::Elem>>
+  fn extract_elem<'a, F: 'a + Send>(
+    row: AppSum<'a, Row, F>
+  ) -> Option<App<'a, F, Self::Elem>>
   where
-    F: TyCon;
+    F: TyCon,
+    Row: 'a;
 }

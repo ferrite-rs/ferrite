@@ -10,7 +10,7 @@ pub trait SessionInjector<N, C, A, B, Row, Del>: Send
   fn inject_session(
     self: Box<Self>,
     session: PartialSession<N::Target, B>,
-  ) -> AppSum<Row::Row, InternalSessionF<N, C, B, Row, Del>>
+  ) -> AppSum<'static, Row::Row, InternalSessionF<N, C, B, Row, Del>>
   where
     A: Protocol,
     B: Protocol,
@@ -18,6 +18,7 @@ pub trait SessionInjector<N, C, A, B, Row, Del>: Send
     Del: Context,
     Row: ToRow,
     Row: Send + 'static,
+    Row::Row: Send + 'static,
     Row::Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>;
 }

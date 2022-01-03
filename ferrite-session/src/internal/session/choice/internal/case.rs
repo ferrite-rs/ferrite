@@ -37,6 +37,7 @@ where
   C: Context,
   D: Context,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   Row2: ElimSum,
@@ -44,8 +45,10 @@ where
   Row2: SumFunctor,
   Row2: IntersectSum,
   Row2: SumFunctorInject,
-  Row2: SumApp<InternalSessionF<N, C, B, Row1, D>, Applied = SessionSum>,
+  Row2:
+    SumApp<'static, InternalSessionF<N, C, B, Row1, D>, Applied = SessionSum>,
   Row2: FlattenSumApp<
+    'static,
     InjectSessionF<N, C, B, Row1, D>,
     FlattenApplied = InjectSessionSum,
   >,

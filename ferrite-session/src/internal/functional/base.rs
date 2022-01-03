@@ -5,48 +5,41 @@ use super::type_app::*;
 
 pub trait Functor: TyCon
 {
-  fn fmap<A, B>(
-    fa: App<Self, A>,
+  fn fmap<'a, A, B>(
+    fa: App<'a, Self, A>,
     mapper: impl Fn(A) -> B,
-  ) -> App<Self, B>
+  ) -> App<'a, Self, B>
   where
-    A: Send + 'static,
-    B: Send + 'static;
+    A: 'a + Send,
+    B: 'a + Send;
 }
 
 pub trait Applicative: Functor
 {
-  fn apply<A, B, Func>(
-    fab: App<Self, Func>,
-    fa: App<Self, A>,
-  ) -> App<Self, B>
+  fn apply<'a, A, B, Func>(
+    fab: App<'a, Self, Func>,
+    fa: App<'a, Self, A>,
+  ) -> App<'a, Self, B>
   where
-    Func: Fn(A) -> B,
-    A: Send + 'static,
-    B: Send + 'static;
+    Func: Fn(A) -> B;
 }
 
 pub trait Monad: Applicative
 {
-  fn bind<A, B>(
-    fa: App<Self, A>,
-    cont: impl Fn(A) -> App<Self, B>,
-  ) -> App<Self, B>
-  where
-    A: Send + 'static,
-    B: Send + 'static;
+  fn bind<'a, A, B>(
+    fa: App<'a, Self, A>,
+    cont: impl Fn(A) -> App<'a, Self, B>,
+  ) -> App<Self, B>;
 }
 
 // NaturalTransformation f1 f2 = forall x. f1 x -> f2 x
-pub trait NaturalTransformation<F1, F2>
+pub trait NaturalTransformation<'a, F1, F2>
 where
   F1: TyCon,
   F2: TyCon,
 {
-  fn lift<A>(
+  fn lift<A: 'a>(
     self,
-    fa: App<F1, A>,
-  ) -> App<F2, A>
-  where
-    A: Send + 'static;
+    fa: App<'a, F1, A>,
+  ) -> App<'a, F2, A>;
 }

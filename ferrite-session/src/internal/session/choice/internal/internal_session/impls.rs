@@ -18,7 +18,8 @@ where
 {
 }
 
-impl<N, C, A, B, Row, Del> TypeApp<A> for InternalSessionF<N, C, B, Row, Del>
+impl<'a, N, C, A, B, Row, Del> TypeApp<'a, A>
+  for InternalSessionF<N, C, B, Row, Del>
 where
   A: 'static,
   N: 'static,
@@ -38,6 +39,7 @@ where
   C: Context,
   Del: Context,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   N: ContextLens<C, InternalChoice<Row1>, A, Deleted = Del>,
@@ -60,6 +62,7 @@ where
   Del: Context,
   Row1: ToRow<Row = Row2>,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row2: RowCon,
   N: ContextLens<C, InternalChoice<Row1>, A, Deleted = Del>,
 {

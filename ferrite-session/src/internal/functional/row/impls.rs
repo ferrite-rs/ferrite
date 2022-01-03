@@ -9,10 +9,10 @@ use crate::internal::functional::{
   type_app::*,
 };
 
-impl<Row, F> serde::Serialize for AppSum<Row, F>
+impl<Row, F> serde::Serialize for AppSum<'static, Row, F>
 where
   F: TyCon,
-  Row: SumApp<F>,
+  Row: SumApp<'static, F>,
   Row::Applied:
     Send + 'static + serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
@@ -29,11 +29,11 @@ where
   }
 }
 
-impl<'a, Row, F, T> serde::Deserialize<'a> for AppSum<Row, F>
+impl<'a, Row, F, T> serde::Deserialize<'a> for AppSum<'a, Row, F>
 where
   F: TyCon,
   T: Send + 'static,
-  Row: SumApp<F, Applied = T>,
+  Row: SumApp<'a, F, Applied = T>,
   T: serde::Serialize + for<'de> serde::Deserialize<'de>,
 {
   fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
@@ -46,16 +46,16 @@ where
   }
 }
 
-impl<S, Row, F> HasSumApp<Row, F> for S
+impl<'a, S, Row, F> HasSumApp<'a, Row, F> for S
 where
   F: TyCon,
-  S: Send + 'static,
-  Row: SumApp<F, Applied = S>,
+  S: Send,
+  Row: SumApp<'a, F, Applied = S>,
 {
   fn get_sum(self: Box<Self>) -> Box<Row::Applied>
   where
     F: TyCon,
-    Row: SumApp<F>,
+    Row: SumApp<'a, F>,
   {
     self
   }
@@ -63,18 +63,13 @@ where
   fn get_sum_borrow(&self) -> &Row::Applied
   where
     F: TyCon,
-    Row: SumApp<F>,
+    Row: SumApp<'a, F>,
   {
     self
   }
 }
 
-impl<A, R> RowCon for (A, R)
-where
-  A: Send + 'static,
-  R: RowCon,
-{
-}
+impl<A, R> RowCon for (A, R) where R: RowCon {}
 
 impl RowCon for () {}
 
@@ -91,27 +86,25 @@ where
   type Row = (A, R);
 }
 
-impl<F, A, R> SumApp<F> for (A, R)
+impl<'a, F: 'a, A: 'a, R: 'a> SumApp<'a, F> for (A, R)
 where
-  A: Send + 'static,
   F: TyCon,
   R: RowCon,
 {
-  type Applied = Sum<App<F, A>, AppSum<R, F>>;
+  type Applied = Sum<App<'a, F, A>, AppSum<'a, R, F>>;
 }
 
-impl<F> SumApp<F> for ()
+impl<'a, F> SumApp<'a, F> for ()
 where
   F: TyCon,
 {
   type Applied = Bottom;
 }
 
-impl<F, A, R> FlattenSumApp<F> for (A, R)
+impl<'a, F: 'a, A: 'a, R: 'a> FlattenSumApp<'a, F> for (A, R)
 where
-  A: Send + 'static,
-  R: FlattenSumApp<F>,
-  F: TypeApp<A>,
+  R: FlattenSumApp<'a, F>,
+  F: TypeApp<'a, A>,
 {
   type FlattenApplied = Sum<F::Applied, R::FlattenApplied>;
 
@@ -127,7 +120,7 @@ where
     }
   }
 
-  fn flatten_sum(row1: AppSum<Self, F>) -> Self::FlattenApplied
+  fn flatten_sum(row1: AppSum<'a, Self, F>) -> Self::FlattenApplied
   {
     match row1.get_sum() {
       Sum::Inl(field1) => {
@@ -144,7 +137,7 @@ where
   }
 }
 
-impl<F> FlattenSumApp<F> for ()
+impl<'a, F> FlattenSumApp<'a, F> for ()
 where
   F: TyCon,
 {
@@ -161,7 +154,7 @@ where
   }
 }
 
-impl<X> ElimField<Const<X>, X> for ElimConst
+impl<'a, X> ElimField<'a, Const<X>, X> for ElimConst
 where
   X: Send + 'static,
 {
@@ -169,34 +162,26 @@ where
     self,
     x: App<Const<X>, A>,
   ) -> X
-  where
-    A: 'static,
   {
     get_applied(x)
   }
 }
 
-impl<T1, T2> TyCon for Merge<T1, T2>
-where
-  T1: 'static,
-  T2: 'static,
-{
-}
+impl<T1, T2> TyCon for Merge<T1, T2> {}
 
-impl<T1, T2, A> TypeApp<A> for Merge<T1, T2>
+impl<'a, T1: 'a, T2: 'a, A: 'a> TypeApp<'a, A> for Merge<T1, T2>
 where
-  A: 'static,
   T1: TyCon,
   T2: TyCon,
 {
-  type Applied = (App<T1, A>, App<T2, A>);
+  type Applied = (App<'a, T1, A>, App<'a, T2, A>);
 }
 
 impl SplitRow for ()
 {
-  fn split_row<F1, F2>(
-    row1: AppSum<Self, Merge<F1, F2>>
-  ) -> (AppSum<Self, F1>, AppSum<Self, F2>)
+  fn split_row<'a, F1: 'a, F2: 'a>(
+    row1: AppSum<'a, Self, Merge<F1, F2>>
+  ) -> (AppSum<'a, Self, F1>, AppSum<'a, Self, F2>)
   where
     F1: TyCon,
     F2: TyCon,
@@ -210,12 +195,13 @@ where
   A: Send + 'static,
   R: SplitRow,
 {
-  fn split_row<F1, F2>(
-    row1: AppSum<Self, Merge<F1, F2>>
-  ) -> (AppSum<Self, F1>, AppSum<Self, F2>)
+  fn split_row<'a, F1: 'a, F2: 'a>(
+    row1: AppSum<'a, Self, Merge<F1, F2>>
+  ) -> (AppSum<'a, Self, F1>, AppSum<'a, Self, F2>)
   where
     F1: TyCon,
     F2: TyCon,
+    Self: 'a,
   {
     let row2 = row1.get_sum();
 
@@ -236,10 +222,10 @@ where
 
 impl IntersectSum for ()
 {
-  fn intersect_sum<F1, F2>(
-    row1: AppSum<(), F1>,
-    _row2: AppSum<(), F2>,
-  ) -> Option<AppSum<(), Merge<F1, F2>>>
+  fn intersect_sum<'a, F1: 'a, F2: 'a>(
+    row1: AppSum<'a, (), F1>,
+    _row2: AppSum<'a, (), F2>,
+  ) -> Option<AppSum<'a, (), Merge<F1, F2>>>
   where
     F1: TyCon,
     F2: TyCon,
@@ -250,16 +236,16 @@ impl IntersectSum for ()
 
 impl<A, R> IntersectSum for (A, R)
 where
-  A: Send + 'static,
   R: IntersectSum,
 {
-  fn intersect_sum<F1, F2>(
-    row1: AppSum<Self, F1>,
-    row2: AppSum<Self, F2>,
-  ) -> Option<AppSum<Self, Merge<F1, F2>>>
+  fn intersect_sum<'a, F1: 'a, F2: 'a>(
+    row1: AppSum<'a, Self, F1>,
+    row2: AppSum<'a, Self, F2>,
+  ) -> Option<AppSum<'a, Self, Merge<F1, F2>>>
   where
     F1: TyCon,
     F2: TyCon,
+    Self: 'a,
   {
     let row1a = row1.get_sum();
 
@@ -279,14 +265,14 @@ where
 
 impl SumFunctor for ()
 {
-  fn lift_sum<T, F1, F2>(
+  fn lift_sum<'a, T: 'a, F1: 'a, F2: 'a>(
     _lift: T,
-    row1: AppSum<Self, F1>,
-  ) -> AppSum<Self, F2>
+    row1: AppSum<'a, Self, F1>,
+  ) -> AppSum<'a, Self, F2>
   where
     F1: TyCon,
     F2: TyCon,
-    T: NaturalTransformation<F1, F2>,
+    T: NaturalTransformation<'a, F1, F2>,
   {
     absurd(row1)
   }
@@ -297,14 +283,15 @@ where
   A: Send + 'static,
   R: SumFunctor,
 {
-  fn lift_sum<T, F1, F2>(
+  fn lift_sum<'a, T: 'a, F1: 'a, F2: 'a>(
     lift: T,
-    row1: AppSum<Self, F1>,
-  ) -> AppSum<Self, F2>
+    row1: AppSum<'a, Self, F1>,
+  ) -> AppSum<'a, Self, F2>
   where
     F1: TyCon,
     F2: TyCon,
-    T: NaturalTransformation<F1, F2>,
+    T: NaturalTransformation<'a, F1, F2>,
+    Self: 'a,
   {
     let row2 = row1.get_sum();
 
@@ -321,14 +308,14 @@ where
 
 impl SumFunctorInject for ()
 {
-  fn lift_sum_inject<L, Root, Inject>(
+  fn lift_sum_inject<'a, L, Root, Inject>(
     _ctx: L,
     _inject: Inject,
-    sum: AppSum<Self, L::SourceF>,
-  ) -> AppSum<Self, L::InjectF>
+    sum: AppSum<'a, Self, L::SourceF>,
+  ) -> AppSum<'a, Self, L::InjectF>
   where
-    L: InjectLift<Root>,
-    Inject: Fn(AppSum<Self, L::TargetF>) -> Root + Send + 'static,
+    L: InjectLift<'a, Root>,
+    Inject: Fn(AppSum<'a, Self, L::TargetF>) -> Root,
   {
     absurd(sum)
   }
@@ -336,30 +323,35 @@ impl SumFunctorInject for ()
 
 impl<A, R> SumFunctorInject for (A, R)
 where
-  A: Send + 'static,
-  R: SumFunctorInject,
+  A: Send,
+  R: SumFunctorInject + Send,
 {
-  fn lift_sum_inject<L, Root, Inject>(
+  fn lift_sum_inject<'a, L, Root, Inject>(
     ctx: L,
     inject: Inject,
-    row1: AppSum<Self, L::SourceF>,
-  ) -> AppSum<Self, L::InjectF>
+    row1: AppSum<'a, Self, L::SourceF>,
+  ) -> AppSum<'a, Self, L::InjectF>
   where
-    L: InjectLift<Root>,
-    Inject: Fn(AppSum<Self, L::TargetF>) -> Root + Send + 'static,
+    L: InjectLift<'a, Root> + Send,
+    Inject: Fn(AppSum<'a, Self, L::TargetF>) -> Root + Send + 'a,
+    Root: Send,
+    Self: 'a,
+    L::SourceF: 'a,
+    L::InjectF: 'a,
+    L::TargetF: 'a,
   {
     let row2 = row1.get_sum();
 
     match row2 {
       Sum::Inl(a) => {
-        let inject2 = move |b: App<L::TargetF, A>| -> Root {
+        let inject2 = move |b: App<'a, L::TargetF, A>| -> Root {
           inject(wrap_sum_app(Sum::Inl(b)))
         };
 
         wrap_sum_app(Sum::Inl(L::lift_field(ctx, inject2, a)))
       }
       Sum::Inr(b) => {
-        let inject2 = move |r: AppSum<R, L::TargetF>| -> Root {
+        let inject2 = move |r: AppSum<'a, R, L::TargetF>| -> Root {
           inject(wrap_sum_app(Sum::Inr(r)))
         };
 
@@ -371,13 +363,14 @@ where
 
 impl ElimSum for ()
 {
-  fn elim_sum<F, E, R>(
+  fn elim_sum<'a, F: 'a, E, R>(
     _elim_field: E,
-    row: AppSum<Self, F>,
+    row: AppSum<'a, Self, F>,
   ) -> R
   where
+    Self: 'a,
     F: TyCon,
-    E: ElimField<F, R>,
+    E: ElimField<'a, F, R>,
   {
     absurd(row)
   }
@@ -385,16 +378,17 @@ impl ElimSum for ()
 
 impl<A, R> ElimSum for (A, R)
 where
-  A: Send + 'static,
+  A: Send,
   R: ElimSum,
 {
-  fn elim_sum<F, E, K>(
+  fn elim_sum<'a, F: 'a, E, K>(
     e: E,
-    row1: AppSum<Self, F>,
+    row1: AppSum<'a, Self, F>,
   ) -> K
   where
+    Self: 'a,
     F: TyCon,
-    E: ElimField<F, K>,
+    E: ElimField<'a, F, K>,
   {
     let row2 = row1.get_sum();
 
@@ -407,21 +401,27 @@ where
 
 impl<A, R> Prism<(A, R)> for ChoiceSelector<Z>
 where
-  A: Send + 'static,
+  A: Send,
   R: RowCon,
 {
   type Elem = A;
 
-  fn inject_elem<F>(t: App<F, A>) -> AppSum<(A, R), F>
+  fn inject_elem<'a, F: 'a + Send>(
+    t: App<'a, F, Self::Elem>
+  ) -> AppSum<'a, (A, R), F>
   where
     F: TyCon,
+    (A, R): 'a,
   {
     wrap_sum_app(Sum::Inl(t))
   }
 
-  fn extract_elem<F>(row: AppSum<(A, R), F>) -> Option<App<F, A>>
+  fn extract_elem<'a, F: 'a + Send>(
+    row: AppSum<'a, (A, R), F>
+  ) -> Option<App<'a, F, Self::Elem>>
   where
     F: TyCon,
+    (A, R): 'a,
   {
     match row.get_sum() {
       Sum::Inl(e) => Some(e),
@@ -438,16 +438,22 @@ where
 {
   type Elem = <ChoiceSelector<N> as Prism<R>>::Elem;
 
-  fn inject_elem<F>(elem: App<F, Self::Elem>) -> AppSum<(A, R), F>
+  fn inject_elem<'a, F: 'a + Send>(
+    elem: App<'a, F, Self::Elem>
+  ) -> AppSum<'a, (A, R), F>
   where
     F: TyCon,
+    (A, R): 'a,
   {
     wrap_sum_app(Sum::Inr(<ChoiceSelector<N> as Prism<R>>::inject_elem(elem)))
   }
 
-  fn extract_elem<F>(row: AppSum<(A, R), F>) -> Option<App<F, Self::Elem>>
+  fn extract_elem<'a, F: 'a + Send>(
+    row: AppSum<'a, (A, R), F>
+  ) -> Option<App<'a, F, Self::Elem>>
   where
     F: TyCon,
+    (A, R): 'a,
   {
     match row.get_sum() {
       Sum::Inl(_) => None,

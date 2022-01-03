@@ -19,6 +19,7 @@ where
   C: Context,
   Del: Context,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   N: ContextLens<C, InternalChoice<Row1>, A, Deleted = Del>,
@@ -72,6 +73,7 @@ where
     Del: Context,
     Row: ToRow,
     Row: Send + 'static,
+    Row::Row: Send + 'static,
     Row::Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
   {

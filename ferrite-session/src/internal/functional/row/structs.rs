@@ -18,9 +18,9 @@ pub enum Sum<A, B>
   Inr(B),
 }
 
-pub struct AppSum<Row, F>
+pub struct AppSum<'a, Row, F>
 {
-  pub row: Box<dyn HasSumApp<Row, F>>,
+  pub row: Box<dyn HasSumApp<'a, Row, F> + 'a>,
 }
 
 pub struct ChoiceSelector<N>
@@ -32,10 +32,10 @@ pub struct Merge<T1, T2>(PhantomData<(T1, T2)>);
 
 pub struct ElimConst {}
 
-impl<Row, F> AppSum<Row, F>
+impl<'a, Row, F> AppSum<'a, Row, F>
 where
   F: TyCon,
-  Row: SumApp<F>,
+  Row: SumApp<'a, F>,
 {
   pub fn get_sum(self) -> Row::Applied
   {
@@ -53,10 +53,11 @@ impl<N> ChoiceSelector<N>
   }
 }
 
-pub fn wrap_sum_app<Row, F>(row: Row::Applied) -> AppSum<Row, F>
+pub fn wrap_sum_app<'a, Row, F>(row: Row::Applied) -> AppSum<'a, Row, F>
 where
   F: TyCon,
-  Row: SumApp<F>,
+  Row: SumApp<'a, F>,
+  Row::Applied: Send,
 {
   AppSum { row: Box::new(row) }
 }

@@ -45,8 +45,8 @@ pub trait SharedProtocol: Send + 'static {}
 pub trait ProtocolRow: RowCon
 {
   fn create_row_endpoints() -> (
-    AppSum<Self, ProviderEndpointF>,
-    AppSum<Self, ConsumerEndpointF>,
+    AppSum<'static, Self, ProviderEndpointF>,
+    AppSum<'static, Self, ConsumerEndpointF>,
   );
 }
 
@@ -54,20 +54,20 @@ pub struct ProviderEndpointF;
 
 pub struct ConsumerEndpointF;
 
-pub type ProviderEndpoint<A> = App<ProviderEndpointF, A>;
+pub type ProviderEndpoint<A> = App<'static, ProviderEndpointF, A>;
 
-pub type ConsumerEndpoint<A> = App<ConsumerEndpointF, A>;
+pub type ConsumerEndpoint<A> = App<'static, ConsumerEndpointF, A>;
 
 impl TyCon for ProviderEndpointF {}
 
 impl TyCon for ConsumerEndpointF {}
 
-impl<A: Protocol> TypeApp<A> for ProviderEndpointF
+impl<'a, A: Protocol> TypeApp<'a, A> for ProviderEndpointF
 {
   type Applied = A::ProviderEndpoint;
 }
 
-impl<A: Protocol> TypeApp<A> for ConsumerEndpointF
+impl<'a, A: Protocol> TypeApp<'a, A> for ConsumerEndpointF
 {
   type Applied = A::ConsumerEndpoint;
 }

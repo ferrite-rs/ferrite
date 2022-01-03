@@ -15,6 +15,7 @@ pub async fn run_case_cont<N, C, D, B, Row1, Row2>(
   ctx: D::Endpoints,
   provider_end_b: ProviderEndpoint<B>,
   cont1: AppSum<
+    'static,
     Row2,
     Merge<ConsumerEndpointF, InternalSessionF<N, C, B, Row1, D>>,
   >,
@@ -23,6 +24,7 @@ pub async fn run_case_cont<N, C, D, B, Row1, Row2>(
   D: Context,
   B: Protocol,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: ElimSum,
   N: ContextLens<C, InternalChoice<Row1>, Empty, Deleted = D>,
@@ -115,6 +117,7 @@ where
 
 impl<B, N, C, Row, D>
   ElimField<
+    'static,
     Merge<ConsumerEndpointF, InternalSessionF<N, C, B, Row, D>>,
     Pin<Box<dyn Future<Output = ()> + Send>>,
   > for ContRunner1<N, C, B, Row, D>
@@ -127,12 +130,14 @@ where
   Row::Row: Send + 'static,
   N: ContextLens<C, InternalChoice<Row>, Empty, Deleted = D>,
 {
-  fn elim_field<A>(
+  fn elim_field<A: 'static>(
     self,
-    fa: App<Merge<ConsumerEndpointF, InternalSessionF<N, C, B, Row, D>>, A>,
+    fa: App<
+      'static,
+      Merge<ConsumerEndpointF, InternalSessionF<N, C, B, Row, D>>,
+      A,
+    >,
   ) -> Pin<Box<dyn Future<Output = ()> + Send>>
-  where
-    A: Send + 'static,
   {
     let (consumer_end_a, session1) = fa.get_applied();
 

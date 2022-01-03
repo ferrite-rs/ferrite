@@ -138,14 +138,14 @@ impl TyCon for ReceiverF {}
 
 impl TyCon for SenderF {}
 
-impl<P> TypeApp<P> for ReceiverF
+impl<'a, P> TypeApp<'a, P> for ReceiverF
 where
   P: Send + 'static,
 {
   type Applied = ReceiverOnce<P>;
 }
 
-impl<P> TypeApp<P> for SenderF
+impl<'a, P> TypeApp<'a, P> for SenderF
 where
   P: Send + 'static,
 {
@@ -427,10 +427,11 @@ where
   }
 }
 
-impl<F, X, T> ForwardChannel for App<F, X>
+impl<F, X, T> ForwardChannel for App<'static, F, X>
 where
-  X: Send + 'static,
-  F: TypeApp<X, Applied = T>,
+  X: 'static,
+  F: 'static,
+  F: TypeApp<'static, X, Applied = T>,
   T: ForwardChannel,
 {
   fn forward_to(
@@ -451,11 +452,12 @@ where
   }
 }
 
-impl<Row, F, T> ForwardChannel for AppSum<Row, F>
+impl<Row, F, T> ForwardChannel for AppSum<'static, Row, F>
 where
   F: TyCon,
   F: Send + 'static,
-  Row: SumApp<F, Applied = T>,
+  Row: 'static,
+  Row: SumApp<'static, F, Applied = T>,
   T: ForwardChannel,
 {
   fn forward_to(

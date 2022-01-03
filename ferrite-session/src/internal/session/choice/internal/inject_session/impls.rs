@@ -28,10 +28,15 @@ where
   C2: Context,
   Del: Context,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   SessionSum: Send + 'static,
-  Row2: SumApp<InternalSessionF<N, C1, B, Row1, Del>, Applied = SessionSum>,
+  Row2: SumApp<
+    'static,
+    InternalSessionF<N, C1, B, Row1, Del>,
+    Applied = SessionSum,
+  >,
   N: ContextLens<C1, InternalChoice<Row1>, A, Deleted = Del, Target = C2>,
 {
   type Ret = SessionSum;
@@ -45,7 +50,8 @@ where
   }
 }
 
-impl<N, C, A, B, Row, Del> TypeApp<A> for InjectSessionF<N, C, B, Row, Del>
+impl<'a, N, C, A, B, Row, Del> TypeApp<'a, A>
+  for InjectSessionF<N, C, B, Row, Del>
 where
   N: Send + 'static,
   C: Send + 'static,

@@ -11,14 +11,15 @@ use crate::internal::{
 };
 
 pub fn lift_unit_to_session<N, C, D, B, Row1, Row2>(
-  row: AppSum<Row2, ()>
-) -> AppSum<Row2, InjectSessionF<N, C, B, Row1, D>>
+  row: AppSum<'static, Row2, ()>
+) -> AppSum<'static, Row2, InjectSessionF<N, C, B, Row1, D>>
 where
   B: Protocol,
   C: Context,
   D: Context,
   N: Send + 'static,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   Row2: SumFunctorInject,
@@ -29,7 +30,7 @@ where
 struct LiftUnitToSession<N, C, D, A, Row>(PhantomData<(N, C, D, A, Row)>);
 
 impl<N, C, D, B, Row1, Row2>
-  InjectLift<AppSum<Row2, InternalSessionF<N, C, B, Row1, D>>>
+  InjectLift<'static, AppSum<'static, Row2, InternalSessionF<N, C, B, Row1, D>>>
   for LiftUnitToSession<N, C, D, B, Row1>
 where
   B: Protocol,
@@ -47,12 +48,12 @@ where
   fn lift_field<A>(
     self,
     inject1: impl Fn(
-        App<Self::TargetF, A>,
-      ) -> AppSum<Row2, InternalSessionF<N, C, B, Row1, D>>
+        App<'static, Self::TargetF, A>,
+      ) -> AppSum<'static, Row2, InternalSessionF<N, C, B, Row1, D>>
       + Send
       + 'static,
-    _row: App<Self::SourceF, A>,
-  ) -> App<Self::InjectF, A>
+    _row: App<'static, Self::SourceF, A>,
+  ) -> App<'static, Self::InjectF, A>
   where
     A: Send + 'static,
   {
@@ -74,8 +75,9 @@ where
 {
   injector: Box<
     dyn FnOnce(
-        App<InternalSessionF<N, C, B, Row, Del>, A>,
-      ) -> AppSum<Row::Row, InternalSessionF<N, C, B, Row, Del>>
+        App<'static, InternalSessionF<N, C, B, Row, Del>, A>,
+      )
+        -> AppSum<'static, Row::Row, InternalSessionF<N, C, B, Row, Del>>
       + Send
       + 'static,
   >,
@@ -89,7 +91,7 @@ where
   fn inject_session(
     self: Box<Self>,
     session1: PartialSession<N::Target, B>,
-  ) -> AppSum<Row::Row, InternalSessionF<N, C, B, Row, Del>>
+  ) -> AppSum<'static, Row::Row, InternalSessionF<N, C, B, Row, Del>>
   where
     A: Protocol,
     B: Protocol,
@@ -97,6 +99,7 @@ where
     Del: Context,
     Row: ToRow,
     Row: Send + 'static,
+    Row::Row: Send + 'static,
     Row::Row: RowCon,
     N: ContextLens<C, InternalChoice<Row>, A, Deleted = Del>,
   {

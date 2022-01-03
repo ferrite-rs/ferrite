@@ -9,22 +9,20 @@ pub struct Identity<A>(pub A);
 
 impl TyCon for IdentityF {}
 
-impl<A> TypeApp<A> for IdentityF
-where
-  A: Send + 'static,
+impl<'a, A: 'a + Send> TypeApp<'a, A> for IdentityF
 {
   type Applied = Identity<A>;
 }
 
 impl Functor for IdentityF
 {
-  fn fmap<A, B>(
-    fa: App<IdentityF, A>,
+  fn fmap<'a, A, B>(
+    fa: App<'a, Self, A>,
     mapper: impl Fn(A) -> B,
-  ) -> App<IdentityF, B>
+  ) -> App<'a, Self, B>
   where
-    A: Send + 'static,
-    B: Send + 'static,
+    A: 'a + Send,
+    B: 'a + Send,
   {
     let Identity(a) = fa.get_applied();
 

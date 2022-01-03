@@ -25,8 +25,9 @@ where
   C: Context,
   A: Protocol,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
-  Row2: SumApp<ReceiverF>,
+  Row2: SumApp<'static, ReceiverF>,
   N: Prism<Row2, Elem = A>,
 {
   unsafe_create_session::<C, InternalChoice<Row1>, _, _>(

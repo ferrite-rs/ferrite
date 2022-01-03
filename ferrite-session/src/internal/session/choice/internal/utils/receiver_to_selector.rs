@@ -6,35 +6,38 @@ use crate::internal::{
     App,
     AppSum,
     Merge,
+    NaturalTransformation,
     SplitRow,
     SumFunctor,
   },
 };
 
-pub fn receiver_to_selector<Row>(
-  row1: AppSum<Row, ConsumerEndpointF>
-) -> (AppSum<Row, ConsumerEndpointF>, AppSum<Row, ()>)
+pub fn receiver_to_selector<Row: 'static>(
+  row1: AppSum<'static, Row, ConsumerEndpointF>
+) -> (AppSum<'static, Row, ConsumerEndpointF>, AppSum<Row, ()>)
 where
   Row: SplitRow,
   Row: SumFunctor,
 {
-  let row2 = lift_sum(
-    crate::natural_transformation! {
-      { } ;
-      ReceiverOnceToSelector :
-        forall x .
-          ConsumerEndpointF [@x] ->
-          Merge < ConsumerEndpointF, () > [@x]
-        ;
-      (receiver) => {
-        wrap_type_app ( (
-          receiver,
-          wrap_type_app( () )
-        ) )
-      }
-    },
-    row1,
-  );
+  struct ReceiverOnceToSelector;
+
+  impl
+    NaturalTransformation<
+      'static,
+      ConsumerEndpointF,
+      Merge<ConsumerEndpointF, ()>,
+    > for ReceiverOnceToSelector
+  {
+    fn lift<A: 'static>(
+      self,
+      receiver: App<ConsumerEndpointF, A>,
+    ) -> App<Merge<ConsumerEndpointF, ()>, A>
+    {
+      wrap_type_app((receiver, wrap_type_app(())))
+    }
+  }
+
+  let row2 = lift_sum(ReceiverOnceToSelector, row1);
 
   Row::split_row(row2)
 }

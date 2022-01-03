@@ -37,6 +37,7 @@ pub fn offer_choice<C, Row1, Row2, InjectSessionSum>(
 where
   C: Context,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
   Row2: ElimSum,
@@ -44,7 +45,7 @@ where
   Row2: SumFunctor,
   Row2: SumFunctorInject,
   // Row2: SumApp<SessionF<C>, Applied = SessionSum>,
-  Row2: FlattenSumApp<ContF<C>, FlattenApplied = InjectSessionSum>,
+  Row2: FlattenSumApp<'static, ContF<C>, FlattenApplied = InjectSessionSum>,
   InjectSessionSum: Send + 'static,
 {
   unsafe_create_session::<C, ExternalChoice<Row1>, _, _>(
@@ -87,14 +88,14 @@ pub struct ContF<C>(PhantomData<C>);
 
 impl<C: 'static> TyCon for ContF<C> {}
 
-impl<C: Context, A: 'static> TypeApp<A> for ContF<C>
+impl<'a, C: Context, A: 'static> TypeApp<'a, A> for ContF<C>
 {
   type Applied = ChoiceCont<C, A>;
 }
 
-fn provider_end_sum_to_cont_sum<C, Row>(
+fn provider_end_sum_to_cont_sum<C, Row: 'static>(
   ctx: C::Endpoints,
-  provider_end_sum: AppSum<Row, ProviderEndpointF>,
+  provider_end_sum: AppSum<'static, Row, ProviderEndpointF>,
 ) -> AppSum<Row, ContF<C>>
 where
   Row: SumFunctor,
@@ -105,15 +106,13 @@ where
     ctx: C::Endpoints,
   }
 
-  impl<C: Context> NaturalTransformation<ProviderEndpointF, ContF<C>>
+  impl<C: Context> NaturalTransformation<'static, ProviderEndpointF, ContF<C>>
     for ProviderEndToCont<C>
   {
-    fn lift<A>(
+    fn lift<A: 'static>(
       self,
-      provider_end: ProviderEndpoint<A>,
-    ) -> App<ContF<C>, A>
-    where
-      A: Send + 'static,
+      provider_end: App<'static, ProviderEndpointF, A>,
+    ) -> App<'static, ContF<C>, A>
     {
       wrap_type_app(ChoiceCont {
         ctx: self.ctx,

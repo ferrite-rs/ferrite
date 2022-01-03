@@ -28,6 +28,7 @@ where
   B: Protocol,
   Row2: RowCon,
   Row1: Send + 'static,
+  Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   N: ContextLens<C1, ExternalChoice<Row1>, B, Target = C2>,
   M: Prism<Row2, Elem = B>,
