@@ -15,6 +15,7 @@ use crate::internal::{
   functional::{
     wrap_sum_app,
     wrap_type_app,
+    AppSum,
     ElimSum,
     FlattenSumApp,
     IntersectSum,
@@ -30,7 +31,11 @@ use crate::internal::{
 
 pub fn case<N, C, D, B, Row1, Row2, SessionSum, InjectSessionSum>(
   _: N,
-  cont1: impl FnOnce(InjectSessionSum) -> SessionSum + Send + 'static,
+  cont1: impl FnOnce(
+      AppSum<'static, Row2, InjectSessionF<N, C, B, Row1, D>>,
+    ) -> SessionSum
+    + Send
+    + 'static,
 ) -> PartialSession<C, B>
 where
   B: Protocol,
@@ -67,9 +72,7 @@ where
 
     let cont3 = lift_unit_to_session(selector_sum);
 
-    let cont3a = Row2::flatten_sum(cont3);
-
-    let cont4 = wrap_sum_app(cont1(cont3a));
+    let cont4 = wrap_sum_app(cont1(cont3));
 
     let cont5 = Row2::intersect_sum(receiver_sum2, cont4);
 

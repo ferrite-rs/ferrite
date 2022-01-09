@@ -5,9 +5,6 @@ pub mod public;
 pub mod row;
 pub mod type_app;
 
-#[macro_use]
-pub mod macros;
-
 #[doc(inline)]
 pub use self::{
   base::{

@@ -1,4 +1,4 @@
-use std::convert::From;
+use core::convert::Into;
 
 use super::{
   structs::*,
@@ -9,11 +9,13 @@ use crate::internal::functional::{
   type_app::*,
 };
 
-pub fn extract<R, T>(row: R) -> T
+pub fn extract<'a, Row, F, T1, T2>(row: AppSum<'a, Row, F>) -> T2
 where
-  T: From<R>,
+  F: TyCon,
+  Row: FlattenSumApp<'a, F, FlattenApplied = T1>,
+  T1: Into<T2>,
 {
-  T::from(row)
+  Row::flatten_sum(row).into()
 }
 
 pub fn get_sum<'a, Row, F>(row: AppSum<'a, Row, F>) -> Row::Applied
