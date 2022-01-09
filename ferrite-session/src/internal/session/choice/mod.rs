@@ -10,7 +10,6 @@ pub use self::{
   internal::{
     case,
     offer_case,
-    InjectInternal,
   },
   run_cont::{
     run_cont,

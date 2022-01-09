@@ -34,7 +34,6 @@ pub use self::{
     offer_case,
     offer_choice,
     run_cont,
-    InjectInternal,
     RunCont,
   },
   context::{

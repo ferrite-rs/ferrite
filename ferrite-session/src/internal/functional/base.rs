@@ -43,3 +43,11 @@ where
     fa: App<'a, F1, A>,
   ) -> App<'a, F2, A>;
 }
+
+trait Life<'a> {}
+
+trait CovariantLife<'a>
+where
+  for<'b> Self: Life<'b>,
+{
+}

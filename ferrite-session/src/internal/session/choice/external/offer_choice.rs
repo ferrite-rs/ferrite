@@ -17,13 +17,9 @@ use crate::internal::{
     wrap_type_app,
     App,
     AppSum,
-    ElimSum,
     NaturalTransformation,
     RowCon,
-    SplitRow,
-    SumApp,
     SumFunctor,
-    SumFunctorInject,
     ToRow,
     TyCon,
     TypeApp,
@@ -45,11 +41,7 @@ where
   Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
   Row2: RowCon,
-  Row2: ElimSum,
-  Row2: SplitRow,
   Row2: SumFunctor,
-  Row2: SumFunctorInject,
-  Row2: for<'r> SumApp<'r, ContF<'r, Row1, C>>,
 {
   unsafe_create_session::<C, ExternalChoice<Row1>, _, _>(
     move |ctx, choice_receiver| async move {
