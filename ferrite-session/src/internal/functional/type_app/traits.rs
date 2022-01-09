@@ -2,7 +2,7 @@ pub trait TyCon: Sized {}
 
 pub trait TypeApp<'a, A>: TyCon
 {
-  type Applied: Sized + Send + 'a;
+  type Applied: Sized + Send;
 }
 
 pub trait HasTypeApp<'a, F, A>: Send

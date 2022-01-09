@@ -29,6 +29,7 @@ where
 pub fn wrap_type_app<'a, F, A>(applied: F::Applied) -> App<'a, F, A>
 where
   F: TypeApp<'a, A>,
+  F::Applied: 'a,
 {
   App {
     applied: Box::new(applied),

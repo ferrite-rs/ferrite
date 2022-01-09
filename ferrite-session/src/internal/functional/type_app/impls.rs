@@ -24,7 +24,7 @@ where
   }
 }
 
-impl<'a, F, X, T> serde::Deserialize<'a> for App<'a, F, X>
+impl<'a, F, X, T: 'a> serde::Deserialize<'a> for App<'a, F, X>
 where
   F: TypeApp<'a, X, Applied = T>,
   T: serde::Serialize + for<'de> serde::Deserialize<'de>,

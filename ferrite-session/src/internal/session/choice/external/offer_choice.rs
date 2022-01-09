@@ -1,6 +1,8 @@
-use core::marker::PhantomData;
-
-use tokio::task;
+use core::{
+  future::Future,
+  marker::PhantomData,
+  pin::Pin,
+};
 
 use crate::internal::{
   base::{
@@ -9,7 +11,6 @@ use crate::internal::{
     Context,
     PartialSession,
     Protocol,
-    ProviderEndpoint,
     ProviderEndpointF,
   },
   functional::{
@@ -17,10 +18,10 @@ use crate::internal::{
     App,
     AppSum,
     ElimSum,
-    FlattenSumApp,
     NaturalTransformation,
     RowCon,
     SplitRow,
+    SumApp,
     SumFunctor,
     SumFunctorInject,
     ToRow,
@@ -31,8 +32,12 @@ use crate::internal::{
   session::choice::run_cont::RunCont,
 };
 
-pub fn offer_choice<C, Row1, Row2, InjectSessionSum>(
-  cont1: impl FnOnce(InjectSessionSum) + Send + 'static
+pub fn offer_choice<C, Row1, Row2>(
+  cont1: impl for<'r> FnOnce(
+      AppSum<'r, Row2, ContF<'r, Row1, C>>,
+    ) -> ChoiceRet<'r, Row1, C>
+    + Send
+    + 'static
 ) -> PartialSession<C, ExternalChoice<Row1>>
 where
   C: Context,
@@ -44,61 +49,76 @@ where
   Row2: SplitRow,
   Row2: SumFunctor,
   Row2: SumFunctorInject,
-  // Row2: SumApp<SessionF<C>, Applied = SessionSum>,
-  Row2: FlattenSumApp<'static, ContF<C>, FlattenApplied = InjectSessionSum>,
-  InjectSessionSum: Send + 'static,
+  Row2: for<'r> SumApp<'r, ContF<'r, Row1, C>>,
 {
   unsafe_create_session::<C, ExternalChoice<Row1>, _, _>(
     move |ctx, choice_receiver| async move {
       let provider_end_sum = choice_receiver.recv().await.unwrap();
 
       let cont_sum_1 =
-        provider_end_sum_to_cont_sum::<C, Row2>(ctx, provider_end_sum);
+        provider_end_sum_to_cont_sum::<C, Row1, Row2>(ctx, provider_end_sum);
 
-      let cont_sum_2 = Row2::flatten_sum(cont_sum_1);
-
-      cont1(cont_sum_2)
+      let res = cont1(cont_sum_1);
+      res.future.await;
     },
   )
 }
 
-impl<C: Context, A: Protocol> RunCont<C, A> for ChoiceCont<C, A>
+pub struct ChoiceRet<'r, Row, C>
 {
-  type Ret = ();
+  future: Pin<Box<dyn Future<Output = ()> + Send + 'r>>,
+  phantom: PhantomData<(Box<dyn Invariant<'r>>, C, Row)>,
+}
+
+impl<'r, Row: 'r, C: Context, A: Protocol> RunCont<C, A>
+  for ChoiceCont<'r, Row, C, A>
+where
+  Row: Send,
+{
+  type Ret = ChoiceRet<'r, Row, C>;
 
   fn run_cont(
     self,
     session: PartialSession<C, A>,
-  )
+  ) -> Self::Ret
   {
-    task::spawn(async move {
-      unsafe_run_session(session, self.ctx, self.provider_end.get_applied())
-        .await;
-    });
+    ChoiceRet {
+      future: Box::pin(async move {
+        unsafe_run_session(session, self.ctx, self.provider_end.get_applied())
+          .await;
+      }),
+      phantom: PhantomData,
+    }
   }
 }
 
-pub struct ChoiceCont<C: Context, A>
+pub trait Invariant<'r>: Send {}
+
+pub struct ChoiceCont<'r, Row, C: Context, A>
 {
   ctx: C::Endpoints,
-  provider_end: ProviderEndpoint<A>,
+  provider_end: App<'r, ProviderEndpointF, A>,
+  phantom: PhantomData<(Box<dyn Invariant<'r>>, Row)>,
 }
 
-pub struct ContF<C>(PhantomData<C>);
+pub struct ContF<'r, Row, C>(PhantomData<&'r (Row, C)>);
 
-impl<C: 'static> TyCon for ContF<C> {}
+impl<'r, Row, C: 'static> TyCon for ContF<'r, Row, C> {}
 
-impl<'a, C: Context, A: 'static> TypeApp<'a, A> for ContF<C>
-{
-  type Applied = ChoiceCont<C, A>;
-}
-
-fn provider_end_sum_to_cont_sum<C, Row: 'static>(
-  ctx: C::Endpoints,
-  provider_end_sum: AppSum<'static, Row, ProviderEndpointF>,
-) -> AppSum<Row, ContF<C>>
+impl<'r, 'a, Row, C: Context, A: 'r> TypeApp<'a, A> for ContF<'r, Row, C>
 where
-  Row: SumFunctor,
+  Row: Send,
+{
+  type Applied = ChoiceCont<'r, Row, C, A>;
+}
+
+fn provider_end_sum_to_cont_sum<C, Row1: 'static, Row2: 'static>(
+  ctx: C::Endpoints,
+  provider_end_sum: AppSum<'static, Row2, ProviderEndpointF>,
+) -> AppSum<Row2, ContF<'static, Row1, C>>
+where
+  Row1: Send,
+  Row2: SumFunctor,
   C: Context,
 {
   struct ProviderEndToCont<C: Context>
@@ -106,20 +126,22 @@ where
     ctx: C::Endpoints,
   }
 
-  impl<C: Context> NaturalTransformation<'static, ProviderEndpointF, ContF<C>>
+  impl<'r, Row: Send, C: Context>
+    NaturalTransformation<'r, ProviderEndpointF, ContF<'r, Row, C>>
     for ProviderEndToCont<C>
   {
-    fn lift<A: 'static>(
+    fn lift<A: 'r>(
       self,
-      provider_end: App<'static, ProviderEndpointF, A>,
-    ) -> App<'static, ContF<C>, A>
+      provider_end: App<'r, ProviderEndpointF, A>,
+    ) -> App<'r, ContF<'r, Row, C>, A>
     {
       wrap_type_app(ChoiceCont {
         ctx: self.ctx,
         provider_end,
+        phantom: PhantomData,
       })
     }
   }
 
-  Row::lift_sum(ProviderEndToCont { ctx }, provider_end_sum)
+  Row2::lift_sum(ProviderEndToCont { ctx }, provider_end_sum)
 }
