@@ -4,6 +4,8 @@ use core::{
   pin::Pin,
 };
 
+use tokio::task;
+
 use crate::internal::{
   base::{
     unsafe_create_session,
@@ -51,7 +53,10 @@ where
         provider_end_sum_to_cont_sum::<C, Row1, Row2>(ctx, provider_end_sum);
 
       let res = cont1(cont_sum_1);
-      res.future.await;
+
+      task::spawn(async move {
+        res.future.await;
+      });
     },
   )
 }

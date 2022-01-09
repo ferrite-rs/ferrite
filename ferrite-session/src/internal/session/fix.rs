@@ -1,3 +1,5 @@
+use tokio::task;
+
 use crate::internal::{
   base::*,
   functional::wrap_type_app,
@@ -21,7 +23,9 @@ where
     };
     sender1.send(rec_end).unwrap();
 
-    unsafe_run_session(cont, ctx, provider_end_a).await;
+    task::spawn(async move {
+      unsafe_run_session(cont, ctx, provider_end_a).await;
+    });
   })
 }
 
@@ -50,6 +54,8 @@ where
 
     let ctx3 = N::insert_target(wrap_type_app(consumer_end), ctx2);
 
-    unsafe_run_session(cont, ctx3, provider_end).await;
+    task::spawn(async move {
+      unsafe_run_session(cont, ctx3, provider_end).await;
+    });
   })
 }
