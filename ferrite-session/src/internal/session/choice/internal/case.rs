@@ -8,7 +8,7 @@ use crate::internal::{
   base::{
     unsafe_create_session,
     unsafe_run_session,
-    ConsumerEndpointF,
+    ClientEndpointF,
     Context,
     ContextLens,
     Empty,
@@ -53,14 +53,14 @@ where
 
     let ctx3 = N::insert_target((), ctx2);
 
-    let consumer_end_sum_receiver = endpoint.get_applied();
+    let client_end_sum_receiver = endpoint.get_applied();
 
-    let consumer_end_sum = consumer_end_sum_receiver.recv().await.unwrap();
+    let client_end_sum = client_end_sum_receiver.recv().await.unwrap();
 
-    let cont_sum = consumer_end_sum_to_cont_sum::<N, C2, B, Row2>(
+    let cont_sum = client_end_sum_to_cont_sum::<N, C2, B, Row2>(
       ctx3,
       wrap_type_app(provider_end),
-      consumer_end_sum,
+      client_end_sum,
     );
 
     let res = cont1(cont_sum);
@@ -78,7 +78,7 @@ where
 {
   ctx: C::Endpoints,
   provider_end: App<'static, ProviderEndpointF, B>,
-  consumer_end: App<'r, ConsumerEndpointF, A>,
+  client_end: App<'r, ClientEndpointF, A>,
   phantom: PhantomData<(Box<dyn Invariant<'r>>, N, C)>,
 }
 
@@ -116,9 +116,9 @@ where
     ChoiceRet {
       future: Box::pin(async move {
         let ((), ctx1) = N::extract_source(self.ctx);
-        let consumer_end = self.consumer_end.get_applied();
+        let client_end = self.client_end.get_applied();
 
-        let ctx2 = N::insert_target(wrap_type_app(consumer_end), ctx1);
+        let ctx2 = N::insert_target(wrap_type_app(client_end), ctx1);
         unsafe_run_session(session, ctx2, self.provider_end.get_applied())
           .await;
       }),
@@ -127,10 +127,10 @@ where
   }
 }
 
-fn consumer_end_sum_to_cont_sum<N, C, B, Row>(
+fn client_end_sum_to_cont_sum<N, C, B, Row>(
   ctx: C::Endpoints,
   provider_end: App<'static, ProviderEndpointF, B>,
-  consumer_end_sum: AppSum<'static, Row, ConsumerEndpointF>,
+  client_end_sum: AppSum<'static, Row, ClientEndpointF>,
 ) -> AppSum<'static, Row, ContF<'static, N, C, B>>
 where
   C: Context,
@@ -144,7 +144,7 @@ where
   }
 
   impl<'r, N, C, B>
-    NaturalTransformation<'r, ConsumerEndpointF, ContF<'r, N, C, B>>
+    NaturalTransformation<'r, ClientEndpointF, ContF<'r, N, C, B>>
     for Trans<C, B>
   where
     C: Context,
@@ -152,17 +152,17 @@ where
   {
     fn lift<A: 'r>(
       self,
-      consumer_end: App<'r, ConsumerEndpointF, A>,
+      client_end: App<'r, ClientEndpointF, A>,
     ) -> App<'r, ContF<'r, N, C, B>, A>
     {
       wrap_type_app(ChoiceCont {
         ctx: self.ctx,
         provider_end: self.provider_end,
-        consumer_end,
+        client_end,
         phantom: PhantomData,
       })
     }
   }
 
-  Row::lift_sum(Trans { ctx, provider_end }, consumer_end_sum)
+  Row::lift_sum(Trans { ctx, provider_end }, client_end_sum)
 }

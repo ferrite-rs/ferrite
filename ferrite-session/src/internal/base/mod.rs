@@ -34,8 +34,8 @@ pub use self::{
     Slot,
   },
   protocol::{
-    ConsumerEndpoint,
-    ConsumerEndpointF,
+    ClientEndpoint,
+    ClientEndpointF,
     Protocol,
     ProviderEndpoint,
     ProviderEndpointF,

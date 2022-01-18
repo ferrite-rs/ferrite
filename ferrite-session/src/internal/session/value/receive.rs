@@ -47,11 +47,11 @@ where
   unsafe_create_session(move |ctx1, provider_end_a| async move {
     let (endpoint, ctx2) = N::extract_source(ctx1);
 
-    let (provider_end_b, consumer_end_b) = B::create_endpoints();
+    let (provider_end_b, client_end_b) = B::create_endpoints();
 
     let sender1 = endpoint.get_applied();
 
-    let ctx3 = N::insert_target(wrap_type_app(consumer_end_b), ctx2);
+    let ctx3 = N::insert_target(wrap_type_app(client_end_b), ctx2);
 
     sender1.send((Value(val), provider_end_b)).unwrap();
 

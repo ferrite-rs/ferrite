@@ -36,11 +36,11 @@ where
     move |ctx1, (chan_sender, provider_end)| async move {
       let (endpoint, ctx2) = N::extract_source(ctx1);
 
-      let consumer_end = endpoint.get_applied();
+      let client_end = endpoint.get_applied();
 
       let ctx3 = N::insert_target((), ctx2);
 
-      chan_sender.send(consumer_end).unwrap();
+      chan_sender.send(client_end).unwrap();
 
       unsafe_run_session(cont, ctx3, provider_end).await;
     },
@@ -66,15 +66,15 @@ where
   unsafe_create_session(move |ctx1, provider_end| async move {
     let (endpoint, ctx2) = N::extract_source(ctx1);
 
-    let (chan_receiver, consumer_end2) = endpoint.get_applied();
+    let (chan_receiver, client_end2) = endpoint.get_applied();
 
-    let consumer_end1 = chan_receiver.recv().await.unwrap();
+    let client_end1 = chan_receiver.recv().await.unwrap();
 
-    let ctx3 = N::insert_target(wrap_type_app(consumer_end2), ctx2);
+    let ctx3 = N::insert_target(wrap_type_app(client_end2), ctx2);
 
     let ctx4 = <N::Target as AppendContext<(A1, ())>>::append_context(
       ctx3,
-      (wrap_type_app(consumer_end1), ()),
+      (wrap_type_app(client_end1), ()),
     );
 
     unsafe_run_session(cont2, ctx4, provider_end).await;
@@ -108,13 +108,13 @@ where
     move |ctx, (chan_sender, provider_end_b)| async move {
       let (ctx1, ctx2) = C1::split_context(ctx);
 
-      let (provider_end_a, consumer_end_a) = A::create_endpoints();
+      let (provider_end_a, client_end_a) = A::create_endpoints();
 
       let child1 = task::spawn(async move {
         unsafe_run_session(cont1, ctx1, provider_end_a).await;
       });
 
-      chan_sender.send(consumer_end_a).unwrap();
+      chan_sender.send(client_end_a).unwrap();
 
       let child2 = task::spawn(async move {
         unsafe_run_session(cont2, ctx2, provider_end_b).await;

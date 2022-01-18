@@ -17,22 +17,21 @@ where
   Row2: Send + 'static,
   Row1: ToRow<Row = Row2>,
 {
-  type ConsumerEndpoint =
-    ReceiverOnce<AppSum<'static, Row2, ConsumerEndpointF>>;
-  type ProviderEndpoint = SenderOnce<AppSum<'static, Row2, ConsumerEndpointF>>;
+  type ClientEndpoint = ReceiverOnce<AppSum<'static, Row2, ClientEndpointF>>;
+  type ProviderEndpoint = SenderOnce<AppSum<'static, Row2, ClientEndpointF>>;
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {
     once_channel()
   }
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
+    client_end: Self::ClientEndpoint,
     provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
     Box::pin(async {
-      let endpoint = consumer_end.recv().await.unwrap();
+      let endpoint = client_end.recv().await.unwrap();
       provider_end.send(endpoint).unwrap();
     })
   }

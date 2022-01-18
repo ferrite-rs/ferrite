@@ -30,12 +30,12 @@ use crate::internal::{
 pub trait Protocol: Send + 'static
 {
   type ProviderEndpoint: Send + 'static;
-  type ConsumerEndpoint: Send + 'static;
+  type ClientEndpoint: Send + 'static;
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint);
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint);
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
+    client_end: Self::ClientEndpoint,
     provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>;
 }
@@ -46,37 +46,37 @@ pub trait ProtocolRow: RowCon
 {
   fn create_row_endpoints() -> (
     AppSum<'static, Self, ProviderEndpointF>,
-    AppSum<'static, Self, ConsumerEndpointF>,
+    AppSum<'static, Self, ClientEndpointF>,
   );
 }
 
 pub struct ProviderEndpointF;
 
-pub struct ConsumerEndpointF;
+pub struct ClientEndpointF;
 
 pub type ProviderEndpoint<A> = App<'static, ProviderEndpointF, A>;
 
-pub type ConsumerEndpoint<A> = App<'static, ConsumerEndpointF, A>;
+pub type ClientEndpoint<A> = App<'static, ClientEndpointF, A>;
 
 impl TyCon for ProviderEndpointF {}
 
-impl TyCon for ConsumerEndpointF {}
+impl TyCon for ClientEndpointF {}
 
 impl<'a, A: Protocol> TypeApp<'a, A> for ProviderEndpointF
 {
   type Applied = A::ProviderEndpoint;
 }
 
-impl<'a, A: Protocol> TypeApp<'a, A> for ConsumerEndpointF
+impl<'a, A: Protocol> TypeApp<'a, A> for ClientEndpointF
 {
-  type Applied = A::ConsumerEndpoint;
+  type Applied = A::ClientEndpoint;
 }
 
 pub trait HasRecEndpoint<F, C>: Send + 'static
 {
   fn get_applied(
     self: Box<Self>
-  ) -> Box<<F::Applied as Protocol>::ConsumerEndpoint>
+  ) -> Box<<F::Applied as Protocol>::ClientEndpoint>
   where
     F: RecApp<C>,
     F::Applied: Protocol;
@@ -86,7 +86,7 @@ impl<F, C, E> HasRecEndpoint<F, C> for E
 where
   E: Send + 'static,
   F: RecApp<C>,
-  F::Applied: Protocol<ConsumerEndpoint = E>,
+  F::Applied: Protocol<ClientEndpoint = E>,
 {
   fn get_applied(self: Box<Self>) -> Box<Self>
   {
@@ -105,21 +105,21 @@ where
   F: Protocol,
   F: RecApp<(RecX<C, F>, C)>,
 {
-  type ConsumerEndpoint = ReceiverOnce<RecEndpoint<F, (RecX<C, F>, C)>>;
+  type ClientEndpoint = ReceiverOnce<RecEndpoint<F, (RecX<C, F>, C)>>;
   type ProviderEndpoint = SenderOnce<RecEndpoint<F, (RecX<C, F>, C)>>;
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {
     once_channel()
   }
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
+    client_end: Self::ClientEndpoint,
     provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
     Box::pin(async {
-      let endpoint = consumer_end.recv().await.unwrap();
+      let endpoint = client_end.recv().await.unwrap();
       provider_end.send(endpoint).unwrap();
     })
   }
@@ -127,16 +127,16 @@ where
 
 impl Protocol for Release
 {
-  type ConsumerEndpoint = ();
+  type ClientEndpoint = ();
   type ProviderEndpoint = ();
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {
     ((), ())
   }
 
   fn forward(
-    _consumer_end: Self::ConsumerEndpoint,
+    _client_end: Self::ClientEndpoint,
     _provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
@@ -146,16 +146,16 @@ impl Protocol for Release
 
 impl Protocol for Z
 {
-  type ConsumerEndpoint = ();
+  type ClientEndpoint = ();
   type ProviderEndpoint = ();
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {
     ((), ())
   }
 
   fn forward(
-    _consumer_end: Self::ConsumerEndpoint,
+    _client_end: Self::ClientEndpoint,
     _provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
@@ -167,16 +167,16 @@ impl<N> Protocol for S<N>
 where
   N: Protocol,
 {
-  type ConsumerEndpoint = ();
+  type ClientEndpoint = ();
   type ProviderEndpoint = ();
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {
     ((), ())
   }
 
   fn forward(
-    _consumer_end: Self::ConsumerEndpoint,
+    _client_end: Self::ClientEndpoint,
     _provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {

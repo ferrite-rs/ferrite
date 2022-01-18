@@ -204,9 +204,9 @@ where
   unsafe_create_session(move |ctx, sender1| async move {
     let (ctx1, ctx2) = X::split_endpoints(ctx);
 
-    let (provider_end_a, consumer_end_a) = A::create_endpoints();
+    let (provider_end_a, client_end_a) = A::create_endpoints();
 
-    let ctx3 = C2::append_context(ctx2, (wrap_type_app(consumer_end_a), ()));
+    let ctx3 = C2::append_context(ctx2, (wrap_type_app(client_end_a), ()));
 
     let child1 = task::spawn(async move {
       unsafe_run_session(cont3, ctx3, sender1).await;
@@ -245,11 +245,11 @@ where
   unsafe_create_session(move |ctx1, b_sender| async move {
     let (ctx2, ctx3) = <C1 as AppendContext<C2>>::split_context(ctx1);
 
-    let (provider_end_a, consumer_end_a) = A::create_endpoints();
+    let (provider_end_a, client_end_a) = A::create_endpoints();
 
     let ctx4 = <C1 as AppendContext<(A, ())>>::append_context(
       ctx2,
-      (wrap_type_app(consumer_end_a), ()),
+      (wrap_type_app(client_end_a), ()),
     );
 
     let child1 = task::spawn(async {

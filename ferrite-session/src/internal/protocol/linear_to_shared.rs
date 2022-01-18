@@ -3,7 +3,7 @@ use crate::internal::base::*;
 
 pub trait HasSharedRecApp<F, A>: Send + 'static
 {
-  fn get_applied(self: Box<Self>) -> <F::Applied as Protocol>::ConsumerEndpoint
+  fn get_applied(self: Box<Self>) -> <F::Applied as Protocol>::ClientEndpoint
   where
     F: SharedRecApp<A>,
     F::Applied: Protocol;
@@ -14,11 +14,10 @@ where
   F: 'static,
   A: 'static,
   E: Send + 'static,
-  FA: Protocol<ConsumerEndpoint = E>,
+  FA: Protocol<ClientEndpoint = E>,
   F: SharedRecApp<A, Applied = FA>,
 {
-  fn get_applied(self: Box<Self>)
-    -> <F::Applied as Protocol>::ConsumerEndpoint
+  fn get_applied(self: Box<Self>) -> <F::Applied as Protocol>::ClientEndpoint
   {
     *self
   }
@@ -42,7 +41,7 @@ impl<F, T, E> ForwardChannel for LinearToShared<F>
 where
   F: SharedRecApp<SharedToLinear<LinearToShared<F>>, Applied = T>,
   F: Send + 'static,
-  T: Protocol<ConsumerEndpoint = E>,
+  T: Protocol<ClientEndpoint = E>,
   E: ForwardChannel,
 {
   fn forward_to(

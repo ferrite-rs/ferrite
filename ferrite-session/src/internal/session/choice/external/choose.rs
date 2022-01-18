@@ -38,13 +38,13 @@ where
 
     let choice_sender = endpoint.get_applied();
 
-    let (provider_end_b, consumer_end_b) = B::create_endpoints();
+    let (provider_end_b, client_end_b) = B::create_endpoints();
 
     let provider_end_sum = M::inject_elem(wrap_type_app(provider_end_b));
 
     choice_sender.send(provider_end_sum).unwrap();
 
-    let ctx3 = N::insert_target(wrap_type_app(consumer_end_b), ctx2);
+    let ctx3 = N::insert_target(wrap_type_app(client_end_b), ctx2);
 
     unsafe_run_session(cont, ctx3, provider_end).await;
   })

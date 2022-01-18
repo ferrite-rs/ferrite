@@ -13,32 +13,31 @@ where
   A: Protocol,
   B: Protocol,
 {
-  type ConsumerEndpoint =
-    (SenderOnce<A::ConsumerEndpoint>, B::ConsumerEndpoint);
+  type ClientEndpoint = (SenderOnce<A::ClientEndpoint>, B::ClientEndpoint);
   type ProviderEndpoint =
-    (ReceiverOnce<A::ConsumerEndpoint>, B::ProviderEndpoint);
+    (ReceiverOnce<A::ClientEndpoint>, B::ProviderEndpoint);
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {
     let (chan_sender, chan_receiver) = once_channel();
-    let (provider_end, consumer_end) = B::create_endpoints();
+    let (provider_end, client_end) = B::create_endpoints();
 
-    ((chan_receiver, provider_end), (chan_sender, consumer_end))
+    ((chan_receiver, provider_end), (chan_sender, client_end))
   }
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
+    client_end: Self::ClientEndpoint,
     provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
-    let (chan_sender, consumer_end_b) = consumer_end;
+    let (chan_sender, client_end_b) = client_end;
     let (chan_receiver, provider_end_b) = provider_end;
 
     Box::pin(async {
       let chan = chan_receiver.recv().await.unwrap();
       chan_sender.send(chan).unwrap();
 
-      B::forward(consumer_end_b, provider_end_b).await;
+      B::forward(client_end_b, provider_end_b).await;
     })
   }
 }

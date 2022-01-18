@@ -31,9 +31,9 @@ where
 
   unsafe_create_session::<C1, ReceiveChannel<A, B>, _, _>(
     move |ctx1, (chan_receiver, provider_end)| async move {
-      let consumer_end = chan_receiver.recv().await.unwrap();
+      let client_end = chan_receiver.recv().await.unwrap();
 
-      let ctx2 = C1::append_context(ctx1, (wrap_type_app(consumer_end), ()));
+      let ctx2 = C1::append_context(ctx1, (wrap_type_app(client_end), ()));
 
       unsafe_run_session(cont2, ctx2, provider_end).await;
     },
@@ -56,17 +56,17 @@ where
   M: ContextLens<C1, A1, Empty, Target = C2>,
 {
   unsafe_create_session(move |ctx1, provider_end_b| async move {
-    let (consumer_end_1, ctx2) = M::extract_source(ctx1);
+    let (client_end_1, ctx2) = M::extract_source(ctx1);
 
     let ctx3 = M::insert_target((), ctx2);
 
     let (endpoint, ctx4) = N::extract_source(ctx3);
 
-    let (chan_sender, consumer_end_2) = endpoint.get_applied();
+    let (chan_sender, client_end_2) = endpoint.get_applied();
 
-    chan_sender.send(consumer_end_1.get_applied()).unwrap();
+    chan_sender.send(client_end_1.get_applied()).unwrap();
 
-    let ctx5 = N::insert_target(wrap_type_app(consumer_end_2), ctx4);
+    let ctx5 = N::insert_target(wrap_type_app(client_end_2), ctx4);
 
     unsafe_run_session(cont, ctx5, provider_end_b).await;
   })

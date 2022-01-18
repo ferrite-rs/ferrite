@@ -25,17 +25,16 @@ where
       SenderOnce<()>,
       SenderOnce<LinearToShared<F>>,
     )>| async move {
-      let (lock_producer_end, lock_consumer_end) =
-        <Lock<F>>::create_endpoints();
+      let (lock_producer_end, lock_client_end) = <Lock<F>>::create_endpoints();
 
-      let (producer_end, consumer_end) = F::Applied::create_endpoints();
+      let (producer_end, client_end) = F::Applied::create_endpoints();
 
       let m_sender1 = receiver1.recv().await;
 
       if let Some((sender5, sender6)) = m_sender1 {
         sender6
           .send(LinearToShared {
-            linear: Box::new(consumer_end),
+            linear: Box::new(client_end),
           })
           .unwrap();
 
@@ -47,7 +46,7 @@ where
 
         unsafe_run_session(
           cont,
-          (wrap_type_app(lock_consumer_end), ()),
+          (wrap_type_app(lock_client_end), ()),
           producer_end,
         )
         .await;
@@ -71,10 +70,10 @@ where
   C: EmptyContext,
 {
   unsafe_create_session::<(Lock<F>, C), SharedToLinear<LinearToShared<F>>, _, _>(
-    move |(lock_consumer_end, _), receiver| async move {
+    move |(lock_client_end, _), receiver| async move {
       debug!("[detach_shared_session] receiving sender2");
 
-      let lock_receiver = lock_consumer_end.get_applied();
+      let lock_receiver = lock_client_end.get_applied();
 
       let Lock { unlock: receiver2 } = lock_receiver.recv().await.unwrap();
 
@@ -109,19 +108,19 @@ where
   let (receiver3, receiver4) = unsafe_receive_shared_channel(shared);
 
   task::spawn(async move {
-    let (provider_end_1, consumer_end_1) = End::create_endpoints();
+    let (provider_end_1, client_end_1) = End::create_endpoints();
 
     let LinearToShared { linear } = receiver4.recv().await.unwrap();
 
-    let consumer_end_2 = linear.get_applied();
+    let client_end_2 = linear.get_applied();
 
     let cont2 = cont1(Z);
 
-    let ctx = (wrap_type_app(consumer_end_2), ());
+    let ctx = (wrap_type_app(client_end_2), ());
 
     unsafe_run_session(cont2, ctx, provider_end_1).await;
 
-    consumer_end_1.recv().await.unwrap();
+    client_end_1.recv().await.unwrap();
 
     receiver3.recv().await.unwrap();
   })
@@ -144,22 +143,22 @@ where
   let (receiver3, receiver4) = unsafe_receive_shared_channel(shared);
 
   task::spawn(async move {
-    let (provider_end_1, consumer_end_1) =
+    let (provider_end_1, client_end_1) =
       <SendValue<T, End>>::create_endpoints();
 
     let LinearToShared { linear } = receiver4.recv().await.unwrap();
 
-    let consumer_end_2 = linear.get_applied();
+    let client_end_2 = linear.get_applied();
 
     let cont2 = cont1(Z);
 
-    let ctx = (wrap_type_app(consumer_end_2), ());
+    let ctx = (wrap_type_app(client_end_2), ());
 
     unsafe_run_session(cont2, ctx, provider_end_1).await;
 
     receiver3.recv().await.unwrap();
 
-    let (Value(val), end_receiver) = consumer_end_1.recv().await.unwrap();
+    let (Value(val), end_receiver) = client_end_1.recv().await.unwrap();
 
     end_receiver.recv().await.unwrap();
 
@@ -194,9 +193,9 @@ where
 
     let LinearToShared { linear } = receiver4.recv().await.unwrap();
 
-    let consumer_end_2 = linear.get_applied();
+    let client_end_2 = linear.get_applied();
 
-    let ctx2 = C1::append_context(ctx1, (wrap_type_app(consumer_end_2), ()));
+    let ctx2 = C1::append_context(ctx1, (wrap_type_app(client_end_2), ()));
 
     unsafe_run_session(cont2, ctx2, provider_end_1).await;
   })
@@ -237,8 +236,8 @@ where
   C: EmptyContext,
 {
   unsafe_create_session::<(Lock<A1>, C), SharedToLinear<LinearToShared<A1>>, _, _>(
-    move |(lock_consumer_end, _), receiver1| async move {
-      let lock_receiver = lock_consumer_end.get_applied();
+    move |(lock_client_end, _), receiver1| async move {
+      let lock_receiver = lock_client_end.get_applied();
 
       let Lock { unlock } = lock_receiver.recv().await.unwrap();
 

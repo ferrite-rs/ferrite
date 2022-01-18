@@ -2,7 +2,7 @@ use crate::internal::{
   base::{
     unsafe_create_session,
     unsafe_run_session,
-    ConsumerEndpointF,
+    ClientEndpointF,
     Context,
     PartialSession,
     Protocol,
@@ -30,13 +30,13 @@ where
   N: Prism<Row2, Elem = A>,
 {
   unsafe_create_session::<C, InternalChoice<Row1>, _, _>(
-    move |ctx, consumer_end_sum_sender| async move {
-      let (provider_end, consumer_end) = A::create_endpoints();
+    move |ctx, client_end_sum_sender| async move {
+      let (provider_end, client_end) = A::create_endpoints();
 
-      let consumer_end_sum =
-        N::inject_elem(wrap_type_app::<ConsumerEndpointF, A>(consumer_end));
+      let client_end_sum =
+        N::inject_elem(wrap_type_app::<ClientEndpointF, A>(client_end));
 
-      consumer_end_sum_sender.send(consumer_end_sum).unwrap();
+      client_end_sum_sender.send(client_end_sum).unwrap();
 
       unsafe_run_session(cont, ctx, provider_end).await;
     },

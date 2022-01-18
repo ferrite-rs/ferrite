@@ -16,10 +16,10 @@ where
   F: RecApp<(RecX<R, F>, R), Applied = A>,
 {
   unsafe_create_session::<C, RecX<R, F>, _, _>(move |ctx, sender1| async move {
-    let (provider_end_a, consumer_end_a) = A::create_endpoints();
+    let (provider_end_a, client_end_a) = A::create_endpoints();
 
     let rec_end = RecEndpoint {
-      applied: Box::new(consumer_end_a),
+      applied: Box::new(client_end_a),
     };
     sender1.send(rec_end).unwrap();
 
@@ -50,9 +50,9 @@ where
 
     let rec_end = receiver1.recv().await.unwrap();
 
-    let consumer_end = *rec_end.applied.get_applied();
+    let client_end = *rec_end.applied.get_applied();
 
-    let ctx3 = N::insert_target(wrap_type_app(consumer_end), ctx2);
+    let ctx3 = N::insert_target(wrap_type_app(client_end), ctx2);
 
     task::spawn(async move {
       unsafe_run_session(cont, ctx3, provider_end).await;

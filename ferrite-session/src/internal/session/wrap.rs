@@ -14,11 +14,11 @@ where
   T::Unwrap: Protocol,
 {
   unsafe_create_session::<C, Wrap<T>, _, _>(move |ctx, sender1| async move {
-    let (provider_end, consumer_end) = T::Unwrap::create_endpoints();
+    let (provider_end, client_end) = T::Unwrap::create_endpoints();
 
     sender1
       .send(Wrap {
-        unwrap: Box::new(consumer_end),
+        unwrap: Box::new(client_end),
       })
       .unwrap();
 

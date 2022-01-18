@@ -14,23 +14,23 @@ where
   F: Send + 'static,
   F: SharedRecApp<SharedToLinear<LinearToShared<F>>>,
 {
-  type ConsumerEndpoint = SenderOnce<()>;
+  type ClientEndpoint = SenderOnce<()>;
   type ProviderEndpoint = ReceiverOnce<()>;
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {
     let (sender, receiver) = once_channel();
     (receiver, sender)
   }
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
+    client_end: Self::ClientEndpoint,
     provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
     Box::pin(async {
       let payload = provider_end.recv().await.unwrap();
-      consumer_end.send(payload).unwrap();
+      client_end.send(payload).unwrap();
     })
   }
 }

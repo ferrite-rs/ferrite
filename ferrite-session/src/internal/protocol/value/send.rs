@@ -13,21 +13,21 @@ where
   T: Send + 'static,
   A: Protocol,
 {
-  type ConsumerEndpoint = ReceiverOnce<(Value<T>, A::ConsumerEndpoint)>;
-  type ProviderEndpoint = SenderOnce<(Value<T>, A::ConsumerEndpoint)>;
+  type ClientEndpoint = ReceiverOnce<(Value<T>, A::ClientEndpoint)>;
+  type ProviderEndpoint = SenderOnce<(Value<T>, A::ClientEndpoint)>;
 
-  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ConsumerEndpoint)
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {
     once_channel()
   }
 
   fn forward(
-    consumer_end: Self::ConsumerEndpoint,
+    client_end: Self::ClientEndpoint,
     provider_end: Self::ProviderEndpoint,
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
   {
     Box::pin(async {
-      let payload = consumer_end.recv().await.unwrap();
+      let payload = client_end.recv().await.unwrap();
       provider_end.send(payload).unwrap();
     })
   }

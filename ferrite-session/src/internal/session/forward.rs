@@ -16,7 +16,7 @@ where
   N: ContextLens<C, A, Empty>,
 {
   unsafe_create_session::<C, A, _, _>(move |ctx, provider_end| async move {
-    let (consumer_end, _) = N::extract_source(ctx);
-    A::forward(consumer_end.get_applied(), provider_end).await;
+    let (client_end, _) = N::extract_source(ctx);
+    A::forward(client_end.get_applied(), provider_end).await;
   })
 }

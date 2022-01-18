@@ -23,8 +23,8 @@ where
 {
   unsafe_create_session::<C, SendValue<T, A>, _, _>(
     move |ctx, sender1| async move {
-      let (provider_end, consumer_end) = A::create_endpoints();
-      sender1.send((Value(val), consumer_end)).unwrap();
+      let (provider_end, client_end) = A::create_endpoints();
+      sender1.send((Value(val), client_end)).unwrap();
 
       unsafe_run_session(cont, ctx, provider_end).await;
     },
@@ -48,9 +48,9 @@ where
 
     let receiver = endpoint.get_applied();
 
-    let (Value(val), consumer_end) = receiver.recv().await.unwrap();
+    let (Value(val), client_end) = receiver.recv().await.unwrap();
 
-    let ctx3 = N::insert_target(wrap_type_app(consumer_end), ctx2);
+    let ctx3 = N::insert_target(wrap_type_app(client_end), ctx2);
 
     let cont2 = cont(val);
 
