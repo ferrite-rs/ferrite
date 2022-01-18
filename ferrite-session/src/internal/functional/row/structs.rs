@@ -28,10 +28,6 @@ pub struct ChoiceSelector<N>
   phantom: PhantomData<N>,
 }
 
-pub struct Merge<T1, T2>(PhantomData<(T1, T2)>);
-
-pub struct ElimConst {}
-
 impl<'a, Row, F> AppSum<'a, Row, F>
 where
   F: TyCon,

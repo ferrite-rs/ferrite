@@ -59,16 +59,7 @@ where
 
 impl TyCon for () {}
 
-impl<X> TyCon for Const<X> {}
-
 impl<'a, A> TypeApp<'a, A> for ()
 {
   type Applied = ();
-}
-
-impl<'a, X: 'a, A> TypeApp<'a, A> for Const<X>
-where
-  X: Send,
-{
-  type Applied = X;
 }

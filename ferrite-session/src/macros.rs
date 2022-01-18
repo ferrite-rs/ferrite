@@ -32,7 +32,7 @@ macro_rules! HList {
 #[macro_export]
 macro_rules! match_choice_value {
   ( $choice:expr; $( $label:path => $e:expr $(,)? )+ ) => {
-    match $crate::prelude::extract( $choice ) {
+    match $crate::prelude::extract_choice( $choice ) {
       $(
         $label ( cont ) => {
           $crate::prelude::run_cont ( cont,

@@ -9,7 +9,7 @@ use crate::internal::functional::{
   type_app::*,
 };
 
-pub fn extract<'a, Row, F, T1, T2>(row: AppSum<'a, Row, F>) -> T2
+pub fn extract_choice<'a, Row, F, T1, T2>(row: AppSum<'a, Row, F>) -> T2
 where
   F: TyCon,
   Row: FlattenSumApp<'a, F, FlattenApplied = T1>,
@@ -59,19 +59,4 @@ where
   Lift: NaturalTransformation<'a, F1, F2>,
 {
   Row::lift_sum(lift, sum)
-}
-
-pub fn lift_sum_inject<'a, Lift: 'a, Row: 'a, TargetF: 'a>(
-  lift: Lift,
-  row: AppSum<'a, Row, Lift::SourceF>,
-) -> AppSum<'a, Row, Lift::InjectF>
-where
-  TargetF: TyCon,
-  Row: SumFunctorInject,
-  Lift: InjectLift<'a, AppSum<'a, Row, TargetF>, TargetF = TargetF> + Send,
-  Lift::SourceF: 'a,
-  Lift::InjectF: 'a,
-  Lift::TargetF: 'a,
-{
-  Row::lift_sum_inject(lift, |x| x, row)
 }

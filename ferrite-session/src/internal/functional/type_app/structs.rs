@@ -1,13 +1,9 @@
-use std::marker::PhantomData;
-
 use super::traits::*;
 
 pub struct App<'a, F, A>
 {
   pub applied: Box<dyn HasTypeApp<'a, F, A> + 'a>,
 }
-
-pub struct Const<X>(PhantomData<X>);
 
 impl<'a, F, A> App<'a, F, A>
 {
