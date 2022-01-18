@@ -1,22 +1,47 @@
+use core::{
+  future::Future,
+  pin::Pin,
+};
+
 use super::{
   traits::{
+    HasRecApp,
+    HasRecEndpoint,
     RecApp,
     SharedRecApp,
   },
   types::{
+    RecEndpoint,
     RecRow,
     RecX,
     Release,
     SharedRecRow,
   },
 };
-use crate::internal::functional::{
-  nat::{
-    S,
-    Z,
+use crate::internal::{
+  base::{
+    channel::{
+      once_channel,
+      ReceiverOnce,
+      SenderOnce,
+    },
+    protocol::Protocol,
   },
-  row::*,
+  functional::*,
 };
+
+impl<T, F, A> HasRecApp<F, A> for T
+where
+  F: 'static,
+  A: 'static,
+  T: Send + 'static,
+  F: RecApp<A, Applied = T>,
+{
+  fn get_applied(self: Box<T>) -> Box<T>
+  {
+    self
+  }
+}
 
 impl<C, F> RecApp<C> for RecX<(), F>
 where
@@ -80,6 +105,63 @@ where
   F: SharedRecApp<X>,
 {
   type Applied = RecX<(), F::Applied>;
+}
+
+impl<F, C, E> HasRecEndpoint<F, C> for E
+where
+  E: Send + 'static,
+  F: RecApp<C>,
+  F::Applied: Protocol<ClientEndpoint = E>,
+{
+  fn get_applied(self: Box<Self>) -> Box<Self>
+  {
+    self
+  }
+}
+
+impl<C, F> Protocol for RecX<C, F>
+where
+  C: Send + 'static,
+  F: Protocol,
+  F: RecApp<(RecX<C, F>, C)>,
+{
+  type ClientEndpoint = ReceiverOnce<RecEndpoint<F, (RecX<C, F>, C)>>;
+  type ProviderEndpoint = SenderOnce<RecEndpoint<F, (RecX<C, F>, C)>>;
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
+  {
+    once_channel()
+  }
+
+  fn forward(
+    client_end: Self::ClientEndpoint,
+    provider_end: Self::ProviderEndpoint,
+  ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
+  {
+    Box::pin(async {
+      let endpoint = client_end.recv().await.unwrap();
+      provider_end.send(endpoint).unwrap();
+    })
+  }
+}
+
+impl Protocol for Release
+{
+  type ClientEndpoint = ();
+  type ProviderEndpoint = ();
+
+  fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
+  {
+    ((), ())
+  }
+
+  fn forward(
+    _client_end: Self::ClientEndpoint,
+    _provider_end: Self::ProviderEndpoint,
+  ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>
+  {
+    Box::pin(async {})
+  }
 }
 
 impl<R, Row1, Row2, Row3> ToRow for RecRow<R, Row1>

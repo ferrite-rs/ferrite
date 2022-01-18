@@ -39,7 +39,6 @@ pub use self::{
     Protocol,
     ProviderEndpoint,
     ProviderEndpointF,
-    RecEndpoint,
     SharedProtocol,
   },
   rec::{
@@ -48,6 +47,7 @@ pub use self::{
     HasRecApp,
     Rec,
     RecApp,
+    RecEndpoint,
     RecRow,
     RecX,
     Release,
