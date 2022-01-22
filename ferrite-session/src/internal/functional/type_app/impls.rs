@@ -35,7 +35,7 @@ where
   {
     let applied = T::deserialize(deserializer)?;
 
-    Ok(wrap_type_app(applied))
+    Ok(App::new(applied))
   }
 }
 

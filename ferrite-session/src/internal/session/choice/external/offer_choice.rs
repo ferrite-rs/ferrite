@@ -16,7 +16,6 @@ use crate::internal::{
     ProviderEndpointF,
   },
   functional::{
-    wrap_type_app,
     App,
     AppSum,
     NaturalTransformation,
@@ -132,7 +131,7 @@ where
       provider_end: App<'r, ProviderEndpointF, A>,
     ) -> App<'r, ContF<'r, Row, C>, A>
     {
-      wrap_type_app(ChoiceCont {
+      App::new(ChoiceCont {
         ctx: self.ctx,
         provider_end,
         phantom: PhantomData,

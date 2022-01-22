@@ -26,13 +26,10 @@ pub mod prelude
     functional::public::{
       absurd,
       extract_choice,
-      get_applied,
       get_sum,
       get_sum_borrow,
       lift_sum,
       succ,
-      wrap_sum_app,
-      wrap_type_app,
       App,
       AppSum,
       Bottom,

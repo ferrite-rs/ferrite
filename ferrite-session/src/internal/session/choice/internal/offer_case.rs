@@ -2,13 +2,12 @@ use crate::internal::{
   base::{
     unsafe_create_session,
     unsafe_run_session,
-    ClientEndpointF,
     Context,
     PartialSession,
     Protocol,
   },
   functional::{
-    wrap_type_app,
+    App,
     Prism,
     RowCon,
     ToRow,
@@ -33,8 +32,7 @@ where
     move |ctx, client_end_sum_sender| async move {
       let (provider_end, client_end) = A::create_endpoints();
 
-      let client_end_sum =
-        N::inject_elem(wrap_type_app::<ClientEndpointF, A>(client_end));
+      let client_end_sum = N::inject_elem(App::new(client_end));
 
       client_end_sum_sender.send(client_end_sum).unwrap();
 

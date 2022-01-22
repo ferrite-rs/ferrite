@@ -2,7 +2,7 @@ use tokio::task;
 
 use crate::internal::{
   base::*,
-  functional::wrap_type_app,
+  functional::App,
 };
 
 pub fn fix_session<R, F, A, C>(
@@ -52,7 +52,7 @@ where
 
     let client_end = *rec_end.applied.get_applied();
 
-    let ctx3 = N::insert_target(wrap_type_app(client_end), ctx2);
+    let ctx3 = N::insert_target(App::new(client_end), ctx2);
 
     task::spawn(async move {
       unsafe_run_session(cont, ctx3, provider_end).await;

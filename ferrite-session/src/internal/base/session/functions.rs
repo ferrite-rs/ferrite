@@ -5,6 +5,7 @@ use core::{
 
 use tokio::task;
 
+use super::types::*;
 use crate::internal::{
   base::{
     context::Context,
@@ -13,24 +14,8 @@ use crate::internal::{
       ProviderEndpoint,
     },
   },
-  functional::type_app::wrap_type_app,
+  functional::App,
 };
-
-pub type Session<P> = PartialSession<(), P>;
-
-pub struct PartialSession<C, A>
-where
-  A: Protocol,
-  C: Context,
-{
-  executor: Box<
-    dyn FnOnce(
-        C::Endpoints,
-        ProviderEndpoint<A>,
-      ) -> Pin<Box<dyn Future<Output = ()> + Send>>
-      + Send,
-  >,
-}
 
 pub fn unsafe_create_session<C, A, Cont, Fut>(
   executor: Cont
@@ -73,7 +58,7 @@ pub async fn unsafe_run_session<C, A>(
   C: Context,
 {
   task::spawn(async move {
-    (session.executor)(ctx, wrap_type_app(provider_end)).await;
+    (session.executor)(ctx, App::new(provider_end)).await;
   })
   .await
   .unwrap();

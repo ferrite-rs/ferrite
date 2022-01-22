@@ -1,6 +1,6 @@
 use crate::internal::{
   base::*,
-  functional::wrap_type_app,
+  functional::App,
   protocol::*,
 };
 
@@ -45,7 +45,7 @@ where
 
     let unwrapped = wrapped.unwrap.unwrap();
 
-    let ctx3 = N::insert_target(wrap_type_app(unwrapped), ctx2);
+    let ctx3 = N::insert_target(App::new(unwrapped), ctx2);
 
     unsafe_run_session(cont, ctx3, provider_end_a).await;
   })

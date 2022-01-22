@@ -222,7 +222,7 @@ where
     receiver: OpaqueReceiver,
   ) -> Self
   {
-    wrap_type_app(T::forward_from(sender, receiver))
+    App::new(T::forward_from(sender, receiver))
   }
 }
 
@@ -248,7 +248,7 @@ where
     receiver: OpaqueReceiver,
   ) -> Self
   {
-    wrap_sum_app(T::forward_from(sender, receiver))
+    AppSum::new(T::forward_from(sender, receiver))
   }
 }
 

@@ -10,7 +10,7 @@ use crate::internal::{
     Protocol,
   },
   functional::{
-    wrap_type_app,
+    App,
     Nat,
   },
   protocol::ReceiveChannel,
@@ -33,7 +33,7 @@ where
     move |ctx1, (chan_receiver, provider_end)| async move {
       let client_end = chan_receiver.recv().await.unwrap();
 
-      let ctx2 = C1::append_context(ctx1, (wrap_type_app(client_end), ()));
+      let ctx2 = C1::append_context(ctx1, (App::new(client_end), ()));
 
       unsafe_run_session(cont2, ctx2, provider_end).await;
     },
@@ -66,7 +66,7 @@ where
 
     chan_sender.send(client_end_1.get_applied()).unwrap();
 
-    let ctx5 = N::insert_target(wrap_type_app(client_end_2), ctx4);
+    let ctx5 = N::insert_target(App::new(client_end_2), ctx4);
 
     unsafe_run_session(cont, ctx5, provider_end_b).await;
   })

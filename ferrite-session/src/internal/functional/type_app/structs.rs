@@ -7,27 +7,20 @@ pub struct App<'a, F, A>
 
 impl<'a, F, A> App<'a, F, A>
 {
+  pub fn new(applied: F::Applied) -> App<'a, F, A>
+  where
+    F: TypeApp<'a, A>,
+    F::Applied: 'a,
+  {
+    App {
+      applied: Box::new(applied),
+    }
+  }
+
   pub fn get_applied(self) -> F::Applied
   where
     F: TypeApp<'a, A>,
   {
     *self.applied.get_applied()
-  }
-}
-
-pub fn get_applied<'a, F, A>(applied: App<'a, F, A>) -> F::Applied
-where
-  F: TypeApp<'a, A>,
-{
-  *applied.applied.get_applied()
-}
-
-pub fn wrap_type_app<'a, F, A>(applied: F::Applied) -> App<'a, F, A>
-where
-  F: TypeApp<'a, A>,
-  F::Applied: 'a,
-{
-  App {
-    applied: Box::new(applied),
   }
 }

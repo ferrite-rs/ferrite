@@ -33,6 +33,15 @@ where
   F: TyCon,
   Row: SumApp<'a, F>,
 {
+  pub fn new(row: Row::Applied) -> AppSum<'a, Row, F>
+  where
+    F: TyCon,
+    Row: SumApp<'a, F>,
+    Row::Applied: Send,
+  {
+    AppSum { row: Box::new(row) }
+  }
+
   pub fn get_sum(self) -> Row::Applied
   {
     *self.row.get_sum()
@@ -47,13 +56,4 @@ impl<N> ChoiceSelector<N>
       phantom: PhantomData,
     }
   }
-}
-
-pub fn wrap_sum_app<'a, Row, F>(row: Row::Applied) -> AppSum<'a, Row, F>
-where
-  F: TyCon,
-  Row: SumApp<'a, F>,
-  Row::Applied: Send,
-{
-  AppSum { row: Box::new(row) }
 }

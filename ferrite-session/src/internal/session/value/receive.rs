@@ -8,7 +8,7 @@ use crate::internal::{
     Protocol,
     Value,
   },
-  functional::wrap_type_app,
+  functional::App,
   protocol::ReceiveValue,
 };
 
@@ -51,7 +51,7 @@ where
 
     let sender1 = endpoint.get_applied();
 
-    let ctx3 = N::insert_target(wrap_type_app(client_end_b), ctx2);
+    let ctx3 = N::insert_target(App::new(client_end_b), ctx2);
 
     sender1.send((Value(val), provider_end_b)).unwrap();
 

@@ -15,7 +15,7 @@ use crate::internal::{
     Protocol,
   },
   functional::{
-    wrap_type_app,
+    App,
     Nat,
   },
   protocol::SendChannel,
@@ -70,11 +70,11 @@ where
 
     let client_end1 = chan_receiver.recv().await.unwrap();
 
-    let ctx3 = N::insert_target(wrap_type_app(client_end2), ctx2);
+    let ctx3 = N::insert_target(App::new(client_end2), ctx2);
 
     let ctx4 = <N::Target as AppendContext<(A1, ())>>::append_context(
       ctx3,
-      (wrap_type_app(client_end1), ()),
+      (App::new(client_end1), ()),
     );
 
     unsafe_run_session(cont2, ctx4, provider_end).await;

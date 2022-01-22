@@ -3,9 +3,8 @@ pub mod public;
 mod channel;
 mod choice;
 mod end;
-mod linear_to_shared;
-mod lock;
-mod shared_to_linear;
+
+mod shared;
 mod value;
 mod wrap;
 
@@ -21,9 +20,11 @@ pub use self::{
     InternalChoice,
   },
   end::End,
-  linear_to_shared::LinearToShared,
-  lock::Lock,
-  shared_to_linear::SharedToLinear,
+  shared::{
+    LinearToShared,
+    Lock,
+    SharedToLinear,
+  },
   value::{
     ReceiveValue,
     SendValue,

@@ -15,7 +15,7 @@ use crate::internal::{
     Slot,
   },
   functional::{
-    wrap_type_app,
+    App,
     Nat,
   },
 };
@@ -206,7 +206,7 @@ where
 
     let (provider_end_a, client_end_a) = A::create_endpoints();
 
-    let ctx3 = C2::append_context(ctx2, (wrap_type_app(client_end_a), ()));
+    let ctx3 = C2::append_context(ctx2, (App::new(client_end_a), ()));
 
     let child1 = task::spawn(async move {
       unsafe_run_session(cont3, ctx3, sender1).await;
@@ -249,7 +249,7 @@ where
 
     let ctx4 = <C1 as AppendContext<(A, ())>>::append_context(
       ctx2,
-      (wrap_type_app(client_end_a), ()),
+      (App::new(client_end_a), ()),
     );
 
     let child1 = task::spawn(async {

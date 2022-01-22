@@ -19,7 +19,6 @@ pub use self::{
     get_sum,
     get_sum_borrow,
     lift_sum,
-    wrap_sum_app,
     AppSum,
     Bottom,
     ChoiceSelector,
@@ -33,8 +32,6 @@ pub use self::{
     ToRow,
   },
   type_app::{
-    get_applied,
-    wrap_type_app,
     App,
     HasTypeApp,
     TyCon,

@@ -42,7 +42,7 @@ where
   {
     let row = T::deserialize(deserializer)?;
 
-    Ok(wrap_sum_app(row))
+    Ok(AppSum::new(row))
   }
 }
 
@@ -111,11 +111,11 @@ where
   fn unflatten_sum(row1: Self::FlattenApplied) -> Self::Applied
   {
     match row1 {
-      Sum::Inl(field) => Sum::Inl(wrap_type_app(field)),
+      Sum::Inl(field) => Sum::Inl(App::new(field)),
       Sum::Inr(row2) => {
         let row3 = R::unflatten_sum(row2);
 
-        Sum::Inr(wrap_sum_app(row3))
+        Sum::Inr(AppSum::new(row3))
       }
     }
   }
@@ -190,9 +190,9 @@ where
       Sum::Inl(fa1) => {
         let fa2 = lift.lift(fa1);
 
-        wrap_sum_app(Sum::Inl(fa2))
+        AppSum::new(Sum::Inl(fa2))
       }
-      Sum::Inr(b) => wrap_sum_app(Sum::Inr(R::lift_sum::<T, F1, F2>(lift, b))),
+      Sum::Inr(b) => AppSum::new(Sum::Inr(R::lift_sum::<T, F1, F2>(lift, b))),
     }
   }
 }
@@ -211,7 +211,7 @@ where
     F: TyCon,
     (A, R): 'a,
   {
-    wrap_sum_app(Sum::Inl(t))
+    AppSum::new(Sum::Inl(t))
   }
 
   fn extract_elem<'a, F: 'a + Send>(
@@ -243,7 +243,7 @@ where
     F: TyCon,
     (A, R): 'a,
   {
-    wrap_sum_app(Sum::Inr(<ChoiceSelector<N> as Prism<R>>::inject_elem(elem)))
+    AppSum::new(Sum::Inr(<ChoiceSelector<N> as Prism<R>>::inject_elem(elem)))
   }
 
   fn extract_elem<'a, F: 'a + Send>(

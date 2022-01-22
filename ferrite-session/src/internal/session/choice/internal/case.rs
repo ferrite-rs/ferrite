@@ -17,7 +17,6 @@ use crate::internal::{
     ProviderEndpointF,
   },
   functional::{
-    wrap_type_app,
     App,
     AppSum,
     NaturalTransformation,
@@ -59,7 +58,7 @@ where
 
     let cont_sum = client_end_sum_to_cont_sum::<N, C2, B, Row2>(
       ctx3,
-      wrap_type_app(provider_end),
+      App::new(provider_end),
       client_end_sum,
     );
 
@@ -118,7 +117,7 @@ where
         let ((), ctx1) = N::extract_source(self.ctx);
         let client_end = self.client_end.get_applied();
 
-        let ctx2 = N::insert_target(wrap_type_app(client_end), ctx1);
+        let ctx2 = N::insert_target(App::new(client_end), ctx1);
         unsafe_run_session(session, ctx2, self.provider_end.get_applied())
           .await;
       }),
@@ -155,7 +154,7 @@ where
       client_end: App<'r, ClientEndpointF, A>,
     ) -> App<'r, ContF<'r, N, C, B>, A>
     {
-      wrap_type_app(ChoiceCont {
+      App::new(ChoiceCont {
         ctx: self.ctx,
         provider_end: self.provider_end,
         client_end,

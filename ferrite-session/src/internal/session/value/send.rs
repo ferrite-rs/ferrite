@@ -8,7 +8,7 @@ use crate::internal::{
     Protocol,
     Value,
   },
-  functional::wrap_type_app,
+  functional::App,
   protocol::SendValue,
 };
 
@@ -50,7 +50,7 @@ where
 
     let (Value(val), client_end) = receiver.recv().await.unwrap();
 
-    let ctx3 = N::insert_target(wrap_type_app(client_end), ctx2);
+    let ctx3 = N::insert_target(App::new(client_end), ctx2);
 
     let cont2 = cont(val);
 
