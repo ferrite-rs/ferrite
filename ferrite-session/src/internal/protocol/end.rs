@@ -7,6 +7,8 @@ use crate::internal::base::*;
 
 pub struct End();
 
+impl SealedProtocol for End {}
+
 impl Protocol for End
 {
   type ClientEndpoint = ReceiverOnce<()>;

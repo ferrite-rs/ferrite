@@ -12,6 +12,7 @@ pub use super::{
   FlattenSumApp,
   HasSumApp,
   HasTypeApp,
+  Nat,
   NaturalTransformation,
   Prism,
   RowCon,
@@ -24,7 +25,3 @@ pub use super::{
   S,
   Z,
 };
-
-pub trait Nat: super::Nat {}
-
-impl<N> Nat for N where N: super::Nat {}

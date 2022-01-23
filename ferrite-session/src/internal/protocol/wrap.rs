@@ -36,6 +36,8 @@ where
   }
 }
 
+impl<T> SealedProtocol for Wrap<T> where T: Wrapper {}
+
 impl<T> Protocol for Wrap<T>
 where
   T: Wrapper,

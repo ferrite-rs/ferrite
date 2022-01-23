@@ -11,6 +11,8 @@ use crate::internal::{
 
 pub struct ExternalChoice<Row>(PhantomData<Row>);
 
+impl<Row> SealedProtocol for ExternalChoice<Row> {}
+
 impl<Row> Protocol for ExternalChoice<Row>
 where
   Row: Send + 'static,

@@ -10,12 +10,16 @@ use crate::internal::{
   },
 };
 
+impl<A> SealedSlot for A where A: Protocol {}
+
 impl<A> Slot for A
 where
   A: Protocol,
 {
   type Endpoint = ClientEndpoint<A>;
 }
+
+impl SealedSlot for Empty {}
 
 impl Slot for Empty
 {
@@ -81,16 +85,22 @@ where
   }
 }
 
+impl SealedContext for () {}
+
 impl Context for ()
 {
   type Endpoints = ();
   type Length = Z;
 }
 
+impl SealedEmptyContext for () {}
+
 impl EmptyContext for ()
 {
   fn empty_values() {}
 }
+
+impl<R> SealedEmptyContext for (Empty, R) where R: EmptyContext {}
 
 impl<R> EmptyContext for (Empty, R)
 where
@@ -101,6 +111,8 @@ where
     ((), R::empty_values())
   }
 }
+
+impl<P, R> SealedContext for (P, R) {}
 
 impl<P, R> Context for (P, R)
 where

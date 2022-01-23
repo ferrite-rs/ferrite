@@ -3,7 +3,9 @@ use core::{
   pin::Pin,
 };
 
-pub trait Protocol: Send + 'static
+pub trait SealedProtocol {}
+
+pub trait Protocol: SealedProtocol + Send + 'static
 {
   type ProviderEndpoint: Send + 'static;
   type ClientEndpoint: Send + 'static;
@@ -16,4 +18,6 @@ pub trait Protocol: Send + 'static
   ) -> Pin<Box<dyn Future<Output = ()> + Send + 'static>>;
 }
 
-pub trait SharedProtocol: Send + 'static {}
+pub trait SealedSharedProtocol {}
+
+pub trait SharedProtocol: SealedSharedProtocol + Send + 'static {}

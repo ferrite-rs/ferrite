@@ -25,7 +25,10 @@ use crate::internal::{
       ReceiverOnce,
       SenderOnce,
     },
-    protocol::Protocol,
+    protocol::{
+      Protocol,
+      SealedProtocol,
+    },
   },
   functional::*,
 };
@@ -119,6 +122,8 @@ where
   }
 }
 
+impl<C, F> SealedProtocol for RecX<C, F> {}
+
 impl<C, F> Protocol for RecX<C, F>
 where
   C: Send + 'static,
@@ -144,6 +149,8 @@ where
     })
   }
 }
+
+impl SealedProtocol for Release {}
 
 impl Protocol for Release
 {

@@ -29,6 +29,8 @@ pub struct LinearToShared<F>
     Box<dyn HasSharedRecApp<F, SharedToLinear<LinearToShared<F>>>>,
 }
 
+impl<F> SealedSharedProtocol for LinearToShared<F> {}
+
 impl<F> SharedProtocol for LinearToShared<F>
 where
   F: Protocol,

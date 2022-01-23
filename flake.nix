@@ -37,8 +37,8 @@
       defaultApp = hello-app;
 
       devShell = pkgs.mkShell {
+        inputsFrom = [ ferrite ];
         nativeBuildInputs = [
-          ferrite
           pkgs.rustc
           pkgs.cargo
         ];

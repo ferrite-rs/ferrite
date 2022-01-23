@@ -8,6 +8,8 @@ use crate::internal::base::*;
 
 pub struct ReceiveChannel<A, B>(PhantomData<(A, B)>);
 
+impl<A, B> SealedProtocol for ReceiveChannel<A, B> {}
+
 impl<A, B> Protocol for ReceiveChannel<A, B>
 where
   A: Protocol,

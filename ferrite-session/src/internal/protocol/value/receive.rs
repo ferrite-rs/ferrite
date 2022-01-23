@@ -8,6 +8,8 @@ use crate::internal::base::*;
 
 pub struct ReceiveValue<T, A>(PhantomData<(T, A)>);
 
+impl<T, A> SealedProtocol for ReceiveValue<T, A> {}
+
 impl<T, A> Protocol for ReceiveValue<T, A>
 where
   T: Send + 'static,

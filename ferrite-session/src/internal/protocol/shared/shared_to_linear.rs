@@ -9,6 +9,8 @@ use crate::internal::base::*;
 
 pub struct SharedToLinear<F>(PhantomData<F>);
 
+impl<F> SealedProtocol for SharedToLinear<LinearToShared<F>> {}
+
 impl<F> Protocol for SharedToLinear<LinearToShared<F>>
 where
   F: Send + 'static,

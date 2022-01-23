@@ -29,6 +29,8 @@ impl<'a, A: Protocol> TypeApp<'a, A> for ClientEndpointF
   type Applied = A::ClientEndpoint;
 }
 
+impl SealedProtocol for Z {}
+
 impl Protocol for Z
 {
   type ClientEndpoint = ();
@@ -47,6 +49,8 @@ impl Protocol for Z
     Box::pin(async {})
   }
 }
+
+impl<N> SealedProtocol for S<N> {}
 
 impl<N> Protocol for S<N>
 where

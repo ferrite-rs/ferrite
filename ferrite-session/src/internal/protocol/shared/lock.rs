@@ -16,6 +16,11 @@ where
   pub(crate) unlock: Receiver<(SenderOnce<()>, SenderOnce<LinearToShared<F>>)>,
 }
 
+impl<F> SealedProtocol for Lock<F> where
+  F: SharedRecApp<SharedToLinear<LinearToShared<F>>>
+{
+}
+
 impl<F> Protocol for Lock<F>
 where
   F: Protocol,

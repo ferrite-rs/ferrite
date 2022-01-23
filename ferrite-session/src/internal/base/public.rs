@@ -1,47 +1,20 @@
 #[doc(inline)]
 pub use super::{
+  AppendContext,
+  Context,
   Empty,
+  EmptyContext,
   PartialSession,
+  Protocol,
   Rec,
   RecX,
   Release,
   Session,
   SharedChannel,
+  SharedProtocol,
   SharedSession,
+  Slot,
 };
-
-pub trait Protocol: super::Protocol {}
-
-impl<A> Protocol for A where A: super::Protocol {}
-
-pub trait SharedProtocol: super::SharedProtocol {}
-
-impl<A> SharedProtocol for A where A: super::SharedProtocol {}
-
-pub trait Context: super::Context {}
-
-impl<C> Context for C where C: super::Context {}
-
-pub trait EmptyContext: super::EmptyContext {}
-
-pub trait Slot: super::Slot {}
-
-impl<C> Slot for C where C: super::Slot {}
-
-impl<C> EmptyContext for C where C: super::EmptyContext {}
-
-pub trait AppendContext<C>: super::AppendContext<C>
-where
-  C: Context,
-{
-}
-
-impl<C1, C2> AppendContext<C2> for C1
-where
-  C2: Context,
-  C1: super::AppendContext<C2>,
-{
-}
 
 pub trait ContextLens<C, A1, A2>: super::ContextLens<C, A1, A2>
 where

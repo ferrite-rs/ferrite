@@ -2,17 +2,22 @@ use crate::internal::functional::nat::Nat;
 
 pub struct Empty;
 
-pub trait Context: Send + 'static
+pub trait SealedContext {}
+
+pub trait Context: SealedContext + Send + 'static
 {
   type Endpoints: Sized + Send;
 
   type Length: Nat;
 }
 
-pub trait EmptyContext: Context
+pub trait SealedEmptyContext {}
+
+pub trait EmptyContext: SealedEmptyContext + Context
 {
   fn empty_values() -> <Self as Context>::Endpoints;
 }
+
 pub trait AppendContext<R>: Context
 where
   R: Context,
@@ -29,7 +34,9 @@ where
   ) -> (<Self as Context>::Endpoints, <R as Context>::Endpoints);
 }
 
-pub trait Slot: Send + 'static
+pub trait SealedSlot {}
+
+pub trait Slot: SealedSlot + Send + 'static
 {
   type Endpoint: Send;
 }
