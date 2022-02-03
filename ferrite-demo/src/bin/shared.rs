@@ -15,7 +15,7 @@ async fn random_sleep()
 
 pub fn make_counter_session(count: u64) -> SharedSession<SharedCounter>
 {
-  accept_shared_session(step(async move {
+  accept_shared_session(async move {
     println!("[Server] Producing count {}", count);
     random_sleep().await;
     println!("[Server] Produced count {}", count);
@@ -24,7 +24,7 @@ pub fn make_counter_session(count: u64) -> SharedSession<SharedCounter>
       count,
       detach_shared_session(make_counter_session(count + 1)),
     )
-  }))
+  })
 }
 
 pub fn read_counter_session(

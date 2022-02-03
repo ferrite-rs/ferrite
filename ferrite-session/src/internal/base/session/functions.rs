@@ -57,9 +57,9 @@ pub async fn unsafe_run_session<C, A>(
   A: Protocol,
   C: Context,
 {
-  task::spawn(async move {
-    (session.executor)(ctx, App::new(provider_end)).await;
-  })
-  .await
-  .unwrap();
+  // task::spawn(async move {
+  (session.executor)(ctx, App::new(provider_end)).await;
+  // })
+  // .await
+  // .unwrap();
 }

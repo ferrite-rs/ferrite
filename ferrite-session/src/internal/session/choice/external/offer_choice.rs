@@ -31,8 +31,8 @@ use crate::internal::{
 
 pub fn offer_choice<C, Row1, Row2>(
   cont1: impl for<'r> FnOnce(
-      AppSum<'r, Row2, ContF<'r, Row1, C>>,
-    ) -> ChoiceRet<'r, Row1, C>
+      AppSum<'r, Row2, InjectSessionF<'r, Row1, C>>,
+    ) -> ContSum<'r, Row1, C>
     + Send
     + 'static
 ) -> PartialSession<C, ExternalChoice<Row1>>
@@ -60,25 +60,34 @@ where
   )
 }
 
-pub struct ChoiceRet<'r, Row, C>
+pub struct InjectSession<'r, Row, C: Context, A>
+{
+  ctx: C::Endpoints,
+  provider_end: App<'r, ProviderEndpointF, A>,
+  phantom: PhantomData<(Box<dyn Invariant<'r>>, Row)>,
+}
+
+pub struct InjectSessionF<'r, Row, C>(PhantomData<&'r (Row, C)>);
+
+pub struct ContSum<'r, Row, C>
 {
   future: Pin<Box<dyn Future<Output = ()> + Send + 'r>>,
   phantom: PhantomData<(Box<dyn Invariant<'r>>, C, Row)>,
 }
 
 impl<'r, Row: 'r, C: Context, A: Protocol> RunCont<C, A>
-  for ChoiceCont<'r, Row, C, A>
+  for InjectSession<'r, Row, C, A>
 where
   Row: Send,
 {
-  type Ret = ChoiceRet<'r, Row, C>;
+  type Ret = ContSum<'r, Row, C>;
 
   fn run_cont(
     self,
     session: PartialSession<C, A>,
   ) -> Self::Ret
   {
-    ChoiceRet {
+    ContSum {
       future: Box::pin(async move {
         unsafe_run_session(session, self.ctx, self.provider_end.get_applied())
           .await;
@@ -90,28 +99,20 @@ where
 
 pub trait Invariant<'r>: Send {}
 
-pub struct ChoiceCont<'r, Row, C: Context, A>
-{
-  ctx: C::Endpoints,
-  provider_end: App<'r, ProviderEndpointF, A>,
-  phantom: PhantomData<(Box<dyn Invariant<'r>>, Row)>,
-}
+impl<'r, Row, C: 'static> TyCon for InjectSessionF<'r, Row, C> {}
 
-pub struct ContF<'r, Row, C>(PhantomData<&'r (Row, C)>);
-
-impl<'r, Row, C: 'static> TyCon for ContF<'r, Row, C> {}
-
-impl<'r, 'a, Row, C: Context, A: 'r> TypeApp<'a, A> for ContF<'r, Row, C>
+impl<'r, 'a, Row, C: Context, A: 'r> TypeApp<'a, A>
+  for InjectSessionF<'r, Row, C>
 where
   Row: Send,
 {
-  type Applied = ChoiceCont<'r, Row, C, A>;
+  type Applied = InjectSession<'r, Row, C, A>;
 }
 
 fn provider_end_sum_to_cont_sum<C, Row1: 'static, Row2: 'static>(
   ctx: C::Endpoints,
   provider_end_sum: AppSum<'static, Row2, ProviderEndpointF>,
-) -> AppSum<Row2, ContF<'static, Row1, C>>
+) -> AppSum<Row2, InjectSessionF<'static, Row1, C>>
 where
   Row1: Send,
   Row2: SumFunctor,
@@ -123,15 +124,15 @@ where
   }
 
   impl<'r, Row: Send, C: Context>
-    NaturalTransformation<'r, ProviderEndpointF, ContF<'r, Row, C>>
+    NaturalTransformation<'r, ProviderEndpointF, InjectSessionF<'r, Row, C>>
     for ProviderEndToCont<C>
   {
     fn lift<A: 'r>(
       self,
       provider_end: App<'r, ProviderEndpointF, A>,
-    ) -> App<'r, ContF<'r, Row, C>, A>
+    ) -> App<'r, InjectSessionF<'r, Row, C>, A>
     {
-      App::new(ChoiceCont {
+      App::new(InjectSession {
         ctx: self.ctx,
         provider_end,
         phantom: PhantomData,

@@ -9,9 +9,9 @@ type CounterLock = Lock<SendValue<u64, Release>>;
 
 fn shared_provider_1(count: u64) -> SharedSession<Counter>
 {
-  accept_shared_session(step(async move {
+  accept_shared_session(async move {
     send_value(count, detach_shared_session(shared_provider_1(count + 1)))
-  }))
+  })
 }
 
 fn detached_provider_1(counter: SharedChannel<Counter>) -> Session<Detached>
@@ -41,12 +41,14 @@ fn detached_provider_2() -> Session<ReceiveChannel<CounterLock, Detached>>
 
 fn shared_provider_2(count: u64) -> SharedSession<Counter>
 {
-  accept_shared_session(send_value(
-    count,
-    include_session(detached_provider_2(), move |c| {
-      send_channel_to(c, Z, send_value_to(c, count + 1, forward(c)))
-    }),
-  ))
+  accept_shared_session(async move {
+    send_value(
+      count,
+      include_session(detached_provider_2(), move |c| {
+        send_channel_to(c, Z, send_value_to(c, count + 1, forward(c)))
+      }),
+    )
+  })
 }
 
 fn detached_client() -> Session<ReceiveChannel<Detached, End>>

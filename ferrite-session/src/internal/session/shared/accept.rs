@@ -1,3 +1,5 @@
+use core::future::Future;
+
 use crate::internal::{
   base::*,
   functional::*,
@@ -9,7 +11,9 @@ use crate::internal::{
 };
 
 pub fn accept_shared_session<F>(
-  cont: PartialSession<(Lock<F>, ()), F::Applied>
+  cont: impl Future<Output = PartialSession<(Lock<F>, ()), F::Applied>>
+    + Send
+    + 'static
 ) -> SharedSession<LinearToShared<F>>
 where
   F: Protocol,
@@ -40,8 +44,12 @@ where
 
         debug!("[accept_shared_session] calling cont");
 
-        unsafe_run_session(cont, (App::new(lock_client_end), ()), producer_end)
-          .await;
+        unsafe_run_session(
+          cont.await,
+          (App::new(lock_client_end), ()),
+          producer_end,
+        )
+        .await;
 
         debug!("[accept_shared_session] returned from cont");
       } else {

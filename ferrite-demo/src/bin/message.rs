@@ -11,7 +11,7 @@ type CounterSession = LinearToShared<ExternalChoice<CounterCommand>>;
 
 fn make_counter_session(count: u64) -> SharedSession<CounterSession>
 {
-  accept_shared_session(step(async move {
+  accept_shared_session(async move {
     offer_choice! {
       Increment => {
         println!("provider incrementing count {}", count);
@@ -27,7 +27,7 @@ fn make_counter_session(count: u64) -> SharedSession<CounterSession>
               make_counter_session ( count ) ) )
       }
     }
-  }))
+  })
 }
 
 async fn use_counter(

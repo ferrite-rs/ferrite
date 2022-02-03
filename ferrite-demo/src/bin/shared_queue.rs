@@ -14,15 +14,17 @@ define_choice! { DequeueOps;
 
 fn empty_queue() -> SharedSession<Queue>
 {
-  accept_shared_session(offer_choice! {
-    Enqueue =>
-      receive_value(move |val| {
-        detach_shared_session(
-          head_queue(val, run_shared_session(empty_queue())))
-      }),
-    Dequeue =>
-      offer_case!(None,
-        detach_shared_session(empty_queue()))
+  accept_shared_session(async move {
+    offer_choice! {
+      Enqueue =>
+        receive_value(move |val| {
+          detach_shared_session(
+            head_queue(val, run_shared_session(empty_queue())))
+        }),
+      Dequeue =>
+        offer_case!(None,
+          detach_shared_session(empty_queue()))
+    }
   })
 }
 
@@ -31,21 +33,23 @@ fn head_queue(
   tail: SharedChannel<Queue>,
 ) -> SharedSession<Queue>
 {
-  accept_shared_session(offer_choice! {
-    Enqueue =>
-      receive_value(move |val2| {
-        acquire_shared_session(tail.clone(), move |c| {
-          choose!(c, Enqueue,
-            send_value_to(c, val2,
-              release_shared_session(c,
-                detach_shared_session(
-                  head_queue(val1, tail)))))
-        })
-      }),
-    Dequeue =>
-      offer_case!(Some,
-        send_value(val1,
-          shared_forward(tail)))
+  accept_shared_session(async move {
+    offer_choice! {
+      Enqueue =>
+        receive_value(move |val2| {
+          acquire_shared_session(tail.clone(), move |c| {
+            choose!(c, Enqueue,
+              send_value_to(c, val2,
+                release_shared_session(c,
+                  detach_shared_session(
+                    head_queue(val1, tail)))))
+          })
+        }),
+      Dequeue =>
+        offer_case!(Some,
+          send_value(val1,
+            shared_forward(tail)))
+    }
   })
 }
 
