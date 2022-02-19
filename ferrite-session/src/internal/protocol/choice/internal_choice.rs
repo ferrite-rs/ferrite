@@ -13,14 +13,14 @@ pub struct InternalChoice<Row>(PhantomData<Row>);
 
 impl<Row1> SealedProtocol for InternalChoice<Row1> {}
 
-impl<Row1, Row2> Protocol for InternalChoice<Row1>
+impl<Row> Protocol for InternalChoice<Row>
 where
-  Row1: Send + 'static,
-  Row2: Send + 'static,
-  Row1: ToRow<Row = Row2>,
+  Row: ToRow + Send + 'static,
 {
-  type ClientEndpoint = ReceiverOnce<AppSum<'static, Row2, ClientEndpointF>>;
-  type ProviderEndpoint = SenderOnce<AppSum<'static, Row2, ClientEndpointF>>;
+  type ClientEndpoint =
+    ReceiverOnce<AppSum<'static, Row::Row, ClientEndpointF>>;
+  type ProviderEndpoint =
+    SenderOnce<AppSum<'static, Row::Row, ClientEndpointF>>;
 
   fn create_endpoints() -> (Self::ProviderEndpoint, Self::ClientEndpoint)
   {

@@ -5,7 +5,7 @@ use core::{
 
 use crate::internal::base::*;
 
-pub struct End();
+pub struct End;
 
 impl SealedProtocol for End {}
 

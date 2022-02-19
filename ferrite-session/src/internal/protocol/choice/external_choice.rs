@@ -15,8 +15,7 @@ impl<Row> SealedProtocol for ExternalChoice<Row> {}
 
 impl<Row> Protocol for ExternalChoice<Row>
 where
-  Row: Send + 'static,
-  Row: ToRow,
+  Row: ToRow + Send + 'static,
 {
   type ClientEndpoint =
     SenderOnce<AppSum<'static, Row::Row, ProviderEndpointF>>;
