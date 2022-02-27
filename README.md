@@ -46,20 +46,6 @@ RUST_LOG=info cargo run --bin hello
 RUST_LOG=info cargo run --bin shared
 ```
 
-## Code Organization
-
-### `ferrite-session`
-
-  - [`base`](ferrite-session/src/internal/base) - Core constructs for Ferrite
-  - [`functional`](ferrite-session/src/internal/functional) - Functional programming constructs such as type application and natural numbers.
-  - [`protocol`](ferrite-session/src/internal/protocol) - Type definitions for session types
-  - [`session`](ferrite-session/src/internal/session) - Term constructors
-  - [`public.rs`](ferrite-session/src/internal/public.rs) - Public API exposed by Ferrite
-
-### Demo
-
-  - [`src/bin`](ferrite-demo/src/bin) - Demo executables
-
 ## Acknowledgement
 
 This material is based upon work supported by the National Science Foundation under Grant No. CCF-1718267.
