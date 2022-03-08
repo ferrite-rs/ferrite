@@ -1,11 +1,10 @@
 [package]
 name = "ferrite-session"
 version = "0.3.0"
-edition = "2018"
+edition = "2021"
 description = "Session Types DSL for Rust"
 homepage = "https://github.com/maybevoid/ferrite"
 repository = "https://github.com/maybevoid/ferrite"
-authors = [ "Soares Chen <soares.chen@maybevoid.com>" ]
 license = "MIT OR Apache-2.0"
 keywords = [ "session-types" ]
 readme = "../README.md"
