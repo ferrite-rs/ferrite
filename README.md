@@ -4,14 +4,6 @@
 
 Ferrite is a DSL for writing session type programs in Rust.
 
-## Documentation
-
-A work-in-progress documentation for Ferrite is available as a
-[book](http://ferrite-rs.github.io/ferrite-book/).
-
-A draft technical report for Ferrite is currently available at
-[Arxiv](https://arxiv.org/abs/2009.13619).
-
 ## Build Instructions
 
 ```bash
