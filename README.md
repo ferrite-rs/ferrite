@@ -18,7 +18,8 @@
 
 Ferrite is a DSL for writing session type programs in Rust.
 This is an ongoing research work by [Soares Chen](https://maybevoid.com/)
-and [Stephanie Balzer](http://www.cs.cmu.edu/~balzers/) to implement
+and [Stephanie Balzer](http://www.cs.cmu.edu/~balzers/), and
+[Bernardo Toninho](http://ctp.di.fct.unl.pt/~btoninho/) to implement
 session types in Rust.
 
 ## Documentation
