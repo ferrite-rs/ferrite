@@ -11,8 +11,8 @@ keywords = [ "session-types" ]
 readme = "../README.md"
 
 [dependencies]
-log = "0.4.14"
-paste = "1.0.6"
-ipc-channel = "0.14.1"
-tokio = { version = "1.15.0", features = [ "full" ] }
-serde = { version = "1.0.133", features = [ "derive" ] }
+log = "0.4.17"
+paste = "1.0.7"
+ipc-channel = "0.16.0"
+tokio = { version = "1.19.1", features = [ "full" ] }
+serde = { version = "1.0.137", features = [ "derive" ] }
